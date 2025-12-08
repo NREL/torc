@@ -9,49 +9,60 @@ use std::io;
 
 mod api;
 mod app;
+pub mod components;
 mod dag;
 mod ui;
 
 use app::App;
+use components::StatusMessage;
 
 /// Check if the Torc server is reachable by calling the ping endpoint
-fn check_server_connection(client: &api::TorcClient) -> Result<()> {
+fn check_server_connection(base_url: &str) -> bool {
     use crate::client::apis::default_api;
 
     let config = crate::client::apis::configuration::Configuration {
-        base_path: client.get_base_url().to_string(),
+        base_path: base_url.to_string(),
         ..Default::default()
     };
 
-    default_api::ping(&config).map_err(|e| anyhow::anyhow!("Failed to ping server: {}", e))?;
-
-    Ok(())
+    default_api::ping(&config).is_ok()
 }
 
-pub fn run() -> Result<()> {
+pub fn run(standalone: bool, port: u16, database: Option<String>) -> Result<()> {
     env_logger::init();
 
-    // Check if server is running before setting up terminal
-    // This prevents terminal corruption if the server is unreachable
-    let client = api::TorcClient::new()?;
-    if let Err(e) = check_server_connection(&client) {
-        eprintln!("Error: Unable to connect to Torc server");
-        eprintln!("  {}", e);
-        eprintln!("\nPlease ensure the server is running and the URL is correct.");
-        eprintln!("Current server URL: {}", client.get_base_url());
-        eprintln!("\nYou can set a different URL using the TORC_API_URL environment variable.");
-        std::process::exit(1);
-    }
-
-    // Setup terminal
+    // Setup terminal first
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // Create app and run
-    let app = App::new()?;
+    // Create app - this will work even if server is not running
+    let mut app = App::new_with_options(standalone, port, database)?;
+
+    // In standalone mode, auto-start the server
+    if standalone {
+        app.start_server_standalone();
+        // Give server a moment to start, then try to connect
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        if check_server_connection(&app.server_url) {
+            app.set_status(StatusMessage::success("Server started in standalone mode"));
+            let _ = app.refresh_workflows();
+        } else {
+            app.set_status(StatusMessage::warning(
+                "Server starting... press 'r' to refresh when ready",
+            ));
+        }
+    } else {
+        // Check if server is running and show appropriate message
+        if !check_server_connection(&app.server_url) {
+            app.set_status(StatusMessage::warning(
+                "No server connection. Press 'S' to start server or 'u' to change URL",
+            ));
+        }
+    }
+
     let res = run_app(&mut terminal, app);
 
     // Restore terminal
@@ -71,14 +82,371 @@ pub fn run() -> Result<()> {
 }
 
 fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: App) -> Result<()> {
+    use app::{DetailViewType, Focus, JobAction, PopupType, WorkflowAction};
+
     loop {
         terminal.draw(|f| ui::draw(f, &mut app))?;
+
+        // Check for auto-refresh
+        let _ = app.check_auto_refresh();
+
+        // Poll process viewer for new output
+        app.poll_process_output();
+
+        // Poll server process for new output
+        app.poll_server_output();
 
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
+                    // Handle popup-specific keys first
+                    if app.has_popup() {
+                        match &app.popup {
+                            Some(PopupType::Help) => match key.code {
+                                KeyCode::Char('q') | KeyCode::Esc => app.close_popup(),
+                                _ => {}
+                            },
+                            Some(PopupType::Confirmation { .. }) => match key.code {
+                                KeyCode::Char('y') | KeyCode::Char('Y') => {
+                                    let _ = app.confirm_action();
+                                }
+                                KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                                    app.cancel_action();
+                                }
+                                _ => {}
+                            },
+                            Some(PopupType::JobDetails(_)) => match key.code {
+                                KeyCode::Char('q') | KeyCode::Esc => app.close_popup(),
+                                KeyCode::Char('l') => {
+                                    // Close details and open logs
+                                    app.close_popup();
+                                    app.show_job_logs();
+                                }
+                                KeyCode::Down => {
+                                    if let Some(PopupType::JobDetails(popup)) = app.popup.as_mut() {
+                                        popup.scroll_down();
+                                    }
+                                }
+                                KeyCode::Up => {
+                                    if let Some(PopupType::JobDetails(popup)) = app.popup.as_mut() {
+                                        popup.scroll_up();
+                                    }
+                                }
+                                _ => {}
+                            },
+                            Some(PopupType::LogViewer(viewer)) => {
+                                if viewer.is_searching {
+                                    match key.code {
+                                        KeyCode::Esc => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.cancel_search();
+                                            }
+                                        }
+                                        KeyCode::Enter => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.apply_search();
+                                            }
+                                        }
+                                        KeyCode::Backspace => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.remove_search_char();
+                                            }
+                                        }
+                                        KeyCode::Char(c) => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.add_search_char(c);
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                } else {
+                                    match key.code {
+                                        KeyCode::Char('q') | KeyCode::Esc => app.close_popup(),
+                                        KeyCode::Tab => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.toggle_tab();
+                                            }
+                                        }
+                                        KeyCode::Down => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_down(1);
+                                            }
+                                        }
+                                        KeyCode::Up => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_up(1);
+                                            }
+                                        }
+                                        KeyCode::PageDown => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_down(20);
+                                            }
+                                        }
+                                        KeyCode::PageUp => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_up(20);
+                                            }
+                                        }
+                                        KeyCode::Char('g') => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_to_top();
+                                            }
+                                        }
+                                        KeyCode::Char('G') => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_to_bottom(30); // approximate visible height
+                                            }
+                                        }
+                                        KeyCode::Char('/') => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.start_search();
+                                            }
+                                        }
+                                        KeyCode::Char('n') => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.next_match();
+                                            }
+                                        }
+                                        KeyCode::Char('N') => {
+                                            if let Some(PopupType::LogViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.prev_match();
+                                            }
+                                        }
+                                        KeyCode::Char('y') => {
+                                            // Show path in status bar for manual copy
+                                            if let Some(PopupType::LogViewer(ref v)) = app.popup {
+                                                if let Some(path) = v.current_path() {
+                                                    app.set_status(
+                                                        components::StatusMessage::info(&format!(
+                                                            "Path: {}",
+                                                            path
+                                                        )),
+                                                    );
+                                                }
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            Some(PopupType::FileViewer(viewer)) => {
+                                if viewer.is_searching {
+                                    match key.code {
+                                        KeyCode::Esc => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.cancel_search();
+                                            }
+                                        }
+                                        KeyCode::Enter => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.apply_search();
+                                            }
+                                        }
+                                        KeyCode::Backspace => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.remove_search_char();
+                                            }
+                                        }
+                                        KeyCode::Char(c) => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.add_search_char(c);
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                } else {
+                                    match key.code {
+                                        KeyCode::Char('q') | KeyCode::Esc => app.close_popup(),
+                                        KeyCode::Down => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_down(1);
+                                            }
+                                        }
+                                        KeyCode::Up => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_up(1);
+                                            }
+                                        }
+                                        KeyCode::PageDown => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_down(20);
+                                            }
+                                        }
+                                        KeyCode::PageUp => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_up(20);
+                                            }
+                                        }
+                                        KeyCode::Char('g') => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_to_top();
+                                            }
+                                        }
+                                        KeyCode::Char('G') => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.scroll_to_bottom(30);
+                                            }
+                                        }
+                                        KeyCode::Char('/') => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.start_search();
+                                            }
+                                        }
+                                        KeyCode::Char('n') => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.next_match();
+                                            }
+                                        }
+                                        KeyCode::Char('N') => {
+                                            if let Some(PopupType::FileViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.prev_match();
+                                            }
+                                        }
+                                        KeyCode::Char('y') => {
+                                            // Show path in status bar for manual copy
+                                            if let Some(PopupType::FileViewer(ref v)) = app.popup {
+                                                app.set_status(components::StatusMessage::info(
+                                                    &format!("Path: {}", v.file_path),
+                                                ));
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            Some(PopupType::ProcessViewer(viewer)) => {
+                                let is_server = viewer.title.contains("Server");
+                                match key.code {
+                                    KeyCode::Char('q') | KeyCode::Esc => {
+                                        if is_server {
+                                            // For server, keep it running in background
+                                            app.close_server_popup();
+                                        } else {
+                                            // For other processes, closing kills them
+                                            app.close_popup();
+                                        }
+                                    }
+                                    KeyCode::Char('k') => {
+                                        // Kill the process
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.kill();
+                                        }
+                                    }
+                                    KeyCode::Char('a') => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.toggle_auto_scroll();
+                                        }
+                                    }
+                                    KeyCode::Down => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_down(1);
+                                        }
+                                    }
+                                    KeyCode::Up => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_up(1);
+                                        }
+                                    }
+                                    KeyCode::PageDown => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_down(20);
+                                        }
+                                    }
+                                    KeyCode::PageUp => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_up(20);
+                                        }
+                                    }
+                                    KeyCode::Char('g') => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_to_top();
+                                        }
+                                    }
+                                    KeyCode::Char('G') => {
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.scroll_to_bottom();
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            None => {}
+                        }
+                        continue;
+                    }
+
                     match app.focus {
-                        app::Focus::FilterInput => match key.code {
+                        Focus::FilterInput => match key.code {
                             KeyCode::Esc => app.cancel_filter(),
                             KeyCode::Enter => app.apply_filter(),
                             KeyCode::Backspace => app.remove_filter_char(),
@@ -87,11 +455,14 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             KeyCode::Char(c) => app.add_filter_char(c),
                             _ => {}
                         },
-                        app::Focus::ServerUrlInput => match key.code {
+                        Focus::ServerUrlInput => match key.code {
                             KeyCode::Esc => app.cancel_server_url_input(),
                             KeyCode::Enter => {
                                 if let Err(e) = app.apply_server_url() {
-                                    eprintln!("Failed to connect to server: {}", e);
+                                    app.set_status(components::StatusMessage::error(&format!(
+                                        "Failed to connect: {}",
+                                        e
+                                    )));
                                     app.cancel_server_url_input();
                                 }
                             }
@@ -99,11 +470,14 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             KeyCode::Char(c) => app.add_server_url_char(c),
                             _ => {}
                         },
-                        app::Focus::UserInput => match key.code {
+                        Focus::UserInput => match key.code {
                             KeyCode::Esc => app.cancel_user_input(),
                             KeyCode::Enter => {
                                 if let Err(e) = app.apply_user_filter() {
-                                    eprintln!("Failed to apply user filter: {}", e);
+                                    app.set_status(components::StatusMessage::error(&format!(
+                                        "Failed to apply filter: {}",
+                                        e
+                                    )));
                                     app.cancel_user_input();
                                 }
                             }
@@ -111,28 +485,58 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             KeyCode::Char(c) => app.add_user_char(c),
                             _ => {}
                         },
-                        _ => match key.code {
+                        Focus::WorkflowPathInput => match key.code {
+                            KeyCode::Esc => app.cancel_workflow_path_input(),
+                            KeyCode::Enter => {
+                                if let Err(e) = app.apply_workflow_path() {
+                                    app.set_status(components::StatusMessage::error(&format!(
+                                        "Failed to create workflow: {}",
+                                        e
+                                    )));
+                                }
+                            }
+                            KeyCode::Backspace => app.remove_workflow_path_char(),
+                            KeyCode::Char(c) => app.add_workflow_path_char(c),
+                            _ => {}
+                        },
+                        Focus::Popup => {
+                            // Handled above
+                        }
+                        Focus::Workflows | Focus::Details => match key.code {
                             KeyCode::Char('q') => return Ok(()),
+                            KeyCode::Char('?') => app.show_help(),
                             KeyCode::Down => app.next_in_active_table(),
                             KeyCode::Up => app.previous_in_active_table(),
                             KeyCode::Enter => {
-                                app.load_detail_data()?;
+                                if app.focus == Focus::Workflows {
+                                    app.load_detail_data()?;
+                                } else if app.detail_view == DetailViewType::Jobs {
+                                    app.show_job_details();
+                                } else if app.detail_view == DetailViewType::Files {
+                                    app.show_file_contents();
+                                }
                             }
                             KeyCode::Tab => app.next_detail_view(),
                             KeyCode::BackTab => app.previous_detail_view(),
                             KeyCode::Char('r') => {
                                 app.refresh_workflows()?;
+                                app.set_status(components::StatusMessage::info("Refreshed"));
                             }
                             KeyCode::Left | KeyCode::Right => {
                                 app.toggle_focus();
                             }
                             KeyCode::Char('f') => {
-                                if app.focus == app::Focus::Details {
+                                if app.focus == Focus::Details {
                                     app.start_filter();
                                 }
                             }
                             KeyCode::Char('c') => {
-                                if app.focus == app::Focus::Details {
+                                if app.focus == Focus::Details
+                                    && app.detail_view == DetailViewType::Jobs
+                                {
+                                    // Cancel job (with confirmation)
+                                    app.request_job_action(JobAction::Cancel);
+                                } else if app.focus == Focus::Details {
                                     app.clear_filter();
                                 }
                             }
@@ -144,7 +548,70 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             }
                             KeyCode::Char('a') => {
                                 if let Err(e) = app.toggle_show_all_users() {
-                                    eprintln!("Failed to toggle user filter: {}", e);
+                                    app.set_status(components::StatusMessage::error(&format!(
+                                        "Failed to toggle filter: {}",
+                                        e
+                                    )));
+                                }
+                            }
+                            KeyCode::Char('A') => {
+                                app.toggle_auto_refresh();
+                            }
+                            // Workflow actions
+                            KeyCode::Char('n') => {
+                                app.start_workflow_path_input();
+                            }
+                            KeyCode::Char('i') => {
+                                app.request_workflow_action(WorkflowAction::Initialize);
+                            }
+                            KeyCode::Char('I') => {
+                                app.request_workflow_action(WorkflowAction::Reinitialize);
+                            }
+                            KeyCode::Char('R') => {
+                                app.request_workflow_action(WorkflowAction::Reset);
+                            }
+                            KeyCode::Char('x') => {
+                                app.request_workflow_action(WorkflowAction::Run);
+                            }
+                            KeyCode::Char('s') => {
+                                app.request_workflow_action(WorkflowAction::Submit);
+                            }
+                            KeyCode::Char('d') => {
+                                app.request_workflow_action(WorkflowAction::Delete);
+                            }
+                            KeyCode::Char('C') => {
+                                app.request_workflow_action(WorkflowAction::Cancel);
+                            }
+                            // Server management
+                            KeyCode::Char('S') => {
+                                app.start_server();
+                            }
+                            KeyCode::Char('K') => {
+                                app.stop_server();
+                            }
+                            KeyCode::Char('O') => {
+                                app.show_server_output();
+                            }
+                            // Job actions (only in Jobs tab)
+                            KeyCode::Char('l') => {
+                                if app.focus == Focus::Details
+                                    && app.detail_view == DetailViewType::Jobs
+                                {
+                                    app.show_job_logs();
+                                }
+                            }
+                            KeyCode::Char('t') => {
+                                if app.focus == Focus::Details
+                                    && app.detail_view == DetailViewType::Jobs
+                                {
+                                    app.request_job_action(JobAction::Terminate);
+                                }
+                            }
+                            KeyCode::Char('y') => {
+                                if app.focus == Focus::Details
+                                    && app.detail_view == DetailViewType::Jobs
+                                {
+                                    app.request_job_action(JobAction::Retry);
                                 }
                             }
                             _ => {}

@@ -6,14 +6,33 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table, Tabs},
 };
 
-use super::app::{App, DetailViewType, Focus};
+use super::app::{App, DetailViewType, Focus, PopupType};
+use super::components::HelpPopup;
+
+/// Format bytes into human-readable format (KB, MB, GB)
+fn format_bytes(bytes: i64) -> String {
+    const KB: f64 = 1024.0;
+    const MB: f64 = KB * 1024.0;
+    const GB: f64 = MB * 1024.0;
+
+    let bytes_f = bytes as f64;
+    if bytes_f >= GB {
+        format!("{:.1} GB", bytes_f / GB)
+    } else if bytes_f >= MB {
+        format!("{:.1} MB", bytes_f / MB)
+    } else if bytes_f >= KB {
+        format!("{:.1} KB", bytes_f / KB)
+    } else {
+        format!("{} B", bytes)
+    }
+}
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),      // Help text
-            Constraint::Length(3),      // Server URL display
+            Constraint::Length(3),      // Server URL + status display
             Constraint::Length(3),      // User filter display
             Constraint::Percentage(40), // Workflows table
             Constraint::Length(3),      // Tabs
@@ -28,10 +47,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     draw_tabs(f, main_chunks[4], app);
 
     // Split the bottom section for detail table and input widgets
-    let detail_chunks = if app.focus == Focus::FilterInput
+    let needs_input = app.focus == Focus::FilterInput
         || app.focus == Focus::ServerUrlInput
         || app.focus == Focus::UserInput
-    {
+        || app.focus == Focus::WorkflowPathInput;
+
+    let detail_chunks = if needs_input {
         Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(5), Constraint::Length(3)])
@@ -51,6 +72,32 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         draw_server_url_input(f, detail_chunks[1], app);
     } else if app.focus == Focus::UserInput {
         draw_user_input(f, detail_chunks[1], app);
+    } else if app.focus == Focus::WorkflowPathInput {
+        draw_workflow_path_input(f, detail_chunks[1], app);
+    }
+
+    // Draw popups on top of everything
+    if let Some(ref popup) = app.popup {
+        match popup {
+            PopupType::Help => {
+                HelpPopup::render(f, f.area(), "");
+            }
+            PopupType::Confirmation { dialog, .. } => {
+                dialog.render(f, f.area());
+            }
+            PopupType::JobDetails(details) => {
+                details.render(f, f.area());
+            }
+            PopupType::LogViewer(viewer) => {
+                viewer.render(f, f.area());
+            }
+            PopupType::FileViewer(viewer) => {
+                viewer.render(f, f.area());
+            }
+            PopupType::ProcessViewer(viewer) => {
+                viewer.render(f, f.area());
+            }
+        }
     }
 }
 
@@ -84,36 +131,97 @@ fn draw_help(f: &mut Frame, area: Rect, app: &App) {
             Span::styled("Esc", Style::default().fg(Color::Yellow)),
             Span::raw(": cancel"),
         ])]
-    } else {
+    } else if app.focus == Focus::WorkflowPathInput {
         vec![Line::from(vec![
-            Span::styled("q", Style::default().fg(Color::Yellow)),
-            Span::raw(": quit | "),
-            Span::styled("↑↓", Style::default().fg(Color::Yellow)),
-            Span::raw(": navigate | "),
-            Span::styled("←→", Style::default().fg(Color::Yellow)),
-            Span::raw(": switch focus | "),
+            Span::styled("Type", Style::default().fg(Color::Yellow)),
+            Span::raw(": enter path to workflow spec file | "),
             Span::styled("Enter", Style::default().fg(Color::Yellow)),
-            Span::raw(": load details | "),
+            Span::raw(": create | "),
+            Span::styled("Esc", Style::default().fg(Color::Yellow)),
+            Span::raw(": cancel"),
+        ])]
+    } else if app.focus == Focus::Details && app.detail_view == DetailViewType::Jobs {
+        // Job-specific help when in Jobs tab
+        vec![Line::from(vec![
+            Span::styled("?", Style::default().fg(Color::Yellow)),
+            Span::raw(": help | "),
+            Span::styled("Enter", Style::default().fg(Color::Yellow)),
+            Span::raw(": details | "),
+            Span::styled("l", Style::default().fg(Color::Yellow)),
+            Span::raw(": logs | "),
+            Span::styled("c", Style::default().fg(Color::Yellow)),
+            Span::raw(": cancel | "),
+            Span::styled("t", Style::default().fg(Color::Yellow)),
+            Span::raw(": terminate | "),
+            Span::styled("y", Style::default().fg(Color::Yellow)),
+            Span::raw(": retry | "),
+            Span::styled("f", Style::default().fg(Color::Yellow)),
+            Span::raw(": filter | "),
             Span::styled("Tab", Style::default().fg(Color::Yellow)),
-            Span::raw(": switch view | "),
-            Span::styled("r", Style::default().fg(Color::Yellow)),
-            Span::raw(": refresh | "),
+            Span::raw(": next tab"),
+        ])]
+    } else if app.focus == Focus::Details && app.detail_view == DetailViewType::Files {
+        // File-specific help when in Files tab
+        vec![Line::from(vec![
+            Span::styled("?", Style::default().fg(Color::Yellow)),
+            Span::raw(": help | "),
+            Span::styled("Enter", Style::default().fg(Color::Yellow)),
+            Span::raw(": view file | "),
             Span::styled("f", Style::default().fg(Color::Yellow)),
             Span::raw(": filter | "),
             Span::styled("c", Style::default().fg(Color::Yellow)),
             Span::raw(": clear filter | "),
-            Span::styled("u", Style::default().fg(Color::Yellow)),
-            Span::raw(": change URL | "),
-            Span::styled("w", Style::default().fg(Color::Yellow)),
-            Span::raw(": change user | "),
-            Span::styled("a", Style::default().fg(Color::Yellow)),
-            Span::raw(": toggle all users"),
+            Span::styled("Tab", Style::default().fg(Color::Yellow)),
+            Span::raw(": next tab"),
         ])]
+    } else {
+        // General help
+        vec![Line::from(vec![
+            Span::styled("?", Style::default().fg(Color::Yellow)),
+            Span::raw(": help | "),
+            Span::styled("n", Style::default().fg(Color::Yellow)),
+            Span::raw(": new | "),
+            Span::styled("i", Style::default().fg(Color::Yellow)),
+            Span::raw(": init | "),
+            Span::styled("I", Style::default().fg(Color::Yellow)),
+            Span::raw(": reinit | "),
+            Span::styled("R", Style::default().fg(Color::Yellow)),
+            Span::raw(": reset | "),
+            Span::styled("x", Style::default().fg(Color::Yellow)),
+            Span::raw(": run | "),
+            Span::styled("s", Style::default().fg(Color::Yellow)),
+            Span::raw(": submit | "),
+            Span::styled("d", Style::default().fg(Color::Yellow)),
+            Span::raw(": delete | "),
+            Span::styled("r", Style::default().fg(Color::Yellow)),
+            Span::raw(": refresh"),
+        ])]
+    };
+
+    // Build title with status message if present
+    let title = if let Some(ref status) = app.status_message {
+        if status.is_visible() {
+            format!("Torc Management Console - {}", status.message)
+        } else {
+            "Torc Management Console".to_string()
+        }
+    } else {
+        "Torc Management Console".to_string()
+    };
+
+    let title_style = if let Some(ref status) = app.status_message {
+        if status.is_visible() {
+            Style::default().fg(status.color())
+        } else {
+            Style::default()
+        }
+    } else {
+        Style::default()
     };
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .title("Torc Management Console");
+        .title(Span::styled(title, title_style));
 
     let paragraph = ratatui::widgets::Paragraph::new(help_text)
         .block(block)
@@ -123,13 +231,40 @@ fn draw_help(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
-    let text = vec![Line::from(vec![
+    // Server status indicator
+    let (status_icon, status_color) = if app.is_server_running() {
+        ("● ", Color::Green) // Running
+    } else if app.server_process.is_some() {
+        ("○ ", Color::Yellow) // Stopped but was started
+    } else {
+        ("", Color::White) // Not managed
+    };
+
+    let mut spans = vec![
         Span::styled("Server: ", Style::default().fg(Color::White)),
+        Span::styled(status_icon, Style::default().fg(status_color)),
         Span::styled(&app.server_url, Style::default().fg(Color::Cyan)),
-        Span::styled(" | Press ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
         Span::styled("u", Style::default().fg(Color::Yellow)),
-        Span::styled(" to change", Style::default().fg(Color::DarkGray)),
-    ])];
+        Span::styled(": URL ", Style::default().fg(Color::DarkGray)),
+    ];
+
+    // Add server management hints
+    if app.is_server_running() {
+        spans.extend(vec![
+            Span::styled("K", Style::default().fg(Color::Yellow)),
+            Span::styled(": stop ", Style::default().fg(Color::DarkGray)),
+            Span::styled("O", Style::default().fg(Color::Yellow)),
+            Span::styled(": output", Style::default().fg(Color::DarkGray)),
+        ]);
+    } else {
+        spans.extend(vec![
+            Span::styled("S", Style::default().fg(Color::Yellow)),
+            Span::styled(": start server", Style::default().fg(Color::DarkGray)),
+        ]);
+    }
+
+    let text = vec![Line::from(spans)];
 
     let block = Block::default().borders(Borders::ALL).title("Connection");
 
@@ -274,23 +409,36 @@ fn draw_jobs_table(f: &mut Frame, area: Rect, app: &mut App) {
     let rows = app.jobs.iter().map(|job| {
         let id = job.id.map(|i| i.to_string()).unwrap_or_default();
         let name = job.name.clone();
-        let status = job
+        let status_str = job
             .status
             .as_ref()
             .map(|s| format!("{:?}", s))
             .unwrap_or_default();
+
+        // Color the status based on its value
+        let status_color = match status_str.as_str() {
+            "Completed" => Color::Green,
+            "Running" => Color::Yellow,
+            "Failed" => Color::Red,
+            "Canceled" | "Terminated" => Color::Magenta,
+            "Ready" => Color::Cyan,
+            "Blocked" => Color::DarkGray,
+            "Pending" | "Scheduled" => Color::Blue,
+            _ => Color::White,
+        };
+
         let command = job.command.clone();
 
         Row::new(vec![
             Cell::from(id),
             Cell::from(name),
-            Cell::from(status),
+            Cell::from(Span::styled(status_str, Style::default().fg(status_color))),
             Cell::from(command),
         ])
     });
 
     let title = if app.focus == Focus::Details {
-        "Jobs [FOCUSED]"
+        "Jobs [FOCUSED] - Enter: details, l: logs, c: cancel, t: terminate, y: retry"
     } else {
         "Jobs"
     };
@@ -323,6 +471,16 @@ fn draw_jobs_table(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_stateful_widget(table, area, &mut app.jobs_state);
 }
 
+/// Format epoch seconds as ISO 8601 timestamp
+fn format_timestamp(epoch_secs: f64) -> String {
+    use chrono::{DateTime, Utc};
+    let secs = epoch_secs as i64;
+    let nsecs = ((epoch_secs - secs as f64) * 1_000_000_000.0) as u32;
+    DateTime::<Utc>::from_timestamp(secs, nsecs)
+        .map(|dt| dt.format("%Y-%m-%dT%H:%M:%SZ").to_string())
+        .unwrap_or_default()
+}
+
 fn draw_files_table(f: &mut Frame, area: Rect, app: &mut App) {
     let is_focused = app.focus == Focus::Details;
     let selected_style = Style::default()
@@ -340,7 +498,10 @@ fn draw_files_table(f: &mut Frame, area: Rect, app: &mut App) {
         let id = file.id.map(|i| i.to_string()).unwrap_or_default();
         let name = file.name.clone();
         let path = file.path.clone();
-        let st_mtime = file.st_mtime.map(|t| t.to_string()).unwrap_or_default();
+        let st_mtime = file
+            .st_mtime
+            .map(|t| format_timestamp(t))
+            .unwrap_or_default();
 
         Row::new(vec![
             Cell::from(id),
@@ -452,23 +613,49 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
         .fg(Color::Yellow)
         .add_modifier(Modifier::BOLD);
 
-    let header = Row::new(vec!["ID", "Job ID", "Run ID", "Return Code", "Status"])
-        .style(header_style)
-        .bottom_margin(1);
+    let header = Row::new(vec![
+        "ID", "Job ID", "Run", "Return", "Status", "Peak Mem", "Peak CPU",
+    ])
+    .style(header_style)
+    .bottom_margin(1);
 
     let rows = app.results.iter().map(|result| {
         let id = result.id.map(|i| i.to_string()).unwrap_or_default();
         let job_id = result.job_id.to_string();
         let run_id = result.run_id.to_string();
-        let return_code = result.return_code.to_string();
+        let return_code = result.return_code;
         let status = format!("{:?}", result.status);
+
+        // Format peak memory (bytes to human readable)
+        let peak_mem = result
+            .peak_memory_bytes
+            .map(|bytes| format_bytes(bytes))
+            .unwrap_or_else(|| "-".to_string());
+
+        // Format peak CPU percentage
+        let peak_cpu = result
+            .peak_cpu_percent
+            .map(|pct| format!("{:.1}%", pct))
+            .unwrap_or_else(|| "-".to_string());
+
+        // Color based on return code
+        let row_color = if return_code == 0 {
+            Color::Green
+        } else {
+            Color::Red
+        };
 
         Row::new(vec![
             Cell::from(id),
             Cell::from(job_id),
             Cell::from(run_id),
-            Cell::from(return_code),
-            Cell::from(status),
+            Cell::from(Span::styled(
+                return_code.to_string(),
+                Style::default().fg(row_color),
+            )),
+            Cell::from(Span::styled(status, Style::default().fg(row_color))),
+            Cell::from(peak_mem),
+            Cell::from(peak_cpu),
         ])
     });
 
@@ -486,11 +673,13 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
     let table = Table::new(
         rows,
         [
-            Constraint::Length(8),
-            Constraint::Length(10),
-            Constraint::Length(10),
-            Constraint::Length(15),
-            Constraint::Length(15),
+            Constraint::Length(6),  // ID
+            Constraint::Length(8),  // Job ID
+            Constraint::Length(5),  // Run
+            Constraint::Length(7),  // Return
+            Constraint::Length(12), // Status
+            Constraint::Length(10), // Peak Mem
+            Constraint::Length(10), // Peak CPU
         ],
     )
     .header(header)
@@ -591,6 +780,34 @@ fn draw_user_input(f: &mut Frame, area: Rect, app: &App) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("Change User Filter")
+        .border_style(Style::default().fg(Color::Green));
+
+    let paragraph = ratatui::widgets::Paragraph::new(text)
+        .block(block)
+        .style(Style::default().fg(Color::White));
+
+    f.render_widget(paragraph, area);
+}
+
+fn draw_workflow_path_input(f: &mut Frame, area: Rect, app: &App) {
+    let text = vec![Line::from(vec![
+        Span::styled("Workflow spec file: ", Style::default().fg(Color::White)),
+        Span::styled(&app.workflow_path_input, Style::default().fg(Color::Cyan)),
+        Span::styled("_", Style::default().fg(Color::White)),
+        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
+        Span::styled("Enter", Style::default().fg(Color::Yellow)),
+        Span::styled(": create | ", Style::default().fg(Color::White)),
+        Span::styled("Esc", Style::default().fg(Color::Yellow)),
+        Span::styled(": cancel", Style::default().fg(Color::White)),
+        Span::styled(
+            " (supports ~, YAML/JSON/JSON5)",
+            Style::default().fg(Color::DarkGray),
+        ),
+    ])];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title("Create Workflow from Spec File")
         .border_style(Style::default().fg(Color::Green));
 
     let paragraph = ratatui::widgets::Paragraph::new(text)
