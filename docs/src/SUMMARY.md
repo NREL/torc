@@ -34,6 +34,7 @@
   - [Working with Slurm](./how-to/slurm.md)
   - [Job Checkpointing](./how-to/checkpointing.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
+  - [Terminal UI (TUI)](./how-to/tui.md)
   - [Web Dashboard](./how-to/dashboard.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Authentication](./how-to/authentication.md)

@@ -3,6 +3,9 @@ use anyhow::Result;
 use ratatui::widgets::TableState;
 
 use super::api::TorcClient;
+use super::components::{
+    ConfirmationDialog, FileViewer, JobDetailsPopup, LogViewer, ProcessViewer, StatusMessage,
+};
 use super::dag::{DagLayout, JobNode};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -12,6 +15,112 @@ pub enum DetailViewType {
     Events,
     Results,
     Dag,
+}
+
+/// Actions that can be performed on workflows
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WorkflowAction {
+    Initialize,
+    InitializeForce, // Initialize with --force (delete existing output files)
+    Reinitialize,
+    ReinitializeForce, // Reinitialize with --force
+    Reset,
+    Run,
+    Submit,
+    Delete,
+    Cancel,
+}
+
+impl WorkflowAction {
+    pub fn confirmation_message(&self, workflow_name: &str) -> String {
+        match self {
+            Self::Initialize => format!("Initialize workflow '{}'?", workflow_name),
+            Self::InitializeForce => {
+                format!("Force initialize workflow '{}'?", workflow_name)
+            }
+            Self::Reinitialize => format!(
+                "Re-initialize workflow '{}'?\nThis will reset all job statuses.",
+                workflow_name
+            ),
+            Self::ReinitializeForce => {
+                format!("Force re-initialize workflow '{}'?", workflow_name)
+            }
+            Self::Reset => format!(
+                "Reset workflow '{}' status?\nThis will clear all job statuses and results.",
+                workflow_name
+            ),
+            Self::Run => format!("Run workflow '{}' locally?", workflow_name),
+            Self::Submit => format!("Submit workflow '{}' to scheduler?", workflow_name),
+            Self::Delete => format!(
+                "DELETE workflow '{}'?\nThis action cannot be undone!",
+                workflow_name
+            ),
+            Self::Cancel => format!("Cancel workflow '{}'?", workflow_name),
+        }
+    }
+
+    pub fn is_destructive(&self) -> bool {
+        matches!(
+            self,
+            Self::Delete
+                | Self::Reset
+                | Self::Reinitialize
+                | Self::ReinitializeForce
+                | Self::InitializeForce
+        )
+    }
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::Initialize => "Initialize Workflow",
+            Self::InitializeForce => "Initialize Workflow (Force)",
+            Self::Reinitialize => "Re-initialize Workflow",
+            Self::ReinitializeForce => "Re-initialize Workflow (Force)",
+            Self::Reset => "Reset Workflow",
+            Self::Run => "Run Workflow",
+            Self::Submit => "Submit Workflow",
+            Self::Delete => "Delete Workflow",
+            Self::Cancel => "Cancel Workflow",
+        }
+    }
+}
+
+/// Actions that can be performed on jobs
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum JobAction {
+    Cancel,
+    Terminate,
+    Retry,
+}
+
+impl JobAction {
+    pub fn confirmation_message(&self, job_name: &str) -> String {
+        match self {
+            Self::Cancel => format!("Cancel job '{}'?", job_name),
+            Self::Terminate => format!("Terminate job '{}'?", job_name),
+            Self::Retry => format!("Retry job '{}'?", job_name),
+        }
+    }
+}
+
+/// Popup types that can be displayed
+pub enum PopupType {
+    Help,
+    JobDetails(JobDetailsPopup),
+    LogViewer(LogViewer),
+    FileViewer(FileViewer),
+    ProcessViewer(ProcessViewer),
+    Confirmation {
+        dialog: ConfirmationDialog,
+        action: PendingAction,
+    },
+}
+
+/// Pending action waiting for confirmation
+#[derive(Debug, Clone)]
+pub enum PendingAction {
+    Workflow(WorkflowAction, i64, String), // action, workflow_id, workflow_name
+    Job(JobAction, i64, String),           // action, job_id, job_name
 }
 
 impl DetailViewType {
@@ -63,6 +172,8 @@ pub enum Focus {
     FilterInput,
     ServerUrlInput,
     UserInput,
+    WorkflowPathInput,
+    Popup,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -96,15 +207,38 @@ pub struct App {
     pub detail_view: DetailViewType,
     pub selected_workflow_id: Option<i64>,
     pub focus: Focus,
+    pub previous_focus: Focus,
     pub filter: Option<Filter>,
     pub filter_input: String,
     pub filter_column_index: usize,
+
+    // New fields for enhanced functionality
+    pub popup: Option<PopupType>,
+    pub status_message: Option<StatusMessage>,
+    pub workflow_path_input: String,
+    pub auto_refresh: bool,
+    pub last_refresh: std::time::Instant,
+
+    // Server management
+    pub server_process: Option<ProcessViewer>,
+    pub standalone_database: Option<String>,
 }
 
 impl App {
+    #[allow(dead_code)]
     pub fn new() -> Result<Self> {
+        Self::new_with_options(false, 8080, None)
+    }
+
+    pub fn new_with_options(standalone: bool, port: u16, database: Option<String>) -> Result<Self> {
         let client = TorcClient::new()?;
-        let server_url = client.get_base_url().to_string();
+
+        // In standalone mode, override the server URL to use the specified port
+        let server_url = if standalone {
+            format!("http://localhost:{}/torc-service/v1", port)
+        } else {
+            client.get_base_url().to_string()
+        };
 
         // Get current user from environment
         let current_user = std::env::var("USER")
@@ -136,13 +270,26 @@ impl App {
             detail_view: DetailViewType::Jobs,
             selected_workflow_id: None,
             focus: Focus::Workflows,
+            previous_focus: Focus::Workflows,
             filter: None,
             filter_input: String::new(),
             filter_column_index: 0,
+            popup: None,
+            status_message: None,
+            workflow_path_input: String::new(),
+            auto_refresh: false,
+            last_refresh: std::time::Instant::now(),
+            server_process: None,
+            standalone_database: database,
         };
 
-        // Load initial workflows
-        app.refresh_workflows()?;
+        // Update client to use the correct URL
+        if standalone {
+            app.client.set_base_url(&server_url);
+        }
+
+        // Try to load workflows, but don't fail if server is not available
+        let _ = app.refresh_workflows();
 
         Ok(app)
     }
@@ -166,9 +313,12 @@ impl App {
         self.focus = match self.focus {
             Focus::Workflows => Focus::Details,
             Focus::Details => Focus::Workflows,
-            Focus::FilterInput => Focus::FilterInput, // Stay in filter mode
-            Focus::ServerUrlInput => Focus::ServerUrlInput, // Stay in URL input mode
-            Focus::UserInput => Focus::UserInput,     // Stay in user input mode
+            // Stay in current mode for input/popup states
+            Focus::FilterInput => Focus::FilterInput,
+            Focus::ServerUrlInput => Focus::ServerUrlInput,
+            Focus::UserInput => Focus::UserInput,
+            Focus::WorkflowPathInput => Focus::WorkflowPathInput,
+            Focus::Popup => Focus::Popup,
         };
     }
 
@@ -199,9 +349,12 @@ impl App {
                     ));
                 }
             }
-            Focus::FilterInput => {}    // No navigation in filter mode
-            Focus::ServerUrlInput => {} // No navigation in URL input mode
-            Focus::UserInput => {}      // No navigation in user input mode
+            // No navigation in input/popup modes
+            Focus::FilterInput
+            | Focus::ServerUrlInput
+            | Focus::UserInput
+            | Focus::WorkflowPathInput
+            | Focus::Popup => {}
         }
     }
 
@@ -229,9 +382,12 @@ impl App {
                     ));
                 }
             }
-            Focus::FilterInput => {}    // No navigation in filter mode
-            Focus::ServerUrlInput => {} // No navigation in URL input mode
-            Focus::UserInput => {}      // No navigation in user input mode
+            // No navigation in input/popup modes
+            Focus::FilterInput
+            | Focus::ServerUrlInput
+            | Focus::UserInput
+            | Focus::WorkflowPathInput
+            | Focus::Popup => {}
         }
     }
 
@@ -290,10 +446,18 @@ impl App {
 
     pub fn next_detail_view(&mut self) {
         self.detail_view = self.detail_view.next();
+        // Load data for the new tab if a workflow is selected
+        if self.selected_workflow_id.is_some() {
+            let _ = self.load_detail_data();
+        }
     }
 
     pub fn previous_detail_view(&mut self) {
         self.detail_view = self.detail_view.previous();
+        // Load data for the new tab if a workflow is selected
+        if self.selected_workflow_id.is_some() {
+            let _ = self.load_detail_data();
+        }
     }
 
     pub fn start_filter(&mut self) {
@@ -596,5 +760,1096 @@ impl App {
 
         dag.compute_layout();
         self.dag = Some(dag);
+    }
+
+    // === Popup Management ===
+
+    pub fn show_help(&mut self) {
+        self.previous_focus = self.focus;
+        self.focus = Focus::Popup;
+        self.popup = Some(PopupType::Help);
+    }
+
+    pub fn close_popup(&mut self) {
+        // Check if we're closing a workflow run process viewer - if so, refresh data
+        let should_refresh = if let Some(PopupType::ProcessViewer(ref viewer)) = self.popup {
+            // Refresh if this was a workflow run (not server output)
+            !viewer.title.contains("Server")
+        } else {
+            false
+        };
+
+        self.popup = None;
+        self.focus = self.previous_focus;
+
+        // Refresh workflow and job data after closing a workflow run viewer
+        if should_refresh {
+            if let Some(workflow_id) = self.selected_workflow_id {
+                // Refresh jobs for the current workflow
+                if let Ok(jobs) = self.client.list_jobs(workflow_id) {
+                    self.jobs_all = jobs.clone();
+                    self.jobs = jobs;
+                    if !self.jobs.is_empty() {
+                        self.jobs_state.select(Some(0));
+                    }
+                    // Clear any filter since we've refreshed all data
+                    self.filter = None;
+                }
+                // Also refresh results
+                if let Ok(results) = self.client.list_results(workflow_id) {
+                    self.results_all = results.clone();
+                    self.results = results;
+                    if !self.results.is_empty() {
+                        self.results_state.select(Some(0));
+                    }
+                }
+            }
+            // Refresh workflow list to update status
+            let _ = self.refresh_workflows();
+        }
+    }
+
+    pub fn has_popup(&self) -> bool {
+        self.popup.is_some()
+    }
+
+    /// Poll the process viewer for new output (called from event loop)
+    pub fn poll_process_output(&mut self) {
+        if let Some(PopupType::ProcessViewer(ref mut viewer)) = self.popup {
+            viewer.poll_output();
+        }
+    }
+
+    // === Status Messages ===
+
+    pub fn set_status(&mut self, message: StatusMessage) {
+        self.status_message = Some(message);
+    }
+
+    // === Workflow Actions ===
+
+    pub fn get_selected_workflow(&self) -> Option<&WorkflowModel> {
+        self.workflows_state
+            .selected()
+            .and_then(|idx| self.workflows.get(idx))
+    }
+
+    pub fn request_workflow_action(&mut self, action: WorkflowAction) {
+        if let Some(workflow) = self.get_selected_workflow() {
+            if let Some(workflow_id) = workflow.id {
+                let workflow_name = workflow.name.clone();
+                let dialog = ConfirmationDialog::new(
+                    action.title(),
+                    &action.confirmation_message(&workflow_name),
+                );
+                let dialog = if action.is_destructive() {
+                    dialog.destructive()
+                } else {
+                    dialog
+                };
+
+                self.previous_focus = self.focus;
+                self.focus = Focus::Popup;
+                self.popup = Some(PopupType::Confirmation {
+                    dialog,
+                    action: PendingAction::Workflow(action, workflow_id, workflow_name),
+                });
+            }
+        } else {
+            self.set_status(StatusMessage::warning("No workflow selected"));
+        }
+    }
+
+    pub fn confirm_action(&mut self) -> Result<()> {
+        if let Some(PopupType::Confirmation { action, .. }) = self.popup.take() {
+            self.focus = self.previous_focus;
+            match action {
+                PendingAction::Workflow(workflow_action, workflow_id, workflow_name) => {
+                    if let Err(e) =
+                        self.execute_workflow_action(workflow_action, workflow_id, &workflow_name)
+                    {
+                        self.set_status(StatusMessage::error(&format!("Action error: {}", e)));
+                    }
+                }
+                PendingAction::Job(job_action, job_id, job_name) => {
+                    if let Err(e) = self.execute_job_action(job_action, job_id, &job_name) {
+                        self.set_status(StatusMessage::error(&format!("Action error: {}", e)));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn cancel_action(&mut self) {
+        self.popup = None;
+        self.focus = self.previous_focus;
+    }
+
+    fn execute_workflow_action(
+        &mut self,
+        action: WorkflowAction,
+        workflow_id: i64,
+        workflow_name: &str,
+    ) -> Result<()> {
+        // Handle Run specially - spawn subprocess with output viewer
+        if action == WorkflowAction::Run {
+            return self.run_workflow_with_viewer(workflow_id, workflow_name);
+        }
+
+        // Handle Initialize, Reinitialize and Reset via CLI commands (like torc-dash does)
+        if action == WorkflowAction::Initialize {
+            return self.initialize_workflow_cli(workflow_id, workflow_name);
+        }
+        if action == WorkflowAction::InitializeForce {
+            return self.run_initialize_command(workflow_id, workflow_name, true);
+        }
+        if action == WorkflowAction::Reinitialize {
+            return self.reinitialize_workflow_cli(workflow_id, workflow_name);
+        }
+        if action == WorkflowAction::ReinitializeForce {
+            return self.run_reinitialize_command(workflow_id, workflow_name, true);
+        }
+        if action == WorkflowAction::Reset {
+            return self.reset_workflow_cli(workflow_id, workflow_name);
+        }
+
+        let result = match action {
+            WorkflowAction::Initialize => unreachable!(), // Handled above
+            WorkflowAction::InitializeForce => unreachable!(), // Handled above
+            WorkflowAction::Reinitialize => unreachable!(), // Handled above
+            WorkflowAction::ReinitializeForce => unreachable!(), // Handled above
+            WorkflowAction::Reset => unreachable!(),      // Handled above
+            WorkflowAction::Run => unreachable!(),        // Handled above
+            WorkflowAction::Submit => self.client.submit_workflow(workflow_id),
+            WorkflowAction::Delete => self.client.delete_workflow(workflow_id),
+            WorkflowAction::Cancel => self.client.cancel_workflow(workflow_id),
+        };
+
+        match result {
+            Ok(_) => {
+                let msg = match action {
+                    WorkflowAction::Initialize => unreachable!(),
+                    WorkflowAction::InitializeForce => unreachable!(),
+                    WorkflowAction::Reinitialize => unreachable!(),
+                    WorkflowAction::ReinitializeForce => unreachable!(),
+                    WorkflowAction::Reset => unreachable!(),
+                    WorkflowAction::Run => unreachable!(),
+                    WorkflowAction::Submit => {
+                        format!("Workflow '{}' submitted to scheduler", workflow_name)
+                    }
+                    WorkflowAction::Delete => format!("Workflow '{}' deleted", workflow_name),
+                    WorkflowAction::Cancel => format!("Workflow '{}' canceled", workflow_name),
+                };
+                self.set_status(StatusMessage::success(&msg));
+
+                // Refresh workflows list after action
+                if action == WorkflowAction::Delete {
+                    self.refresh_workflows()?;
+                } else {
+                    // Reload the detail data to show updated status
+                    let _ = self.load_detail_data();
+                }
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to {} workflow: {}",
+                    action.title().to_lowercase(),
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Initialize workflow using CLI command (following torc-dash pattern)
+    /// First does a dry-run check, then prompts user if there are existing files
+    fn initialize_workflow_cli(&mut self, workflow_id: i64, workflow_name: &str) -> Result<()> {
+        self.set_status(StatusMessage::info(&format!(
+            "Checking workflow '{}'...",
+            workflow_name
+        )));
+
+        let exe_path = self.get_torc_exe_path();
+        let url = self.client.get_base_url();
+        let workflow_id_str = workflow_id.to_string();
+
+        // First, do a dry-run check to see if there are existing output files
+        let check_output = std::process::Command::new(&exe_path)
+            .args([
+                "--url",
+                &url,
+                "-f",
+                "json",
+                "workflows",
+                "initialize",
+                &workflow_id_str,
+                "--dry-run",
+            ])
+            .output();
+
+        match check_output {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+
+                // Try to parse JSON response
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
+                    let existing_count = json
+                        .get("existing_output_file_count")
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(0);
+                    let missing_count = json
+                        .get("missing_input_file_count")
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(0);
+                    let safe = json.get("safe").and_then(|v| v.as_bool()).unwrap_or(true);
+
+                    // Check for missing input files (fatal error)
+                    if !safe || missing_count > 0 {
+                        let missing_files = json
+                            .get("missing_input_files")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            })
+                            .unwrap_or_default();
+                        self.set_status(StatusMessage::error(&format!(
+                            "Cannot initialize: {} missing input file(s): {}",
+                            missing_count, missing_files
+                        )));
+                        return Ok(());
+                    }
+
+                    // Check for existing output files (needs confirmation)
+                    if existing_count > 0 {
+                        let existing_files = json
+                            .get("existing_output_files")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str())
+                                    .take(5) // Show max 5 files
+                                    .collect::<Vec<_>>()
+                                    .join("\n  - ")
+                            })
+                            .unwrap_or_default();
+
+                        let msg = if existing_count > 5 {
+                            format!(
+                                "Found {} existing output file(s):\n  - {}\n  ... and {} more.\n\nDelete these files and initialize?",
+                                existing_count,
+                                existing_files,
+                                existing_count - 5
+                            )
+                        } else {
+                            format!(
+                                "Found {} existing output file(s):\n  - {}\n\nDelete these files and initialize?",
+                                existing_count, existing_files
+                            )
+                        };
+
+                        // Show confirmation dialog for force initialization
+                        let dialog =
+                            ConfirmationDialog::new("Initialize with Existing Files", &msg)
+                                .destructive();
+                        self.previous_focus = self.focus;
+                        self.focus = Focus::Popup;
+                        self.popup = Some(PopupType::Confirmation {
+                            dialog,
+                            action: PendingAction::Workflow(
+                                WorkflowAction::InitializeForce,
+                                workflow_id,
+                                workflow_name.to_string(),
+                            ),
+                        });
+                        return Ok(());
+                    }
+                }
+
+                // No existing files or couldn't parse JSON - proceed with normal initialize
+                self.run_initialize_command(workflow_id, workflow_name, false)
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to check initialization: {}",
+                    e
+                )));
+                Ok(())
+            }
+        }
+    }
+
+    /// Run the actual initialize command (with or without --force)
+    fn run_initialize_command(
+        &mut self,
+        workflow_id: i64,
+        workflow_name: &str,
+        force: bool,
+    ) -> Result<()> {
+        let exe_path = self.get_torc_exe_path();
+        let url = self.client.get_base_url();
+        let workflow_id_str = workflow_id.to_string();
+
+        let mut args = vec![
+            "--url",
+            &url,
+            "workflows",
+            "initialize",
+            "--no-prompts",
+            &workflow_id_str,
+        ];
+        if force {
+            args.push("--force");
+        }
+
+        let output = std::process::Command::new(&exe_path).args(&args).output();
+
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    self.set_status(StatusMessage::success(&format!(
+                        "Workflow '{}' initialized",
+                        workflow_name
+                    )));
+                    let _ = self.load_detail_data();
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let error_msg = if !stderr.trim().is_empty() {
+                        stderr.trim().to_string()
+                    } else if !stdout.trim().is_empty() {
+                        stdout.trim().to_string()
+                    } else {
+                        "Unknown error".to_string()
+                    };
+                    self.set_status(StatusMessage::error(&format!(
+                        "Initialize failed: {}",
+                        error_msg
+                    )));
+                }
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to run initialize command: {}",
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Reinitialize workflow using CLI command (following torc-dash pattern)
+    /// First does a dry-run check, then prompts user if there are existing files
+    fn reinitialize_workflow_cli(&mut self, workflow_id: i64, workflow_name: &str) -> Result<()> {
+        self.set_status(StatusMessage::info(&format!(
+            "Checking workflow '{}'...",
+            workflow_name
+        )));
+
+        let exe_path = self.get_torc_exe_path();
+        let url = self.client.get_base_url();
+        let workflow_id_str = workflow_id.to_string();
+
+        // First, do a dry-run check to see if there are existing output files
+        let check_output = std::process::Command::new(&exe_path)
+            .args([
+                "--url",
+                &url,
+                "-f",
+                "json",
+                "workflows",
+                "reinitialize",
+                &workflow_id_str,
+                "--dry-run",
+            ])
+            .output();
+
+        match check_output {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+
+                // Try to parse JSON response
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
+                    let existing_count = json
+                        .get("existing_output_file_count")
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(0);
+
+                    // Check for existing output files (needs confirmation)
+                    if existing_count > 0 {
+                        let existing_files = json
+                            .get("existing_output_files")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str())
+                                    .take(5)
+                                    .collect::<Vec<_>>()
+                                    .join("\n  - ")
+                            })
+                            .unwrap_or_default();
+
+                        let msg = if existing_count > 5 {
+                            format!(
+                                "Found {} existing output file(s):\n  - {}\n  ... and {} more.\n\nDelete these files and re-initialize?",
+                                existing_count,
+                                existing_files,
+                                existing_count - 5
+                            )
+                        } else {
+                            format!(
+                                "Found {} existing output file(s):\n  - {}\n\nDelete these files and re-initialize?",
+                                existing_count, existing_files
+                            )
+                        };
+
+                        let dialog =
+                            ConfirmationDialog::new("Re-initialize with Existing Files", &msg)
+                                .destructive();
+                        self.previous_focus = self.focus;
+                        self.focus = Focus::Popup;
+                        self.popup = Some(PopupType::Confirmation {
+                            dialog,
+                            action: PendingAction::Workflow(
+                                WorkflowAction::ReinitializeForce,
+                                workflow_id,
+                                workflow_name.to_string(),
+                            ),
+                        });
+                        return Ok(());
+                    }
+                }
+
+                // No existing files or couldn't parse JSON - proceed with normal reinitialize
+                self.run_reinitialize_command(workflow_id, workflow_name, false)
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to check re-initialization: {}",
+                    e
+                )));
+                Ok(())
+            }
+        }
+    }
+
+    /// Run the actual reinitialize command (with or without --force)
+    fn run_reinitialize_command(
+        &mut self,
+        workflow_id: i64,
+        workflow_name: &str,
+        force: bool,
+    ) -> Result<()> {
+        let exe_path = self.get_torc_exe_path();
+        let url = self.client.get_base_url();
+        let workflow_id_str = workflow_id.to_string();
+
+        let mut args = vec!["--url", &url, "workflows", "reinitialize", &workflow_id_str];
+        if force {
+            args.push("--force");
+        }
+
+        let output = std::process::Command::new(&exe_path).args(&args).output();
+
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    self.set_status(StatusMessage::success(&format!(
+                        "Workflow '{}' re-initialized",
+                        workflow_name
+                    )));
+                    let _ = self.load_detail_data();
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let error_msg = if !stderr.trim().is_empty() {
+                        stderr.trim().to_string()
+                    } else if !stdout.trim().is_empty() {
+                        stdout.trim().to_string()
+                    } else {
+                        "Unknown error".to_string()
+                    };
+                    self.set_status(StatusMessage::error(&format!(
+                        "Re-initialize failed: {}",
+                        error_msg
+                    )));
+                }
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to run reinitialize command: {}",
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Reset workflow status using CLI command (following torc-dash pattern)
+    fn reset_workflow_cli(&mut self, workflow_id: i64, workflow_name: &str) -> Result<()> {
+        let exe_path = self.get_torc_exe_path();
+        let url = self.client.get_base_url();
+        let workflow_id_str = workflow_id.to_string();
+
+        // Run CLI command: torc --url <url> workflows reset-status --no-prompts <workflow_id>
+        let output = std::process::Command::new(&exe_path)
+            .args([
+                "--url",
+                &url,
+                "workflows",
+                "reset-status",
+                "--no-prompts",
+                &workflow_id_str,
+            ])
+            .output();
+
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    self.set_status(StatusMessage::success(&format!(
+                        "Workflow '{}' status reset",
+                        workflow_name
+                    )));
+                    let _ = self.load_detail_data();
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let error_msg = if !stderr.trim().is_empty() {
+                        stderr.trim().to_string()
+                    } else if !stdout.trim().is_empty() {
+                        stdout.trim().to_string()
+                    } else {
+                        "Unknown error".to_string()
+                    };
+                    self.set_status(StatusMessage::error(&format!(
+                        "Reset failed: {}",
+                        error_msg
+                    )));
+                }
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to run reset-status command: {}",
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Get the path to the torc executable
+    fn get_torc_exe_path(&self) -> String {
+        std::env::current_exe()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| "torc".to_string())
+    }
+
+    fn run_workflow_with_viewer(&mut self, workflow_id: i64, workflow_name: &str) -> Result<()> {
+        let mut viewer = ProcessViewer::new(format!("Running: {}", workflow_name));
+
+        let exe_path = self.get_torc_exe_path();
+
+        // Build arguments - note: --url is a global option, must come before subcommand
+        let workflow_id_str = workflow_id.to_string();
+        let url = self.client.get_base_url();
+        let args = vec!["--url", &url, "run", &workflow_id_str];
+
+        match viewer.start(&exe_path, &args) {
+            Ok(()) => {
+                self.previous_focus = self.focus;
+                self.focus = Focus::Popup;
+                self.popup = Some(PopupType::ProcessViewer(viewer));
+                self.set_status(StatusMessage::info(&format!(
+                    "Running workflow '{}' locally...",
+                    workflow_name
+                )));
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to start workflow runner: {}",
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    // === Job Actions ===
+
+    pub fn get_selected_job(&self) -> Option<&JobModel> {
+        self.jobs_state
+            .selected()
+            .and_then(|idx| self.jobs.get(idx))
+    }
+
+    pub fn request_job_action(&mut self, action: JobAction) {
+        if let Some(job) = self.get_selected_job() {
+            if let Some(job_id) = job.id {
+                let job_name = job.name.clone();
+                let dialog = ConfirmationDialog::new(
+                    match action {
+                        JobAction::Cancel => "Cancel Job",
+                        JobAction::Terminate => "Terminate Job",
+                        JobAction::Retry => "Retry Job",
+                    },
+                    &action.confirmation_message(&job_name),
+                );
+
+                self.previous_focus = self.focus;
+                self.focus = Focus::Popup;
+                self.popup = Some(PopupType::Confirmation {
+                    dialog,
+                    action: PendingAction::Job(action, job_id, job_name),
+                });
+            }
+        } else {
+            self.set_status(StatusMessage::warning("No job selected"));
+        }
+    }
+
+    fn execute_job_action(&mut self, action: JobAction, job_id: i64, job_name: &str) -> Result<()> {
+        let result = match action {
+            JobAction::Cancel => self.client.cancel_job(job_id),
+            JobAction::Terminate => self.client.terminate_job(job_id),
+            JobAction::Retry => self.client.retry_job(job_id),
+        };
+
+        match result {
+            Ok(_) => {
+                let msg = match action {
+                    JobAction::Cancel => format!("Job '{}' canceled", job_name),
+                    JobAction::Terminate => format!("Job '{}' terminated", job_name),
+                    JobAction::Retry => format!("Job '{}' queued for retry", job_name),
+                };
+                self.set_status(StatusMessage::success(&msg));
+
+                // Reload jobs to show updated status
+                let _ = self.load_detail_data();
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to {:?} job: {}",
+                    action, e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn show_job_details(&mut self) {
+        if let Some(job) = self.get_selected_job() {
+            let popup = JobDetailsPopup::new(
+                job.id.unwrap_or(0),
+                job.name.clone(),
+                job.command.clone(),
+                job.status
+                    .as_ref()
+                    .map(|s| format!("{:?}", s))
+                    .unwrap_or_default(),
+            );
+            self.previous_focus = self.focus;
+            self.focus = Focus::Popup;
+            self.popup = Some(PopupType::JobDetails(popup));
+        } else {
+            self.set_status(StatusMessage::warning("No job selected"));
+        }
+    }
+
+    // === Log Viewer ===
+
+    pub fn show_job_logs(&mut self) {
+        if let Some(job) = self.get_selected_job() {
+            let job_id = job.id.unwrap_or(0);
+            let job_name = job.name.clone();
+
+            // Try to get log paths from results
+            let mut viewer = LogViewer::new(job_id, job_name);
+
+            // Try to load logs
+            if let Err(e) = self.load_job_logs(&mut viewer) {
+                self.set_status(StatusMessage::warning(&format!(
+                    "Could not load logs: {}",
+                    e
+                )));
+            }
+
+            self.previous_focus = self.focus;
+            self.focus = Focus::Popup;
+            self.popup = Some(PopupType::LogViewer(viewer));
+        } else {
+            self.set_status(StatusMessage::warning("No job selected"));
+        }
+    }
+
+    fn load_job_logs(&self, viewer: &mut LogViewer) -> Result<()> {
+        use crate::client::log_paths::{get_job_stderr_path, get_job_stdout_path};
+        use std::path::PathBuf;
+
+        // Try to find log files based on job results
+        if let Some(workflow_id) = self.selected_workflow_id {
+            let results = self.client.list_results(workflow_id)?;
+
+            // Find the most recent result for this job
+            if let Some(result) = results
+                .iter()
+                .filter(|r| r.job_id == viewer.job_id)
+                .max_by_key(|r| r.run_id)
+            {
+                // Construct log paths using the standard path pattern
+                // Default output directory is "output" in the current working directory
+                let output_dir = PathBuf::from("output");
+
+                let stdout_path =
+                    get_job_stdout_path(&output_dir, workflow_id, viewer.job_id, result.run_id);
+                let stderr_path =
+                    get_job_stderr_path(&output_dir, workflow_id, viewer.job_id, result.run_id);
+
+                viewer.stdout_path = Some(stdout_path.clone());
+                viewer.stderr_path = Some(stderr_path.clone());
+
+                // Try to read stdout
+                if let Ok(content) = std::fs::read_to_string(&stdout_path) {
+                    viewer.stdout_content = content;
+                } else {
+                    viewer.stdout_content = format!(
+                        "Could not read file: {}\n\nThe file may not exist if:\n- The job has not run yet\n- The output directory is different\n- You are on a different system",
+                        stdout_path
+                    );
+                }
+
+                // Try to read stderr
+                if let Ok(content) = std::fs::read_to_string(&stderr_path) {
+                    viewer.stderr_content = content;
+                } else {
+                    viewer.stderr_content = format!(
+                        "Could not read file: {}\n\nThe file may not exist if:\n- The job has not run yet\n- The output directory is different\n- You are on a different system",
+                        stderr_path
+                    );
+                }
+            } else {
+                viewer.stdout_content =
+                    "No results found for this job.\n\nThe job may not have run yet.".to_string();
+                viewer.stderr_content = "No results found for this job.".to_string();
+            }
+        }
+
+        Ok(())
+    }
+
+    // === File Viewer ===
+
+    pub fn get_selected_file(&self) -> Option<&FileModel> {
+        self.files_state
+            .selected()
+            .and_then(|idx| self.files.get(idx))
+    }
+
+    pub fn show_file_contents(&mut self) {
+        if let Some(file) = self.get_selected_file() {
+            let file_name = file.name.clone();
+            let file_path = file.path.clone();
+
+            let mut viewer = FileViewer::new(file_name, file_path);
+
+            // Try to load the file contents
+            if let Err(e) = viewer.load_content() {
+                self.set_status(StatusMessage::warning(&format!(
+                    "Could not load file: {}",
+                    e
+                )));
+            }
+
+            self.previous_focus = self.focus;
+            self.focus = Focus::Popup;
+            self.popup = Some(PopupType::FileViewer(viewer));
+        } else {
+            self.set_status(StatusMessage::warning("No file selected"));
+        }
+    }
+
+    // === Workflow Path Input (Create Workflow) ===
+
+    pub fn start_workflow_path_input(&mut self) {
+        self.previous_focus = self.focus;
+        self.focus = Focus::WorkflowPathInput;
+        self.workflow_path_input.clear();
+    }
+
+    pub fn cancel_workflow_path_input(&mut self) {
+        self.focus = self.previous_focus;
+        self.workflow_path_input.clear();
+    }
+
+    pub fn add_workflow_path_char(&mut self, c: char) {
+        self.workflow_path_input.push(c);
+    }
+
+    pub fn remove_workflow_path_char(&mut self) {
+        self.workflow_path_input.pop();
+    }
+
+    pub fn apply_workflow_path(&mut self) -> Result<()> {
+        if self.workflow_path_input.is_empty() {
+            self.cancel_workflow_path_input();
+            return Ok(());
+        }
+
+        // Expand the path (handle ~ for home directory)
+        let path = if self.workflow_path_input.starts_with("~/") {
+            let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            format!("{}{}", home, &self.workflow_path_input[1..])
+        } else {
+            self.workflow_path_input.clone()
+        };
+
+        self.focus = self.previous_focus;
+
+        // Check if file exists
+        if !std::path::Path::new(&path).exists() {
+            self.set_status(StatusMessage::error(&format!("File not found: {}", path)));
+            return Ok(());
+        }
+
+        // Try to create workflow from the file
+        match self.client.create_workflow_from_file(&path) {
+            Ok(workflow_id) => {
+                self.set_status(StatusMessage::success(&format!(
+                    "Workflow created with ID: {}",
+                    workflow_id
+                )));
+                self.refresh_workflows()?;
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to create workflow: {}",
+                    e
+                )));
+            }
+        }
+
+        self.workflow_path_input.clear();
+        Ok(())
+    }
+
+    // === Auto-refresh ===
+
+    pub fn toggle_auto_refresh(&mut self) {
+        self.auto_refresh = !self.auto_refresh;
+        if self.auto_refresh {
+            self.set_status(StatusMessage::info("Auto-refresh enabled (30s interval)"));
+        } else {
+            self.set_status(StatusMessage::info("Auto-refresh disabled"));
+        }
+    }
+
+    pub fn check_auto_refresh(&mut self) -> Result<()> {
+        if self.auto_refresh && self.last_refresh.elapsed() > std::time::Duration::from_secs(30) {
+            self.refresh_workflows()?;
+            if self.selected_workflow_id.is_some() {
+                let _ = self.load_detail_data();
+            }
+            self.last_refresh = std::time::Instant::now();
+        }
+        Ok(())
+    }
+
+    // === Server Management ===
+
+    pub fn is_server_running(&self) -> bool {
+        self.server_process
+            .as_ref()
+            .map(|p| p.is_running)
+            .unwrap_or(false)
+    }
+
+    pub fn start_server(&mut self) {
+        if self.is_server_running() {
+            self.set_status(StatusMessage::warning("Server is already running"));
+            return;
+        }
+
+        let mut viewer = ProcessViewer::new("Torc Server".to_string());
+
+        // Find the torc-server binary - try several locations
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()));
+
+        let server_paths = [
+            // Same directory as current executable
+            exe_dir
+                .as_ref()
+                .map(|d| d.join("torc-server").to_string_lossy().to_string()),
+            // Current directory
+            Some("./torc-server".to_string()),
+            // In PATH
+            Some("torc-server".to_string()),
+        ];
+
+        let mut server_path = None;
+        for path_opt in server_paths.iter().flatten() {
+            if std::path::Path::new(path_opt).exists() || !path_opt.contains('/') {
+                server_path = Some(path_opt.clone());
+                break;
+            }
+        }
+
+        let server_path = match server_path {
+            Some(p) => p,
+            None => {
+                self.set_status(StatusMessage::error(
+                    "Could not find torc-server binary. Make sure it's in PATH or same directory.",
+                ));
+                return;
+            }
+        };
+
+        // Extract port from current server URL to use for the new server
+        // Default to 8080 if we can't parse it
+        let port = self
+            .server_url
+            .split(':')
+            .last()
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(8080);
+
+        let port_str = port.to_string();
+        let args = vec!["run", "--port", &port_str];
+
+        match viewer.start(&server_path, &args) {
+            Ok(()) => {
+                self.server_process = Some(viewer);
+                self.set_status(StatusMessage::success(&format!(
+                    "Server started on port {}",
+                    port
+                )));
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to start server: {}",
+                    e
+                )));
+            }
+        }
+    }
+
+    /// Start server in standalone mode with optional database path
+    pub fn start_server_standalone(&mut self) {
+        if self.is_server_running() {
+            return;
+        }
+
+        let mut viewer = ProcessViewer::new("Torc Server (standalone)".to_string());
+
+        // Find the torc-server binary
+        let exe_dir = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()));
+
+        let server_paths = [
+            exe_dir
+                .as_ref()
+                .map(|d| d.join("torc-server").to_string_lossy().to_string()),
+            Some("./torc-server".to_string()),
+            Some("torc-server".to_string()),
+        ];
+
+        let mut server_path = None;
+        for path_opt in server_paths.iter().flatten() {
+            if std::path::Path::new(path_opt).exists() || !path_opt.contains('/') {
+                server_path = Some(path_opt.clone());
+                break;
+            }
+        }
+
+        let server_path = match server_path {
+            Some(p) => p,
+            None => {
+                self.set_status(StatusMessage::error("Could not find torc-server binary"));
+                return;
+            }
+        };
+
+        // Extract port from server URL
+        let port = self
+            .server_url
+            .split(':')
+            .last()
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(8080);
+
+        let port_str = port.to_string();
+
+        // Build args with optional database path
+        let mut args = vec!["run", "--port", &port_str];
+        let db_path;
+        if let Some(ref db) = self.standalone_database {
+            db_path = db.clone();
+            args.push("--database");
+            args.push(&db_path);
+        }
+
+        match viewer.start(&server_path, &args) {
+            Ok(()) => {
+                self.server_process = Some(viewer);
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to start server: {}",
+                    e
+                )));
+            }
+        }
+    }
+
+    pub fn stop_server(&mut self) {
+        if let Some(ref mut viewer) = self.server_process {
+            if viewer.is_running {
+                viewer.kill();
+                self.set_status(StatusMessage::info("Server stopped"));
+            } else {
+                self.set_status(StatusMessage::warning("Server is not running"));
+            }
+        } else {
+            self.set_status(StatusMessage::warning("No server process to stop"));
+        }
+    }
+
+    pub fn show_server_output(&mut self) {
+        if let Some(viewer) = self.server_process.take() {
+            self.previous_focus = self.focus;
+            self.focus = Focus::Popup;
+            self.popup = Some(PopupType::ProcessViewer(viewer));
+        } else {
+            self.set_status(StatusMessage::warning(
+                "No server process. Press S to start one.",
+            ));
+        }
+    }
+
+    pub fn close_server_popup(&mut self) {
+        // When closing the server popup, move the viewer back to server_process
+        if let Some(PopupType::ProcessViewer(viewer)) = self.popup.take() {
+            self.server_process = Some(viewer);
+        }
+        self.focus = self.previous_focus;
+    }
+
+    /// Poll the server process for new output (called from event loop)
+    pub fn poll_server_output(&mut self) {
+        if let Some(ref mut viewer) = self.server_process {
+            viewer.poll_output();
+        }
     }
 }

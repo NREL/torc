@@ -1,190 +1,526 @@
 # Torc TUI - Terminal User Interface
 
-A terminal-based user interface for managing Torc workflows, built with [ratatui](https://ratatui.rs/).
+A full-featured terminal user interface for managing Torc workflows, designed for HPC users working in terminal-over-SSH environments. Built with [ratatui](https://ratatui.rs/).
 
-## Features
-
-- **Workflow List**: View all workflows with ID, name, user, and description
-- **Dynamic Detail Views**: Switch between Jobs, Files, Events, Results, and DAG visualization for selected workflows
-- **DAG Visualization**: Visual representation of job dependencies as a directed acyclic graph
-- **Focus Management**: Independent navigation of workflows and detail tables
-- **Filtering**: Filter detail views by column values with case-insensitive substring matching
-  - Jobs: Filter by Status, Name, or Command
-  - Files: Filter by Name or Path
-  - Events: Filter by Data
-  - Results: Filter by Status or Return Code
-- **Server Connection Management**: Change server URL on-the-fly without restarting
-- **User Filtering**: Filter workflows by username or show all users' workflows
-  - Defaults to current user from environment variables
-  - Quick toggle between current user and all users
-- **Keyboard Navigation**: Fast, keyboard-driven interface
-- **Real-time Data**: Refresh workflows and load details on demand
-
-## Installation
+## Quick Start
 
 ```bash
-cd torc-tui
-cargo build --release
-```
+# Make sure the Torc server is running
+torc-server run
 
-## Usage
-
-First, make sure the Torc server is running:
-
-```bash
-# Start the server (from the torc-server directory)
-cd torc-server
-cargo run --bin torc-server
-```
-
-Then run the TUI:
-
-```bash
-# Set the server URL (optional, defaults to localhost:8080)
-export TORC_API_URL="http://localhost:8080/torc-service/v1"
-
-# Run the TUI
+# Launch the TUI
 torc tui
 ```
 
-## Keyboard Controls
+## Features
+
+### Workflow Management
+- **Create workflows** from YAML, JSON, or JSON5 spec files
+- **Initialize** workflows to set up job dependencies
+- **Run** workflows locally or **submit** to HPC schedulers (Slurm)
+- **Cancel**, **reset**, or **delete** workflows
+- All destructive actions require confirmation
+
+### Job Management
+- **View job details** including full command and status
+- **View job logs** (stdout/stderr) with search and navigation
+- **Cancel**, **terminate**, or **retry** individual jobs
+- Color-coded job status for quick visual scanning
+
+### Real-time Monitoring
+- **Auto-refresh** toggle for live updates (30-second interval)
+- **Manual refresh** with `r` key
+- **Status bar** with operation feedback
+- **Color-coded results** showing pass/fail status
+
+### Navigation
+- **Two-pane interface**: Workflows list and detail view
+- **Tabbed detail views**: Jobs, Files, Events, Results, DAG
+- **Column filtering** for all table views
+- **Keyboard-driven** interface optimized for SSH
+
+---
+
+## Tutorial
+
+### 1. Starting the TUI
+
+First, ensure the Torc server is running:
+
+```bash
+# Start the server
+torc-server run
+
+# In another terminal, set server URL (optional)
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
+
+# Launch the TUI
+torc tui
+```
+
+When the TUI starts, you'll see the main interface:
+
+```
+┌─ Torc Management Console ────────────────────────────────────────┐
+│ ?: help | n: new | i: init | x: run | s: submit | d: delete ...│
+└──────────────────────────────────────────────────────────────────┘
+┌─ Server ─────────────────────────────────────────────────────────┐
+│ http://localhost:8080/torc-service/v1  (press 'u' to change)    │
+└──────────────────────────────────────────────────────────────────┘
+┌─ User Filter ────────────────────────────────────────────────────┐
+│ Current: yourname  (press 'w' to change, 'a' for all users)     │
+└──────────────────────────────────────────────────────────────────┘
+┌─ Workflows [FOCUSED] ────────────────────────────────────────────┐
+│ >> 1  | my-workflow    | yourname | Example workflow            │
+│    2  | data-pipeline  | yourname | Data processing pipeline    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Basic Navigation
 
 | Key | Action |
 |-----|--------|
-| `q` | Quit the application |
-| `↑` / `↓` | Navigate up/down in the active table |
-| `←` / `→` | Toggle focus between Workflows and Details tables |
-| `Enter` | Load details for the selected workflow |
-| `Tab` | Switch to next detail view (Jobs → Files → Events → Results → DAG) |
-| `Shift+Tab` | Switch to previous detail view |
-| `r` | Refresh the workflow list |
-| `f` | Start filtering (when Details table is focused) |
-| `c` | Clear active filter (when Details table is focused) |
+| `↑` / `↓` | Move up/down in the current table |
+| `←` / `→` | Switch focus between Workflows and Details panes |
+| `Tab` | Switch between detail tabs (Jobs → Files → Events → Results → DAG) |
+| `Enter` | Load details for selected workflow |
+| `q` | Quit (or close popup/dialog) |
+| `?` | Show help popup with all keybindings |
+
+**Try it:** Use arrow keys to select a workflow, press `Enter` to load its details.
+
+### 3. Creating a Workflow
+
+Press `n` to create a new workflow from a spec file:
+
+```
+┌─ Create Workflow from Spec File ─────────────────────────────────┐
+│ Workflow spec file: ~/workflows/my-workflow.yaml_                │
+│ Enter: create | Esc: cancel (supports ~, YAML/JSON/JSON5)        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+1. Press `n` to start
+2. Type the path to your workflow spec file (supports `~` for home directory)
+3. Press `Enter` to create the workflow
+4. Press `Esc` to cancel
+
+The status bar will show success or any errors.
+
+### 4. Workflow Actions
+
+Select a workflow and use these keys:
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `i` | Initialize | Set up job dependencies, mark ready jobs |
+| `I` | Re-initialize | Reset and re-initialize (clears existing state) |
+| `R` | Reset | Reset all job statuses |
+| `x` | Run | Run workflow locally |
+| `s` | Submit | Submit to HPC scheduler (Slurm) |
+| `C` | Cancel | Cancel running workflow |
+| `d` | Delete | Delete workflow (destructive!) |
+
+All destructive actions show a confirmation dialog:
+
+```
+┌─ Delete Workflow ────────────────────────────────────────────────┐
+│                                                                  │
+│        DELETE workflow 'my-workflow'?                            │
+│        This action cannot be undone!                             │
+│                                                                  │
+│              y: Yes | n: No | Esc: cancel                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 5. Viewing Jobs
+
+Press `→` to focus the Details pane, then navigate to the Jobs tab:
+
+```
+┌─ Jobs [FOCUSED] - Enter: details, l: logs, c: cancel... ────────┐
+│ ID    | Name          | Status      | Command                   │
+│ >> 1  | preprocess    | Completed   | python preprocess.py      │
+│    2  | train-model   | Running     | python train.py           │
+│    3  | evaluate      | Blocked     | python evaluate.py        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Status colors:**
+- 🟢 **Green**: Completed
+- 🟡 **Yellow**: Running
+- 🔴 **Red**: Failed
+- 🟣 **Magenta**: Canceled/Terminated
+- 🔵 **Blue**: Pending/Scheduled
+- ⚪ **Cyan**: Ready
+- ⬛ **Gray**: Blocked
+
+### 6. Job Details and Logs
+
+Select a job and press `Enter` to see details:
+
+```
+┌─ Job Details: train-model ───────────────────────────────────────┐
+│ ID: 2                                                            │
+│ Status: Running                                                  │
+│                                                                  │
+│ Command:                                                         │
+│ python train.py --epochs 100 --batch-size 32                     │
+│                                                                  │
+│ Press q or Esc to close, l to view logs                          │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Press `l` to view logs:
+
+```
+┌─ Logs: train-model ──────────────────────────────────────────────┐
+│  stdout  |  stderr   (Tab to switch)                             │
+├──────────────────────────────────────────────────────────────────┤
+│   1  Epoch 1/100: loss=0.532                                     │
+│   2  Epoch 2/100: loss=0.421                                     │
+│   3  Epoch 3/100: loss=0.387                                     │
+│   4  Epoch 4/100: loss=0.352                                     │
+│   ...                                                            │
+├──────────────────────────────────────────────────────────────────┤
+│ Path: output/job_stdio/job_1_2_1.o                               │
+│ q: close | /: search | n/N: next/prev | g/G: top/bottom | y: path│
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Log viewer controls:**
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Switch between stdout and stderr |
+| `↑` / `↓` | Scroll one line |
+| `PgUp` / `PgDn` | Scroll 20 lines |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `/` | Start search |
+| `n` | Next search match |
+| `N` | Previous search match |
+| `y` | Show file path in status bar |
+| `q` / `Esc` | Close log viewer |
+
+### 7. Job Actions
+
+From the Jobs tab, select a job and use:
+
+| Key | Action | When to use |
+|-----|--------|-------------|
+| `c` | Cancel | Stop a pending or running job gracefully |
+| `t` | Terminate | Force-stop a running job |
+| `y` | Retry | Re-queue a failed job |
+
+### 8. Viewing Files
+
+Switch to the Files tab and press `Enter` on a file to view its contents:
+
+```
+┌─ File: config.yaml ──────────────────────────────────────────────┐
+│   1  name: my-workflow                                           │
+│   2  description: Example workflow                               │
+│   3                                                              │
+│   4  jobs:                                                       │
+│   5    - name: preprocess                                        │
+│   ...                                                            │
+├──────────────────────────────────────────────────────────────────┤
+│ Path: /home/user/workflows/config.yaml                           │
+│ q: close | /: search | n/N: next/prev | g/G: top/bottom | y: path│
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**File viewer controls:**
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Scroll one line |
+| `PgUp` / `PgDn` | Scroll 20 lines |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `/` | Start search |
+| `n` | Next search match |
+| `N` | Previous search match |
+| `y` | Show file path in status bar |
+| `q` / `Esc` | Close file viewer |
+
+**Notes:**
+- Files up to 1MB can be viewed
+- Binary files show a hex dump preview
+- Files that don't exist show a helpful error message
+
+### 9. Filtering Tables
+
+Press `f` while focused on any detail table to filter:
+
+```
+┌─ Filter Input ───────────────────────────────────────────────────┐
+│ Status: failed_ | Tab: change column | Enter: apply | Esc: cancel│
+└──────────────────────────────────────────────────────────────────┘
+```
+
+1. Press `f` to start filtering
+2. Press `Tab` to change the filter column (e.g., Status, Name, Command)
+3. Type your filter text
+4. Press `Enter` to apply
+5. Press `c` to clear the filter
+
+### 10. Auto-Refresh
+
+Press `A` to toggle auto-refresh:
+
+```
+┌─ Torc Management Console - Auto-refresh enabled (30s interval) ──┐
+│ ?: help | n: new | i: init | x: run | ... | A: auto-refresh [ON]│
+└──────────────────────────────────────────────────────────────────┘
+```
+
+When enabled, the workflow list and details refresh every 30 seconds.
+
+### 11. DAG Visualization
+
+Switch to the DAG tab to see job dependencies:
+
+```
+┌─ Job DAG ────────────────────────────────────────────────────────┐
+│   [✓] preprocess (id: 1)                                         │
+│      ↓↓↓                                                         │
+│   [▶] train-model (id: 2)                                        │
+│      ↓↓↓                                                         │
+│   [◦] evaluate (id: 3)                                           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Status indicators:**
+- `✓` Completed (green)
+- `▶` Running (yellow)
+- `✗` Failed (red)
+- `○` Canceled (magenta)
+- `◦` Other (cyan)
+
+---
+
+## Complete Keyboard Reference
+
+### Global Keys
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit / Close popup |
+| `?` | Show help popup |
+| `r` | Refresh current view |
+| `A` | Toggle auto-refresh |
+| `↑` / `↓` | Navigate table rows |
+| `←` / `→` | Switch focus between panes |
+| `Tab` | Next detail tab |
+| `Shift+Tab` | Previous detail tab |
+| `Enter` | Load details / Confirm action |
+
+### Workflow Actions
+
+| Key | Action |
+|-----|--------|
+| `n` | Create new workflow from spec file |
+| `i` | Initialize workflow |
+| `I` | Re-initialize workflow |
+| `R` | Reset workflow status |
+| `x` | Run workflow locally |
+| `s` | Submit workflow to scheduler |
+| `C` | Cancel workflow |
+| `d` | Delete workflow |
+
+### Job Actions (Jobs tab only)
+
+| Key | Action |
+|-----|--------|
+| `Enter` | View job details |
+| `l` | View job logs |
+| `c` | Cancel job |
+| `t` | Terminate job |
+| `y` | Retry failed job |
+| `f` | Filter jobs |
+
+### File Actions (Files tab only)
+
+| Key | Action |
+|-----|--------|
+| `Enter` | View file contents |
+| `f` | Filter files |
+
+### Log Viewer
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Switch stdout/stderr |
+| `/` | Search |
+| `n` | Next match |
+| `N` | Previous match |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `↑` / `↓` | Scroll one line |
+| `PgUp` / `PgDn` | Scroll 20 lines |
+| `y` | Show file path |
+| `q` / `Esc` | Close |
+
+### File Viewer
+
+| Key | Action |
+|-----|--------|
+| `/` | Search |
+| `n` | Next match |
+| `N` | Previous match |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `↑` / `↓` | Scroll one line |
+| `PgUp` / `PgDn` | Scroll 20 lines |
+| `y` | Show file path |
+| `q` / `Esc` | Close |
+
+### Server Management
+
+| Key | Action |
+|-----|--------|
+| `S` | Start torc-server |
+| `K` | Stop/Kill server |
+| `O` | Show server output |
+
+### Connection Settings
+
+| Key | Action |
+|-----|--------|
 | `u` | Change server URL |
 | `w` | Change user filter |
 | `a` | Toggle show all users |
 
-### Filter Mode Controls
+---
 
-When in filter input mode (press `f` to enter):
+## Server Management
 
-| Key | Action |
-|-----|--------|
-| `Type` | Enter filter value |
-| `Tab` / `Shift+Tab` | Cycle through filterable columns |
-| `Enter` | Apply the filter |
-| `Esc` | Cancel and exit filter mode |
+The TUI can start and manage a `torc-server` instance directly:
 
-### Server URL Input Controls
+1. **Starting a server**: Press `S` to start a server on the port from your configured URL
+2. **Viewing output**: Press `O` to see the server's output in real-time
+3. **Stopping**: Press `K` to stop the running server
 
-When in server URL input mode (press `u` to enter):
+The Connection bar shows the server status:
+- `●` (green) - Server is running (managed by TUI)
+- `○` (yellow) - Server was started but has stopped
+- No indicator - Server not managed by TUI (external server)
 
-| Key | Action |
-|-----|--------|
-| `Type` | Enter server URL |
-| `Enter` | Connect to new server |
-| `Esc` | Cancel and keep current connection |
+**Note**: The TUI looks for `torc-server` in:
+1. Same directory as the `torc` binary
+2. Current working directory
+3. System PATH
 
-### User Filter Input Controls
+---
 
-When in user filter input mode (press `w` to enter):
+## Configuration
 
-| Key | Action |
-|-----|--------|
-| `Type` | Enter username |
-| `Enter` | Apply user filter |
-| `Esc` | Cancel and keep current filter |
+The TUI respects Torc's layered configuration system. Settings are loaded with this priority (highest to lowest):
 
-**Focus Management:** Use Left/Right arrows to switch focus between the workflows table (top) and the detail table (bottom). The focused table will have a green border and "[FOCUSED]" in its title. Only the focused table responds to Up/Down arrow keys.
+1. Interactive changes in TUI (press `u` to change server URL)
+2. Environment variables (`TORC_CLIENT__API_URL`)
+3. Local config file (`./torc.toml`)
+4. User config file (`~/.config/torc/config.toml`)
+5. System config file (`/etc/torc/config.toml`)
+6. Default values
 
-**Filtering:** When the Details table is focused, press `f` to start filtering. Use Tab to cycle through available columns (varies by view type), type your filter text, and press Enter to apply. The filter performs case-insensitive substring matching. Press `c` to clear the active filter.
+### Setting Up Configuration
 
-**Server Connection:** The current server URL is displayed in the Connection section. Press `u` to change the server URL. The TUI will attempt to connect to the new server and refresh workflows when you press Enter. If the connection fails, the TUI will revert to the previous URL.
+Use the CLI to create a user configuration file:
 
-**User Filtering:** The User Filter section shows the current user filter. By default, workflows are filtered to the current user (from `USER` or `USERNAME` environment variable). Press `w` to change the user filter to a specific username, or leave it empty and press Enter to show all users. Press `a` to quickly toggle between showing only your workflows and all users' workflows.
+```bash
+# Create user config interactively
+torc config init --user
+
+# Show current configuration
+torc config show
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TORC_CLIENT__API_URL` | Torc server API URL | `http://localhost:8080/torc-service/v1` |
+| `USER` | Default username filter | Current system user |
+
+### Log File Locations
+
+Job logs are stored in the `output` directory by default:
+
+```
+output/
+└── job_stdio/
+    ├── job_{workflow_id}_{job_id}_{run_id}.o  # stdout
+    └── job_{workflow_id}_{job_id}_{run_id}.e  # stderr
+```
+
+---
+
+## Troubleshooting
+
+### "Could not connect to server"
+
+1. Ensure the Torc server is running: `torc-server run`
+2. Check the server URL: press `u` to update if needed
+3. Verify network connectivity
+
+### "No log content available"
+
+Logs may not be available if:
+- The job hasn't run yet
+- You're on a different machine than where jobs ran
+- The output directory is in a different location
+
+### Job actions not working
+
+- Ensure you have the correct permissions
+- Check that the server is responsive (press `r` to refresh)
+- Some actions only apply to certain job states (e.g., can't retry a completed job)
+
+### Screen rendering issues
+
+- Ensure your terminal supports UTF-8 and 256 colors
+- Try resizing your terminal window
+- Press `r` to force a refresh
+
+---
 
 ## Architecture
 
-The TUI is organized into four main modules:
+The TUI is organized into these modules:
 
-- **`main.rs`**: Entry point, terminal setup, and synchronous event loop
-- **`app.rs`**: Application state management and business logic
-- **`api.rs`**: Synchronous API client wrapper for Torc server communication
-- **`ui.rs`**: UI rendering logic using ratatui widgets
-
-The TUI is completely synchronous, using the blocking reqwest client from torc. No async runtime overhead!
-
-## Screenshots
-
-The interface is divided into six sections:
-
-1. **Help Bar**: Shows available keyboard shortcuts (context-sensitive based on current mode)
-2. **Connection**: Displays current server URL with option to change
-3. **User Filter**: Shows current user filter with options to change or toggle all users
-4. **Workflows Table**: Lists all workflows with ID, name, user, and description
-5. **Tab Bar**: Switch between different detail views
-6. **Detail Table**: Shows jobs, files, events, or results for the selected workflow
-
-## Development
-
-The TUI uses:
-- **ratatui**: Terminal UI framework
-- **crossterm**: Cross-platform terminal manipulation
-- **torc client library**: Generated blocking API client from OpenAPI spec
-
-## DAG Visualization
-
-The DAG (Directed Acyclic Graph) view provides a visual representation of job dependencies within a workflow. Each node represents a job, and edges represent blocking relationships (job A blocks job B means B cannot run until A completes).
-
-### Current Implementation
-
-The DAG visualization currently displays all jobs as nodes without edges. To enable full DAG visualization with dependency edges, the server needs to expose the `job_depends_on` table data.
-
-### Server-Side Implementation Needed
-
-To enable complete DAG visualization, add an API endpoint that returns job blocking relationships:
-
-```rust
-// Suggested endpoint in server API
-GET /workflows/{workflow_id}/job-dependencies
-
-// Returns:
-[
-  {
-    "job_id": 123,
-    "depends_on_job_id": 456,
-    "workflow_id": 789
-  },
-  ...
-]
+```
+src/tui/
+├── mod.rs          # Entry point and event loop
+├── app.rs          # Application state and business logic
+├── api.rs          # Synchronous API client
+├── ui.rs           # UI rendering with ratatui
+├── dag.rs          # DAG layout computation
+└── components.rs   # Reusable UI components
+                    # (dialogs, log viewer, status bar)
 ```
 
-This data comes from the `job_depends_on` table with columns:
-- `job_id`: The job that is blocked
-- `depends_on_job_id`: The job that must complete first
-- `workflow_id`: The workflow containing both jobs
+The TUI is completely synchronous, using the blocking reqwest client—no async runtime overhead, perfect for resource-constrained HPC environments.
 
-Once this endpoint is available, update `TorcClient::list_job_dependencies()` in `torc-tui/src/api.rs` and uncomment the edge-building logic in `App::build_dag_from_jobs()`.
+---
 
-### Visual Features
+## Comparison with torc-dash
 
-- **Color-coded nodes** based on job status:
-  - Green: Completed
-  - Yellow: Running
-  - Red: Failed
-  - Magenta: Canceled
-  - Cyan: Other statuses
-- **Layered layout** using topological sort to arrange jobs in dependency order
-- **Automatic layout** that scales to available terminal space
+| Feature | TUI (`torc tui`) | Web (`torc-dash`) |
+|---------|------------------|-------------------|
+| Environment | Terminal/SSH | Web browser |
+| Startup | Instant | ~2 seconds |
+| Dependencies | None (single binary) | Python + packages |
+| Workflow actions | ✅ | ✅ |
+| Job actions | ✅ | ✅ |
+| Log viewing | ✅ | ✅ |
+| DAG visualization | Text-based | Interactive graph |
+| Resource plots | Planned | ✅ |
+| Event monitoring | Planned | ✅ |
+| File preview | Via logs | ✅ |
 
-## Future Enhancements
+Choose the **TUI** for: SSH sessions, HPC environments, quick operations, low-bandwidth connections.
 
-Potential improvements:
-- Add job blocking relationships API endpoint (see DAG Visualization section)
-- Node labels with job names in DAG view
-- Interactive DAG navigation (select nodes, zoom)
-- Pagination for large result sets
-- Sorting options
-- Workflow creation/modification UI
-- Real-time status updates
-- Multi-workflow selection
+Choose **torc-dash** for: Rich visualizations, file previews, resource plots, team dashboards.

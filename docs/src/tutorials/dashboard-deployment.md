@@ -2,6 +2,8 @@
 
 This tutorial covers three common deployment scenarios for the Torc web dashboard (`torc-dash`). Each scenario addresses different environments and use cases.
 
+> **Prefer the terminal?** If you work primarily in SSH sessions or terminal environments, consider using the [Terminal UI (TUI)](../how-to/tui.md) instead. The TUI provides the same workflow and job management capabilities without requiring a web browser or SSH tunnels.
+
 ## Overview of Deployment Scenarios
 
 | Scenario | Environment | Use Case |

@@ -1,10 +1,10 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::config::TorcConfig;
 use crate::models::{
     EventModel, FileModel, JobDependencyModel, JobModel, ResultModel, WorkflowModel,
 };
 use anyhow::{Context, Result};
-use std::env;
 
 pub struct TorcClient {
     config: Configuration,
@@ -12,8 +12,10 @@ pub struct TorcClient {
 
 impl TorcClient {
     pub fn new() -> Result<Self> {
-        let base_url = env::var("TORC_API_URL")
-            .unwrap_or_else(|_| "http://localhost:8080/torc-service/v1".to_string());
+        // Load configuration from files (system, user, local) and environment variables
+        // Priority: env vars > local config > user config > system config > default
+        let file_config = TorcConfig::load().unwrap_or_default();
+        let base_url = file_config.client.api_url.clone();
 
         let config = Configuration {
             base_path: base_url,
@@ -34,6 +36,10 @@ impl TorcClient {
 
     pub fn get_base_url(&self) -> &str {
         &self.config.base_path
+    }
+
+    pub fn set_base_url(&mut self, base_url: &str) {
+        self.config.base_path = base_url.to_string();
     }
 
     pub fn list_workflows(&self) -> Result<Vec<WorkflowModel>> {
@@ -151,5 +157,99 @@ impl TorcClient {
         .context("Failed to list job dependencies")?;
 
         Ok(response.items.unwrap_or_default())
+    }
+
+    // === Workflow Actions ===
+
+    pub fn submit_workflow(&self, workflow_id: i64) -> Result<()> {
+        // Create a workflow action to submit to scheduler
+        let action = serde_json::json!({
+            "workflow_id": workflow_id,
+            "trigger_type": "on_workflow_start",
+            "action_type": "schedule_nodes",
+            "action_config": {}
+        });
+
+        default_api::create_workflow_action(&self.config, workflow_id, action)
+            .context("Failed to create submit action")?;
+
+        Ok(())
+    }
+
+    pub fn delete_workflow(&self, workflow_id: i64) -> Result<()> {
+        default_api::delete_workflow(&self.config, workflow_id, None)
+            .context("Failed to delete workflow")?;
+
+        Ok(())
+    }
+
+    pub fn cancel_workflow(&self, workflow_id: i64) -> Result<()> {
+        default_api::cancel_workflow(&self.config, workflow_id, None)
+            .context("Failed to cancel workflow")?;
+
+        Ok(())
+    }
+
+    // === Job Actions ===
+
+    /// Get a job by ID to update it
+    fn get_job(&self, job_id: i64) -> Result<crate::models::JobModel> {
+        default_api::get_job(&self.config, job_id).context("Failed to get job")
+    }
+
+    pub fn cancel_job(&self, job_id: i64) -> Result<()> {
+        use crate::models::JobStatus;
+
+        // Get the existing job, update status, and PUT back
+        let mut job = self.get_job(job_id)?;
+        job.status = Some(JobStatus::Canceled);
+
+        default_api::update_job(&self.config, job_id, job).context("Failed to cancel job")?;
+
+        Ok(())
+    }
+
+    pub fn terminate_job(&self, job_id: i64) -> Result<()> {
+        use crate::models::JobStatus;
+
+        let mut job = self.get_job(job_id)?;
+        job.status = Some(JobStatus::Terminated);
+
+        default_api::update_job(&self.config, job_id, job).context("Failed to terminate job")?;
+
+        Ok(())
+    }
+
+    pub fn retry_job(&self, job_id: i64) -> Result<()> {
+        use crate::models::JobStatus;
+
+        let mut job = self.get_job(job_id)?;
+        job.status = Some(JobStatus::Ready);
+
+        default_api::update_job(&self.config, job_id, job).context("Failed to retry job")?;
+
+        Ok(())
+    }
+
+    // === Workflow Creation ===
+
+    pub fn create_workflow_from_file(&self, path: &str) -> Result<i64> {
+        use crate::client::workflow_spec::WorkflowSpec;
+
+        // Get current user
+        let user = std::env::var("USER")
+            .or_else(|_| std::env::var("USERNAME"))
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        // Create the workflow using the spec
+        let workflow_id = WorkflowSpec::create_workflow_from_spec(
+            &self.config,
+            path,
+            &user,
+            false, // enable_resource_monitoring
+        )
+        .map_err(|e| anyhow::anyhow!("{}", e))?;
+
+        Ok(workflow_id)
     }
 }
