@@ -280,9 +280,24 @@ async fn main() -> Result<()> {
         ManagedServer::default()
     };
 
-    // Determine API URL - if standalone mode, use actual_server_port
+    // Determine API URL - if standalone mode, use actual_server_port with the correct host
     let final_api_url = if standalone {
-        format!("http://localhost:{}/torc-service/v1", actual_server_port)
+        // In standalone mode, we need to determine the correct host for the API URL.
+        // If the user provided a custom --api-url, extract the host from it.
+        // Otherwise, use the host the dashboard is binding to (or localhost as fallback).
+        let api_host = if api_url != "http://localhost:8080/torc-service/v1" {
+            // User provided a custom API URL, extract the host
+            url::Url::parse(&api_url)
+                .ok()
+                .and_then(|u| u.host_str().map(|h| h.to_string()))
+                .unwrap_or_else(|| "localhost".to_string())
+        } else if host != "127.0.0.1" {
+            // User specified a non-default host, use it
+            host.clone()
+        } else {
+            "localhost".to_string()
+        };
+        format!("http://{}:{}/torc-service/v1", api_host, actual_server_port)
     } else {
         api_url.clone()
     };

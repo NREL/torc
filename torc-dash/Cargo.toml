@@ -50,3 +50,6 @@ async-stream = "0.3"
 
 # Date/time
 chrono = "0.4"
+
+# URL parsing
+url = "2"
