@@ -188,8 +188,19 @@ async fn main() -> Result<()> {
             server_port
         );
 
+        // Determine the host for the server to bind to.
+        // If user provided a custom --api-url, the server needs to bind to 0.0.0.0
+        // so it's accessible from the specified IP address.
+        let server_host = if api_url != "http://localhost:8080/torc-service/v1" {
+            "0.0.0.0".to_string()
+        } else {
+            "127.0.0.1".to_string()
+        };
+
         let mut args = vec![
             "run".to_string(),
+            "--host".to_string(),
+            server_host.clone(),
             "--port".to_string(),
             server_port.to_string(),
             "--completion-check-interval-secs".to_string(),
@@ -200,6 +211,8 @@ async fn main() -> Result<()> {
             args.push("--database".to_string());
             args.push(db.clone());
         }
+
+        info!("Server will bind to {}:{}", server_host, server_port);
 
         let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
         match Command::new(&torc_server_bin)
