@@ -1885,6 +1885,44 @@ textarea.text-input {
     margin-bottom: 0;
 }
 
+/* Scheduler select row with inline button */
+.scheduler-select-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.scheduler-select-row .select-input {
+    flex: 1;
+}
+
+.scheduler-select-row .btn {
+    white-space: nowrap;
+}
+
+/* Parallelization strategy help */
+.strategy-help {
+    display: block;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+.strategy-help code {
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.strategy-help a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.strategy-help a:hover {
+    text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {

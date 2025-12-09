@@ -186,8 +186,36 @@ torc workflows delete <workflow_id>
 torc workflows get <workflow_id>
 ```
 
+## Defining File Dependencies
+
+Jobs often need to read input files and produce output files. Torc can automatically infer job dependencies from these file relationships using **variable substitution**:
+
+```yaml
+files:
+  - name: raw_data
+    path: /data/raw.csv
+  - name: processed_data
+    path: /data/processed.csv
+
+jobs:
+  - name: preprocess
+    command: "python preprocess.py -o ${files.output.raw_data}"
+
+  - name: analyze
+    command: "python analyze.py -i ${files.input.raw_data} -o ${files.output.processed_data}"
+```
+
+Key concepts:
+- **`${files.input.NAME}`** - References a file this job reads (creates a dependency on the job that outputs it)
+- **`${files.output.NAME}`** - References a file this job writes (satisfies dependencies for downstream jobs)
+
+In the example above, `analyze` automatically depends on `preprocess` because it needs `raw_data` as input, which `preprocess` produces as output.
+
+For a complete walkthrough, see [Tutorial: Diamond Workflow](../tutorials/diamond.md).
+
 ## Next Steps
 
+- [Tutorial: Diamond Workflow](../tutorials/diamond.md) - Learn file-based dependencies with the fan-out/fan-in pattern
 - [Workflow Specification Formats](../reference/workflow-formats.md) - Detailed format reference
 - [Job Parameterization](../reference/parameterization.md) - Generate multiple jobs from templates
 - [Tutorial: Many Independent Jobs](../tutorials/many-jobs.md) - Your first workflow
