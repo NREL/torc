@@ -37,8 +37,16 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases) or build from source:
 
 ```bash
-cargo build --workspace --release"
+cargo build --workspace --release
 ```
+
+**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute after downloading:
+
+```bash
+xattr -cr /path/to/torc*
+```
+
+Alternatively, you can right-click each binary and select "Open" to add a security exception.
 
 The unified `torc` CLI provides all workflow management, execution, and monitoring capabilities.
 
