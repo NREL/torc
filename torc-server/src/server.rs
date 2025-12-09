@@ -1121,9 +1121,20 @@ impl<C> Server<C> {
                 -- Base case: find jobs directly blocked by the completed job
                 SELECT
                     jbb.job_id,
-                    -- Cancel if: return_code != 0 AND cancel_on_blocking_job_failure = true
+                    -- Cancel if: ANY dependency has non-zero return code AND cancel_on_blocking_job_failure = true
+                    -- We check ALL completed dependencies, not just the current one being processed
                     CASE
-                        WHEN ? != 0 AND j.cancel_on_blocking_job_failure != 0 THEN 1
+                        WHEN j.cancel_on_blocking_job_failure != 0 AND EXISTS (
+                            SELECT 1
+                            FROM job_depends_on jbb_dep
+                            JOIN job j_dep ON jbb_dep.depends_on_job_id = j_dep.id
+                            JOIN result r_dep ON j_dep.id = r_dep.job_id
+                            JOIN workflow_status ws ON j_dep.workflow_id = ws.id AND r_dep.run_id = ws.run_id
+                            WHERE jbb_dep.job_id = jbb.job_id
+                              AND jbb_dep.workflow_id = ?
+                              AND j_dep.status IN (?, ?, ?, ?)
+                              AND r_dep.return_code != 0
+                        ) THEN 1
                         ELSE 0
                     END as should_cancel,
                     0 as level
@@ -1179,7 +1190,11 @@ impl<C> Server<C> {
             ORDER BY jtp.level ASC  -- Process in dependency order
             "#,
         )
-        .bind(return_code)           // Base case: check return_code for cancellation
+        .bind(workflow_id)           // Base case: workflow_id for subquery
+        .bind(completed_status)      // Base case: complete statuses for subquery
+        .bind(failed_status)
+        .bind(canceled_status)
+        .bind(terminated_status)
         .bind(completed_job_id)      // Base case: depends_on_job_id
         .bind(workflow_id)           // Base case: workflow_id
         .bind(blocked_status)        // Base case: only process blocked jobs
