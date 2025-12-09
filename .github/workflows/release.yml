@@ -30,7 +30,7 @@ jobs:
           # Linux x86_64 (musl for static binaries - works on all distros)
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            use_cross: true
+            use_cross: false
 
           # Linux x86_64 (glibc - for modern distros, better performance)
           - os: ubuntu-20.04
