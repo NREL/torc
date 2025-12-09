@@ -199,7 +199,7 @@ async fn main() -> Result<()> {
 
         let mut args = vec![
             "run".to_string(),
-            "--host".to_string(),
+            "--url".to_string(),
             server_host.clone(),
             "--port".to_string(),
             server_port.to_string(),
