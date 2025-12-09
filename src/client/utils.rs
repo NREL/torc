@@ -126,15 +126,16 @@ pub fn claim_action(
     config: &Configuration,
     workflow_id: i64,
     action_id: i64,
-    compute_node_id: i64,
+    compute_node_id: Option<i64>,
     wait_for_healthy_database_minutes: u64,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let claimed = send_with_retries(
         config,
         || -> Result<bool, Box<dyn std::error::Error>> {
-            let body = serde_json::json!({
-                "compute_node_id": compute_node_id
-            });
+            let body = match compute_node_id {
+                Some(id) => serde_json::json!({ "compute_node_id": id }),
+                None => serde_json::json!({}),
+            };
 
             match default_api::claim_action(config, workflow_id, action_id, body) {
                 Ok(result) => {

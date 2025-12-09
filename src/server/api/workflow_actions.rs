@@ -139,11 +139,12 @@ pub trait WorkflowActionsApi<C> {
     ) -> Result<GetPendingActionsResponse, ApiError>;
 
     /// Atomically claim a workflow action for execution
+    /// compute_node_id is optional - if None, executed_by will be NULL (used for submission from login nodes)
     async fn claim_action(
         &self,
         workflow_id: i64,
         action_id: i64,
-        compute_node_id: i64,
+        compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ClaimActionResponse, ApiError>;
 }
@@ -452,13 +453,14 @@ where
         &self,
         workflow_id: i64,
         action_id: i64,
-        compute_node_id: i64,
+        compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ClaimActionResponse, ApiError> {
         debug!(
-            "claim_action(workflow_id={}, action_id={}) - X-Span-ID: {:?}",
+            "claim_action(workflow_id={}, action_id={}, compute_node_id={:?}) - X-Span-ID: {:?}",
             workflow_id,
             action_id,
+            compute_node_id,
             context.get().0.clone()
         );
 
@@ -545,7 +547,7 @@ where
                 let claimed = result.rows_affected() > 0;
                 if claimed {
                     info!(
-                        "Successfully claimed action {} for compute node {} (persistent={})",
+                        "Successfully claimed action {} for compute node {:?} (persistent={})",
                         action_id, compute_node_id, is_persistent
                     );
                     let response = serde_json::json!({"claimed": true, "action_id": action_id});

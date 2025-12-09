@@ -198,34 +198,9 @@ impl WorkflowManager {
             }
         }
 
-        // Create a compute node for the submission host
-        let compute_node = match default_api::create_compute_node(
-            &self.config,
-            crate::models::ComputeNodeModel::new(
-                self.workflow_id,
-                self.hostname.clone(),
-                std::process::id() as i64,
-                chrono::Utc::now().to_rfc3339(),
-                0,   // num_cpus
-                0.0, // memory_gb
-                0,   // num_gpus
-                0,   // num_nodes
-                "submission".to_string(),
-                None, // scheduler
-            ),
-        ) {
-            Ok(node) => node,
-            Err(err) => {
-                error!("Failed to create compute node: {}", err);
-                return Err(TorcError::ApiError(err.to_string()));
-            }
-        };
-
-        let compute_node_id = compute_node
-            .id
-            .ok_or_else(|| TorcError::ApiError("Compute node ID is missing".to_string()))?;
-
         // Get pending on_workflow_start actions
+        // Note: We don't create a compute node for the submission host (login node)
+        // since it's not actually running jobs - it just submits to the scheduler
         let actions = match default_api::get_pending_actions(
             &self.config,
             self.workflow_id,
@@ -254,13 +229,13 @@ impl WorkflowManager {
 
                 // Only claim the action if we can execute it (scheduler_type == "slurm")
                 if scheduler_type == "slurm" {
-                    // Claim the action atomically
+                    // Claim the action atomically (no compute_node_id since we're on login node)
                     let claimed = match crate::client::utils::claim_action(
                         &self.config,
                         self.workflow_id,
                         action_id,
-                        compute_node_id,
-                        20, // wait_for_healthy_database_minutes - use a reasonable default
+                        None, // No compute node for login node submissions
+                        20,   // wait_for_healthy_database_minutes - use a reasonable default
                     ) {
                         Ok(claimed) => claimed,
                         Err(err) => {

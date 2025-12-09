@@ -2055,16 +2055,8 @@ where
         body: serde_json::Value,
         context: &C,
     ) -> Result<ClaimActionResponse, ApiError> {
-        // Parse compute_node_id from body
-        let compute_node_id = match body.get("compute_node_id").and_then(|v| v.as_i64()) {
-            Some(id) => id,
-            None => {
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": "Missing or invalid compute_node_id in request body"
-                }));
-                return Ok(ClaimActionResponse::DefaultErrorResponse(error_response));
-            }
-        };
+        // Parse compute_node_id from body (optional - can be null for login node submissions)
+        let compute_node_id = body.get("compute_node_id").and_then(|v| v.as_i64());
 
         // Check if workflow exists
         let workflow_exists = self
