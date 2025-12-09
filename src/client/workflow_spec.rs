@@ -1275,8 +1275,17 @@ impl WorkflowSpec {
 
                 // Set optional fields
                 job_model.invocation_script = job_spec.invocation_script.clone();
-                job_model.cancel_on_blocking_job_failure = job_spec.cancel_on_blocking_job_failure;
-                job_model.supports_termination = job_spec.supports_termination;
+                // Only override cancel_on_blocking_job_failure if explicitly set in spec
+                // (JobModel::new() defaults to Some(true))
+                if job_spec.cancel_on_blocking_job_failure.is_some() {
+                    job_model.cancel_on_blocking_job_failure =
+                        job_spec.cancel_on_blocking_job_failure;
+                }
+                // Only override supports_termination if explicitly set in spec
+                // (JobModel::new() defaults to Some(false))
+                if job_spec.supports_termination.is_some() {
+                    job_model.supports_termination = job_spec.supports_termination;
+                }
 
                 // Map file names and regexes to IDs
                 let input_file_ids = Self::resolve_names_and_regexes(
