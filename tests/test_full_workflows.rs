@@ -825,5 +825,336 @@ resource_requirements:
     );
 
     // Cleanup
-    default_api::delete_workflow(config, workflow_id, None).expect("Failed to delete workflow");
+    default_api::delete_workflow(config, workflow_id, None)
+        .expect("Failed to delete restart_test workflow");
+}
+
+/// Test workflow restart after fixing a bad input file using reinitialize.
+///
+/// This test creates a three-stage workflow similar to test_workflow_restart_after_failure,
+/// but instead of using a flag file, it uses an input file with bad data that causes the job
+/// to fail. The reinitialize command detects the file has changed and resets the job.
+///
+/// The test verifies:
+/// 1. First run: setup completes, work_a/work_b complete, work_fail fails (bad input), finalize is canceled
+/// 2. After fixing input file and running reinitialize: work_fail becomes ready, finalize becomes blocked
+/// 3. Second run: all jobs complete with return code 0
+#[rstest]
+fn test_workflow_reinitialize_after_fixing_input(start_server: &ServerProcess) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir = temp_dir.path().to_path_buf();
+
+    // Create an input file with bad data that will cause the job to fail
+    let input_file_path = work_dir.join("config.json");
+    let bad_input = r#"{"valid": false, "message": "This input should cause failure"}"#;
+    fs::write(&input_file_path, bad_input).expect("Failed to write config.json");
+
+    // Create workflow with three stages using YAML spec
+    // The work_fail job reads the config.json file and fails if valid=false
+    let yaml_content = format!(
+        r#"name: reinitialize_test_workflow
+user: test_user
+description: Test workflow reinitialize after fixing input file
+
+files:
+  - name: config_file
+    path: {config_path}
+
+jobs:
+  # Stage 1: Setup job (no dependencies)
+  - name: setup
+    command: echo "Setup complete"
+    resource_requirements: minimal
+
+  # Stage 2: Three parallel jobs that depend on setup
+  - name: work_a
+    command: echo "Work A complete"
+    depends_on:
+      - setup
+    resource_requirements: minimal
+
+  - name: work_b
+    command: echo "Work B complete"
+    depends_on:
+      - setup
+    resource_requirements: minimal
+
+  # This job reads the config file and fails if valid=false
+  - name: work_fail
+    command: 'if grep -q "\"valid\": true" {config_path}; then echo "Input valid, job succeeds"; exit 0; else echo "Input invalid, job fails"; exit 1; fi'
+    depends_on:
+      - setup
+    input_files:
+      - config_file
+    resource_requirements: minimal
+
+  # Stage 3: Finalize job that depends on all Stage 2 jobs
+  - name: finalize
+    command: echo "Finalize complete"
+    depends_on:
+      - work_a
+      - work_b
+      - work_fail
+    resource_requirements: minimal
+
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 1m
+    runtime: P0DT1M
+"#,
+        config_path = input_file_path.display()
+    );
+
+    // Write YAML to temp file
+    let yaml_path = work_dir.join("reinitialize_test.yaml");
+    fs::write(&yaml_path, &yaml_content).expect("Failed to write YAML file");
+
+    // === First run: work_fail should fail (bad input) ===
+
+    run_jobs_cli_command(
+        &[
+            yaml_path.to_str().unwrap(),
+            "--poll-interval",
+            "0.1",
+            "--max-parallel-jobs",
+            "4",
+        ],
+        start_server,
+    )
+    .expect("First run command should succeed (workflow completes, checking job statuses)");
+
+    // Find the workflow that was created
+    let workflows = default_api::list_workflows(
+        config,
+        None,
+        None,
+        None,
+        None,
+        Some("reinitialize_test_workflow"),
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list workflows");
+
+    let workflow = workflows
+        .items
+        .as_ref()
+        .and_then(|items| items.first())
+        .expect("Workflow not found");
+    let workflow_id = workflow.id.unwrap();
+
+    // Verify job statuses after first run
+    let jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    let job_statuses: HashMap<String, models::JobStatus> = job_items
+        .iter()
+        .map(|j| (j.name.clone(), j.status.unwrap()))
+        .collect();
+
+    // Stage 1 should be complete
+    assert_eq!(
+        job_statuses.get("setup").unwrap(),
+        &models::JobStatus::Completed,
+        "setup should be completed"
+    );
+
+    // Stage 2: work_a and work_b should be complete, work_fail should be failed
+    assert_eq!(
+        job_statuses.get("work_a").unwrap(),
+        &models::JobStatus::Completed,
+        "work_a should be completed"
+    );
+    assert_eq!(
+        job_statuses.get("work_b").unwrap(),
+        &models::JobStatus::Completed,
+        "work_b should be completed"
+    );
+    assert_eq!(
+        job_statuses.get("work_fail").unwrap(),
+        &models::JobStatus::Failed,
+        "work_fail should be failed"
+    );
+
+    // Stage 3: finalize should be canceled (because a dependency failed)
+    assert_eq!(
+        job_statuses.get("finalize").unwrap(),
+        &models::JobStatus::Canceled,
+        "finalize should be canceled due to failed dependency"
+    );
+
+    // === Fix the input file and run reinitialize ===
+
+    // Wait a moment to ensure file mtime changes
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    // Fix the input file
+    let good_input = r#"{"valid": true, "message": "This input should succeed"}"#;
+    fs::write(&input_file_path, good_input).expect("Failed to write fixed config.json");
+
+    // Run reinitialize command
+    run_cli_command(
+        &["workflows", "reinitialize", &workflow_id.to_string()],
+        start_server,
+    )
+    .expect("Failed to reinitialize workflow");
+
+    // Verify job statuses after reinitialize
+    let jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs after reinitialize");
+
+    let job_items = jobs.items.unwrap();
+    let job_statuses: HashMap<String, models::JobStatus> = job_items
+        .iter()
+        .map(|j| (j.name.clone(), j.status.unwrap()))
+        .collect();
+
+    // Stage 1 should still be complete (wasn't affected)
+    assert_eq!(
+        job_statuses.get("setup").unwrap(),
+        &models::JobStatus::Completed,
+        "setup should still be completed after reinitialize"
+    );
+
+    // Stage 2: work_a and work_b should still be complete
+    assert_eq!(
+        job_statuses.get("work_a").unwrap(),
+        &models::JobStatus::Completed,
+        "work_a should still be completed after reinitialize"
+    );
+    assert_eq!(
+        job_statuses.get("work_b").unwrap(),
+        &models::JobStatus::Completed,
+        "work_b should still be completed after reinitialize"
+    );
+
+    // work_fail should now be ready (reinitialize detected changed input file)
+    assert_eq!(
+        job_statuses.get("work_fail").unwrap(),
+        &models::JobStatus::Ready,
+        "work_fail should be ready after reinitialize (input file changed)"
+    );
+
+    // finalize should be blocked (waiting on work_fail to complete)
+    assert_eq!(
+        job_statuses.get("finalize").unwrap(),
+        &models::JobStatus::Blocked,
+        "finalize should be blocked after reinitialize"
+    );
+
+    // === Second run: work_fail should succeed now ===
+
+    run_jobs_cli_command(
+        &[
+            &workflow_id.to_string(),
+            "--poll-interval",
+            "0.1",
+            "--max-parallel-jobs",
+            "4",
+        ],
+        start_server,
+    )
+    .expect("Second run should succeed");
+
+    // Verify all jobs are now completed
+    let jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs after second run");
+
+    let job_items = jobs.items.unwrap();
+    for job in &job_items {
+        assert_eq!(
+            job.status.unwrap(),
+            models::JobStatus::Completed,
+            "Job {} should be completed after second run, got {:?}",
+            job.name,
+            job.status
+        );
+    }
+
+    // Verify all results have return code 0
+    // Get results for all runs (not just run_id 1)
+    let results = default_api::list_results(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(true), // all_runs=true
+    )
+    .expect("Failed to list all results");
+
+    let result_items = results.items.unwrap();
+
+    // Find the latest run_id for work_fail job
+    let work_fail_job = job_items.iter().find(|j| j.name == "work_fail").unwrap();
+    let work_fail_latest = result_items
+        .iter()
+        .filter(|r| r.job_id == work_fail_job.id.unwrap())
+        .max_by_key(|r| r.run_id)
+        .expect("work_fail should have results");
+    assert_eq!(
+        work_fail_latest.return_code, 0,
+        "work_fail latest run should have return code 0"
+    );
+
+    // Find finalize result
+    let finalize_job = job_items.iter().find(|j| j.name == "finalize").unwrap();
+    let finalize_result = result_items
+        .iter()
+        .find(|r| r.job_id == finalize_job.id.unwrap())
+        .expect("finalize should have a result after second run");
+    assert_eq!(
+        finalize_result.return_code, 0,
+        "finalize should have return code 0"
+    );
+
+    // Cleanup
+    default_api::delete_workflow(config, workflow_id, None)
+        .expect("Failed to delete reinitialize_test workflow");
 }
