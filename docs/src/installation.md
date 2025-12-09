@@ -1,11 +1,25 @@
 # Installation
 
-## Prerequisites
+## Precompiled Binaries (Recommended)
+
+Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases).
+
+**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute after downloading:
+
+```bash
+xattr -cr /path/to/torc*
+```
+
+Alternatively, you can right-click each binary and select "Open" to add a security exception.
+
+## Building from Source
+
+### Prerequisites
 
 - Rust 1.70 or later
 - SQLite 3.35 or later (usually included with Rust via sqlx)
 
-## Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/NREL/torc.git
