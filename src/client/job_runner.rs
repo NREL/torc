@@ -964,7 +964,7 @@ impl JobRunner {
                 &self.config,
                 self.workflow_id,
                 action_id,
-                self.compute_node_id,
+                Some(self.compute_node_id),
                 self.rules.compute_node_wait_for_healthy_database_minutes,
             ) {
                 Ok(claimed) => claimed,
@@ -1044,7 +1044,7 @@ impl JobRunner {
                 &self.config,
                 self.workflow_id,
                 action_id,
-                self.compute_node_id,
+                Some(self.compute_node_id),
                 self.rules.compute_node_wait_for_healthy_database_minutes,
             ) {
                 Ok(claimed) => claimed,
@@ -1123,7 +1123,7 @@ impl JobRunner {
                 &self.config,
                 self.workflow_id,
                 action_id,
-                self.compute_node_id,
+                Some(self.compute_node_id),
                 self.rules.compute_node_wait_for_healthy_database_minutes,
             ) {
                 Ok(claimed) => claimed,
@@ -1218,7 +1218,7 @@ impl JobRunner {
                 &self.config,
                 self.workflow_id,
                 action_id,
-                self.compute_node_id,
+                Some(self.compute_node_id),
                 self.rules.compute_node_wait_for_healthy_database_minutes,
             ) {
                 Ok(claimed) => claimed,
