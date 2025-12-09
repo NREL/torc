@@ -3100,6 +3100,8 @@ class TorcDashboard {
             granularity: 'summary',
             sample_interval_seconds: 5
         };
+        // Parallelization strategy: 'resource_aware' or 'queue_depth'
+        this.wizardParallelizationStrategy = 'resource_aware';
 
         // Resource presets
         this.resourcePresets = {
@@ -3108,6 +3110,15 @@ class TorcDashboard {
             'gpu': { name: 'GPU', num_cpus: 1, memory: '10g', num_gpus: 1 },
             'custom': { name: 'Custom', num_cpus: 1, memory: '1g', num_gpus: 0 }
         };
+
+        // Parallelization strategy change handler
+        document.getElementById('wizard-parallelization-strategy')?.addEventListener('change', (e) => {
+            this.wizardParallelizationStrategy = e.target.value;
+            // Re-render jobs to show/hide resource requirements
+            this.wizardRenderJobs();
+            // Re-render actions to show/hide max_parallel_jobs
+            this.wizardRenderActions();
+        });
 
         // Navigation buttons
         document.getElementById('wizard-prev')?.addEventListener('click', () => {
@@ -3169,12 +3180,17 @@ class TorcDashboard {
             granularity: 'summary',
             sample_interval_seconds: 5
         };
+        this.wizardParallelizationStrategy = 'resource_aware';
 
         // Clear form fields
         const nameInput = document.getElementById('wizard-name');
         const descInput = document.getElementById('wizard-description');
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
+
+        // Reset parallelization strategy selector
+        const strategySelect = document.getElementById('wizard-parallelization-strategy');
+        if (strategySelect) strategySelect.value = 'resource_aware';
 
         // Reset resource monitoring form (enabled by default)
         const monitoringEnabled = document.getElementById('wizard-monitoring-enabled');
@@ -3224,6 +3240,15 @@ class TorcDashboard {
         document.querySelectorAll('.wizard-content').forEach((content, i) => {
             content.classList.toggle('active', i === step - 1);
         });
+
+        // Render the content for the current step
+        if (step === 2) {
+            this.wizardRenderJobs();
+        } else if (step === 3) {
+            this.wizardRenderSchedulers();
+        } else if (step === 4) {
+            this.wizardRenderActions();
+        }
 
         // Update navigation
         document.getElementById('wizard-prev').disabled = step === 1;
@@ -3315,6 +3340,7 @@ class TorcDashboard {
             num_cpus: 1,
             memory: '1g',
             num_gpus: 0,
+            runtime: 'PT1H',
             parameters: '',
             scheduler: ''
         };
@@ -3395,6 +3421,13 @@ class TorcDashboard {
         const container = document.getElementById('wizard-jobs-list');
         if (!container) return;
 
+        // Track which cards are expanded before re-rendering
+        const expandedJobIds = [];
+        container.querySelectorAll('.wizard-job-card.expanded').forEach(card => {
+            const jobId = parseInt(card.dataset.jobId);
+            if (!isNaN(jobId)) expandedJobIds.push(jobId);
+        });
+
         if (this.wizardJobs.length === 0) {
             container.innerHTML = `
                 <div class="wizard-empty-state">
@@ -3405,12 +3438,15 @@ class TorcDashboard {
             return;
         }
 
+        const showResources = this.wizardParallelizationStrategy === 'resource_aware';
+
         container.innerHTML = this.wizardJobs.map((job, index) => {
             // Get other jobs for depends_on dropdown
             const otherJobs = this.wizardJobs.filter(j => j.id !== job.id);
+            const isExpanded = expandedJobIds.includes(job.id);
 
             return `
-                <div class="wizard-job-card" data-job-id="${job.id}">
+                <div class="wizard-job-card${isExpanded ? ' expanded' : ''}" data-job-id="${job.id}">
                     <div class="wizard-job-header" onclick="app.wizardToggleJob(${job.id})">
                         <h5>
                             <span class="job-index">${index + 1}</span>
@@ -3464,54 +3500,67 @@ class TorcDashboard {
                         <div class="wizard-job-row">
                             <div class="form-group">
                                 <label>Scheduler</label>
-                                <select class="select-input"
-                                        onchange="app.wizardUpdateJob(${job.id}, 'scheduler', this.value)">
-                                    <option value="" ${!job.scheduler ? 'selected' : ''}>None (local execution)</option>
-                                    ${this.wizardGetSchedulerNames().map(name => `
-                                        <option value="${this.escapeHtml(name)}" ${job.scheduler === name ? 'selected' : ''}>
-                                            ${this.escapeHtml(name)}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                                <small>Optional, assign this job to a Slurm scheduler (define schedulers in step 3)</small>
+                                <div class="scheduler-select-row">
+                                    <select class="select-input"
+                                            onchange="app.wizardUpdateJob(${job.id}, 'scheduler', this.value)">
+                                        <option value="" ${!job.scheduler ? 'selected' : ''}>Auto (any compatible runner)</option>
+                                        ${this.wizardGetSchedulerNames().map(name => `
+                                            <option value="${this.escapeHtml(name)}" ${job.scheduler === name ? 'selected' : ''}>
+                                                ${this.escapeHtml(name)}
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                            onclick="event.stopPropagation(); app.wizardAddSchedulerFromJob(${job.id})"
+                                            title="Add a new Slurm scheduler">+ New</button>
+                                </div>
+                                <small>Runs on any compatible runner. <a href="https://nrel.github.io/torc/explanation/parallelization.html#job-allocation-ambiguity-two-approaches" target="_blank">Learn more</a></small>
                             </div>
                             <div class="form-group"></div>
                         </div>
-                        <div class="form-group">
-                            <label>Resources</label>
-                            <div class="resource-presets">
-                                ${Object.entries(this.resourcePresets).map(([key, preset]) => `
-                                    <button type="button" class="resource-preset-btn ${job.resource_preset === key ? 'selected' : ''}"
-                                            data-preset="${key}"
-                                            onclick="app.wizardUpdateJob(${job.id}, 'resource_preset', '${key}')">
-                                        ${preset.name}
-                                        ${key !== 'custom' ? `<small>(${preset.num_cpus} CPU, ${preset.memory}${preset.num_gpus ? ', ' + preset.num_gpus + ' GPU' : ''})</small>` : ''}
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>
-                        ${job.resource_preset === 'custom' ? `
-                            <div class="wizard-job-row">
-                                <div class="form-group">
-                                    <label>CPUs</label>
-                                    <input type="number" class="text-input" min="1" value="${job.num_cpus}"
-                                           onchange="app.wizardUpdateJob(${job.id}, 'num_cpus', parseInt(this.value))">
-                                </div>
-                                <div class="form-group">
-                                    <label>Memory</label>
-                                    <input type="text" class="text-input" value="${this.escapeHtml(job.memory)}"
-                                           placeholder="e.g., 4g, 512m"
-                                           onchange="app.wizardUpdateJob(${job.id}, 'memory', this.value)">
+                        ${showResources ? `
+                            <div class="form-group">
+                                <label>Resources</label>
+                                <div class="resource-presets">
+                                    ${Object.entries(this.resourcePresets).map(([key, preset]) => `
+                                        <button type="button" class="resource-preset-btn ${job.resource_preset === key ? 'selected' : ''}"
+                                                data-preset="${key}"
+                                                onclick="app.wizardUpdateJob(${job.id}, 'resource_preset', '${key}')">
+                                            ${preset.name}
+                                            ${key !== 'custom' ? `<small>(${preset.num_cpus} CPU, ${preset.memory}${preset.num_gpus ? ', ' + preset.num_gpus + ' GPU' : ''})</small>` : ''}
+                                        </button>
+                                    `).join('')}
                                 </div>
                             </div>
-                            <div class="wizard-job-row">
-                                <div class="form-group">
-                                    <label>GPUs</label>
-                                    <input type="number" class="text-input" min="0" value="${job.num_gpus}"
-                                           onchange="app.wizardUpdateJob(${job.id}, 'num_gpus', parseInt(this.value))">
+                            ${job.resource_preset === 'custom' ? `
+                                <div class="wizard-job-row">
+                                    <div class="form-group">
+                                        <label>CPUs</label>
+                                        <input type="number" class="text-input" min="1" value="${job.num_cpus}"
+                                               onchange="app.wizardUpdateJob(${job.id}, 'num_cpus', parseInt(this.value))">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Memory</label>
+                                        <input type="text" class="text-input" value="${this.escapeHtml(job.memory)}"
+                                               placeholder="e.g., 4g, 512m"
+                                               onchange="app.wizardUpdateJob(${job.id}, 'memory', this.value)">
+                                    </div>
                                 </div>
-                                <div class="form-group"></div>
-                            </div>
+                                <div class="wizard-job-row">
+                                    <div class="form-group">
+                                        <label>GPUs</label>
+                                        <input type="number" class="text-input" min="0" value="${job.num_gpus}"
+                                               onchange="app.wizardUpdateJob(${job.id}, 'num_gpus', parseInt(this.value))">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Runtime</label>
+                                        <input type="text" class="text-input" value="${this.escapeHtml(job.runtime)}"
+                                               placeholder="PT1H (1 hour)"
+                                               onchange="app.wizardUpdateJob(${job.id}, 'runtime', this.value)">
+                                        <small>ISO8601 duration: PT1H (1hr), PT30M (30min), P1D (1 day)</small>
+                                    </div>
+                                </div>
+                            ` : ''}
                         ` : ''}
                     </div>
                 </div>
@@ -3582,6 +3631,42 @@ class TorcDashboard {
         this.wizardRenderSchedulers();
     }
 
+    /**
+     * Add a new scheduler from within a job card.
+     * Creates a new scheduler with a default name, adds it, and re-renders jobs
+     * so the dropdown updates.
+     */
+    wizardAddSchedulerFromJob(jobId) {
+        const schedulerId = ++this.wizardSchedulerIdCounter;
+        const schedulerName = `scheduler-${schedulerId}`;
+        const scheduler = {
+            id: schedulerId,
+            name: schedulerName,
+            account: '',
+            nodes: 1,
+            walltime: '01:00:00',
+            partition: '',
+            qos: '',
+            gres: '',
+            mem: '',
+            tmp: '',
+            extra: ''
+        };
+        this.wizardSchedulers.push(scheduler);
+
+        // Auto-assign this scheduler to the job
+        const job = this.wizardJobs.find(j => j.id === jobId);
+        if (job) {
+            job.scheduler = schedulerName;
+        }
+
+        // Re-render jobs to update scheduler dropdowns
+        this.wizardRenderJobs();
+
+        // Show a toast to guide the user
+        this.showToast(`Scheduler "${schedulerName}" created. Configure it in step 3 (Schedulers).`, 'info');
+    }
+
     wizardToggleScheduler(schedulerId) {
         const card = document.querySelector(`[data-scheduler-id="${schedulerId}"]`);
         if (card) {
@@ -3621,6 +3706,13 @@ class TorcDashboard {
         const container = document.getElementById('wizard-schedulers-list');
         if (!container) return;
 
+        // Track which cards are expanded before re-rendering
+        const expandedSchedulerIds = [];
+        container.querySelectorAll('.wizard-scheduler-card.expanded').forEach(card => {
+            const schedulerId = parseInt(card.dataset.schedulerId);
+            if (!isNaN(schedulerId)) expandedSchedulerIds.push(schedulerId);
+        });
+
         if (this.wizardSchedulers.length === 0) {
             container.innerHTML = `
                 <div class="wizard-empty-state">
@@ -3633,8 +3725,9 @@ class TorcDashboard {
         }
 
         container.innerHTML = this.wizardSchedulers.map((scheduler, index) => {
+            const isExpanded = expandedSchedulerIds.includes(scheduler.id);
             return `
-                <div class="wizard-scheduler-card" data-scheduler-id="${scheduler.id}">
+                <div class="wizard-scheduler-card${isExpanded ? ' expanded' : ''}" data-scheduler-id="${scheduler.id}">
                     <div class="wizard-scheduler-header" onclick="app.wizardToggleScheduler(${scheduler.id})">
                         <h5>
                             <span class="scheduler-index">${index + 1}</span>
@@ -3703,7 +3796,7 @@ class TorcDashboard {
                                 <label>Memory</label>
                                 <input type="text" class="text-input"
                                        value="${this.escapeHtml(scheduler.mem)}"
-                                       placeholder="e.g., 64G"
+                                       placeholder="e.g., 256G"
                                        onchange="app.wizardUpdateScheduler(${scheduler.id}, 'mem', this.value)">
                             </div>
                         </div>
@@ -3760,7 +3853,8 @@ class TorcDashboard {
             trigger_type: 'on_workflow_start',
             scheduler: '',
             jobs: [],
-            num_allocations: 1
+            num_allocations: 1,
+            max_parallel_jobs: 10
         };
         this.wizardActions.push(action);
         this.wizardRenderActions();
@@ -3838,11 +3932,19 @@ class TorcDashboard {
             return;
         }
 
+        // Track which cards are expanded before re-rendering
+        const expandedActionIds = [];
+        container.querySelectorAll('.wizard-action-card.expanded').forEach(card => {
+            const actionId = parseInt(card.dataset.actionId);
+            if (!isNaN(actionId)) expandedActionIds.push(actionId);
+        });
+
         container.innerHTML = this.wizardActions.map((action, index) => {
             const showJobSelector = action.trigger_type === 'on_jobs_ready' || action.trigger_type === 'on_jobs_complete';
+            const isExpanded = expandedActionIds.includes(action.id);
 
             return `
-                <div class="wizard-action-card" data-action-id="${action.id}">
+                <div class="wizard-action-card${isExpanded ? ' expanded' : ''}" data-action-id="${action.id}">
                     <div class="wizard-action-header" onclick="app.wizardToggleAction(${action.id})">
                         <h5>
                             <span class="action-index">${index + 1}</span>
@@ -3906,7 +4008,14 @@ class TorcDashboard {
                                        onchange="app.wizardUpdateAction(${action.id}, 'num_allocations', parseInt(this.value) || 1)">
                                 <small>How many Slurm job allocations to request</small>
                             </div>
-                            <div class="form-group"></div>
+                            ${this.wizardParallelizationStrategy === 'queue_depth' ? `
+                                <div class="form-group">
+                                    <label>Max Parallel Jobs</label>
+                                    <input type="number" class="text-input" min="1" value="${action.max_parallel_jobs || 10}"
+                                           onchange="app.wizardUpdateAction(${action.id}, 'max_parallel_jobs', parseInt(this.value) || 10)">
+                                    <small>Maximum concurrent jobs per allocation (--max-parallel-jobs)</small>
+                                </div>
+                            ` : '<div class="form-group"></div>'}
                         </div>
                     </div>
                 </div>
@@ -3917,6 +4026,7 @@ class TorcDashboard {
     wizardGenerateSpec() {
         const name = document.getElementById('wizard-name')?.value?.trim() || 'untitled-workflow';
         const description = document.getElementById('wizard-description')?.value?.trim();
+        const useResourceAware = this.wizardParallelizationStrategy === 'resource_aware';
 
         // Build job info map for resolving depends_on references
         const jobInfoMap = {};
@@ -3929,25 +4039,29 @@ class TorcDashboard {
             };
         });
 
-        // Build unique resource requirements
+        // Build unique resource requirements (only for resource-aware strategy)
         const resourceReqs = {};
-        this.wizardJobs.forEach(job => {
-            const key = `${job.num_cpus}_${job.memory}_${job.num_gpus}`;
-            if (!resourceReqs[key]) {
-                resourceReqs[key] = {
-                    name: `res_${job.num_cpus}cpu_${job.memory}${job.num_gpus > 0 ? '_' + job.num_gpus + 'gpu' : ''}`,
-                    num_cpus: job.num_cpus,
-                    memory: job.memory,
-                    num_gpus: job.num_gpus,
-                    num_nodes: 1,
-                    runtime: "PT1H"
-                };
-            }
-        });
+        if (useResourceAware) {
+            this.wizardJobs.forEach(job => {
+                const runtime = job.runtime || 'PT1H';
+                const key = `${job.num_cpus}_${job.memory}_${job.num_gpus}_${runtime}`;
+                if (!resourceReqs[key]) {
+                    resourceReqs[key] = {
+                        name: `res_${job.num_cpus}cpu_${job.memory}${job.num_gpus > 0 ? '_' + job.num_gpus + 'gpu' : ''}_${runtime}`,
+                        num_cpus: job.num_cpus,
+                        memory: job.memory,
+                        num_gpus: job.num_gpus,
+                        num_nodes: 1,
+                        runtime: runtime
+                    };
+                }
+            });
+        }
 
         // Build jobs array
         const jobs = this.wizardJobs.map(job => {
-            const resKey = `${job.num_cpus}_${job.memory}_${job.num_gpus}`;
+            const runtime = job.runtime || 'PT1H';
+            const resKey = `${job.num_cpus}_${job.memory}_${job.num_gpus}_${runtime}`;
             const jobSpec = {
                 name: job.name?.trim() || `job_${job.id}`,
                 command: job.command?.trim() || 'echo "TODO"'
@@ -3977,8 +4091,10 @@ class TorcDashboard {
                 }
             }
 
-            // Add resource requirements
-            jobSpec.resource_requirements = resourceReqs[resKey].name;
+            // Add resource requirements only for resource-aware strategy
+            if (useResourceAware) {
+                jobSpec.resource_requirements = resourceReqs[resKey].name;
+            }
 
             // Add scheduler if specified
             if (job.scheduler?.trim()) {
@@ -4092,15 +4208,23 @@ class TorcDashboard {
                     && a.jobs && a.jobs.length > 0) {
                     actionSpec.jobs = a.jobs;
                 }
+                // Add max_parallel_jobs for queue-depth strategy
+                if (!useResourceAware && a.max_parallel_jobs) {
+                    actionSpec.max_parallel_jobs = a.max_parallel_jobs;
+                }
                 return actionSpec;
             });
 
         // Build the spec
         const spec = {
             name,
-            jobs,
-            resource_requirements: Object.values(resourceReqs)
+            jobs
         };
+
+        // Add resource_requirements only for resource-aware strategy
+        if (useResourceAware && Object.keys(resourceReqs).length > 0) {
+            spec.resource_requirements = Object.values(resourceReqs);
+        }
 
         if (description) {
             spec.description = description;

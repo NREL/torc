@@ -486,6 +486,18 @@
                             <input type="text" id="wizard-description" class="text-input"
                                    placeholder="Optional description of what this workflow does">
                         </div>
+                        <div class="form-group">
+                            <label for="wizard-parallelization-strategy">Parallelization Strategy</label>
+                            <select id="wizard-parallelization-strategy" class="select-input">
+                                <option value="resource_aware" selected>Resource-Aware (recommended)</option>
+                                <option value="queue_depth">Queue-Depth (--max-parallel-jobs)</option>
+                            </select>
+                            <small class="strategy-help">
+                                <strong>Resource-Aware:</strong> Define per-job CPU/memory/GPU requirements. The runner intelligently allocates jobs based on available resources.<br>
+                                <strong>Queue-Depth:</strong> Simply control the number of concurrent jobs with <code>--max-parallel-jobs</code>. Best for homogeneous jobs.
+                                <a href="https://nrel.github.io/torc/explanation/parallelization.html" target="_blank">Learn more</a>
+                            </small>
+                        </div>
                     </div>
 
                     <!-- Step 2: Jobs -->
