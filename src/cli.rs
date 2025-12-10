@@ -76,6 +76,9 @@ pub enum Commands {
         /// Output directory for jobs
         #[arg(short, long)]
         output_dir: Option<PathBuf>,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
     },
     /// Submit a workflow to scheduler (create from spec file or submit existing workflow by ID)
     ///
@@ -87,6 +90,9 @@ pub enum Commands {
         /// Ignore missing data (defaults to false)
         #[arg(short, long, default_value = "false")]
         ignore_missing_data: bool,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
     },
     /// Workflow management commands
     Workflows {

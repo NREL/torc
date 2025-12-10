@@ -484,6 +484,7 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
+        false,
     )
     .expect("Failed to create workflow from spec file");
 
@@ -550,6 +551,7 @@ fn test_create_workflow_from_json_file_with_files(start_server: &ServerProcess) 
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
+        false,
     )
     .expect("Failed to create workflow from spec file");
 
@@ -610,6 +612,7 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
+        false,
     )
     .expect("Failed to create workflow from spec file");
 
@@ -665,6 +668,7 @@ fn test_create_workflow_from_json_file_duplicate_file_names(start_server: &Serve
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
+        false,
     );
 
     assert!(result.is_err());
@@ -715,6 +719,7 @@ fn test_create_workflow_from_json_file_missing_file_reference(start_server: &Ser
         &start_server.config,
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
+        false,
         false,
     );
 
@@ -767,6 +772,7 @@ fn test_create_workflow_from_json_file_missing_job_dependency(start_server: &Ser
         &temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
+        false,
     );
 
     assert!(result.is_err());
@@ -815,6 +821,7 @@ fn test_create_workflow_from_json5_file(start_server: &ServerProcess) {
         &temp_file.path(),
         "json5_user",
         false,
+        false,
     )
     .expect("Failed to create workflow from JSON5 file");
 
@@ -855,6 +862,7 @@ slurm_schedulers: null
         &temp_file.path(),
         "yaml_user",
         false,
+        false,
     )
     .expect("Failed to create workflow from YAML file");
 
@@ -894,6 +902,7 @@ slurm_schedulers: null
         &start_server.config,
         &temp_file.path(),
         "yaml_user",
+        false,
         false,
     )
     .expect("Failed to create workflow from YAML file");
@@ -941,6 +950,7 @@ fn test_create_workflow_from_spec_auto_detect_json(start_server: &ServerProcess)
         &start_server.config,
         &temp_file.path(),
         "auto_user",
+        false,
         false,
     )
     .expect("Failed to create workflow from spec file with auto-detection");
@@ -1392,6 +1402,7 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
         &temp_file.path(),
         "rollback_user",
         false,
+        false,
     );
 
     // Should fail due to missing resource requirements
@@ -1476,6 +1487,7 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
         &start_server.config,
         &temp_file.path(),
         "regex_user",
+        false,
         false,
     )
     .expect("Failed to create workflow with regex job dependencies");
@@ -1569,6 +1581,7 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
         &temp_file.path(),
         "regex_user",
         false,
+        false,
     )
     .expect("Failed to create workflow with regex file dependencies");
 
@@ -1653,6 +1666,7 @@ fn test_create_workflow_with_regex_user_data_dependencies(start_server: &ServerP
         &start_server.config,
         &temp_file.path(),
         "regex_user",
+        false,
         false,
     )
     .expect("Failed to create workflow with regex user data dependencies");
@@ -1741,6 +1755,7 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
         &start_server.config,
         &temp_file.path(),
         "regex_user",
+        false,
         false,
     )
     .expect("Failed to create workflow with mixed dependencies");
@@ -1849,11 +1864,14 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
         let user = spec.user.unwrap_or_else(|| "test_user".to_string());
 
         // Create the workflow
-        let workflow_id =
-            WorkflowSpec::create_workflow_from_spec(&start_server.config, &spec_file, &user, false)
-                .unwrap_or_else(|e| {
-                    panic!("Failed to create workflow from {:?}: {}", spec_file, e)
-                });
+        let workflow_id = WorkflowSpec::create_workflow_from_spec(
+            &start_server.config,
+            &spec_file,
+            &user,
+            false,
+            false,
+        )
+        .unwrap_or_else(|e| panic!("Failed to create workflow from {:?}: {}", spec_file, e));
 
         assert!(workflow_id > 0, "Invalid workflow ID for {:?}", spec_file);
 
@@ -1882,5 +1900,361 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
 
         default_api::delete_workflow(&start_server.config, workflow_id, None)
             .expect("Warning: Failed to delete workflow");
+    }
+}
+
+// =============================================================================
+// Scheduler Node Validation Tests
+// =============================================================================
+
+/// Test that validation fails when a multi-node scheduler is used without
+/// start_one_worker_per_node and no jobs have matching num_nodes
+#[rstest]
+fn test_scheduler_node_validation_fails_with_mismatched_nodes(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "multi_node_mismatch_workflow",
+        "description": "Workflow with mismatched scheduler nodes",
+        "jobs": [
+            {
+                "name": "job1",
+                "command": "echo hello",
+                "resource_requirements": "single_node_req",
+                "scheduler": "multi_node_scheduler"
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": [
+            {
+                "name": "single_node_req",
+                "num_cpus": 1,
+                "num_nodes": 1,
+                "memory": "1g",
+                "runtime": "PT1H"
+            }
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "multi_node_scheduler",
+                "account": "test_account",
+                "nodes": 2,
+                "walltime": "01:00:00"
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "multi_node_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "test_user",
+        false,
+        false, // skip_checks = false
+    );
+
+    // Should fail due to multi-node scheduler without matching job num_nodes
+    assert!(result.is_err());
+    let err_msg = result.unwrap_err().to_string();
+    assert!(
+        err_msg.contains("Scheduler node validation failed"),
+        "Expected scheduler node validation error, got: {}",
+        err_msg
+    );
+    assert!(
+        err_msg.contains("multi_node_scheduler"),
+        "Error should mention the scheduler name: {}",
+        err_msg
+    );
+}
+
+/// Test that validation passes when start_one_worker_per_node is true
+#[rstest]
+fn test_scheduler_node_validation_passes_with_start_one_worker_per_node(
+    start_server: &ServerProcess,
+) {
+    let workflow_data = serde_json::json!({
+        "name": "multi_node_with_workers_workflow",
+        "description": "Workflow with multi-node scheduler and start_one_worker_per_node",
+        "jobs": [
+            {
+                "name": "job1",
+                "command": "echo hello",
+                "resource_requirements": "single_node_req",
+                "scheduler": "multi_node_scheduler"
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": [
+            {
+                "name": "single_node_req",
+                "num_cpus": 1,
+                "num_nodes": 1,
+                "memory": "1g",
+                "runtime": "PT1H"
+            }
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "multi_node_scheduler",
+                "account": "test_account",
+                "nodes": 2,
+                "walltime": "01:00:00"
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "multi_node_scheduler",
+                "scheduler_type": "slurm",
+                "start_one_worker_per_node": true
+            }
+        ]
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "test_user",
+        false,
+        false, // skip_checks = false
+    );
+
+    // Should succeed because start_one_worker_per_node is true
+    assert!(
+        result.is_ok(),
+        "Expected success with start_one_worker_per_node=true, got: {:?}",
+        result.err()
+    );
+
+    // Clean up
+    if let Ok(workflow_id) = result {
+        let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+    }
+}
+
+/// Test that validation passes when job num_nodes matches scheduler nodes
+#[rstest]
+fn test_scheduler_node_validation_passes_with_matching_nodes(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "matching_nodes_workflow",
+        "description": "Workflow with matching job and scheduler nodes",
+        "jobs": [
+            {
+                "name": "job1",
+                "command": "echo hello",
+                "resource_requirements": "multi_node_req",
+                "scheduler": "multi_node_scheduler"
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": [
+            {
+                "name": "multi_node_req",
+                "num_cpus": 1,
+                "num_nodes": 2,
+                "memory": "1g",
+                "runtime": "PT1H"
+            }
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "multi_node_scheduler",
+                "account": "test_account",
+                "nodes": 2,
+                "walltime": "01:00:00"
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "multi_node_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "test_user",
+        false,
+        false, // skip_checks = false
+    );
+
+    // Should succeed because job num_nodes matches scheduler nodes
+    assert!(
+        result.is_ok(),
+        "Expected success with matching nodes, got: {:?}",
+        result.err()
+    );
+
+    // Clean up
+    if let Ok(workflow_id) = result {
+        let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+    }
+}
+
+/// Test that skip_checks=true bypasses the validation
+#[rstest]
+fn test_scheduler_node_validation_skipped_with_skip_checks(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "skip_checks_workflow",
+        "description": "Workflow that would fail validation but uses skip_checks",
+        "jobs": [
+            {
+                "name": "job1",
+                "command": "echo hello",
+                "resource_requirements": "single_node_req",
+                "scheduler": "multi_node_scheduler"
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": [
+            {
+                "name": "single_node_req",
+                "num_cpus": 1,
+                "num_nodes": 1,
+                "memory": "1g",
+                "runtime": "PT1H"
+            }
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "multi_node_scheduler",
+                "account": "test_account",
+                "nodes": 2,
+                "walltime": "01:00:00"
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "multi_node_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "test_user",
+        false,
+        true, // skip_checks = true
+    );
+
+    // Should succeed because skip_checks is true
+    assert!(
+        result.is_ok(),
+        "Expected success with skip_checks=true, got: {:?}",
+        result.err()
+    );
+
+    // Clean up
+    if let Ok(workflow_id) = result {
+        let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+    }
+}
+
+/// Test that single-node schedulers pass validation without any special requirements
+#[rstest]
+fn test_scheduler_node_validation_passes_with_single_node_scheduler(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "single_node_scheduler_workflow",
+        "description": "Workflow with single-node scheduler (nodes=1)",
+        "jobs": [
+            {
+                "name": "job1",
+                "command": "echo hello",
+                "scheduler": "single_node_scheduler"
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": null,
+        "slurm_schedulers": [
+            {
+                "name": "single_node_scheduler",
+                "account": "test_account",
+                "nodes": 1,
+                "walltime": "01:00:00"
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "single_node_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "test_user",
+        false,
+        false, // skip_checks = false
+    );
+
+    // Should succeed because scheduler only has 1 node
+    assert!(
+        result.is_ok(),
+        "Expected success with single-node scheduler, got: {:?}",
+        result.err()
+    );
+
+    // Clean up
+    if let Ok(workflow_id) = result {
+        let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
     }
 }

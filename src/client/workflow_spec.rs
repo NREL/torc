@@ -624,6 +624,147 @@ impl WorkflowSpec {
         Ok(())
     }
 
+    /// Validate that multi-node schedulers are properly utilized.
+    ///
+    /// This validation ensures that when a scheduler allocates multiple nodes (nodes > 1)
+    /// and `start_one_worker_per_node` is NOT set, there are jobs that actually require
+    /// that many nodes. This prevents scenarios where:
+    ///
+    /// 1. A scheduler allocates 2+ nodes from Slurm
+    /// 2. Jobs only need 1 node each
+    /// 3. A single-node scheduler claims all jobs first
+    /// 4. The multi-node allocation is wasted or jobs fail unexpectedly
+    ///
+    /// If `start_one_worker_per_node` is true, each node runs its own worker and can
+    /// independently claim single-node jobs, so no validation is needed.
+    pub fn validate_scheduler_node_requirements(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Build lookup maps for resource requirements and schedulers
+        let resource_req_map: HashMap<&str, &ResourceRequirementsSpec> = self
+            .resource_requirements
+            .as_ref()
+            .map(|reqs| reqs.iter().map(|r| (r.name.as_str(), r)).collect())
+            .unwrap_or_default();
+
+        let scheduler_map: HashMap<&str, &SlurmSchedulerSpec> = self
+            .slurm_schedulers
+            .as_ref()
+            .map(|schedulers| {
+                schedulers
+                    .iter()
+                    .filter_map(|s| s.name.as_ref().map(|n| (n.as_str(), s)))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        // If no schedulers or no actions, skip validation
+        if scheduler_map.is_empty() {
+            return Ok(());
+        }
+
+        let actions = match &self.actions {
+            Some(actions) => actions,
+            None => return Ok(()),
+        };
+
+        let mut errors: Vec<String> = Vec::new();
+
+        // Check each schedule_nodes action
+        for action in actions {
+            if action.action_type != "schedule_nodes" {
+                continue;
+            }
+
+            // Get scheduler name from action
+            let scheduler_name = match &action.scheduler {
+                Some(name) => name,
+                None => continue, // Validation of required fields is done elsewhere
+            };
+
+            // Only validate slurm schedulers
+            let scheduler_type = action.scheduler_type.as_deref().unwrap_or("");
+            if scheduler_type != "slurm" {
+                continue;
+            }
+
+            // Get the scheduler spec
+            let scheduler = match scheduler_map.get(scheduler_name.as_str()) {
+                Some(s) => s,
+                None => continue, // Missing scheduler is validated elsewhere
+            };
+
+            // If scheduler only allocates 1 node, no special validation needed
+            if scheduler.nodes <= 1 {
+                continue;
+            }
+
+            // If start_one_worker_per_node is true, each node gets its own worker
+            // and can claim single-node jobs independently - no validation needed
+            if action.start_one_worker_per_node == Some(true) {
+                continue;
+            }
+
+            // Multi-node scheduler WITHOUT start_one_worker_per_node:
+            // Find jobs that reference this scheduler and check their num_nodes
+            let jobs_using_scheduler: Vec<&JobSpec> = self
+                .jobs
+                .iter()
+                .filter(|job| job.scheduler.as_ref() == Some(scheduler_name))
+                .collect();
+
+            if jobs_using_scheduler.is_empty() {
+                // No jobs explicitly reference this scheduler - this might be intentional
+                // (jobs could be dynamically assigned), so just warn about potential issue
+                errors.push(format!(
+                    "Scheduler '{}' allocates {} nodes but no jobs explicitly reference it. \
+                     If jobs are dynamically assigned, ensure they have num_nodes={} in their \
+                     resource requirements, or set start_one_worker_per_node=true on the action.",
+                    scheduler_name, scheduler.nodes, scheduler.nodes
+                ));
+                continue;
+            }
+
+            // Check if any job using this scheduler has matching num_nodes
+            let has_matching_job = jobs_using_scheduler.iter().any(|job| {
+                let job_num_nodes = job
+                    .resource_requirements
+                    .as_ref()
+                    .and_then(|name| resource_req_map.get(name.as_str()))
+                    .map(|req| req.num_nodes)
+                    .unwrap_or(1);
+                job_num_nodes == scheduler.nodes
+            });
+
+            if !has_matching_job {
+                let job_names: Vec<&str> = jobs_using_scheduler
+                    .iter()
+                    .map(|j| j.name.as_str())
+                    .collect();
+                errors.push(format!(
+                    "Scheduler '{}' allocates {} nodes but none of the jobs using it \
+                     ({}) have num_nodes={} in their resource requirements. \
+                     Either set num_nodes={} on job resource requirements, \
+                     or set start_one_worker_per_node=true on the schedule_nodes action \
+                     to run independent workers on each node.",
+                    scheduler_name,
+                    scheduler.nodes,
+                    job_names.join(", "),
+                    scheduler.nodes,
+                    scheduler.nodes
+                ));
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(format!(
+                "Scheduler node validation failed:\n  - {}",
+                errors.join("\n  - ")
+            )
+            .into())
+        }
+    }
+
     /// Check if the workflow spec has an on_workflow_start action with schedule_nodes
     /// Returns true if such an action exists, false otherwise
     pub fn has_schedule_nodes_action(&self) -> bool {
@@ -641,11 +782,19 @@ impl WorkflowSpec {
     ///
     /// This function will create the workflow and all associated models (files, user data, etc.)
     /// If any errors occur, the workflow will be deleted (which cascades to all other objects)
+    ///
+    /// # Arguments
+    /// * `config` - Server configuration
+    /// * `path` - Path to the workflow specification file
+    /// * `user` - User that owns the workflow
+    /// * `enable_resource_monitoring` - Whether to enable resource monitoring by default
+    /// * `skip_checks` - Skip validation checks (use with caution)
     pub fn create_workflow_from_spec<P: AsRef<Path>>(
         config: &Configuration,
         path: P,
         user: &str,
         enable_resource_monitoring: bool,
+        skip_checks: bool,
     ) -> Result<i64, Box<dyn std::error::Error>> {
         // Step 1: Deserialize the WorkflowSpecification from spec file
         let mut spec = Self::from_spec_file(path)?;
@@ -666,6 +815,11 @@ impl WorkflowSpec {
 
         // Step 1.4: Validate workflow actions
         spec.validate_actions()?;
+
+        // Step 1.45: Validate scheduler node requirements
+        if !skip_checks {
+            spec.validate_scheduler_node_requirements()?;
+        }
 
         // Step 1.5: Perform variable substitution in commands
         spec.substitute_variables()?;

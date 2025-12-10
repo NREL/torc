@@ -59,6 +59,9 @@ pub enum WorkflowCommands {
         /// Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
         #[arg(long, default_value = "false")]
         no_resource_monitoring: bool,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
     },
     /// Create a new empty workflow
     New {
@@ -1754,9 +1757,16 @@ fn handle_create(
     file: &str,
     user: &str,
     no_resource_monitoring: bool,
+    skip_checks: bool,
     format: &str,
 ) {
-    match WorkflowSpec::create_workflow_from_spec(config, file, user, !no_resource_monitoring) {
+    match WorkflowSpec::create_workflow_from_spec(
+        config,
+        file,
+        user,
+        !no_resource_monitoring,
+        skip_checks,
+    ) {
         Ok(workflow_id) => {
             if format == "json" {
                 let json_output = serde_json::json!({
@@ -1788,8 +1798,16 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             file,
             user,
             no_resource_monitoring,
+            skip_checks,
         } => {
-            handle_create(config, file, user, *no_resource_monitoring, format);
+            handle_create(
+                config,
+                file,
+                user,
+                *no_resource_monitoring,
+                *skip_checks,
+                format,
+            );
         }
         WorkflowCommands::New {
             name,
