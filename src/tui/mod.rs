@@ -440,6 +440,12 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                                     _ => {}
                                 }
                             }
+                            Some(PopupType::Error(_)) => match key.code {
+                                KeyCode::Enter | KeyCode::Esc | KeyCode::Char('q') => {
+                                    app.close_popup()
+                                }
+                                _ => {}
+                            },
                             None => {}
                         }
                         continue;

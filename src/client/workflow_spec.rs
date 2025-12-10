@@ -9,6 +9,50 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+/// Result of validating a workflow specification (dry-run)
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ValidationResult {
+    /// Whether the validation passed with no errors
+    pub valid: bool,
+    /// Validation errors that would prevent workflow creation
+    pub errors: Vec<String>,
+    /// Warnings that don't prevent creation but may indicate issues
+    pub warnings: Vec<String>,
+    /// Summary of what would be created
+    pub summary: ValidationSummary,
+}
+
+/// Summary of workflow components that would be created
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ValidationSummary {
+    /// Name of the workflow
+    pub workflow_name: String,
+    /// Description of the workflow
+    pub workflow_description: Option<String>,
+    /// Number of jobs that would be created
+    pub job_count: usize,
+    /// Number of jobs before parameter expansion
+    pub job_count_before_expansion: usize,
+    /// Number of files that would be created
+    pub file_count: usize,
+    /// Number of files before parameter expansion
+    pub file_count_before_expansion: usize,
+    /// Number of user data records that would be created
+    pub user_data_count: usize,
+    /// Number of resource requirements that would be created
+    pub resource_requirements_count: usize,
+    /// Number of Slurm schedulers that would be created
+    pub slurm_scheduler_count: usize,
+    /// Number of workflow actions that would be created
+    pub action_count: usize,
+    /// Whether the workflow has on_workflow_start schedule_nodes action
+    pub has_schedule_nodes_action: bool,
+    /// List of job names that would be created
+    pub job_names: Vec<String>,
+    /// List of scheduler names
+    pub scheduler_names: Vec<String>,
+}
+
 #[cfg(feature = "client")]
 use kdl::{KdlDocument, KdlNode};
 
@@ -774,6 +818,112 @@ impl WorkflowSpec {
             })
         } else {
             false
+        }
+    }
+
+    /// Validate a workflow specification without creating anything (dry-run mode)
+    ///
+    /// This method performs all validation steps that would occur during `create_workflow_from_spec`
+    /// but without actually creating the workflow. It returns a detailed validation result including:
+    /// - Whether validation passed
+    /// - Any errors that would prevent creation
+    /// - Any warnings about potential issues
+    /// - A summary of what would be created (job count, file count, etc.)
+    ///
+    /// # Arguments
+    /// * `path` - Path to the workflow specification file
+    ///
+    /// # Returns
+    /// A `ValidationResult` containing validation status and summary
+    pub fn validate_spec<P: AsRef<Path>>(path: P) -> ValidationResult {
+        let mut errors = Vec::new();
+        let warnings = Vec::new();
+
+        // Step 1: Try to parse the spec file
+        let mut spec = match Self::from_spec_file(&path) {
+            Ok(spec) => spec,
+            Err(e) => {
+                return ValidationResult {
+                    valid: false,
+                    errors: vec![format!("Failed to parse specification file: {}", e)],
+                    warnings: vec![],
+                    summary: ValidationSummary {
+                        workflow_name: String::new(),
+                        workflow_description: None,
+                        job_count: 0,
+                        job_count_before_expansion: 0,
+                        file_count: 0,
+                        file_count_before_expansion: 0,
+                        user_data_count: 0,
+                        resource_requirements_count: 0,
+                        slurm_scheduler_count: 0,
+                        action_count: 0,
+                        has_schedule_nodes_action: false,
+                        job_names: vec![],
+                        scheduler_names: vec![],
+                    },
+                };
+            }
+        };
+
+        // Capture counts before expansion
+        let job_count_before_expansion = spec.jobs.len();
+        let file_count_before_expansion = spec.files.as_ref().map(|f| f.len()).unwrap_or(0);
+
+        // Step 2: Expand parameters
+        if let Err(e) = spec.expand_parameters() {
+            errors.push(format!("Parameter expansion failed: {}", e));
+        }
+
+        // Step 3: Validate actions
+        if let Err(e) = spec.validate_actions() {
+            errors.push(format!("Action validation failed: {}", e));
+        }
+
+        // Step 4: Validate scheduler node requirements
+        // This is an error by default (same as create_workflow_from_spec with skip_checks=false)
+        if let Err(e) = spec.validate_scheduler_node_requirements() {
+            errors.push(format!("{}", e));
+        }
+
+        // Step 5: Validate variable substitution
+        if let Err(e) = spec.substitute_variables() {
+            errors.push(format!("Variable substitution failed: {}", e));
+        }
+
+        // Collect scheduler names
+        let scheduler_names: Vec<String> = spec
+            .slurm_schedulers
+            .as_ref()
+            .map(|schedulers| schedulers.iter().filter_map(|s| s.name.clone()).collect())
+            .unwrap_or_default();
+
+        // Build summary
+        let summary = ValidationSummary {
+            workflow_name: spec.name.clone(),
+            workflow_description: spec.description.clone(),
+            job_count: spec.jobs.len(),
+            job_count_before_expansion,
+            file_count: spec.files.as_ref().map(|f| f.len()).unwrap_or(0),
+            file_count_before_expansion,
+            user_data_count: spec.user_data.as_ref().map(|u| u.len()).unwrap_or(0),
+            resource_requirements_count: spec
+                .resource_requirements
+                .as_ref()
+                .map(|r| r.len())
+                .unwrap_or(0),
+            slurm_scheduler_count: spec.slurm_schedulers.as_ref().map(|s| s.len()).unwrap_or(0),
+            action_count: spec.actions.as_ref().map(|a| a.len()).unwrap_or(0),
+            has_schedule_nodes_action: spec.has_schedule_nodes_action(),
+            job_names: spec.jobs.iter().map(|j| j.name.clone()).collect(),
+            scheduler_names,
+        };
+
+        ValidationResult {
+            valid: errors.is_empty(),
+            errors,
+            warnings,
+            summary,
         }
     }
 

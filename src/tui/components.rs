@@ -182,6 +182,81 @@ impl StatusMessage {
     }
 }
 
+/// An error dialog that displays a full error message in a popup
+/// Used when error messages are too long for the status bar
+#[derive(Debug, Clone)]
+pub struct ErrorDialog {
+    pub title: String,
+    pub message: String,
+}
+
+impl ErrorDialog {
+    pub fn new(title: &str, message: &str) -> Self {
+        Self {
+            title: title.to_string(),
+            message: message.to_string(),
+        }
+    }
+
+    pub fn render(&self, f: &mut Frame, area: Rect) {
+        // Calculate dialog size based on message length
+        // Allow more width and height for long messages
+        let dialog_width = 80.min(area.width.saturating_sub(4));
+        // Calculate height based on message lines (rough estimate)
+        let line_count = self.message.lines().count() + self.message.len() / 70 + 5;
+        let dialog_height = (line_count as u16 + 4).min(area.height.saturating_sub(4));
+
+        let dialog_x = (area.width.saturating_sub(dialog_width)) / 2;
+        let dialog_y = (area.height.saturating_sub(dialog_height)) / 2;
+
+        let dialog_area = Rect::new(dialog_x, dialog_y, dialog_width, dialog_height);
+
+        // Clear the area behind the dialog
+        f.render_widget(Clear, dialog_area);
+
+        let block = Block::default()
+            .title(format!(" {} ", self.title))
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Red));
+
+        let inner = block.inner(dialog_area);
+        f.render_widget(block, dialog_area);
+
+        // Split inner area for message and buttons
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(1), Constraint::Length(2)])
+            .split(inner);
+
+        // Message with word wrapping
+        let message = Paragraph::new(self.message.as_str())
+            .style(Style::default().fg(Color::White))
+            .wrap(Wrap { trim: false });
+        f.render_widget(message, chunks[0]);
+
+        // Close hint
+        let hint = Line::from(vec![
+            Span::raw("Press "),
+            Span::styled(
+                "Enter",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" or "),
+            Span::styled(
+                "Esc",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" to close"),
+        ]);
+        let hint_para = Paragraph::new(hint).alignment(Alignment::Center);
+        f.render_widget(hint_para, chunks[1]);
+    }
+}
+
 /// A help popup showing all available keybindings
 pub struct HelpPopup;
 

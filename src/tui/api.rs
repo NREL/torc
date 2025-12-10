@@ -233,6 +233,16 @@ impl TorcClient {
 
     // === Workflow Creation ===
 
+    /// Validate a workflow specification without creating it
+    /// Available for future use by the TUI to show validation info before creation
+    #[allow(dead_code)]
+    pub fn validate_workflow_spec(
+        &self,
+        path: &str,
+    ) -> crate::client::workflow_spec::ValidationResult {
+        crate::client::workflow_spec::WorkflowSpec::validate_spec(path)
+    }
+
     pub fn create_workflow_from_file(&self, path: &str) -> Result<i64> {
         use crate::client::workflow_spec::WorkflowSpec;
 

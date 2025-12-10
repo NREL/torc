@@ -4,7 +4,8 @@ use ratatui::widgets::TableState;
 
 use super::api::TorcClient;
 use super::components::{
-    ConfirmationDialog, FileViewer, JobDetailsPopup, LogViewer, ProcessViewer, StatusMessage,
+    ConfirmationDialog, ErrorDialog, FileViewer, JobDetailsPopup, LogViewer, ProcessViewer,
+    StatusMessage,
 };
 use super::dag::{DagLayout, JobNode};
 
@@ -114,6 +115,7 @@ pub enum PopupType {
         dialog: ConfirmationDialog,
         action: PendingAction,
     },
+    Error(ErrorDialog),
 }
 
 /// Pending action waiting for confirmation
@@ -824,6 +826,11 @@ impl App {
 
     pub fn set_status(&mut self, message: StatusMessage) {
         self.status_message = Some(message);
+    }
+
+    /// Show an error dialog for long error messages
+    pub fn show_error_dialog(&mut self, title: &str, message: &str) {
+        self.popup = Some(PopupType::Error(ErrorDialog::new(title, message)));
     }
 
     // === Workflow Actions ===
@@ -1629,10 +1636,16 @@ impl App {
                 self.refresh_workflows()?;
             }
             Err(e) => {
-                self.set_status(StatusMessage::error(&format!(
-                    "Failed to create workflow: {}",
-                    e
-                )));
+                let error_msg = format!("{}", e);
+                // Use error dialog for long messages (> 80 chars) to avoid truncation
+                if error_msg.len() > 80 {
+                    self.show_error_dialog("Failed to Create Workflow", &error_msg);
+                } else {
+                    self.set_status(StatusMessage::error(&format!(
+                        "Failed to create workflow: {}",
+                        e
+                    )));
+                }
             }
         }
 
