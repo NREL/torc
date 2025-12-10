@@ -1852,7 +1852,7 @@ fn handle_create(
                     println!("Validation: PASSED");
                 } else {
                     println!(
-                        "Validation: PASSED (with {} warning(s), use --skip-checks to bypass)",
+                        "Validation: PASSED (with {} warning(s))",
                         result.warnings.len()
                     );
                 }

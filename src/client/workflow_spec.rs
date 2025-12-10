@@ -755,15 +755,9 @@ impl WorkflowSpec {
                 .filter(|job| job.scheduler.as_ref() == Some(scheduler_name))
                 .collect();
 
+            // If no jobs explicitly reference this scheduler, this might be intentional
+            // (jobs could be dynamically assigned), so do not treat as an error.
             if jobs_using_scheduler.is_empty() {
-                // No jobs explicitly reference this scheduler - this might be intentional
-                // (jobs could be dynamically assigned), so just warn about potential issue
-                errors.push(format!(
-                    "Scheduler '{}' allocates {} nodes but no jobs explicitly reference it. \
-                     If jobs are dynamically assigned, ensure they have num_nodes={} in their \
-                     resource requirements, or set start_one_worker_per_node=true on the action.",
-                    scheduler_name, scheduler.nodes, scheduler.nodes
-                ));
                 continue;
             }
 

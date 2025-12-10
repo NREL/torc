@@ -264,7 +264,7 @@ To create a workflow despite validation warnings:
 torc workflows create --skip-checks workflow.yaml
 ```
 
-Note: This only bypasses warnings, not errors. Errors (like missing references or circular dependencies) will always prevent creation.
+Note: This bypasses scheduler node validation checks (which are treated as errors), but does not bypass all errors. Errors such as missing references or circular dependencies will always prevent creation.
 
 ### List Available Workflows
 

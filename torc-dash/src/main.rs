@@ -577,8 +577,10 @@ async fn cli_validate_handler(
         .await
     } else {
         // Spec is inline content - write to temp file with correct extension
+        // Use UUID to avoid race conditions with concurrent requests
         let extension = req.file_extension.as_deref().unwrap_or(".json");
-        let temp_path = format!("/tmp/torc_spec_{}{}", std::process::id(), extension);
+        let unique_id = uuid::Uuid::new_v4();
+        let temp_path = format!("/tmp/torc_spec_{}{}", unique_id, extension);
         if let Err(e) = tokio::fs::write(&temp_path, &req.spec).await {
             return Json(CliResponse {
                 success: false,

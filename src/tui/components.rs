@@ -203,8 +203,10 @@ impl ErrorDialog {
         // Allow more width and height for long messages
         let dialog_width = 80.min(area.width.saturating_sub(4));
         // Calculate height based on message lines (rough estimate)
+        // Cap line_count to prevent overflow when casting to u16
         let line_count = self.message.lines().count() + self.message.len() / 70 + 5;
-        let dialog_height = (line_count as u16 + 4).min(area.height.saturating_sub(4));
+        let capped_line_count = line_count.min(u16::MAX as usize - 4);
+        let dialog_height = (capped_line_count as u16 + 4).min(area.height.saturating_sub(4));
 
         let dialog_x = (area.width.saturating_sub(dialog_width)) / 2;
         let dialog_y = (area.height.saturating_sub(dialog_height)) / 2;
