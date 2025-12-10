@@ -2537,3 +2537,526 @@ fn test_validate_spec_complete_workflow() {
         vec!["test_scheduler".to_string()]
     );
 }
+
+/// Test that validate_spec detects duplicate job names
+#[test]
+fn test_validate_spec_duplicate_job_names() {
+    let workflow_data = serde_json::json!({
+        "name": "duplicate_job_names_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"},
+            {"name": "job1", "command": "echo world"}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("Duplicate job name") && error_text.contains("job1"),
+        "Expected duplicate job name error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects duplicate file names
+#[test]
+fn test_validate_spec_duplicate_file_names() {
+    let workflow_data = serde_json::json!({
+        "name": "duplicate_file_names_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"}
+        ],
+        "files": [
+            {"name": "file1", "path": "/tmp/file1.txt"},
+            {"name": "file1", "path": "/tmp/file2.txt"}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("Duplicate file name") && error_text.contains("file1"),
+        "Expected duplicate file name error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects non-existent job dependencies
+#[test]
+fn test_validate_spec_nonexistent_dependency() {
+    let workflow_data = serde_json::json!({
+        "name": "nonexistent_dependency_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "depends_on": ["nonexistent_job"]}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("depends_on non-existent job")
+            && error_text.contains("nonexistent_job"),
+        "Expected non-existent dependency error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects non-existent resource_requirements reference
+#[test]
+fn test_validate_spec_nonexistent_resource_requirements() {
+    let workflow_data = serde_json::json!({
+        "name": "nonexistent_rr_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "resource_requirements": "nonexistent_rr"}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("non-existent resource_requirements")
+            && error_text.contains("nonexistent_rr"),
+        "Expected non-existent resource_requirements error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects non-existent scheduler reference
+#[test]
+fn test_validate_spec_nonexistent_scheduler() {
+    let workflow_data = serde_json::json!({
+        "name": "nonexistent_scheduler_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "scheduler": "nonexistent_scheduler"}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("non-existent scheduler")
+            && error_text.contains("nonexistent_scheduler"),
+        "Expected non-existent scheduler error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects non-existent input file reference
+#[test]
+fn test_validate_spec_nonexistent_input_file() {
+    let workflow_data = serde_json::json!({
+        "name": "nonexistent_file_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "input_files": ["nonexistent_file"]}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("non-existent file") && error_text.contains("nonexistent_file"),
+        "Expected non-existent file error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects circular dependencies
+#[test]
+fn test_validate_spec_circular_dependency() {
+    let workflow_data = serde_json::json!({
+        "name": "circular_dependency_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "depends_on": ["job2"]},
+            {"name": "job2", "command": "echo world", "depends_on": ["job1"]}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("Circular dependency"),
+        "Expected circular dependency error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects invalid regex in depends_on_regexes
+#[test]
+fn test_validate_spec_invalid_regex() {
+    let workflow_data = serde_json::json!({
+        "name": "invalid_regex_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"},
+            {"name": "job2", "command": "echo world", "depends_on_regexes": ["[invalid("]}
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("invalid") && error_text.contains("depends_on_regexes"),
+        "Expected invalid regex error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects action referencing non-existent job
+#[test]
+fn test_validate_spec_action_nonexistent_job() {
+    let workflow_data = serde_json::json!({
+        "name": "action_nonexistent_job_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"}
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_jobs_complete",
+                "action_type": "run_commands",
+                "jobs": ["nonexistent_job"],
+                "commands": ["echo done"]
+            }
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("non-existent job") && error_text.contains("nonexistent_job"),
+        "Expected action non-existent job error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec detects action referencing non-existent scheduler
+#[test]
+fn test_validate_spec_action_nonexistent_scheduler() {
+    let workflow_data = serde_json::json!({
+        "name": "action_nonexistent_scheduler_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"}
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "nonexistent_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(!result.valid, "Expected validation to fail");
+    let error_text = result.errors.join(" ");
+    assert!(
+        error_text.contains("non-existent") && error_text.contains("scheduler"),
+        "Expected action non-existent scheduler error, got: {}",
+        error_text
+    );
+}
+
+/// Test that validate_spec warns about heterogeneous schedulers without jobs_sort_method
+#[test]
+fn test_validate_spec_heterogeneous_schedulers_warning() {
+    let workflow_data = serde_json::json!({
+        "name": "heterogeneous_schedulers_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"},
+            {"name": "job2", "command": "echo world"}
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "small_scheduler",
+                "account": "test",
+                "mem": "4G",
+                "walltime": "01:00:00",
+                "nodes": 1
+            },
+            {
+                "name": "big_scheduler",
+                "account": "test",
+                "mem": "128G",
+                "walltime": "04:00:00",
+                "nodes": 1
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "small_scheduler",
+                "scheduler_type": "slurm"
+            },
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "big_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    // Should be valid but with warnings
+    assert!(result.valid, "Expected validation to pass");
+    assert!(!result.warnings.is_empty(), "Expected warnings");
+    let warning_text = result.warnings.join(" ");
+    assert!(
+        warning_text.contains("jobs_sort_method"),
+        "Expected warning about jobs_sort_method, got: {}",
+        warning_text
+    );
+}
+
+/// Test that validate_spec does NOT warn when jobs_sort_method is set
+#[test]
+fn test_validate_spec_no_warning_with_sort_method() {
+    let workflow_data = serde_json::json!({
+        "name": "heterogeneous_with_sort_workflow",
+        "jobs_sort_method": "gpus_runtime_memory",
+        "jobs": [
+            {"name": "job1", "command": "echo hello"},
+            {"name": "job2", "command": "echo world"}
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "small_scheduler",
+                "account": "test",
+                "mem": "4G",
+                "walltime": "01:00:00",
+                "nodes": 1
+            },
+            {
+                "name": "big_scheduler",
+                "account": "test",
+                "mem": "128G",
+                "walltime": "04:00:00",
+                "nodes": 1
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "small_scheduler",
+                "scheduler_type": "slurm"
+            },
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "big_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(result.valid, "Expected validation to pass");
+    assert!(
+        result.warnings.is_empty(),
+        "Expected no warnings when jobs_sort_method is set, got: {:?}",
+        result.warnings
+    );
+}
+
+/// Test that validate_spec does NOT warn when all jobs have explicit scheduler assignments
+#[test]
+fn test_validate_spec_no_warning_with_scheduler_assignments() {
+    let workflow_data = serde_json::json!({
+        "name": "heterogeneous_with_assignments_workflow",
+        "jobs": [
+            {"name": "job1", "command": "echo hello", "scheduler": "small_scheduler"},
+            {"name": "job2", "command": "echo world", "scheduler": "big_scheduler"}
+        ],
+        "slurm_schedulers": [
+            {
+                "name": "small_scheduler",
+                "account": "test",
+                "mem": "4G",
+                "walltime": "01:00:00",
+                "nodes": 1
+            },
+            {
+                "name": "big_scheduler",
+                "account": "test",
+                "mem": "128G",
+                "walltime": "04:00:00",
+                "nodes": 1
+            }
+        ],
+        "actions": [
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "small_scheduler",
+                "scheduler_type": "slurm"
+            },
+            {
+                "trigger_type": "on_workflow_start",
+                "action_type": "schedule_nodes",
+                "scheduler": "big_scheduler",
+                "scheduler_type": "slurm"
+            }
+        ]
+    });
+
+    let temp_file = tempfile::Builder::new()
+        .suffix(".json")
+        .tempfile()
+        .expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let result = WorkflowSpec::validate_spec(&temp_file.path());
+
+    assert!(result.valid, "Expected validation to pass");
+    assert!(
+        result.warnings.is_empty(),
+        "Expected no warnings when all jobs have scheduler assignments, got: {:?}",
+        result.warnings
+    );
+}

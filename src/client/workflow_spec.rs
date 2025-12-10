@@ -836,8 +836,10 @@ impl WorkflowSpec {
     /// # Returns
     /// A `ValidationResult` containing validation status and summary
     pub fn validate_spec<P: AsRef<Path>>(path: P) -> ValidationResult {
+        use std::collections::{HashMap, HashSet};
+
         let mut errors = Vec::new();
-        let warnings = Vec::new();
+        let mut warnings = Vec::new();
 
         // Step 1: Try to parse the spec file
         let mut spec = match Self::from_spec_file(&path) {
@@ -875,7 +877,7 @@ impl WorkflowSpec {
             errors.push(format!("Parameter expansion failed: {}", e));
         }
 
-        // Step 3: Validate actions
+        // Step 3: Validate actions (basic structure validation)
         if let Err(e) = spec.validate_actions() {
             errors.push(format!("Action validation failed: {}", e));
         }
@@ -891,7 +893,404 @@ impl WorkflowSpec {
             errors.push(format!("Variable substitution failed: {}", e));
         }
 
-        // Collect scheduler names
+        // Step 6: Check for duplicate names
+        // Check duplicate job names
+        let mut job_names_set = HashSet::new();
+        for job in &spec.jobs {
+            if !job_names_set.insert(job.name.clone()) {
+                errors.push(format!("Duplicate job name: '{}'", job.name));
+            }
+        }
+
+        // Check duplicate file names
+        if let Some(ref files) = spec.files {
+            let mut file_names_set = HashSet::new();
+            for file in files {
+                if !file_names_set.insert(file.name.clone()) {
+                    errors.push(format!("Duplicate file name: '{}'", file.name));
+                }
+            }
+        }
+
+        // Check duplicate user_data names
+        if let Some(ref user_data_list) = spec.user_data {
+            let mut user_data_names_set = HashSet::new();
+            for ud in user_data_list {
+                if let Some(ref name) = ud.name {
+                    if !user_data_names_set.insert(name.clone()) {
+                        errors.push(format!("Duplicate user_data name: '{}'", name));
+                    }
+                }
+            }
+        }
+
+        // Check duplicate resource_requirements names
+        if let Some(ref resource_reqs) = spec.resource_requirements {
+            let mut rr_names_set = HashSet::new();
+            for rr in resource_reqs {
+                if !rr_names_set.insert(rr.name.clone()) {
+                    errors.push(format!(
+                        "Duplicate resource_requirements name: '{}'",
+                        rr.name
+                    ));
+                }
+            }
+        }
+
+        // Check duplicate slurm_scheduler names
+        if let Some(ref schedulers) = spec.slurm_schedulers {
+            let mut scheduler_names_set = HashSet::new();
+            for sched in schedulers {
+                if let Some(ref name) = sched.name {
+                    if !scheduler_names_set.insert(name.clone()) {
+                        errors.push(format!("Duplicate slurm_scheduler name: '{}'", name));
+                    }
+                }
+            }
+        }
+
+        // Step 7: Build lookup sets for reference validation
+        let job_names: HashSet<String> = spec.jobs.iter().map(|j| j.name.clone()).collect();
+        let file_names: HashSet<String> = spec
+            .files
+            .as_ref()
+            .map(|files| files.iter().map(|f| f.name.clone()).collect())
+            .unwrap_or_default();
+        let user_data_names: HashSet<String> = spec
+            .user_data
+            .as_ref()
+            .map(|uds| uds.iter().filter_map(|ud| ud.name.clone()).collect())
+            .unwrap_or_default();
+        let resource_req_names: HashSet<String> = spec
+            .resource_requirements
+            .as_ref()
+            .map(|rrs| rrs.iter().map(|rr| rr.name.clone()).collect())
+            .unwrap_or_default();
+        let scheduler_names_set: HashSet<String> = spec
+            .slurm_schedulers
+            .as_ref()
+            .map(|scheds| scheds.iter().filter_map(|s| s.name.clone()).collect())
+            .unwrap_or_default();
+
+        // Step 8: Validate job references and build dependency graph
+        let mut dependencies: HashMap<String, Vec<String>> = HashMap::new();
+
+        for job in &spec.jobs {
+            let mut job_deps = Vec::new();
+
+            // Validate depends_on references
+            if let Some(ref deps) = job.depends_on {
+                for dep_name in deps {
+                    if !job_names.contains(dep_name) {
+                        errors.push(format!(
+                            "Job '{}' depends_on non-existent job '{}'",
+                            job.name, dep_name
+                        ));
+                    } else {
+                        job_deps.push(dep_name.clone());
+                    }
+                }
+            }
+
+            // Validate depends_on_regexes
+            if let Some(ref regexes) = job.depends_on_regexes {
+                for regex_str in regexes {
+                    match Regex::new(regex_str) {
+                        Ok(re) => {
+                            let mut found_match = false;
+                            for other_name in &job_names {
+                                if re.is_match(other_name) && !job_deps.contains(other_name) {
+                                    job_deps.push(other_name.clone());
+                                    found_match = true;
+                                }
+                            }
+                            if !found_match {
+                                errors.push(format!(
+                                    "Job '{}' depends_on_regexes '{}' did not match any jobs",
+                                    job.name, regex_str
+                                ));
+                            }
+                        }
+                        Err(e) => {
+                            errors.push(format!(
+                                "Job '{}' has invalid depends_on_regexes '{}': {}",
+                                job.name, regex_str, e
+                            ));
+                        }
+                    }
+                }
+            }
+
+            dependencies.insert(job.name.clone(), job_deps);
+
+            // Validate resource_requirements reference
+            if let Some(ref rr_name) = job.resource_requirements {
+                if !resource_req_names.contains(rr_name) {
+                    errors.push(format!(
+                        "Job '{}' references non-existent resource_requirements '{}'",
+                        job.name, rr_name
+                    ));
+                }
+            }
+
+            // Validate scheduler reference
+            if let Some(ref sched_name) = job.scheduler {
+                if !scheduler_names_set.contains(sched_name) {
+                    errors.push(format!(
+                        "Job '{}' references non-existent scheduler '{}'",
+                        job.name, sched_name
+                    ));
+                }
+            }
+
+            // Validate input_files references
+            if let Some(ref files) = job.input_files {
+                for file_name in files {
+                    if !file_names.contains(file_name) {
+                        errors.push(format!(
+                            "Job '{}' input_files references non-existent file '{}'",
+                            job.name, file_name
+                        ));
+                    }
+                }
+            }
+
+            // Validate input_file_regexes
+            if let Some(ref regexes) = job.input_file_regexes {
+                for regex_str in regexes {
+                    if let Err(e) = Regex::new(regex_str) {
+                        errors.push(format!(
+                            "Job '{}' has invalid input_file_regexes '{}': {}",
+                            job.name, regex_str, e
+                        ));
+                    }
+                }
+            }
+
+            // Validate output_files references
+            if let Some(ref files) = job.output_files {
+                for file_name in files {
+                    if !file_names.contains(file_name) {
+                        errors.push(format!(
+                            "Job '{}' output_files references non-existent file '{}'",
+                            job.name, file_name
+                        ));
+                    }
+                }
+            }
+
+            // Validate output_file_regexes
+            if let Some(ref regexes) = job.output_file_regexes {
+                for regex_str in regexes {
+                    if let Err(e) = Regex::new(regex_str) {
+                        errors.push(format!(
+                            "Job '{}' has invalid output_file_regexes '{}': {}",
+                            job.name, regex_str, e
+                        ));
+                    }
+                }
+            }
+
+            // Validate input_user_data references
+            if let Some(ref uds) = job.input_user_data {
+                for ud_name in uds {
+                    if !user_data_names.contains(ud_name) {
+                        errors.push(format!(
+                            "Job '{}' input_user_data references non-existent user_data '{}'",
+                            job.name, ud_name
+                        ));
+                    }
+                }
+            }
+
+            // Validate input_user_data_regexes
+            if let Some(ref regexes) = job.input_user_data_regexes {
+                for regex_str in regexes {
+                    if let Err(e) = Regex::new(regex_str) {
+                        errors.push(format!(
+                            "Job '{}' has invalid input_user_data_regexes '{}': {}",
+                            job.name, regex_str, e
+                        ));
+                    }
+                }
+            }
+
+            // Validate output_user_data references
+            if let Some(ref uds) = job.output_user_data {
+                for ud_name in uds {
+                    if !user_data_names.contains(ud_name) {
+                        errors.push(format!(
+                            "Job '{}' output_user_data references non-existent user_data '{}'",
+                            job.name, ud_name
+                        ));
+                    }
+                }
+            }
+
+            // Validate output_user_data_regexes
+            if let Some(ref regexes) = job.output_user_data_regexes {
+                for regex_str in regexes {
+                    if let Err(e) = Regex::new(regex_str) {
+                        errors.push(format!(
+                            "Job '{}' has invalid output_user_data_regexes '{}': {}",
+                            job.name, regex_str, e
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Step 9: Check for circular dependencies using topological sort
+        {
+            let mut remaining: HashSet<String> = job_names.clone();
+            let mut processed = HashSet::new();
+
+            while !remaining.is_empty() {
+                let mut current_level = Vec::new();
+
+                for job_name in &remaining {
+                    if let Some(deps) = dependencies.get(job_name) {
+                        if deps.iter().all(|d| processed.contains(d)) {
+                            current_level.push(job_name.clone());
+                        }
+                    }
+                }
+
+                if current_level.is_empty() {
+                    // Find jobs involved in cycle for better error message
+                    let cycle_jobs: Vec<&String> = remaining.iter().collect();
+                    errors.push(format!(
+                        "Circular dependency detected involving jobs: {}",
+                        cycle_jobs
+                            .iter()
+                            .map(|s| format!("'{}'", s))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ));
+                    break;
+                }
+
+                for job_name in current_level {
+                    remaining.remove(&job_name);
+                    processed.insert(job_name);
+                }
+            }
+        }
+
+        // Step 10: Validate action references
+        if let Some(ref actions) = spec.actions {
+            for (idx, action) in actions.iter().enumerate() {
+                let action_desc = format!("Action #{} ({})", idx + 1, action.action_type);
+
+                // Validate job references in actions
+                if let Some(ref job_refs) = action.jobs {
+                    for job_name in job_refs {
+                        if !job_names.contains(job_name) {
+                            errors.push(format!(
+                                "{} references non-existent job '{}'",
+                                action_desc, job_name
+                            ));
+                        }
+                    }
+                }
+
+                // Validate job_name_regexes in actions
+                if let Some(ref regexes) = action.job_name_regexes {
+                    for regex_str in regexes {
+                        if let Err(e) = Regex::new(regex_str) {
+                            errors.push(format!(
+                                "{} has invalid job_name_regexes '{}': {}",
+                                action_desc, regex_str, e
+                            ));
+                        }
+                    }
+                }
+
+                // Validate scheduler reference in schedule_nodes actions
+                if action.action_type == "schedule_nodes" {
+                    if let Some(ref sched_name) = action.scheduler {
+                        let sched_type = action.scheduler_type.as_deref().unwrap_or("");
+                        if sched_type == "slurm" && !scheduler_names_set.contains(sched_name) {
+                            errors.push(format!(
+                                "{} references non-existent slurm scheduler '{}'",
+                                action_desc, sched_name
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Step 11: Warn about heterogeneous schedulers without jobs_sort_method
+        // This helps users avoid suboptimal job-to-node matching
+        if let Some(ref schedulers) = spec.slurm_schedulers {
+            if schedulers.len() > 1 && spec.jobs_sort_method.is_none() {
+                // Check if schedulers have different resource profiles
+                let has_different_gres = schedulers
+                    .iter()
+                    .map(|s| &s.gres)
+                    .collect::<HashSet<_>>()
+                    .len()
+                    > 1;
+                let has_different_mem = schedulers
+                    .iter()
+                    .map(|s| &s.mem)
+                    .collect::<HashSet<_>>()
+                    .len()
+                    > 1;
+                let has_different_walltime = schedulers
+                    .iter()
+                    .map(|s| &s.walltime)
+                    .collect::<HashSet<_>>()
+                    .len()
+                    > 1;
+                let has_different_partition = schedulers
+                    .iter()
+                    .map(|s| &s.partition)
+                    .collect::<HashSet<_>>()
+                    .len()
+                    > 1;
+
+                let has_heterogeneous_schedulers = has_different_gres
+                    || has_different_mem
+                    || has_different_walltime
+                    || has_different_partition;
+
+                // Check if any jobs don't have explicit scheduler assignments
+                let jobs_without_scheduler =
+                    spec.jobs.iter().filter(|j| j.scheduler.is_none()).count();
+
+                if has_heterogeneous_schedulers && jobs_without_scheduler > 0 {
+                    let mut differences = Vec::new();
+                    if has_different_gres {
+                        differences.push("GPUs (gres)");
+                    }
+                    if has_different_mem {
+                        differences.push("memory (mem)");
+                    }
+                    if has_different_walltime {
+                        differences.push("walltime");
+                    }
+                    if has_different_partition {
+                        differences.push("partition");
+                    }
+
+                    warnings.push(format!(
+                        "Workflow has {} schedulers with different {} but {} job(s) have no explicit \
+                        scheduler assignment and jobs_sort_method is not set. The default sort method \
+                        'gpus_runtime_memory' will be used (jobs sorted by GPUs, then runtime, then \
+                        memory). If this doesn't match your workload, consider setting jobs_sort_method \
+                        explicitly to 'gpus_memory_runtime' (prioritize memory over runtime) or 'none' \
+                        (no sorting).",
+                        schedulers.len(),
+                        differences.join(", "),
+                        jobs_without_scheduler
+                    ));
+                }
+            }
+        }
+
+        // Collect scheduler names for summary
         let scheduler_names: Vec<String> = spec
             .slurm_schedulers
             .as_ref()
