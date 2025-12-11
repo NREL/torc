@@ -376,11 +376,20 @@ impl JobRunner {
                     .unwrap_or(0);
 
                 if idle_seconds >= self.rules.compute_node_wait_for_new_jobs_seconds {
-                    info!(
-                        "No jobs claimed for {} seconds (limit: {} seconds). Exiting job runner.",
-                        idle_seconds, self.rules.compute_node_wait_for_new_jobs_seconds
-                    );
-                    break;
+                    // Before exiting, check if there are pending actions we can handle
+                    // Actions like schedule_nodes might add more compute capacity
+                    if self.has_pending_actions_we_can_handle() {
+                        debug!(
+                            "Idle for {} seconds but pending actions exist, continuing to wait",
+                            idle_seconds
+                        );
+                    } else {
+                        info!(
+                            "No jobs claimed for {} seconds (limit: {} seconds). Exiting job runner.",
+                            idle_seconds, self.rules.compute_node_wait_for_new_jobs_seconds
+                        );
+                        break;
+                    }
                 }
             }
         }
@@ -1207,10 +1216,17 @@ impl JobRunner {
         ) {
             Ok(actions) => {
                 if !actions.is_empty() {
-                    debug!(
+                    info!(
                         "Found {} pending action(s) (trigger_types: on_jobs_ready, on_jobs_complete)",
                         actions.len()
                     );
+                    for action in &actions {
+                        info!(
+                            "  Action {:?}: type={}, trigger={}, trigger_count={}, required_triggers={}",
+                            action.id, action.action_type, action.trigger_type,
+                            action.trigger_count, action.required_triggers
+                        );
+                    }
                 }
                 actions
             }
@@ -1236,9 +1252,9 @@ impl JobRunner {
 
             // Check if this job runner can handle this action before claiming
             if !self.can_handle_action(&action) {
-                debug!(
-                    "Action {} cannot be handled by this job runner, skipping",
-                    action_id
+                info!(
+                    "Action {} (type={}) cannot be handled by this job runner, skipping",
+                    action_id, action.action_type
                 );
                 continue;
             }
@@ -1270,6 +1286,54 @@ impl JobRunner {
         }
     }
 
+    /// Check if there are any unexecuted actions that this job runner can handle.
+    /// This is used to prevent early exit when actions might still need to be executed.
+    /// We check for unexecuted (not just pending) actions because the background thread
+    /// might not have processed job completions yet, so actions that will become pending
+    /// soon should also keep us alive.
+    fn has_pending_actions_we_can_handle(&self) -> bool {
+        // Get ALL actions for this workflow (not just pending ones)
+        match utils::send_with_retries(
+            &self.config,
+            || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
+                let actions = default_api::get_workflow_actions(&self.config, self.workflow_id)?;
+                Ok(actions)
+            },
+            self.rules.compute_node_wait_for_healthy_database_minutes,
+        ) {
+            Ok(actions) => {
+                // Check if we can handle any unexecuted on_jobs_ready or on_jobs_complete actions
+                for action in &actions {
+                    // Skip already executed actions
+                    if action.executed {
+                        continue;
+                    }
+                    // Only consider job-triggered actions (on_jobs_ready, on_jobs_complete)
+                    // on_workflow_start and on_worker_start are handled at startup
+                    if action.trigger_type != "on_jobs_ready"
+                        && action.trigger_type != "on_jobs_complete"
+                    {
+                        continue;
+                    }
+                    if self.can_handle_action(action) {
+                        debug!(
+                            "Found unexecuted action {} (trigger={}, type={}) that we can handle",
+                            action.id.unwrap_or(-1),
+                            action.trigger_type,
+                            action.action_type
+                        );
+                        return true;
+                    }
+                }
+                false
+            }
+            Err(e) => {
+                error!("Failed to check for unexecuted actions: {}", e);
+                false
+            }
+        }
+    }
+
     /// Check if this job runner can handle the given action
     /// Job runners can handle:
     /// - run_commands actions (always)
@@ -1288,9 +1352,22 @@ impl JobRunner {
                     .unwrap_or("");
 
                 // Job runners can handle slurm schedule_nodes using schedule_slurm_nodes_for_action
-                scheduler_type == "slurm"
+                let can_handle = scheduler_type == "slurm";
+                if !can_handle {
+                    debug!(
+                        "Cannot handle schedule_nodes action: scheduler_type='{}' (expected 'slurm'). action_config={:?}",
+                        scheduler_type, action.action_config
+                    );
+                }
+                can_handle
             }
-            _ => false,
+            _ => {
+                debug!(
+                    "Cannot handle action: unknown action_type='{}'",
+                    action_type
+                );
+                false
+            }
         }
     }
 
