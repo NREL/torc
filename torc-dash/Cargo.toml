@@ -53,3 +53,6 @@ chrono = "0.4"
 
 # URL parsing
 url = { workspace = true }
+
+# UUID for unique temp file names
+uuid = { version = "1.11", features = ["v4"] }

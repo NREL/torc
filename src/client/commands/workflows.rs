@@ -59,6 +59,13 @@ pub enum WorkflowCommands {
         /// Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
         #[arg(long, default_value = "false")]
         no_resource_monitoring: bool,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
+        /// Validate the workflow specification without creating it (dry-run mode)
+        /// Returns a summary of what would be created including job count after parameter expansion
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Create a new empty workflow
     New {
@@ -1754,9 +1761,121 @@ fn handle_create(
     file: &str,
     user: &str,
     no_resource_monitoring: bool,
+    skip_checks: bool,
+    dry_run: bool,
     format: &str,
 ) {
-    match WorkflowSpec::create_workflow_from_spec(config, file, user, !no_resource_monitoring) {
+    // Handle dry-run mode
+    if dry_run {
+        let result = WorkflowSpec::validate_spec(file);
+
+        if format == "json" {
+            match serde_json::to_string_pretty(&result) {
+                Ok(json) => println!("{}", json),
+                Err(e) => {
+                    eprintln!("Error serializing validation result: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        } else {
+            // Human-readable output
+            println!("Workflow Validation Results");
+            println!("===========================");
+            println!();
+
+            let summary = &result.summary;
+            println!("Workflow: {}", summary.workflow_name);
+            if let Some(ref desc) = summary.workflow_description {
+                println!("Description: {}", desc);
+            }
+            println!();
+
+            // Show what would be created
+            println!("Components to be created:");
+            if summary.job_count != summary.job_count_before_expansion {
+                println!(
+                    "  Jobs: {} (expanded from {} parameterized job specs)",
+                    summary.job_count, summary.job_count_before_expansion
+                );
+            } else {
+                println!("  Jobs: {}", summary.job_count);
+            }
+            if summary.file_count != summary.file_count_before_expansion {
+                println!(
+                    "  Files: {} (expanded from {} parameterized file specs)",
+                    summary.file_count, summary.file_count_before_expansion
+                );
+            } else {
+                println!("  Files: {}", summary.file_count);
+            }
+            println!("  User data records: {}", summary.user_data_count);
+            println!(
+                "  Resource requirements: {}",
+                summary.resource_requirements_count
+            );
+            println!("  Slurm schedulers: {}", summary.slurm_scheduler_count);
+            println!("  Workflow actions: {}", summary.action_count);
+            println!();
+
+            if summary.has_schedule_nodes_action {
+                println!(
+                    "Submission: Ready for scheduler submission (has on_workflow_start schedule_nodes action)"
+                );
+            } else {
+                println!(
+                    "Submission: Local execution only (no on_workflow_start schedule_nodes action)"
+                );
+            }
+            println!();
+
+            // Show errors
+            if !result.errors.is_empty() {
+                eprintln!("Errors ({}):", result.errors.len());
+                for error in &result.errors {
+                    eprintln!("  - {}", error);
+                }
+                eprintln!();
+            }
+
+            // Show warnings
+            if !result.warnings.is_empty() {
+                eprintln!("Warnings ({}):", result.warnings.len());
+                for warning in &result.warnings {
+                    eprintln!("  - {}", warning);
+                }
+                eprintln!();
+            }
+
+            // Final verdict
+            if result.valid {
+                if result.warnings.is_empty() {
+                    println!("Validation: PASSED");
+                } else {
+                    println!(
+                        "Validation: PASSED (with {} warning(s))",
+                        result.warnings.len()
+                    );
+                }
+            } else {
+                eprintln!("Validation: FAILED");
+            }
+        }
+
+        // Exit with appropriate code
+        if !result.valid {
+            std::process::exit(1);
+        }
+        return;
+    }
+
+    // Normal create mode
+    match WorkflowSpec::create_workflow_from_spec(
+        config,
+        file,
+        user,
+        !no_resource_monitoring,
+        skip_checks,
+    ) {
         Ok(workflow_id) => {
             if format == "json" {
                 let json_output = serde_json::json!({
@@ -1788,8 +1907,18 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             file,
             user,
             no_resource_monitoring,
+            skip_checks,
+            dry_run,
         } => {
-            handle_create(config, file, user, *no_resource_monitoring, format);
+            handle_create(
+                config,
+                file,
+                user,
+                *no_resource_monitoring,
+                *skip_checks,
+                *dry_run,
+                format,
+            );
         }
         WorkflowCommands::New {
             name,

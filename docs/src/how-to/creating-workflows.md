@@ -163,10 +163,108 @@ For more details, see the [Map Python Functions](../tutorials/map_python_functio
 
 ### Validate a Workflow File Without Creating
 
+Use `--dry-run` to validate a workflow specification without creating it on the server:
+
 ```bash
-# Dry run - validates but doesn't create
 torc workflows create --dry-run workflow.yaml
 ```
+
+Example output:
+```
+Workflow Validation Results
+===========================
+
+Workflow: my_workflow
+Description: A sample workflow
+
+Components to be created:
+  Jobs: 100 (expanded from 1 parameterized job specs)
+  Files: 5
+  User data records: 2
+  Resource requirements: 2
+  Slurm schedulers: 2
+  Workflow actions: 3
+
+Submission: Ready for scheduler submission (has on_workflow_start schedule_nodes action)
+
+Validation: PASSED
+```
+
+For programmatic use (e.g., in scripts or the dashboard), get JSON output:
+
+```bash
+torc -f json workflows create --dry-run workflow.yaml
+```
+
+#### What Validation Checks
+
+The dry-run performs comprehensive validation:
+
+**Structural Checks:**
+- Valid file format (YAML, JSON5, KDL, or JSON)
+- Required fields present
+- Parameter expansion (shows expanded job count vs. original spec count)
+
+**Reference Validation:**
+- `depends_on` references existing jobs
+- `depends_on_regexes` patterns are valid and match at least one job
+- `resource_requirements` references exist
+- `scheduler` references exist
+- `input_files` and `output_files` reference defined files
+- `input_user_data` and `output_user_data` reference defined user data
+- All regex patterns (`*_regexes` fields) are valid
+
+**Duplicate Detection:**
+- Duplicate job names
+- Duplicate file names
+- Duplicate user data names
+- Duplicate resource requirement names
+- Duplicate scheduler names
+
+**Dependency Analysis:**
+- Circular dependency detection (reports all jobs in the cycle)
+
+**Action Validation:**
+- Actions reference existing jobs and schedulers
+- `schedule_nodes` actions have required `scheduler` and `scheduler_type`
+
+**Scheduler Configuration:**
+- Slurm scheduler node requirements are valid
+- Warns about heterogeneous schedulers without `jobs_sort_method` (see below)
+
+#### Heterogeneous Scheduler Warning
+
+When you have multiple Slurm schedulers with different resource profiles (memory, GPUs, walltime, partition) and jobs without explicit scheduler assignments, the validation warns about potential suboptimal job-to-node matching:
+
+```
+Warnings (1):
+  - Workflow has 3 schedulers with different memory (mem), walltime but 10 job(s)
+    have no explicit scheduler assignment and jobs_sort_method is not set. The
+    default sort method 'gpus_runtime_memory' will be used (jobs sorted by GPUs,
+    then runtime, then memory). If this doesn't match your workload, consider
+    setting jobs_sort_method explicitly to 'gpus_memory_runtime' (prioritize
+    memory over runtime) or 'none' (no sorting).
+```
+
+This warning helps you avoid situations where:
+- Long-walltime nodes pull short-runtime jobs
+- High-memory nodes pull low-memory jobs
+- GPU nodes pull non-GPU jobs
+
+**Solutions:**
+1. Set `jobs_sort_method` explicitly in your workflow spec
+2. Assign jobs to specific schedulers using the `scheduler` field on each job
+3. Accept the default `gpus_runtime_memory` sorting if it matches your workload
+
+#### Bypassing Validation
+
+To create a workflow despite validation warnings:
+
+```bash
+torc workflows create --skip-checks workflow.yaml
+```
+
+Note: This bypasses scheduler node validation checks (which are treated as errors), but does not bypass all errors. Errors such as missing references or circular dependencies will always prevent creation.
 
 ### List Available Workflows
 

@@ -117,6 +117,7 @@ fn main() {
             num_gpus,
             poll_interval,
             output_dir,
+            skip_checks,
         } => {
             let workflow_id = if is_spec_file(workflow_spec_or_id) {
                 // Create workflow from spec file
@@ -128,6 +129,7 @@ fn main() {
                     workflow_spec_or_id,
                     &user,
                     true,
+                    *skip_checks,
                 ) {
                     Ok(id) => {
                         println!("Created workflow {}", id);
@@ -180,6 +182,7 @@ fn main() {
         Commands::Submit {
             workflow_spec_or_id,
             ignore_missing_data,
+            skip_checks,
         } => {
             let workflow_id = if is_spec_file(workflow_spec_or_id) {
                 // Load and validate spec file
@@ -220,6 +223,7 @@ fn main() {
                     workflow_spec_or_id,
                     &user,
                     true,
+                    *skip_checks,
                 ) {
                     Ok(id) => {
                         println!("Created workflow {}", id);

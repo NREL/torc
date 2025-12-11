@@ -331,6 +331,7 @@ async fn main() -> Result<()> {
         .route("/static/*path", get(static_handler))
         // CLI command endpoints
         .route("/api/cli/create", post(cli_create_handler))
+        .route("/api/cli/validate", post(cli_validate_handler))
         .route("/api/cli/run", post(cli_run_handler))
         .route("/api/cli/submit", post(cli_submit_handler))
         .route("/api/cli/initialize", post(cli_initialize_handler))
@@ -551,6 +552,46 @@ async fn cli_create_handler(
         let result = run_torc_command(
             &state.torc_bin,
             &["workflows", "create", &temp_path],
+            &state.api_url,
+        )
+        .await;
+        let _ = tokio::fs::remove_file(&temp_path).await;
+        result
+    };
+
+    Json(result)
+}
+
+/// Validate a workflow specification using --dry-run to get structured validation info
+async fn cli_validate_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateRequest>,
+) -> impl IntoResponse {
+    let result = if req.is_file {
+        // Spec is a file path
+        run_torc_command(
+            &state.torc_bin,
+            &["-f", "json", "workflows", "create", &req.spec, "--dry-run"],
+            &state.api_url,
+        )
+        .await
+    } else {
+        // Spec is inline content - write to temp file with correct extension
+        // Use UUID to avoid race conditions with concurrent requests
+        let extension = req.file_extension.as_deref().unwrap_or(".json");
+        let unique_id = uuid::Uuid::new_v4();
+        let temp_path = format!("/tmp/torc_spec_{}{}", unique_id, extension);
+        if let Err(e) = tokio::fs::write(&temp_path, &req.spec).await {
+            return Json(CliResponse {
+                success: false,
+                stdout: String::new(),
+                stderr: format!("Failed to write temp file: {}", e),
+                exit_code: None,
+            });
+        }
+        let result = run_torc_command(
+            &state.torc_bin,
+            &["-f", "json", "workflows", "create", &temp_path, "--dry-run"],
             &state.api_url,
         )
         .await;

@@ -97,6 +97,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             PopupType::ProcessViewer(viewer) => {
                 viewer.render(f, f.area());
             }
+            PopupType::Error(dialog) => {
+                dialog.render(f, f.area());
+            }
         }
     }
 }
