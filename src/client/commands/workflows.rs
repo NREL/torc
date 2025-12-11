@@ -264,7 +264,7 @@ pub enum WorkflowCommands {
         spec_or_id: String,
     },
     /// List workflow actions and their statuses (useful for debugging action triggers)
-    Actions {
+    ListActions {
         /// ID of the workflow to show actions for (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
@@ -464,7 +464,7 @@ fn handle_execution_plan(config: &Configuration, spec_or_id: &str, format: &str)
     }
 }
 
-fn handle_actions(
+fn handle_list_actions(
     config: &Configuration,
     workflow_id: &Option<i64>,
     user: &Option<String>,
@@ -480,7 +480,10 @@ fn handle_actions(
     match default_api::get_workflow_actions(config, selected_workflow_id) {
         Ok(actions) => {
             if format == "json" {
-                match serde_json::to_string_pretty(&actions) {
+                let output = serde_json::json!({
+                    "actions": actions
+                });
+                match serde_json::to_string_pretty(&output) {
                     Ok(json) => println!("{}", json),
                     Err(e) => {
                         eprintln!("Error serializing actions to JSON: {}", e);
@@ -2169,8 +2172,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::ExecutionPlan { spec_or_id } => {
             handle_execution_plan(config, spec_or_id, format);
         }
-        WorkflowCommands::Actions { workflow_id, user } => {
-            handle_actions(config, workflow_id, user, format);
+        WorkflowCommands::ListActions { workflow_id, user } => {
+            handle_list_actions(config, workflow_id, user, format);
         }
     }
 }
