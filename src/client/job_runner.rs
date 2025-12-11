@@ -129,6 +129,8 @@ pub struct JobRunner {
     resource_monitor: Option<ResourceMonitor>,
     /// Flag set when SIGTERM is received. Shared with signal handler.
     termination_requested: Arc<AtomicBool>,
+    /// Timestamp of when a job was last claimed. Used for idle timeout.
+    last_job_claimed_time: Option<DateTime<Utc>>,
 }
 
 impl JobRunner {
@@ -154,8 +156,7 @@ impl JobRunner {
         let running_jobs: HashMap<i64, AsyncCliCommand> = HashMap::new();
         let rules = ComputeNodeRules::new(
             workflow.compute_node_expiration_buffer_seconds,
-            // TODO
-            // workflow.compute_node_wait_for_new_jobs_seconds,
+            workflow.compute_node_wait_for_new_jobs_seconds,
             workflow.compute_node_ignore_workflow_completion,
             workflow.compute_node_wait_for_healthy_database_minutes,
             workflow.jobs_sort_method,
@@ -221,6 +222,7 @@ impl JobRunner {
             rules,
             resource_monitor,
             termination_requested: Arc::new(AtomicBool::new(false)),
+            last_job_claimed_time: None,
         }
     }
 
@@ -358,6 +360,28 @@ impl JobRunner {
                 info!("End time reached. Terminating jobs and stopping job runner.");
                 self.terminate_jobs();
                 break;
+            }
+
+            // Check if we should exit due to no new jobs being claimed for too long
+            if self.rules.compute_node_wait_for_new_jobs_seconds > 0 && self.running_jobs.is_empty()
+            {
+                // Initialize the time if this is the first check
+                if self.last_job_claimed_time.is_none() {
+                    self.last_job_claimed_time = Some(Utc::now());
+                }
+
+                let idle_seconds = self
+                    .last_job_claimed_time
+                    .map(|last_time| (Utc::now() - last_time).num_seconds() as u64)
+                    .unwrap_or(0);
+
+                if idle_seconds >= self.rules.compute_node_wait_for_new_jobs_seconds {
+                    info!(
+                        "No jobs claimed for {} seconds (limit: {} seconds). Exiting job runner.",
+                        idle_seconds, self.rules.compute_node_wait_for_new_jobs_seconds
+                    );
+                    break;
+                }
             }
         }
 
@@ -736,6 +760,9 @@ impl JobRunner {
                 }
                 debug!("Found {} ready jobs to execute", jobs.len());
 
+                // Update last job claimed time since we got jobs
+                self.last_job_claimed_time = Some(Utc::now());
+
                 for job in jobs {
                     let job_id = job.id.expect("Job must have an ID");
                     let rr_id = job
@@ -855,6 +882,9 @@ impl JobRunner {
                     );
                 }
                 info!("Found {} ready jobs to execute", jobs.len());
+
+                // Update last job claimed time since we got jobs
+                self.last_job_claimed_time = Some(Utc::now());
 
                 // Start each job asynchronously
                 for job in jobs {
@@ -1389,7 +1419,7 @@ struct ComputeNodeRules {
     /// Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.
     pub compute_node_expiration_buffer_seconds: i64,
     /// Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
-    // pub compute_node_wait_for_new_jobs_seconds: u64,
+    pub compute_node_wait_for_new_jobs_seconds: u64,
     /// Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     pub compute_node_ignore_workflow_completion: bool,
     /// Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
@@ -1400,7 +1430,7 @@ struct ComputeNodeRules {
 impl ComputeNodeRules {
     pub fn new(
         compute_node_expiration_buffer_seconds: Option<i64>,
-        // compute_node_wait_for_new_jobs_seconds: Option<i64>,
+        compute_node_wait_for_new_jobs_seconds: Option<i64>,
         compute_node_ignore_workflow_completion: Option<bool>,
         compute_node_wait_for_healthy_database_minutes: Option<i64>,
         jobs_sort_method: Option<ClaimJobsSortMethod>,
@@ -1408,8 +1438,8 @@ impl ComputeNodeRules {
         ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
                 .unwrap_or(60) as i64,
-            // compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
-            //     .unwrap_or(0) as u64,
+            compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
+                .unwrap_or(0) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:
