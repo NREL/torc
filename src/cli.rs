@@ -15,6 +15,7 @@ use crate::client::commands::jobs::JobCommands;
 use crate::client::commands::reports::ReportCommands;
 use crate::client::commands::resource_requirements::ResourceRequirementsCommands;
 use crate::client::commands::results::ResultCommands;
+use crate::client::commands::scheduled_compute_nodes::ScheduledComputeNodeCommands;
 use crate::client::commands::slurm::SlurmCommands;
 use crate::client::commands::user_data::UserDataCommands;
 use crate::client::commands::workflows::WorkflowCommands;
@@ -143,6 +144,11 @@ pub enum Commands {
     Slurm {
         #[command(subcommand)]
         command: SlurmCommands,
+    },
+    /// Scheduled compute node management commands
+    ScheduledComputeNodes {
+        #[command(subcommand)]
+        command: ScheduledComputeNodeCommands,
     },
     /// Generate reports and analytics
     Reports {

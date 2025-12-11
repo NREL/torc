@@ -6,6 +6,7 @@ use crate::client::job_runner::JobRunner;
 use crate::client::log_paths::get_job_runner_log_file;
 use crate::client::utils::detect_nvidia_gpus;
 use crate::client::workflow_manager::WorkflowManager;
+use crate::config::TorcConfig;
 use crate::models;
 use chrono::{DateTime, Utc};
 use clap::Parser;
@@ -122,7 +123,9 @@ pub fn run(args: &Args) {
                         "Workflow {} has all jobs uninitialized. Initializing workflow...",
                         workflow_id
                     );
-                    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+                    let torc_config = TorcConfig::load().unwrap_or_default();
+                    let workflow_manager =
+                        WorkflowManager::new(config.clone(), torc_config, workflow.clone());
                     match workflow_manager.initialize(false) {
                         Ok(()) => {
                             eprintln!("Successfully initialized workflow {}", workflow_id);

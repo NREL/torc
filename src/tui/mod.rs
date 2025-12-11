@@ -372,7 +372,14 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                                 let is_server = viewer.title.contains("Server");
                                 match key.code {
                                     KeyCode::Char('q') | KeyCode::Esc => {
-                                        if is_server {
+                                        // If in kill confirmation mode, cancel it instead of closing
+                                        if viewer.kill_confirm {
+                                            if let Some(PopupType::ProcessViewer(v)) =
+                                                app.popup.as_mut()
+                                            {
+                                                v.cancel_kill();
+                                            }
+                                        } else if is_server {
                                             // For server, keep it running in background
                                             app.close_server_popup();
                                         } else {
@@ -381,11 +388,29 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                                         }
                                     }
                                     KeyCode::Char('k') => {
-                                        // Kill the process
+                                        // Request kill confirmation
                                         if let Some(PopupType::ProcessViewer(v)) =
                                             app.popup.as_mut()
                                         {
-                                            v.kill();
+                                            v.request_kill();
+                                        }
+                                    }
+                                    KeyCode::Char('y') => {
+                                        // Confirm kill if in confirmation mode
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            if v.kill_confirm {
+                                                v.kill();
+                                            }
+                                        }
+                                    }
+                                    KeyCode::Char('n') => {
+                                        // Cancel kill confirmation
+                                        if let Some(PopupType::ProcessViewer(v)) =
+                                            app.popup.as_mut()
+                                        {
+                                            v.cancel_kill();
                                         }
                                     }
                                     KeyCode::Char('a') => {

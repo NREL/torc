@@ -4143,9 +4143,8 @@ where
             );
         }
 
-        // Note: on_jobs_ready actions are checked in unblock_jobs_waiting_for() which is called
-        // by manage_job_status_change() above. When jobs transition to Ready status,
-        // the relevant on_jobs_ready actions are triggered within that transaction.
+        // Note: on_jobs_ready actions are triggered by the background unblock thread
+        // (process_workflow_unblocks) when jobs transition to Ready status.
 
         // Check if workflow is now complete and trigger on_workflow_complete actions
         match self

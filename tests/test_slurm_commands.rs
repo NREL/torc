@@ -11,6 +11,7 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+use torc::client::config::TorcConfig;
 use torc::client::default_api;
 use torc::client::hpc::common::HpcJobStatus;
 use torc::client::hpc::hpc_interface::HpcInterface;
@@ -479,6 +480,17 @@ fn test_create_submission_script_with_srun() {
     assert!(
         script_content.contains("srun torc-slurm-job-runner"),
         "Should have srun prefix when start_one_worker_per_node is true"
+    );
+
+    assert!(
+        script_content.contains("unset SLURM_MEM_PER_CPU SLURM_MEM_PER_GPU"),
+        "Should unset conflicting Slurm memory variables before srun"
+    );
+
+    // SLURM_MEM_PER_NODE should NOT be unset since torc-slurm-job-runner needs it
+    assert!(
+        !script_content.contains("SLURM_MEM_PER_NODE"),
+        "Should NOT unset SLURM_MEM_PER_NODE as it's needed by torc-slurm-job-runner"
     );
 
     let _ = fs::remove_file(&script_path);
@@ -1301,7 +1313,8 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
 
     let workflow = torc::client::default_api::get_workflow(config, workflow_id)
         .expect("Failed to get workflow");
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");
@@ -1446,7 +1459,8 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
     let jobs = create_test_jobs(config, workflow_id, 5);
 
     // Start the workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");

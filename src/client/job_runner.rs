@@ -76,6 +76,7 @@ use crate::client::apis::default_api;
 use crate::client::async_cli_command::AsyncCliCommand;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
+use crate::config::TorcConfig;
 use crate::models::{
     ClaimJobsSortMethod, ComputeNodesResources, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
@@ -107,6 +108,7 @@ thread_local! {
 #[allow(dead_code)]
 pub struct JobRunner {
     config: Configuration,
+    torc_config: TorcConfig,
     workflow: WorkflowModel,
     pub workflow_id: i64,
     pub run_id: i64,
@@ -129,6 +131,8 @@ pub struct JobRunner {
     resource_monitor: Option<ResourceMonitor>,
     /// Flag set when SIGTERM is received. Shared with signal handler.
     termination_requested: Arc<AtomicBool>,
+    /// Timestamp of when a job was last claimed. Used for idle timeout.
+    last_job_claimed_time: Option<DateTime<Utc>>,
 }
 
 impl JobRunner {
@@ -152,10 +156,10 @@ impl JobRunner {
     ) -> Self {
         let workflow_id = workflow.id.expect("Workflow ID must be present");
         let running_jobs: HashMap<i64, AsyncCliCommand> = HashMap::new();
+        let torc_config = TorcConfig::load().unwrap_or_default();
         let rules = ComputeNodeRules::new(
             workflow.compute_node_expiration_buffer_seconds,
-            // TODO
-            // workflow.compute_node_wait_for_new_jobs_seconds,
+            workflow.compute_node_wait_for_new_jobs_seconds,
             workflow.compute_node_ignore_workflow_completion,
             workflow.compute_node_wait_for_healthy_database_minutes,
             workflow.jobs_sort_method,
@@ -200,6 +204,7 @@ impl JobRunner {
 
         JobRunner {
             config,
+            torc_config,
             workflow,
             workflow_id,
             run_id,
@@ -221,6 +226,7 @@ impl JobRunner {
             rules,
             resource_monitor,
             termination_requested: Arc::new(AtomicBool::new(false)),
+            last_job_claimed_time: None,
         }
     }
 
@@ -358,6 +364,37 @@ impl JobRunner {
                 info!("End time reached. Terminating jobs and stopping job runner.");
                 self.terminate_jobs();
                 break;
+            }
+
+            // Check if we should exit due to no new jobs being claimed for too long
+            if self.rules.compute_node_wait_for_new_jobs_seconds > 0 && self.running_jobs.is_empty()
+            {
+                // Initialize the time if this is the first check
+                if self.last_job_claimed_time.is_none() {
+                    self.last_job_claimed_time = Some(Utc::now());
+                }
+
+                let idle_seconds = self
+                    .last_job_claimed_time
+                    .map(|last_time| (Utc::now() - last_time).num_seconds() as u64)
+                    .unwrap_or(0);
+
+                if idle_seconds >= self.rules.compute_node_wait_for_new_jobs_seconds {
+                    // Before exiting, check if there are pending actions we can handle
+                    // Actions like schedule_nodes might add more compute capacity
+                    if self.has_pending_actions_we_can_handle() {
+                        debug!(
+                            "Idle for {} seconds but pending actions exist, continuing to wait",
+                            idle_seconds
+                        );
+                    } else {
+                        info!(
+                            "No jobs claimed for {} seconds (limit: {} seconds). Exiting job runner.",
+                            idle_seconds, self.rules.compute_node_wait_for_new_jobs_seconds
+                        );
+                        break;
+                    }
+                }
             }
         }
 
@@ -736,6 +773,9 @@ impl JobRunner {
                 }
                 debug!("Found {} ready jobs to execute", jobs.len());
 
+                // Update last job claimed time since we got jobs
+                self.last_job_claimed_time = Some(Utc::now());
+
                 for job in jobs {
                     let job_id = job.id.expect("Job must have an ID");
                     let rr_id = job
@@ -855,6 +895,9 @@ impl JobRunner {
                     );
                 }
                 info!("Found {} ready jobs to execute", jobs.len());
+
+                // Update last job claimed time since we got jobs
+                self.last_job_claimed_time = Some(Utc::now());
 
                 // Start each job asynchronously
                 for job in jobs {
@@ -1177,10 +1220,20 @@ impl JobRunner {
         ) {
             Ok(actions) => {
                 if !actions.is_empty() {
-                    debug!(
+                    info!(
                         "Found {} pending action(s) (trigger_types: on_jobs_ready, on_jobs_complete)",
                         actions.len()
                     );
+                    for action in &actions {
+                        info!(
+                            "  Action {:?}: type={}, trigger={}, trigger_count={}, required_triggers={}",
+                            action.id,
+                            action.action_type,
+                            action.trigger_type,
+                            action.trigger_count,
+                            action.required_triggers
+                        );
+                    }
                 }
                 actions
             }
@@ -1206,9 +1259,9 @@ impl JobRunner {
 
             // Check if this job runner can handle this action before claiming
             if !self.can_handle_action(&action) {
-                debug!(
-                    "Action {} cannot be handled by this job runner, skipping",
-                    action_id
+                info!(
+                    "Action {} (type={}) cannot be handled by this job runner, skipping",
+                    action_id, action.action_type
                 );
                 continue;
             }
@@ -1240,6 +1293,54 @@ impl JobRunner {
         }
     }
 
+    /// Check if there are any unexecuted actions that this job runner can handle.
+    /// This is used to prevent early exit when actions might still need to be executed.
+    /// We check for unexecuted (not just pending) actions because the background thread
+    /// might not have processed job completions yet, so actions that will become pending
+    /// soon should also keep us alive.
+    fn has_pending_actions_we_can_handle(&self) -> bool {
+        // Get ALL actions for this workflow (not just pending ones)
+        match utils::send_with_retries(
+            &self.config,
+            || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
+                let actions = default_api::get_workflow_actions(&self.config, self.workflow_id)?;
+                Ok(actions)
+            },
+            self.rules.compute_node_wait_for_healthy_database_minutes,
+        ) {
+            Ok(actions) => {
+                // Check if we can handle any unexecuted on_jobs_ready or on_jobs_complete actions
+                for action in &actions {
+                    // Skip already executed actions
+                    if action.executed {
+                        continue;
+                    }
+                    // Only consider job-triggered actions (on_jobs_ready, on_jobs_complete)
+                    // on_workflow_start and on_worker_start are handled at startup
+                    if action.trigger_type != "on_jobs_ready"
+                        && action.trigger_type != "on_jobs_complete"
+                    {
+                        continue;
+                    }
+                    if self.can_handle_action(action) {
+                        debug!(
+                            "Found unexecuted action {} (trigger={}, type={}) that we can handle",
+                            action.id.unwrap_or(-1),
+                            action.trigger_type,
+                            action.action_type
+                        );
+                        return true;
+                    }
+                }
+                false
+            }
+            Err(e) => {
+                error!("Failed to check for unexecuted actions: {}", e);
+                false
+            }
+        }
+    }
+
     /// Check if this job runner can handle the given action
     /// Job runners can handle:
     /// - run_commands actions (always)
@@ -1258,9 +1359,22 @@ impl JobRunner {
                     .unwrap_or("");
 
                 // Job runners can handle slurm schedule_nodes using schedule_slurm_nodes_for_action
-                scheduler_type == "slurm"
+                let can_handle = scheduler_type == "slurm";
+                if !can_handle {
+                    debug!(
+                        "Cannot handle schedule_nodes action: scheduler_type='{}' (expected 'slurm'). action_config={:?}",
+                        scheduler_type, action.action_config
+                    );
+                }
+                can_handle
             }
-            _ => false,
+            _ => {
+                debug!(
+                    "Cannot handle action: unknown action_type='{}'",
+                    action_type
+                );
+                false
+            }
         }
     }
 
@@ -1360,10 +1474,10 @@ impl JobRunner {
                         num_allocations,
                         "worker",
                         "output",
-                        60, // poll_interval
+                        self.torc_config.client.slurm.poll_interval,
                         max_parallel_jobs,
                         start_one_worker_per_node,
-                        false, // keep_submission_scripts
+                        self.torc_config.client.slurm.keep_submission_scripts,
                     ) {
                         Ok(()) => {
                             info!("Successfully scheduled {} Slurm job(s)", num_allocations);
@@ -1389,7 +1503,7 @@ struct ComputeNodeRules {
     /// Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.
     pub compute_node_expiration_buffer_seconds: i64,
     /// Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
-    // pub compute_node_wait_for_new_jobs_seconds: u64,
+    pub compute_node_wait_for_new_jobs_seconds: u64,
     /// Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     pub compute_node_ignore_workflow_completion: bool,
     /// Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
@@ -1400,7 +1514,7 @@ struct ComputeNodeRules {
 impl ComputeNodeRules {
     pub fn new(
         compute_node_expiration_buffer_seconds: Option<i64>,
-        // compute_node_wait_for_new_jobs_seconds: Option<i64>,
+        compute_node_wait_for_new_jobs_seconds: Option<i64>,
         compute_node_ignore_workflow_completion: Option<bool>,
         compute_node_wait_for_healthy_database_minutes: Option<i64>,
         jobs_sort_method: Option<ClaimJobsSortMethod>,
@@ -1408,8 +1522,8 @@ impl ComputeNodeRules {
         ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
                 .unwrap_or(60) as i64,
-            // compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
-            //     .unwrap_or(0) as u64,
+            compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
+                .unwrap_or(120) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:

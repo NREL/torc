@@ -519,11 +519,13 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
     use std::thread;
     use std::time::Duration;
     use torc::client::workflow_manager::WorkflowManager;
+    use torc::config::TorcConfig;
 
     let config = &start_server.config;
     let workflow = create_test_workflow(config, "action_reinit_test_workflow");
     let workflow_id = workflow.id.unwrap();
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
     // Create job1 (independent, will fail in first run and be reset)
     let job1 =

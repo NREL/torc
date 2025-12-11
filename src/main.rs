@@ -14,6 +14,7 @@ use torc::client::commands::jobs::handle_job_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
 use torc::client::commands::results::handle_result_commands;
+use torc::client::commands::scheduled_compute_nodes::handle_scheduled_compute_node_commands;
 use torc::client::commands::slurm::handle_slurm_commands;
 use torc::client::commands::user_data::handle_user_data_commands;
 use torc::client::commands::workflows::handle_workflow_commands;
@@ -282,7 +283,9 @@ fn main() {
             // Submit the workflow
             match default_api::get_workflow(&config, workflow_id) {
                 Ok(workflow) => {
-                    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+                    let torc_config = TorcConfig::load().unwrap_or_default();
+                    let workflow_manager =
+                        WorkflowManager::new(config.clone(), torc_config, workflow);
                     match workflow_manager.start(*ignore_missing_data) {
                         Ok(()) => {
                             println!("Successfully submitted workflow {}", workflow_id);
@@ -328,6 +331,9 @@ fn main() {
         }
         Commands::Slurm { command } => {
             handle_slurm_commands(&config, command, &format);
+        }
+        Commands::ScheduledComputeNodes { command } => {
+            handle_scheduled_compute_node_commands(&config, command, &format);
         }
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &format);

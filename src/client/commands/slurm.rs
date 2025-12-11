@@ -13,6 +13,7 @@ use crate::client::commands::{
 };
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::workflow_manager::WorkflowManager;
+use crate::config::TorcConfig;
 use crate::models;
 use tabled::Tabled;
 
@@ -549,8 +550,9 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                                 "Workflow {} has all jobs uninitialized. Initializing workflow...",
                                 wf_id
                             );
+                            let torc_config = TorcConfig::load().unwrap_or_default();
                             let workflow_manager =
-                                WorkflowManager::new(config.clone(), workflow.clone());
+                                WorkflowManager::new(config.clone(), torc_config, workflow.clone());
                             match workflow_manager.initialize(false) {
                                 Ok(()) => {
                                     info!("Successfully initialized workflow {}", wf_id);

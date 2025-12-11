@@ -5,7 +5,7 @@ use common::{
     ServerProcess, create_test_compute_node, create_test_file, create_test_workflow, start_server,
 };
 use rstest::rstest;
-use torc::client::{apis::default_api, workflow_manager::WorkflowManager};
+use torc::client::{apis::default_api, config::TorcConfig, workflow_manager::WorkflowManager};
 use torc::models;
 use torc::models::JobStatus;
 
@@ -108,7 +108,8 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
     let created_job2 = default_api::create_job(config, job2).expect("Failed to create job2");
     let job2_id = created_job2.id.unwrap();
 
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     manager.initialize(true).expect("Failed to start workflow");
 
     // Create a compute node for the results
@@ -281,7 +282,8 @@ fn test_list_required_existing_files_combined_scenario(start_server: &ServerProc
     let created_job2 = default_api::create_job(config, job2).expect("Failed to create job2");
     let job2_id = created_job2.id.unwrap();
 
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     manager.initialize(true).expect("Failed to start workflow");
 
     // Create a compute node for the results

@@ -5,6 +5,7 @@ use common::{ServerProcess, create_test_compute_node, create_test_workflow, star
 use rstest::rstest;
 use serial_test::serial;
 use torc::client::{apis::default_api, workflow_manager::WorkflowManager};
+use torc::config::TorcConfig;
 use torc::models;
 use torc::models::JobStatus;
 
@@ -54,7 +55,8 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
     let job3_id = created_job3.id.unwrap();
 
     // Initialize the workflow to set up job dependencies
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     manager.initialize(true).expect("Failed to start workflow");
 
     // Verify initial job states - job1 should be ready, others blocked
@@ -239,7 +241,8 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
     let job4_id = created_job4.id.unwrap();
 
     // Initialize the workflow
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     manager.initialize(true).expect("Failed to start workflow");
 
     // Create a compute node for the results
@@ -349,7 +352,8 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
     let job4_id = created_job4.id.unwrap();
 
     // Initialize the workflow
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     manager.initialize(true).expect("Failed to start workflow");
 
     // Create a compute node for the results

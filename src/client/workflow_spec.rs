@@ -133,6 +133,7 @@ pub struct UserDataSpec {
 
 /// Workflow action specification for defining conditional actions
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WorkflowActionSpec {
     /// Trigger type: on_workflow_start, on_workflow_complete, on_jobs_ready, on_jobs_complete
     pub trigger_type: String,
@@ -1460,6 +1461,8 @@ impl WorkflowSpec {
         }
         if let Some(value) = spec.compute_node_wait_for_new_jobs_seconds {
             workflow_model.compute_node_wait_for_new_jobs_seconds = Some(value);
+        } else {
+            workflow_model.compute_node_wait_for_new_jobs_seconds = Some(120);
         }
         if let Some(value) = spec.compute_node_ignore_workflow_completion {
             workflow_model.compute_node_ignore_workflow_completion = Some(value);
@@ -1746,7 +1749,7 @@ impl WorkflowSpec {
                             "scheduler_type": scheduler_type,
                             "scheduler_id": scheduler_id,
                             "num_allocations": action_spec.num_allocations.unwrap_or(1),
-                            "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(true),
+                            "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(false),
                         });
                         // Only include max_parallel_jobs if explicitly specified
                         if let Some(max_parallel_jobs) = action_spec.max_parallel_jobs {

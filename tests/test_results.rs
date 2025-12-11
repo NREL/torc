@@ -8,6 +8,7 @@ use rstest::rstest;
 use serde_json::json;
 use torc::client::default_api;
 use torc::client::workflow_manager::WorkflowManager;
+use torc::config::TorcConfig;
 use torc::models;
 use torc::models::JobStatus;
 
@@ -465,7 +466,8 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     let job2_id = job2.id.unwrap();
 
     // Use WorkflowManager to initialize workflow for run 1
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow for run 1");
@@ -893,7 +895,8 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
     let job2_id = job2.id.unwrap();
 
     // Use WorkflowManager to initialize workflow
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow for run 1");

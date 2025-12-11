@@ -1,4 +1,6 @@
-use crate::models::{EventModel, FileModel, JobModel, ResultModel, WorkflowModel};
+use crate::models::{
+    EventModel, FileModel, JobModel, ResultModel, ScheduledComputeNodesModel, WorkflowModel,
+};
 use anyhow::Result;
 use ratatui::widgets::TableState;
 
@@ -15,6 +17,7 @@ pub enum DetailViewType {
     Files,
     Events,
     Results,
+    ScheduledNodes,
     Dag,
 }
 
@@ -132,6 +135,7 @@ impl DetailViewType {
             Self::Files => "Files",
             Self::Events => "Events",
             Self::Results => "Results",
+            Self::ScheduledNodes => "Scheduled Nodes",
             Self::Dag => "DAG",
         }
     }
@@ -142,6 +146,7 @@ impl DetailViewType {
             Self::Files,
             Self::Events,
             Self::Results,
+            Self::ScheduledNodes,
             Self::Dag,
         ]
     }
@@ -151,7 +156,8 @@ impl DetailViewType {
             Self::Jobs => Self::Files,
             Self::Files => Self::Events,
             Self::Events => Self::Results,
-            Self::Results => Self::Dag,
+            Self::Results => Self::ScheduledNodes,
+            Self::ScheduledNodes => Self::Dag,
             Self::Dag => Self::Jobs,
         }
     }
@@ -162,7 +168,8 @@ impl DetailViewType {
             Self::Files => Self::Jobs,
             Self::Events => Self::Files,
             Self::Results => Self::Events,
-            Self::Dag => Self::Results,
+            Self::ScheduledNodes => Self::Results,
+            Self::Dag => Self::ScheduledNodes,
         }
     }
 }
@@ -205,6 +212,9 @@ pub struct App {
     pub results: Vec<ResultModel>,
     pub results_all: Vec<ResultModel>,
     pub results_state: TableState,
+    pub scheduled_nodes: Vec<ScheduledComputeNodesModel>,
+    pub scheduled_nodes_all: Vec<ScheduledComputeNodesModel>,
+    pub scheduled_nodes_state: TableState,
     pub dag: Option<DagLayout>,
     pub detail_view: DetailViewType,
     pub selected_workflow_id: Option<i64>,
@@ -268,6 +278,9 @@ impl App {
             results: Vec::new(),
             results_all: Vec::new(),
             results_state: TableState::default(),
+            scheduled_nodes: Vec::new(),
+            scheduled_nodes_all: Vec::new(),
+            scheduled_nodes_state: TableState::default(),
             dag: None,
             detail_view: DetailViewType::Jobs,
             selected_workflow_id: None,
@@ -340,6 +353,9 @@ impl App {
                     DetailViewType::Files => (&mut self.files_state, self.files.len()),
                     DetailViewType::Events => (&mut self.events_state, self.events.len()),
                     DetailViewType::Results => (&mut self.results_state, self.results.len()),
+                    DetailViewType::ScheduledNodes => {
+                        (&mut self.scheduled_nodes_state, self.scheduled_nodes.len())
+                    }
                     DetailViewType::Dag => return, // DAG view doesn't support table navigation
                 };
                 if len > 0 {
@@ -376,6 +392,9 @@ impl App {
                     DetailViewType::Files => (&mut self.files_state, self.files.len()),
                     DetailViewType::Events => (&mut self.events_state, self.events.len()),
                     DetailViewType::Results => (&mut self.results_state, self.results.len()),
+                    DetailViewType::ScheduledNodes => {
+                        (&mut self.scheduled_nodes_state, self.scheduled_nodes.len())
+                    }
                     DetailViewType::Dag => return, // DAG view doesn't support table navigation
                 };
                 if len > 0 {
@@ -430,6 +449,14 @@ impl App {
                                 self.results_state.select(Some(0));
                             }
                         }
+                        DetailViewType::ScheduledNodes => {
+                            self.scheduled_nodes_all =
+                                self.client.list_scheduled_compute_nodes(workflow_id)?;
+                            self.scheduled_nodes = self.scheduled_nodes_all.clone();
+                            if !self.scheduled_nodes.is_empty() {
+                                self.scheduled_nodes_state.select(Some(0));
+                            }
+                        }
                         DetailViewType::Dag => {
                             // Load jobs if not already loaded
                             if self.jobs_all.is_empty() {
@@ -479,6 +506,7 @@ impl App {
             DetailViewType::Files => vec!["Name", "Path"],
             DetailViewType::Events => vec!["Data"],
             DetailViewType::Results => vec!["Status", "Return Code"],
+            DetailViewType::ScheduledNodes => vec!["Status", "Scheduler Type"],
             DetailViewType::Dag => vec![], // DAG view doesn't support filtering
         }
     }
@@ -596,6 +624,23 @@ impl App {
                     self.results_state.select(None);
                 }
             }
+            DetailViewType::ScheduledNodes => {
+                self.scheduled_nodes = self
+                    .scheduled_nodes_all
+                    .iter()
+                    .filter(|node| match column.as_str() {
+                        "Status" => node.status.to_lowercase().contains(&value),
+                        "Scheduler Type" => node.scheduler_type.to_lowercase().contains(&value),
+                        _ => false,
+                    })
+                    .cloned()
+                    .collect();
+                if !self.scheduled_nodes.is_empty() {
+                    self.scheduled_nodes_state.select(Some(0));
+                } else {
+                    self.scheduled_nodes_state.select(None);
+                }
+            }
             DetailViewType::Dag => {
                 // DAG view doesn't support filtering
             }
@@ -629,6 +674,12 @@ impl App {
                 self.results = self.results_all.clone();
                 if !self.results.is_empty() {
                     self.results_state.select(Some(0));
+                }
+            }
+            DetailViewType::ScheduledNodes => {
+                self.scheduled_nodes = self.scheduled_nodes_all.clone();
+                if !self.scheduled_nodes.is_empty() {
+                    self.scheduled_nodes_state.select(Some(0));
                 }
             }
             DetailViewType::Dag => {

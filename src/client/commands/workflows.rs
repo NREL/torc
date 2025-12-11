@@ -9,6 +9,7 @@ use crate::client::commands::{
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::workflow_manager::WorkflowManager;
 use crate::client::workflow_spec::WorkflowSpec;
+use crate::config::TorcConfig;
 use crate::models;
 use serde_json;
 use tabled::Tabled;
@@ -37,6 +38,24 @@ struct WorkflowTableRowNoUser {
     description: String,
     #[tabled(rename = "Timestamp")]
     timestamp: String,
+}
+
+#[derive(Tabled)]
+struct WorkflowActionTableRow {
+    #[tabled(rename = "ID")]
+    id: i64,
+    #[tabled(rename = "Trigger")]
+    trigger_type: String,
+    #[tabled(rename = "Action")]
+    action_type: String,
+    #[tabled(rename = "Progress")]
+    progress: String,
+    #[tabled(rename = "Status")]
+    status: String,
+    #[tabled(rename = "Executed At")]
+    executed_at: String,
+    #[tabled(rename = "Job IDs")]
+    job_ids: String,
 }
 
 #[derive(Subcommand)]
@@ -245,6 +264,15 @@ pub enum WorkflowCommands {
         #[arg()]
         spec_or_id: String,
     },
+    /// List workflow actions and their statuses (useful for debugging action triggers)
+    ListActions {
+        /// ID of the workflow to show actions for (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+        /// User to filter by when selecting workflow interactively (defaults to USER environment variable)
+        #[arg(short, long)]
+        user: Option<String>,
+    },
 }
 
 fn show_execution_plan_from_spec(file_path: &str, format: &str) {
@@ -434,6 +462,119 @@ fn handle_execution_plan(config: &Configuration, spec_or_id: &str, format: &str)
     } else {
         // Show execution plan for workflow from spec file
         show_execution_plan_from_spec(spec_or_id, format);
+    }
+}
+
+fn handle_list_actions(
+    config: &Configuration,
+    workflow_id: &Option<i64>,
+    user: &Option<String>,
+    format: &str,
+) {
+    let user_name = get_user_name(user);
+
+    let selected_workflow_id = match workflow_id {
+        Some(id) => *id,
+        None => select_workflow_interactively(config, &user_name).unwrap(),
+    };
+
+    match default_api::get_workflow_actions(config, selected_workflow_id) {
+        Ok(actions) => {
+            if format == "json" {
+                let output = serde_json::json!({
+                    "actions": actions
+                });
+                match serde_json::to_string_pretty(&output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing actions to JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                if actions.is_empty() {
+                    println!(
+                        "No workflow actions found for workflow {}",
+                        selected_workflow_id
+                    );
+                } else {
+                    println!("Workflow Actions for workflow {}:", selected_workflow_id);
+                    println!();
+
+                    let rows: Vec<WorkflowActionTableRow> = actions
+                        .iter()
+                        .map(|action| {
+                            // Determine status based on trigger_count, required_triggers, and executed
+                            let status = if action.executed {
+                                "Executed".to_string()
+                            } else if action.trigger_count >= action.required_triggers {
+                                "Pending (ready to claim)".to_string()
+                            } else {
+                                "Waiting".to_string()
+                            };
+
+                            // Format progress as "trigger_count/required_triggers"
+                            let progress =
+                                format!("{}/{}", action.trigger_count, action.required_triggers);
+
+                            // Format job_ids for display
+                            let job_ids = match &action.job_ids {
+                                Some(ids) if !ids.is_empty() => {
+                                    if ids.len() <= 5 {
+                                        ids.iter()
+                                            .map(|id| id.to_string())
+                                            .collect::<Vec<_>>()
+                                            .join(", ")
+                                    } else {
+                                        format!(
+                                            "{}, ... (+{} more)",
+                                            ids.iter()
+                                                .take(3)
+                                                .map(|id| id.to_string())
+                                                .collect::<Vec<_>>()
+                                                .join(", "),
+                                            ids.len() - 3
+                                        )
+                                    }
+                                }
+                                _ => "(all jobs)".to_string(),
+                            };
+
+                            WorkflowActionTableRow {
+                                id: action.id.unwrap_or(-1),
+                                trigger_type: action.trigger_type.clone(),
+                                action_type: action.action_type.clone(),
+                                progress,
+                                status,
+                                executed_at: action
+                                    .executed_at
+                                    .as_deref()
+                                    .unwrap_or("-")
+                                    .to_string(),
+                                job_ids,
+                            }
+                        })
+                        .collect();
+
+                    display_table_with_count(&rows, "actions");
+
+                    // Print a helpful legend
+                    println!();
+                    println!("Status legend:");
+                    println!(
+                        "  Waiting  - trigger_count < required_triggers (action not yet triggered)"
+                    );
+                    println!(
+                        "  Pending  - trigger_count >= required_triggers (ready to be claimed and executed)"
+                    );
+                    println!("  Executed - action has been claimed and executed");
+                }
+            }
+        }
+        Err(e) => {
+            print_error("getting workflow actions", &e);
+            std::process::exit(1);
+        }
     }
 }
 
@@ -661,7 +802,8 @@ fn handle_reset_status(
     if restart {
         match default_api::get_workflow(config, selected_workflow_id) {
             Ok(workflow) => {
-                let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+                let torc_config = TorcConfig::load().unwrap_or_default();
+                let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
                 match workflow_manager.reinitialize(false, false) {
                     Ok(()) => {
                         restart_success = true;
@@ -812,7 +954,8 @@ fn handle_reinitialize(
     // First get the workflow
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
             // Handle dry-run mode
             if dry_run {
@@ -943,7 +1086,8 @@ fn handle_initialize(
     // First get the workflow
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
             // Handle dry-run mode
             if dry_run {
@@ -1175,7 +1319,8 @@ fn handle_submit(config: &Configuration, workflow_id: &Option<i64>, force: bool,
     // Get the workflow and submit it
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
             match workflow_manager.start(force) {
                 Ok(()) => {
                     if format == "json" {
@@ -2031,6 +2176,9 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         }
         WorkflowCommands::ExecutionPlan { spec_or_id } => {
             handle_execution_plan(config, spec_or_id, format);
+        }
+        WorkflowCommands::ListActions { workflow_id, user } => {
+            handle_list_actions(config, workflow_id, user, format);
         }
     }
 }

@@ -16,6 +16,7 @@ use std::thread;
 use std::time::Duration;
 use tempfile::TempDir;
 use torc::client::{Configuration, default_api, workflow_manager::WorkflowManager};
+use torc::config::TorcConfig;
 use torc::models;
 
 /// Helper to wait for a job to reach an expected status
@@ -50,7 +51,8 @@ fn create_test_workflow_manager(
         Some("Test workflow for WorkflowManager".to_string()),
     );
 
-    let manager = WorkflowManager::new(config, workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config, torc_config, workflow.clone());
     (manager, workflow)
 }
 
@@ -177,9 +179,10 @@ fn test_workflow_manager_new_panics_without_id() {
     let config = Configuration::new();
     let mut workflow = models::WorkflowModel::new("test".to_string(), "user".to_string());
     workflow.id = None; // No ID set
+    let torc_config = TorcConfig::load().unwrap_or_default();
 
     // This should panic
-    WorkflowManager::new(config, workflow);
+    WorkflowManager::new(config, torc_config, workflow);
 }
 
 #[rstest]
@@ -2148,7 +2151,8 @@ fn create_workflow_with_user_data_chain(
 
     let job_ids = vec![job1_id, job2_id, job3_id];
 
-    let manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
 
     (manager, workflow, job_ids, user_data_ids)
 }
@@ -2397,7 +2401,8 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
     let workflow = default_api::get_workflow(&config, workflow_id).expect("Failed to get workflow");
 
     // Create workflow manager
-    let manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
     // Define file paths
     let f1_path = temp_dir.path().join("f1.json");

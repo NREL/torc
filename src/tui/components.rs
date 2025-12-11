@@ -1076,6 +1076,7 @@ pub struct ProcessViewer {
     pub scroll_offset: u16,
     pub auto_scroll: bool,
     pub is_running: bool,
+    pub kill_confirm: bool,
     child: Option<Child>,
     output_receiver: Option<Receiver<String>>,
 }
@@ -1088,6 +1089,7 @@ impl ProcessViewer {
             scroll_offset: 0,
             auto_scroll: true,
             is_running: false,
+            kill_confirm: false,
             child: None,
             output_receiver: None,
         }
@@ -1207,8 +1209,21 @@ impl ProcessViewer {
         }
     }
 
+    /// Request kill confirmation
+    pub fn request_kill(&mut self) {
+        if self.is_running {
+            self.kill_confirm = true;
+        }
+    }
+
+    /// Cancel kill confirmation
+    pub fn cancel_kill(&mut self) {
+        self.kill_confirm = false;
+    }
+
     /// Kill the running process
     pub fn kill(&mut self) {
+        self.kill_confirm = false;
         if let Some(ref mut child) = self.child {
             let _ = child.kill();
             self.is_running = false;
@@ -1321,7 +1336,35 @@ impl ProcessViewer {
         f.render_widget(paragraph, chunks[0]);
 
         // Help bar
-        let help_items = if self.is_running {
+        let help_items = if self.kill_confirm {
+            vec![
+                Span::styled(
+                    "Kill process? ",
+                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    "y",
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(": yes | "),
+                Span::styled(
+                    "n",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("/"),
+                Span::styled(
+                    "Esc",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw(": cancel"),
+            ]
+        } else if self.is_running {
             vec![
                 Span::styled("q", Style::default().fg(Color::Yellow)),
                 Span::raw(": close | "),
