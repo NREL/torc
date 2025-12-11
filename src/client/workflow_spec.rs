@@ -139,7 +139,7 @@ pub struct WorkflowActionSpec {
     /// Action type: run_commands, schedule_nodes
     pub action_type: String,
     /// For on_jobs_ready/on_jobs_complete: exact job names to match
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "job_names")]
     pub jobs: Option<Vec<String>>,
     /// For on_jobs_ready/on_jobs_complete: regex patterns to match job names
     #[serde(skip_serializing_if = "Option::is_none")]
