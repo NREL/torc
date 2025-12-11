@@ -6,6 +6,7 @@
 class TorcDashboard {
     constructor() {
         this.currentTab = 'workflows';
+        this.previousTab = null;  // Track previous tab for back navigation
         this.selectedWorkflowId = null;
         this.selectedSubTab = 'jobs';
         this.workflows = [];
@@ -110,7 +111,7 @@ class TorcDashboard {
         });
     }
 
-    switchTab(tabName) {
+    switchTab(tabName, skipHistory = false) {
         // Update nav items
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.tab === tabName);
@@ -121,7 +122,14 @@ class TorcDashboard {
             content.classList.toggle('active', content.id === `tab-${tabName}`);
         });
 
+        // Track previous tab for back navigation (unless we're going back)
+        if (!skipHistory && this.currentTab !== tabName) {
+            this.previousTab = this.currentTab;
+        }
         this.currentTab = tabName;
+
+        // Update back button visibility in DAG tab
+        this.updateDAGBackButton();
 
         // Tab-specific initialization
         if (tabName === 'dag' && dagVisualizer && this.selectedWorkflowId) {
@@ -1608,6 +1616,28 @@ class TorcDashboard {
         document.getElementById('btn-fit-dag')?.addEventListener('click', () => {
             dagVisualizer.fitToView();
         });
+
+        document.getElementById('btn-dag-back')?.addEventListener('click', () => {
+            this.goBackFromDAG();
+        });
+    }
+
+    updateDAGBackButton() {
+        const backBtn = document.getElementById('btn-dag-back');
+        if (backBtn) {
+            // Show back button only when in DAG tab and there's a previous tab to go back to
+            backBtn.style.display = (this.currentTab === 'dag' && this.previousTab) ? 'inline-block' : 'none';
+        }
+    }
+
+    goBackFromDAG() {
+        if (this.previousTab) {
+            this.switchTab(this.previousTab, true);  // skipHistory=true to avoid infinite back loop
+            this.previousTab = null;
+        } else {
+            // Default to details if no previous tab
+            this.switchTab('details', true);
+        }
     }
 
     async loadDAG(workflowId) {
