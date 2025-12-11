@@ -1748,7 +1748,7 @@ impl WorkflowSpec {
                             "scheduler_type": scheduler_type,
                             "scheduler_id": scheduler_id,
                             "num_allocations": action_spec.num_allocations.unwrap_or(1),
-                            "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(true),
+                            "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(false),
                         });
                         // Only include max_parallel_jobs if explicitly specified
                         if let Some(max_parallel_jobs) = action_spec.max_parallel_jobs {

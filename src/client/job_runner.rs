@@ -1223,8 +1223,11 @@ impl JobRunner {
                     for action in &actions {
                         info!(
                             "  Action {:?}: type={}, trigger={}, trigger_count={}, required_triggers={}",
-                            action.id, action.action_type, action.trigger_type,
-                            action.trigger_count, action.required_triggers
+                            action.id,
+                            action.action_type,
+                            action.trigger_type,
+                            action.trigger_count,
+                            action.required_triggers
                         );
                     }
                 }
