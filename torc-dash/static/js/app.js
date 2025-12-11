@@ -3935,7 +3935,8 @@ class TorcDashboard {
             scheduler: '',
             jobs: [],
             num_allocations: 1,
-            max_parallel_jobs: 10
+            max_parallel_jobs: 10,
+            start_one_worker_per_node: false
         };
         this.wizardActions.push(action);
         this.wizardRenderActions();
@@ -4097,6 +4098,16 @@ class TorcDashboard {
                                     <small>Maximum concurrent jobs per allocation (--max-parallel-jobs)</small>
                                 </div>
                             ` : '<div class="form-group"></div>'}
+                        </div>
+                        <div class="wizard-action-row">
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" ${action.start_one_worker_per_node ? 'checked' : ''}
+                                           onchange="app.wizardUpdateAction(${action.id}, 'start_one_worker_per_node', this.checked)">
+                                    <span>Start one worker per node</span>
+                                </label>
+                                <small>When enabled, each allocated node runs its own worker process. Useful for multi-node allocations where jobs only need a single node.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4292,6 +4303,10 @@ class TorcDashboard {
                 // Add max_parallel_jobs for queue-depth strategy
                 if (!useResourceAware && a.max_parallel_jobs) {
                     actionSpec.max_parallel_jobs = a.max_parallel_jobs;
+                }
+                // Add start_one_worker_per_node if enabled
+                if (a.start_one_worker_per_node) {
+                    actionSpec.start_one_worker_per_node = true;
                 }
                 return actionSpec;
             });

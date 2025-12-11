@@ -1855,6 +1855,28 @@ textarea.text-input {
     font-size: 11px;
 }
 
+.wizard-action-row .checkbox-group {
+    grid-column: 1 / -1;
+}
+
+.wizard-action-row .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.wizard-action-row .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.wizard-action-row .checkbox-label span {
+    font-size: 13px;
+}
+
 /* Wizard Monitoring Step */
 .wizard-monitoring-header {
     display: flex;
