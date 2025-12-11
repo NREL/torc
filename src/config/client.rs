@@ -21,6 +21,9 @@ pub struct ClientConfig {
 
     /// Run command configuration
     pub run: ClientRunConfig,
+
+    /// Slurm scheduler configuration
+    pub slurm: ClientSlurmConfig,
 }
 
 impl Default for ClientConfig {
@@ -31,6 +34,7 @@ impl Default for ClientConfig {
             username: None,
             log_level: "info".to_string(),
             run: ClientRunConfig::default(),
+            slurm: ClientSlurmConfig::default(),
         }
     }
 }
@@ -71,6 +75,26 @@ impl Default for ClientRunConfig {
             num_cpus: None,
             memory_gb: None,
             num_gpus: None,
+        }
+    }
+}
+
+/// Configuration for Slurm scheduler integration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ClientSlurmConfig {
+    /// Poll interval in seconds for Slurm job runners
+    pub poll_interval: i32,
+
+    /// Keep submission scripts after job submission (useful for debugging)
+    pub keep_submission_scripts: bool,
+}
+
+impl Default for ClientSlurmConfig {
+    fn default() -> Self {
+        Self {
+            poll_interval: 60,
+            keep_submission_scripts: false,
         }
     }
 }

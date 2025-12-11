@@ -10,6 +10,7 @@ use tempfile::TempDir;
 use torc::client::default_api;
 use torc::client::workflow_manager::WorkflowManager;
 use torc::client::workflow_spec::WorkflowSpec;
+use torc::config::TorcConfig;
 
 /// Helper to create a temporary workflow spec file
 fn create_spec_file(temp_dir: &Path, content: &str) -> std::path::PathBuf {
@@ -80,7 +81,8 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
 
     // Initialize workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -214,7 +216,8 @@ actions:
     assert_eq!(actions.len(), 1);
 
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -319,7 +322,8 @@ actions:
 
     // Get workflow and initialize using WorkflowManager
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -435,7 +439,8 @@ actions:
 
     // Get workflow and initialize using WorkflowManager
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -546,7 +551,8 @@ actions:
     assert_eq!(actions.len(), 3);
 
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -662,7 +668,8 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
 
     // Initialize workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -793,7 +800,8 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
 
     // Initialize workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -931,7 +939,8 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
 
     // Initialize workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");
@@ -1067,7 +1076,8 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
 
     // Initialize workflow using WorkflowManager
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
     workflow_manager
         .initialize(true)
         .expect("Failed to initialize workflow");

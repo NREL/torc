@@ -76,6 +76,7 @@ use crate::client::apis::default_api;
 use crate::client::async_cli_command::AsyncCliCommand;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
+use crate::config::TorcConfig;
 use crate::models::{
     ClaimJobsSortMethod, ComputeNodesResources, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
@@ -107,6 +108,7 @@ thread_local! {
 #[allow(dead_code)]
 pub struct JobRunner {
     config: Configuration,
+    torc_config: TorcConfig,
     workflow: WorkflowModel,
     pub workflow_id: i64,
     pub run_id: i64,
@@ -154,6 +156,7 @@ impl JobRunner {
     ) -> Self {
         let workflow_id = workflow.id.expect("Workflow ID must be present");
         let running_jobs: HashMap<i64, AsyncCliCommand> = HashMap::new();
+        let torc_config = TorcConfig::load().unwrap_or_default();
         let rules = ComputeNodeRules::new(
             workflow.compute_node_expiration_buffer_seconds,
             workflow.compute_node_wait_for_new_jobs_seconds,
@@ -201,6 +204,7 @@ impl JobRunner {
 
         JobRunner {
             config,
+            torc_config,
             workflow,
             workflow_id,
             run_id,
@@ -1470,10 +1474,10 @@ impl JobRunner {
                         num_allocations,
                         "worker",
                         "output",
-                        60, // poll_interval
+                        self.torc_config.client.slurm.poll_interval,
                         max_parallel_jobs,
                         start_one_worker_per_node,
-                        false, // keep_submission_scripts
+                        self.torc_config.client.slurm.keep_submission_scripts,
                     ) {
                         Ok(()) => {
                             info!("Successfully scheduled {} Slurm job(s)", num_allocations);

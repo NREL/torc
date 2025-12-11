@@ -9,6 +9,7 @@ use crate::client::commands::{
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::workflow_manager::WorkflowManager;
 use crate::client::workflow_spec::WorkflowSpec;
+use crate::config::TorcConfig;
 use crate::models;
 use serde_json;
 use tabled::Tabled;
@@ -801,7 +802,8 @@ fn handle_reset_status(
     if restart {
         match default_api::get_workflow(config, selected_workflow_id) {
             Ok(workflow) => {
-                let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+                let torc_config = TorcConfig::load().unwrap_or_default();
+                let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
                 match workflow_manager.reinitialize(false, false) {
                     Ok(()) => {
                         restart_success = true;
@@ -952,7 +954,8 @@ fn handle_reinitialize(
     // First get the workflow
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
             // Handle dry-run mode
             if dry_run {
@@ -1083,7 +1086,8 @@ fn handle_initialize(
     // First get the workflow
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
 
             // Handle dry-run mode
             if dry_run {
@@ -1315,7 +1319,8 @@ fn handle_submit(config: &Configuration, workflow_id: &Option<i64>, force: bool,
     // Get the workflow and submit it
     match default_api::get_workflow(config, selected_workflow_id) {
         Ok(workflow) => {
-            let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
             match workflow_manager.start(force) {
                 Ok(()) => {
                     if format == "json" {

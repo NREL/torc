@@ -282,7 +282,9 @@ fn main() {
             // Submit the workflow
             match default_api::get_workflow(&config, workflow_id) {
                 Ok(workflow) => {
-                    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+                    let torc_config = TorcConfig::load().unwrap_or_default();
+                    let workflow_manager =
+                        WorkflowManager::new(config.clone(), torc_config, workflow);
                     match workflow_manager.start(*ignore_missing_data) {
                         Ok(()) => {
                             println!("Successfully submitted workflow {}", workflow_id);

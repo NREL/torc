@@ -1,6 +1,7 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::errors::TorcError;
+use crate::config::TorcConfig;
 use log::{self, debug, error, info, warn};
 
 use crate::client::commands::pagination::{FileListParams, JobListParams, iter_files, iter_jobs};
@@ -18,12 +19,13 @@ pub struct InitializationCheck {
 
 pub struct WorkflowManager {
     config: Configuration,
+    torc_config: TorcConfig,
     pub workflow_id: i64,
     hostname: String,
 }
 
 impl WorkflowManager {
-    pub fn new(config: Configuration, workflow: WorkflowModel) -> Self {
+    pub fn new(config: Configuration, torc_config: TorcConfig, workflow: WorkflowModel) -> Self {
         let workflow_id = workflow.id.expect("Workflow ID must be present");
         let hostname = hostname::get()
             .expect("Failed to get hostname")
@@ -31,6 +33,7 @@ impl WorkflowManager {
             .expect("Hostname is not valid UTF-8");
         WorkflowManager {
             config,
+            torc_config,
             workflow_id,
             hostname,
         }
@@ -279,10 +282,10 @@ impl WorkflowManager {
                         num_allocations,
                         "worker",
                         "output",
-                        60, // poll_interval
+                        self.torc_config.client.slurm.poll_interval,
                         max_parallel_jobs,
                         start_one_worker_per_node,
-                        false, // keep_submission_scripts
+                        self.torc_config.client.slurm.keep_submission_scripts,
                     ) {
                         Ok(()) => {
                             info!(

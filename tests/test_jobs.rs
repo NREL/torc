@@ -9,6 +9,7 @@ use rstest::rstest;
 use serde_json::json;
 use torc::client::default_api;
 use torc::client::workflow_manager::WorkflowManager;
+use torc::config::TorcConfig;
 use torc::models;
 use torc::models::JobStatus;
 
@@ -439,7 +440,8 @@ fn test_jobs_complete_command_json(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Start the workflow
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");
@@ -487,7 +489,8 @@ fn test_jobs_complete_with_different_statuses(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Start the workflow
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");
@@ -539,7 +542,8 @@ fn test_jobs_complete_return_codes(start_server: &ServerProcess) {
     let workflow = create_test_workflow(config, "test_return_codes_workflow");
     let workflow_id = workflow.id.unwrap();
 
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");
@@ -775,7 +779,8 @@ fn test_jobs_update_restriction_status_must_be_uninitialized(start_server: &Serv
     let job_id = job.id.unwrap();
 
     // Start the workflow to change job status from Uninitialized
-    let workflow_manager = WorkflowManager::new(config.clone(), workflow);
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
     workflow_manager
         .initialize(true)
         .expect("Failed to start workflow");

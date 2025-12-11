@@ -209,6 +209,13 @@ output_dir = "output"
 # memory_gb = 32.0
 # num_gpus = 1
 
+[client.slurm]
+# Poll interval in seconds for Slurm job runners
+poll_interval = 60
+
+# Keep submission scripts after job submission (useful for debugging)
+keep_submission_scripts = false
+
 [server]
 # Hostname/IP to bind to
 url = "localhost"
