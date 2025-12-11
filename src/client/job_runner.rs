@@ -1439,7 +1439,7 @@ impl ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
                 .unwrap_or(60) as i64,
             compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
-                .unwrap_or(0) as u64,
+                .unwrap_or(120) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:
