@@ -823,6 +823,9 @@ class TorcDashboard {
                 case 'compute-nodes':
                     this.tableState.data = await api.listComputeNodes(workflowId);
                     break;
+                case 'scheduled-nodes':
+                    this.tableState.data = await api.listScheduledComputeNodes(workflowId);
+                    break;
             }
             this.tableState.filteredData = [...this.tableState.data];
             this.renderCurrentTable();
@@ -859,6 +862,9 @@ class TorcDashboard {
                 break;
             case 'compute-nodes':
                 content.innerHTML = this.renderComputeNodesTable(filteredData);
+                break;
+            case 'scheduled-nodes':
+                content.innerHTML = this.renderScheduledNodesTable(filteredData);
                 break;
         }
 
@@ -1491,6 +1497,51 @@ class TorcDashboard {
                             <td>${n.memory_gb ?? '-'}</td>
                             <td>${n.num_gpus ?? '-'}</td>
                             <td>${n.is_active != null ? (n.is_active ? 'Yes' : 'No') : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    renderScheduledNodesTable(nodes) {
+        const controls = this.renderTableControls('scheduled-nodes');
+        const count = `<span class="table-count">${nodes.length} scheduled node${nodes.length !== 1 ? 's' : ''}</span>`;
+
+        if (!nodes || nodes.length === 0) {
+            return `${controls}<div class="placeholder-message">No scheduled compute nodes in this workflow</div>`;
+        }
+
+        const getStatusClass = (status) => {
+            const s = (status || '').toLowerCase();
+            if (s === 'running') return 'status-running';
+            if (s === 'pending' || s === 'scheduled') return 'status-pending';
+            if (s === 'completed' || s === 'done') return 'status-completed';
+            if (s === 'failed' || s === 'error') return 'status-failed';
+            return '';
+        };
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Scheduler ID', 'scheduler_id')}
+                        ${this.renderSortableHeader('Config ID', 'scheduler_config_id')}
+                        ${this.renderSortableHeader('Type', 'scheduler_type')}
+                        ${this.renderSortableHeader('Status', 'status')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${nodes.map(n => `
+                        <tr>
+                            <td><code>${n.id ?? '-'}</code></td>
+                            <td><code>${n.scheduler_id ?? '-'}</code></td>
+                            <td><code>${n.scheduler_config_id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(n.scheduler_type || '-')}</td>
+                            <td><span class="status-badge ${getStatusClass(n.status)}">${this.escapeHtml(n.status || '-')}</span></td>
                         </tr>
                     `).join('')}
                 </tbody>

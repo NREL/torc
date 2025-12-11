@@ -371,7 +371,8 @@ fn draw_tabs(f: &mut Frame, area: Rect, app: &App) {
         DetailViewType::Files => 1,
         DetailViewType::Events => 2,
         DetailViewType::Results => 3,
-        DetailViewType::Dag => 4,
+        DetailViewType::ScheduledNodes => 4,
+        DetailViewType::Dag => 5,
     };
 
     let tabs = Tabs::new(titles)
@@ -393,6 +394,7 @@ fn draw_detail_table(f: &mut Frame, area: Rect, app: &mut App) {
         DetailViewType::Files => draw_files_table(f, area, app),
         DetailViewType::Events => draw_events_table(f, area, app),
         DetailViewType::Results => draw_results_table(f, area, app),
+        DetailViewType::ScheduledNodes => draw_scheduled_nodes_table(f, area, app),
         DetailViewType::Dag => draw_dag(f, area, app),
     }
 }
@@ -696,6 +698,78 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
     .highlight_symbol(">> ");
 
     f.render_stateful_widget(table, area, &mut app.results_state);
+}
+
+fn draw_scheduled_nodes_table(f: &mut Frame, area: Rect, app: &mut App) {
+    let is_focused = app.focus == Focus::Details;
+    let selected_style = Style::default()
+        .add_modifier(Modifier::REVERSED)
+        .fg(Color::Cyan);
+    let header_style = Style::default()
+        .fg(Color::Yellow)
+        .add_modifier(Modifier::BOLD);
+
+    let header = Row::new(vec!["ID", "Scheduler ID", "Config ID", "Type", "Status"])
+        .style(header_style)
+        .bottom_margin(1);
+
+    let rows = app.scheduled_nodes.iter().map(|node| {
+        let id = node.id.map(|i| i.to_string()).unwrap_or_default();
+        let scheduler_id = node.scheduler_id.to_string();
+        let config_id = node.scheduler_config_id.to_string();
+        let scheduler_type = node.scheduler_type.clone();
+        let status = node.status.clone();
+
+        // Color based on status
+        let status_color = match status.as_str() {
+            "running" => Color::Green,
+            "pending" | "scheduled" => Color::Yellow,
+            "failed" | "error" => Color::Red,
+            "completed" | "done" => Color::Blue,
+            _ => Color::White,
+        };
+
+        Row::new(vec![
+            Cell::from(id),
+            Cell::from(scheduler_id),
+            Cell::from(config_id),
+            Cell::from(scheduler_type),
+            Cell::from(Span::styled(status, Style::default().fg(status_color))),
+        ])
+    });
+
+    let title = if is_focused {
+        "Scheduled Nodes [FOCUSED]"
+    } else {
+        "Scheduled Nodes"
+    };
+    let border_style = if is_focused {
+        Style::default().fg(Color::Green)
+    } else {
+        Style::default()
+    };
+
+    let table = Table::new(
+        rows,
+        [
+            Constraint::Length(8),  // ID
+            Constraint::Length(14), // Scheduler ID
+            Constraint::Length(10), // Config ID
+            Constraint::Length(10), // Type
+            Constraint::Length(12), // Status
+        ],
+    )
+    .header(header)
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title(title)
+            .border_style(border_style),
+    )
+    .row_highlight_style(selected_style)
+    .highlight_symbol(">> ");
+
+    f.render_stateful_widget(table, area, &mut app.scheduled_nodes_state);
 }
 
 fn draw_filter_input(f: &mut Frame, area: Rect, app: &App) {

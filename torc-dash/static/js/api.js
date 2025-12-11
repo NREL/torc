@@ -223,6 +223,13 @@ class TorcAPI {
         return this.extractItems(response);
     }
 
+    // ==================== Scheduled Compute Nodes ====================
+
+    async listScheduledComputeNodes(workflowId, offset = 0, limit = 1000) {
+        const response = await this.request(`/scheduled_compute_nodes?workflow_id=${workflowId}&offset=${offset}&limit=${limit}`);
+        return this.extractItems(response);
+    }
+
     // ==================== Workflow Events ====================
 
     async listWorkflowEvents(workflowId, offset = 0, limit = 1000) {

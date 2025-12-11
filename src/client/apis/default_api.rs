@@ -6764,7 +6764,6 @@ pub fn get_pending_actions(
 ) -> Result<Vec<crate::models::WorkflowActionModel>, Error<GetPendingActionsError>> {
     let p_workflow_id = workflow_id;
 
-    // TODO: Use default_api
     let mut uri_str = format!(
         "{}/workflows/{workflow_id}/actions/pending",
         configuration.base_path,

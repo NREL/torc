@@ -2,7 +2,8 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::config::TorcConfig;
 use crate::models::{
-    EventModel, FileModel, JobDependencyModel, JobModel, ResultModel, WorkflowModel,
+    EventModel, FileModel, JobDependencyModel, JobModel, ResultModel, ScheduledComputeNodesModel,
+    WorkflowModel,
 };
 use anyhow::{Context, Result};
 
@@ -155,6 +156,26 @@ impl TorcClient {
             None, // limit
         )
         .context("Failed to list job dependencies")?;
+
+        Ok(response.items.unwrap_or_default())
+    }
+
+    pub fn list_scheduled_compute_nodes(
+        &self,
+        workflow_id: i64,
+    ) -> Result<Vec<ScheduledComputeNodesModel>> {
+        let response = default_api::list_scheduled_compute_nodes(
+            &self.config,
+            workflow_id,
+            None, // offset
+            None, // limit
+            None, // sort_by
+            None, // reverse_sort
+            None, // scheduler_id
+            None, // scheduler_config_id
+            None, // status
+        )
+        .context("Failed to list scheduled compute nodes")?;
 
         Ok(response.items.unwrap_or_default())
     }
