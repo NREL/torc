@@ -1,0 +1,48 @@
+// Zip Parameter Mode Example
+// Demonstrates using parameter_mode "zip" for paired parameter expansion
+//
+// When using Cartesian product (default): 3 datasets x 3 models = 9 jobs
+// When using zip mode: 3 pairs = 3 jobs (dataset[i] paired with model[i])
+//
+// This is useful when you have pre-determined parameter combinations rather than
+// wanting to test all possible combinations.
+
+name "zip_parameter_example"
+description "Example workflow demonstrating zip parameter mode for paired parameters"
+
+// Training jobs using zip mode - each dataset is paired with a specific model
+// Instead of 3x3=9 combinations, we get exactly 3 jobs:
+//   - cifar10 with resnet
+//   - mnist with cnn
+//   - imagenet with transformer
+job "train_{dataset}_{model}" {
+    command "python train.py --dataset={dataset} --model={model}"
+    output_files "model_{dataset}_{model}"
+    parameters {
+        dataset "['cifar10', 'mnist', 'imagenet']"
+        model "['resnet', 'cnn', 'transformer']"
+    }
+    parameter_mode "zip"
+}
+
+// Evaluation jobs also use zip mode to match the training jobs
+job "evaluate_{dataset}_{model}" {
+    command "python evaluate.py --model=/models/{dataset}_{model}.pt"
+    depends_on_job "train_{dataset}_{model}"
+    input_files "model_{dataset}_{model}"
+    parameters {
+        dataset "['cifar10', 'mnist', 'imagenet']"
+        model "['resnet', 'cnn', 'transformer']"
+    }
+    parameter_mode "zip"
+}
+
+// File specifications also support zip mode
+file "model_{dataset}_{model}" {
+    path "/models/{dataset}_{model}.pt"
+    parameters {
+        dataset "['cifar10', 'mnist', 'imagenet']"
+        model "['resnet', 'cnn', 'transformer']"
+    }
+    parameter_mode "zip"
+}

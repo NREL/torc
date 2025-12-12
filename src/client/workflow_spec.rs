@@ -1,6 +1,6 @@
 use crate::client::apis::{configuration::Configuration, default_api};
 use crate::client::parameter_expansion::{
-    ParameterValue, cartesian_product, parse_parameter_value, substitute_parameters,
+    ParameterValue, cartesian_product, parse_parameter_value, substitute_parameters, zip_parameters,
 };
 use crate::models;
 use regex::Regex;
@@ -67,6 +67,10 @@ pub struct FileSpec {
     /// Supports range notation (e.g., "1:100" or "1:100:5") and lists (e.g., "[1,5,10]")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, String>>,
+    /// How to combine multiple parameters: "product" (default, Cartesian product) or "zip"
+    /// With "zip", parameters are combined element-wise (all must have the same length)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameter_mode: Option<String>,
     /// Names of workflow-level parameters to use for this file
     /// If set, only these parameters from the workflow will be used
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -81,6 +85,7 @@ impl FileSpec {
             name,
             path,
             parameters: None,
+            parameter_mode: None,
             use_parameters: None,
         }
     }
@@ -100,14 +105,19 @@ impl FileSpec {
             parsed_params.insert(name.clone(), values);
         }
 
-        // Generate Cartesian product of all parameters
-        let combinations = cartesian_product(&parsed_params);
+        // Generate combinations based on parameter_mode
+        let mode = self.parameter_mode.as_deref().unwrap_or("product");
+        let combinations = match mode {
+            "zip" => zip_parameters(&parsed_params)?,
+            "product" | _ => cartesian_product(&parsed_params),
+        };
 
         // Create a FileSpec for each combination
         let mut expanded = Vec::new();
         for combo in combinations {
             let mut new_spec = self.clone();
             new_spec.parameters = None; // Remove parameters from expanded specs
+            new_spec.parameter_mode = None; // Remove parameter_mode from expanded specs
 
             // Substitute parameters in name and path
             new_spec.name = substitute_parameters(&self.name, &combo);
@@ -281,9 +291,13 @@ pub struct JobSpec {
     pub scheduler: Option<String>,
     /// Optional parameters for generating multiple jobs
     /// Supports range notation (e.g., "1:100" or "1:100:5") and lists (e.g., "[1,5,10]")
-    /// Multiple parameters create a Cartesian product of jobs
+    /// Multiple parameters create a Cartesian product of jobs by default
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, String>>,
+    /// How to combine multiple parameters: "product" (default, Cartesian product) or "zip"
+    /// With "zip", parameters are combined element-wise (all must have the same length)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameter_mode: Option<String>,
     /// Names of workflow-level parameters to use for this job
     /// If set, only these parameters from the workflow will be used
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -313,6 +327,7 @@ impl JobSpec {
             output_user_data_regexes: None,
             scheduler: None,
             parameters: None,
+            parameter_mode: None,
             use_parameters: None,
         }
     }
@@ -332,14 +347,19 @@ impl JobSpec {
             parsed_params.insert(name.clone(), values);
         }
 
-        // Generate Cartesian product of all parameters
-        let combinations = cartesian_product(&parsed_params);
+        // Generate combinations based on parameter_mode
+        let mode = self.parameter_mode.as_deref().unwrap_or("product");
+        let combinations = match mode {
+            "zip" => zip_parameters(&parsed_params)?,
+            "product" | _ => cartesian_product(&parsed_params),
+        };
 
         // Create a JobSpec for each combination
         let mut expanded = Vec::new();
         for combo in combinations {
             let mut new_spec = self.clone();
             new_spec.parameters = None; // Remove parameters from expanded specs
+            new_spec.parameter_mode = None; // Remove parameter_mode from expanded specs
 
             // Substitute parameters in all string fields
             new_spec.name = substitute_parameters(&self.name, &combo);
@@ -2419,6 +2439,13 @@ impl WorkflowSpec {
                     "parameters" => {
                         job_spec.parameters = Self::parse_kdl_parameters(child)?;
                     }
+                    "parameter_mode" => {
+                        job_spec.parameter_mode = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .map(|s| s.to_string());
+                    }
                     "use_parameters" => {
                         // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
                         let param_names: Vec<String> = child
@@ -2455,9 +2482,10 @@ impl WorkflowSpec {
             .map(|s| s.to_string());
 
         let mut parameters = None;
+        let mut parameter_mode = None;
         let mut use_parameters = None;
 
-        // Check for child nodes (path, parameters, use_parameters)
+        // Check for child nodes (path, parameters, parameter_mode, use_parameters)
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
@@ -2470,6 +2498,13 @@ impl WorkflowSpec {
                     }
                     "parameters" => {
                         parameters = Self::parse_kdl_parameters(child)?;
+                    }
+                    "parameter_mode" => {
+                        parameter_mode = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .map(|s| s.to_string());
                     }
                     "use_parameters" => {
                         // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
@@ -2493,6 +2528,7 @@ impl WorkflowSpec {
             name,
             path,
             parameters,
+            parameter_mode,
             use_parameters,
         })
     }

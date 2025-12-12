@@ -235,6 +235,51 @@ pub fn cartesian_product(
     result
 }
 
+/// Zip parameter values together (like Python's zip function)
+/// All parameter lists must have the same length
+/// Given a map of parameter names to value lists, returns a vector where
+/// the i-th element contains the i-th value from each parameter
+pub fn zip_parameters(
+    params: &HashMap<String, Vec<ParameterValue>>,
+) -> Result<Vec<HashMap<String, ParameterValue>>, String> {
+    if params.is_empty() {
+        return Ok(vec![HashMap::new()]);
+    }
+
+    // Check that all parameter lists have the same length
+    let lengths: Vec<(&String, usize)> = params.iter().map(|(k, v)| (k, v.len())).collect();
+    let first_len = lengths[0].1;
+
+    for (name, len) in &lengths {
+        if *len != first_len {
+            return Err(format!(
+                "All parameters must have the same number of values when using 'zip' mode. \
+                 Parameter '{}' has {} values, but '{}' has {} values.",
+                lengths[0].0, first_len, name, len
+            ));
+        }
+    }
+
+    if first_len == 0 {
+        return Ok(vec![]);
+    }
+
+    // Convert HashMap to Vec for consistent ordering
+    let param_vec: Vec<(&String, &Vec<ParameterValue>)> = params.iter().collect();
+
+    // Zip the values together
+    let mut result = Vec::with_capacity(first_len);
+    for i in 0..first_len {
+        let mut combo = HashMap::new();
+        for (param_name, param_values) in &param_vec {
+            combo.insert((*param_name).clone(), param_values[i].clone());
+        }
+        result.push(combo);
+    }
+
+    Ok(result)
+}
+
 /// Substitute parameter values into a template string
 /// Supports both {param_name} and {param_name:format} syntax
 pub fn substitute_parameters(template: &str, params: &HashMap<String, ParameterValue>) -> String {

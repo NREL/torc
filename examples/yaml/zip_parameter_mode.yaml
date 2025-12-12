@@ -1,0 +1,83 @@
+# Zip Parameter Mode Example
+# Demonstrates using parameter_mode: zip for paired parameter expansion
+#
+# When using Cartesian product (default): 3 datasets × 3 models = 9 jobs
+# When using zip mode: 3 pairs = 3 jobs (dataset[i] paired with model[i])
+#
+# This is useful when you have pre-determined parameter combinations rather than
+# wanting to test all possible combinations.
+
+name: zip_parameter_example
+description: Example workflow demonstrating zip parameter mode for paired parameters
+
+jobs:
+  # Setup job - runs once before all training jobs
+  - name: setup_environment
+    command: |
+      echo "Setting up training environment"
+      mkdir -p /models /results
+
+  # Training jobs using zip mode - each dataset is paired with a specific model
+  # Instead of 3×3=9 combinations, we get exactly 3 jobs:
+  #   - cifar10 with resnet
+  #   - mnist with cnn
+  #   - imagenet with transformer
+  - name: train_{dataset}_{model}
+    command: |
+      python train.py \
+        --dataset={dataset} \
+        --model={model} \
+        --output=/models/{dataset}_{model}.pt
+    depends_on:
+      - setup_environment
+    output_files:
+      - model_{dataset}_{model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'cnn', 'transformer']"
+    parameter_mode: zip
+
+  # Evaluation job that processes all models
+  # Note: This job uses the same parameters with zip mode to wait for the
+  # correct corresponding training jobs
+  - name: evaluate_{dataset}_{model}
+    command: |
+      python evaluate.py \
+        --model=/models/{dataset}_{model}.pt \
+        --output=/results/{dataset}_{model}_metrics.json
+    depends_on:
+      - train_{dataset}_{model}
+    input_files:
+      - model_{dataset}_{model}
+    output_files:
+      - metrics_{dataset}_{model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'cnn', 'transformer']"
+    parameter_mode: zip
+
+  # Final aggregation job
+  - name: aggregate_results
+    command: |
+      python aggregate.py \
+        --input-dir=/results \
+        --output=/results/summary.json
+    # Use regex to depend on all evaluation jobs
+    depends_on_regexes:
+      - "evaluate_.*"
+
+# File specifications also support zip mode
+files:
+  - name: model_{dataset}_{model}
+    path: /models/{dataset}_{model}.pt
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'cnn', 'transformer']"
+    parameter_mode: zip
+
+  - name: metrics_{dataset}_{model}
+    path: /results/{dataset}_{model}_metrics.json
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'cnn', 'transformer']"
+    parameter_mode: zip
