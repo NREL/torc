@@ -1,6 +1,7 @@
 use rstest::rstest;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use torc::client::parameter_expansion::{ParameterValue, zip_parameters};
 use torc::client::workflow_spec::{FileSpec, JobSpec, WorkflowSpec};
 
 #[rstest]
@@ -445,6 +446,7 @@ fn test_workflow_spec_expand_parameters() {
                 params.insert("i".to_string(), "1:3".to_string());
                 params
             }),
+            parameter_mode: None,
             use_parameters: None,
         }],
         files: Some(vec![{
@@ -882,4 +884,268 @@ fn test_example_file_hyperparameter_sweep_shared_params_json5() {
     // Should have same structure as YAML/KDL versions: 38 jobs, 38 files
     assert_eq!(spec.jobs.len(), 38);
     assert_eq!(spec.files.as_ref().unwrap().len(), 38);
+}
+
+// ==================== Zip Parameter Mode Tests ====================
+
+#[rstest]
+fn test_zip_parameter_mode_yaml() {
+    let yaml_content = r#"
+name: test_zip_parameters
+description: Test zip parameter mode in YAML
+
+jobs:
+  - name: train_{dataset}_{model}
+    command: python train.py --dataset={dataset} --model={model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'vgg', 'transformer']"
+    parameter_mode: zip
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    // Before expansion, should have 1 job
+    assert_eq!(spec.jobs.len(), 1);
+    assert_eq!(spec.jobs[0].parameter_mode, Some("zip".to_string()));
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // With zip mode: 3 zipped pairs, not 9 combinations
+    assert_eq!(spec.jobs.len(), 3);
+    assert_eq!(spec.jobs[0].name, "train_cifar10_resnet");
+    assert_eq!(spec.jobs[1].name, "train_mnist_vgg");
+    assert_eq!(spec.jobs[2].name, "train_imagenet_transformer");
+
+    // Parameters and parameter_mode should be removed from expanded jobs
+    for job in &spec.jobs {
+        assert!(job.parameters.is_none());
+        assert!(job.parameter_mode.is_none());
+    }
+}
+
+#[rstest]
+fn test_zip_parameter_mode_json() {
+    let json_content = r#"
+{
+    "name": "test_zip_parameters",
+    "jobs": [
+        {
+            "name": "process_{input}_{output}",
+            "command": "convert {input} {output}",
+            "parameters": {
+                "input": "['a.txt', 'b.txt']",
+                "output": "['a.out', 'b.out']"
+            },
+            "parameter_mode": "zip"
+        }
+    ]
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(json_content, "json")
+        .expect("Failed to parse JSON workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // With zip mode: 2 zipped pairs
+    assert_eq!(spec.jobs.len(), 2);
+    assert_eq!(spec.jobs[0].name, "process_a.txt_a.out");
+    assert_eq!(spec.jobs[1].name, "process_b.txt_b.out");
+}
+
+#[rstest]
+fn test_zip_parameter_mode_kdl() {
+    let kdl_content = r#"
+name "test_zip_parameters"
+description "Test zip parameter mode in KDL"
+
+job "run_{stage}_{config}" {
+    command "execute --stage={stage} --config={config}"
+    parameters {
+        stage "[1, 2, 3]"
+        config "['a', 'b', 'c']"
+    }
+    parameter_mode "zip"
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(kdl_content, "kdl")
+        .expect("Failed to parse KDL workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // With zip mode: 3 zipped pairs
+    assert_eq!(spec.jobs.len(), 3);
+    assert_eq!(spec.jobs[0].name, "run_1_a");
+    assert_eq!(spec.jobs[1].name, "run_2_b");
+    assert_eq!(spec.jobs[2].name, "run_3_c");
+}
+
+#[rstest]
+fn test_zip_parameter_mode_file_spec() {
+    let yaml_content = r#"
+name: test_zip_file_parameters
+description: Test zip parameter mode for files
+
+jobs:
+  - name: dummy_job
+    command: echo dummy
+
+files:
+  - name: data_{dataset}_{split}
+    path: /data/{dataset}/{split}.csv
+    parameters:
+      dataset: "['train', 'test', 'val']"
+      split: "['2023', '2024', '2025']"
+    parameter_mode: zip
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // With zip mode: 3 zipped pairs
+    let files = spec.files.as_ref().unwrap();
+    assert_eq!(files.len(), 3);
+    assert_eq!(files[0].name, "data_train_2023");
+    assert_eq!(files[0].path, "/data/train/2023.csv");
+    assert_eq!(files[1].name, "data_test_2024");
+    assert_eq!(files[2].name, "data_val_2025");
+}
+
+#[rstest]
+fn test_zip_parameter_mode_mismatched_lengths_error() {
+    let yaml_content = r#"
+name: test_zip_mismatched
+jobs:
+  - name: job_{a}_{b}
+    command: echo {a} {b}
+    parameters:
+      a: "[1, 2, 3]"
+      b: "['x', 'y']"
+    parameter_mode: zip
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    // Expansion should fail due to mismatched lengths
+    let result = spec.expand_parameters();
+    assert!(result.is_err());
+    let err_msg = result.unwrap_err().to_string();
+    assert!(err_msg.contains("same number of values"));
+}
+
+#[rstest]
+fn test_product_parameter_mode_explicit() {
+    // Test that explicit "product" mode works the same as default
+    let yaml_content = r#"
+name: test_product_explicit
+jobs:
+  - name: job_{a}_{b}
+    command: echo {a} {b}
+    parameters:
+      a: "[1, 2]"
+      b: "['x', 'y']"
+    parameter_mode: product
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // With product mode: 2 * 2 = 4 combinations
+    assert_eq!(spec.jobs.len(), 4);
+}
+
+#[rstest]
+fn test_default_parameter_mode_is_product() {
+    // Test that default mode (no parameter_mode specified) is Cartesian product
+    let yaml_content = r#"
+name: test_default_mode
+jobs:
+  - name: job_{a}_{b}
+    command: echo {a} {b}
+    parameters:
+      a: "[1, 2]"
+      b: "['x', 'y']"
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Default should be product mode: 2 * 2 = 4 combinations
+    assert_eq!(spec.jobs.len(), 4);
+}
+
+// ==================== Unit Tests for zip_parameters function ====================
+
+#[rstest]
+fn test_zip_parameters_function() {
+    let mut params = HashMap::new();
+    params.insert(
+        "dataset".to_string(),
+        vec![
+            ParameterValue::String("cifar10".to_string()),
+            ParameterValue::String("mnist".to_string()),
+            ParameterValue::String("imagenet".to_string()),
+        ],
+    );
+    params.insert(
+        "model".to_string(),
+        vec![
+            ParameterValue::String("resnet".to_string()),
+            ParameterValue::String("vgg".to_string()),
+            ParameterValue::String("transformer".to_string()),
+        ],
+    );
+
+    let result = zip_parameters(&params).unwrap();
+    assert_eq!(result.len(), 3); // 3 zipped pairs, not 9 combinations
+
+    // Verify each combination has both parameters
+    for combo in &result {
+        assert!(combo.contains_key("dataset"));
+        assert!(combo.contains_key("model"));
+    }
+}
+
+#[rstest]
+fn test_zip_parameters_empty() {
+    let params: HashMap<String, Vec<ParameterValue>> = HashMap::new();
+    let result = zip_parameters(&params).unwrap();
+    assert_eq!(result.len(), 1);
+    assert!(result[0].is_empty());
+}
+
+#[rstest]
+fn test_zip_parameters_single_param() {
+    let mut params = HashMap::new();
+    params.insert(
+        "i".to_string(),
+        vec![
+            ParameterValue::Integer(1),
+            ParameterValue::Integer(2),
+            ParameterValue::Integer(3),
+        ],
+    );
+
+    let result = zip_parameters(&params).unwrap();
+    assert_eq!(result.len(), 3);
+    assert_eq!(result[0].get("i"), Some(&ParameterValue::Integer(1)));
+    assert_eq!(result[1].get("i"), Some(&ParameterValue::Integer(2)));
+    assert_eq!(result[2].get("i"), Some(&ParameterValue::Integer(3)));
 }

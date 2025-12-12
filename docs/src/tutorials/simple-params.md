@@ -254,6 +254,32 @@ Torc creates these relationships:
 
 Each chain is independent—`eval_2` doesn't wait for `train_1`.
 
+## Parameter Modes: Product vs Zip
+
+By default, multiple parameters create a **Cartesian product** (all combinations). For **paired parameters**, use `parameter_mode: zip`:
+
+```yaml
+jobs:
+  # Default (product): 3 × 3 = 9 jobs
+  - name: train_{dataset}_{model}
+    command: python train.py --dataset={dataset} --model={model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'vgg', 'transformer']"
+
+  # Zip mode: 3 paired jobs (cifar10+resnet, mnist+vgg, imagenet+transformer)
+  - name: paired_{dataset}_{model}
+    command: python train.py --dataset={dataset} --model={model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'vgg', 'transformer']"
+    parameter_mode: zip
+```
+
+Use zip mode when parameters have a 1:1 correspondence (e.g., input/output file pairs, pre-determined configurations).
+
+See [Parameterization Reference](../reference/parameterization.md#parameter-modes) for details.
+
 ## What You Learned
 
 In this tutorial, you learned:
@@ -263,6 +289,7 @@ In this tutorial, you learned:
 - ✅ Format specifiers (`{i:03d}`, `{lr:.4f}`) for consistent naming
 - ✅ How parameterized files create one-to-one dependencies
 - ✅ The efficiency of parameter-matched dependencies (each chain runs independently)
+- ✅ The difference between product (default) and zip parameter modes
 
 ## Next Steps
 

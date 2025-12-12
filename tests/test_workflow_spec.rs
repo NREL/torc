@@ -1341,6 +1341,7 @@ fn test_json_field_name_compatibility() {
         output_user_data_regexes: None,
         scheduler: Some("sched".to_string()),
         parameters: None,
+        parameter_mode: None,
         use_parameters: None,
     };
 

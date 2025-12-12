@@ -2336,8 +2336,8 @@ class TorcDashboard {
             await this.createWorkflow();
         });
 
-        // Close modal on background click
-        document.getElementById('create-workflow-modal')?.addEventListener('click', (e) => {
+        // Close modal on background click (use mousedown to avoid closing when selecting text)
+        document.getElementById('create-workflow-modal')?.addEventListener('mousedown', (e) => {
             if (e.target.classList.contains('modal')) {
                 this.hideModal('create-workflow-modal');
                 this.resetWizard();
@@ -3423,6 +3423,7 @@ class TorcDashboard {
             num_gpus: 0,
             runtime: 'PT1H',
             parameters: '',
+            parameter_mode: 'product',
             scheduler: ''
         };
         this.wizardJobs.push(job);
@@ -3493,6 +3494,17 @@ class TorcDashboard {
                 const titleSpan = card.querySelector('.job-title');
                 if (titleSpan) {
                     titleSpan.textContent = value || 'Untitled Job';
+                }
+            }
+        }
+
+        // Enable/disable parameter_mode dropdown based on parameters field
+        if (field === 'parameters') {
+            const card = document.querySelector(`[data-job-id="${jobId}"]`);
+            if (card) {
+                const paramModeSelect = card.querySelector('select[onchange*="parameter_mode"]');
+                if (paramModeSelect) {
+                    paramModeSelect.disabled = !value?.trim();
                 }
             }
         }
@@ -3568,14 +3580,24 @@ class TorcDashboard {
                                        onchange="app.wizardUpdateJob(${job.id}, 'command', this.value)">
                             </div>
                         </div>
-                        <div class="wizard-job-row full">
+                        <div class="wizard-job-row" style="grid-template-columns: 2fr 1fr;">
                             <div class="form-group">
                                 <label>Parameters (for job expansion)</label>
                                 <input type="text" class="text-input"
                                        value="${this.escapeHtml(job.parameters)}"
-                                       placeholder='e.g., i: "1:10", lr: "[0.001, 0.01, 0.1]"'
+                                       placeholder="e.g., i: 1:10 or x: [1,2,3], y: [a,b,c]"
                                        onchange="app.wizardUpdateJob(${job.id}, 'parameters', this.value)">
-                                <small>Creates multiple jobs. Use {param} in name/command. Formats: "1:10" (range), "[a,b,c]" (list)</small>
+                                <small>Creates multiple jobs. Use {param} in name/command. Formats: 1:10 (range), [1,2,3] (list), ['a','b'] (strings)</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Parameter Mode</label>
+                                <select class="select-input"
+                                        ${!job.parameters?.trim() ? 'disabled' : ''}
+                                        onchange="app.wizardUpdateJob(${job.id}, 'parameter_mode', this.value)">
+                                    <option value="product" ${job.parameter_mode !== 'zip' ? 'selected' : ''}>Product (all combinations)</option>
+                                    <option value="zip" ${job.parameter_mode === 'zip' ? 'selected' : ''}>Zip (paired values)</option>
+                                </select>
+                                <small>Product: x=[1,2] × y=[a,b] = 4 jobs. Zip: pairs (1,a), (2,b) = 2 jobs</small>
                             </div>
                         </div>
                         <div class="wizard-job-row">
@@ -4255,6 +4277,10 @@ class TorcDashboard {
 
                     if (Object.keys(params).length > 0) {
                         jobSpec.parameters = params;
+                        // Add parameter_mode if set to 'zip' (product is the default)
+                        if (job.parameter_mode === 'zip') {
+                            jobSpec.parameter_mode = 'zip';
+                        }
                     }
                 } catch (e) {
                     console.warn('Failed to parse parameters:', e);

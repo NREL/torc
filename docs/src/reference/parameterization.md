@@ -323,6 +323,84 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
 }
 ```
 
+## Parameter Modes
+
+By default, when multiple parameters are specified, Torc generates the Cartesian product of all parameter values. You can change this behavior using `parameter_mode`.
+
+### Product Mode (Default)
+
+The default mode generates all possible combinations:
+
+```yaml
+jobs:
+  - name: job_{a}_{b}
+    command: echo {a} {b}
+    parameters:
+      a: "[1, 2, 3]"
+      b: "['x', 'y', 'z']"
+    # parameter_mode: product  # This is the default
+```
+
+This creates 3 × 3 = **9 jobs**: `job_1_x`, `job_1_y`, `job_1_z`, `job_2_x`, etc.
+
+### Zip Mode
+
+Use `parameter_mode: zip` to pair parameters element-wise (like Python's `zip()` function). All parameter lists must have the same length.
+
+```yaml
+jobs:
+  - name: train_{dataset}_{model}
+    command: python train.py --dataset={dataset} --model={model}
+    parameters:
+      dataset: "['cifar10', 'mnist', 'imagenet']"
+      model: "['resnet', 'cnn', 'transformer']"
+    parameter_mode: zip
+```
+
+This creates **3 jobs** (not 9):
+- `train_cifar10_resnet`
+- `train_mnist_cnn`
+- `train_imagenet_transformer`
+
+**When to use zip mode:**
+- Pre-determined parameter pairings (dataset A always uses model X)
+- Corresponding input/output file pairs
+- Parallel arrays where position matters
+
+**Error handling:**
+If parameter lists have different lengths in zip mode, Torc will return an error:
+```
+All parameters must have the same number of values when using 'zip' mode.
+Parameter 'dataset' has 3 values, but 'model' has 2 values.
+```
+
+### KDL Syntax
+
+```kdl
+job "train_{dataset}_{model}" {
+    command "python train.py --dataset={dataset} --model={model}"
+    parameters {
+        dataset "['cifar10', 'mnist', 'imagenet']"
+        model "['resnet', 'cnn', 'transformer']"
+    }
+    parameter_mode "zip"
+}
+```
+
+### JSON5 Syntax
+
+```json5
+{
+  name: "train_{dataset}_{model}",
+  command: "python train.py --dataset={dataset} --model={model}",
+  parameters: {
+    dataset: "['cifar10', 'mnist', 'imagenet']",
+    model: "['resnet', 'cnn', 'transformer']"
+  },
+  parameter_mode: "zip"
+}
+```
+
 ## Best Practices
 
 1. **Use descriptive parameter names** - `lr` not `x`, `batch_size` not `b`
@@ -332,3 +410,4 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
 5. **Consider parameter dependencies** - Some parameter combinations may be invalid
 6. **Prefer shared parameters for multi-job workflows** - Use `use_parameters` to avoid repeating definitions
 7. **Use selective inheritance** - Only inherit the parameters each job actually needs
+8. **Use zip mode for paired parameters** - When parameters have a 1:1 correspondence, use `parameter_mode: zip`
