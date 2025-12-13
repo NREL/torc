@@ -963,20 +963,54 @@ fn test_update_jobs_on_file_change_with_canceled_jobs(start_server: &ServerProce
     let files = create_test_files_with_disk_files(&config, workflow_id, &temp_dir);
     let file_id = files[0].id.unwrap();
 
-    // Execute workflow with a job that depends on the file, then cancel it
-    let (job_id, run_id) = execute_workflow_with_job(
-        &config,
-        &manager,
-        workflow_id,
-        "canceled_job",
-        "echo 'canceled job'",
-        Some(vec![file_id]),
-    )
-    .expect("Failed to execute job");
+    // Create resource requirements
+    let resource_requirements = models::ResourceRequirementsModel::new(1, "small".to_string());
+    let rr = default_api::create_resource_requirements(&config, resource_requirements)
+        .expect("Failed to create resource requirements");
 
-    // Set job to Canceled status
-    default_api::manage_status_change(&config, job_id, models::JobStatus::Canceled, run_id, None)
-        .expect("Failed to set job to Canceled");
+    // Create a job with file dependency
+    let mut job = models::JobModel::new(
+        workflow_id,
+        "canceled_job".to_string(),
+        "echo 'canceled job'".to_string(),
+    );
+    job.input_file_ids = Some(vec![file_id]);
+    job.resource_requirements_id = rr.id;
+    let created_job = default_api::create_job(&config, job).expect("Failed to create job");
+    let job_id = created_job.id.unwrap();
+
+    // Initialize and claim the job
+    manager.initialize(false).expect("Failed to initialize");
+    let run_id = manager.get_run_id().expect("Failed to get run_id");
+
+    let resources = models::ComputeNodesResources::new(36, 100.0, 0, 1);
+    let result =
+        default_api::claim_jobs_based_on_resources(&config, workflow_id, &resources, 10, None)
+            .expect("Failed to claim jobs");
+    let returned_jobs = result.jobs.expect("Server must return jobs array");
+    assert_eq!(returned_jobs.len(), 1, "Should return exactly 1 job");
+
+    // Set to Running using manage_status_change (non-completion status, allowed)
+    default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
+        .expect("Failed to set job to Running");
+
+    // Create compute node for the result
+    let compute_node = create_test_compute_node(&config, workflow_id);
+    let compute_node_id = compute_node.id.unwrap();
+
+    // Cancel the job using complete_job (the correct API for completion statuses)
+    let job_result = models::ResultModel::new(
+        job_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        -1, // Non-zero return code indicating cancellation
+        0.0,
+        "2020-01-01T00:00:00Z".to_string(),
+        models::JobStatus::Canceled,
+    );
+    default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
+        .expect("Failed to cancel job");
 
     // Update jobs on file change - should reset Canceled job too
     let result = manager.update_jobs_on_file_change(files[0].clone(), false);
