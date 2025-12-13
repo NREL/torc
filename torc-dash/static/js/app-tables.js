@@ -284,9 +284,9 @@ Object.assign(TorcDashboard.prototype, {
 
         const getStatusClass = (status) => {
             const s = (status || '').toLowerCase();
-            if (s === 'running') return 'status-running';
+            if (s === 'running' || s === 'active') return 'status-running';
             if (s === 'pending' || s === 'scheduled') return 'status-pending';
-            if (s === 'completed' || s === 'done') return 'status-completed';
+            if (s === 'completed' || s === 'done' || s === 'complete') return 'status-completed';
             if (s === 'failed' || s === 'error') return 'status-failed';
             return '';
         };
