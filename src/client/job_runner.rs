@@ -69,7 +69,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
@@ -131,8 +131,10 @@ pub struct JobRunner {
     resource_monitor: Option<ResourceMonitor>,
     /// Flag set when SIGTERM is received. Shared with signal handler.
     termination_requested: Arc<AtomicBool>,
-    /// Timestamp of when a job was last claimed. Used for idle timeout.
-    last_job_claimed_time: Option<DateTime<Utc>>,
+    /// Monotonic timestamp of when a job was last claimed. Used for idle timeout.
+    /// Uses std::time::Instant instead of wall clock time to avoid issues with
+    /// NTP clock adjustments that could cause premature idle timeout exits.
+    last_job_claimed_time: Option<Instant>,
 }
 
 impl JobRunner {
@@ -371,12 +373,14 @@ impl JobRunner {
             {
                 // Initialize the time if this is the first check
                 if self.last_job_claimed_time.is_none() {
-                    self.last_job_claimed_time = Some(Utc::now());
+                    self.last_job_claimed_time = Some(Instant::now());
                 }
 
+                // Use monotonic Instant to avoid issues with wall clock time going backwards
+                // (e.g., due to NTP synchronization), which could cause spurious idle timeouts
                 let idle_seconds = self
                     .last_job_claimed_time
-                    .map(|last_time| (Utc::now() - last_time).num_seconds() as u64)
+                    .map(|last_time| last_time.elapsed().as_secs())
                     .unwrap_or(0);
 
                 if idle_seconds >= self.rules.compute_node_wait_for_new_jobs_seconds {
@@ -774,7 +778,7 @@ impl JobRunner {
                 debug!("Found {} ready jobs to execute", jobs.len());
 
                 // Update last job claimed time since we got jobs
-                self.last_job_claimed_time = Some(Utc::now());
+                self.last_job_claimed_time = Some(Instant::now());
 
                 for job in jobs {
                     let job_id = job.id.expect("Job must have an ID");
@@ -897,7 +901,7 @@ impl JobRunner {
                 info!("Found {} ready jobs to execute", jobs.len());
 
                 // Update last job claimed time since we got jobs
-                self.last_job_claimed_time = Some(Utc::now());
+                self.last_job_claimed_time = Some(Instant::now());
 
                 // Start each job asynchronously
                 for job in jobs {

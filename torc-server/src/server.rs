@@ -3683,6 +3683,25 @@ where
             context.get().0.clone()
         );
 
+        // Guard: Reject completion statuses - those must go through complete_job
+        // Completion statuses trigger unblocking of dependent jobs via a background task,
+        // which requires proper result records to be created first.
+        if status.is_complete() {
+            error!(
+                "manage_status_change: cannot set completion status '{}' for job_id={}. Use complete_job instead.",
+                status, id
+            );
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!(
+                    "Cannot set completion status '{}' via manage_status_change. Use complete_job API instead.",
+                    status
+                )
+            }));
+            return Ok(
+                ManageStatusChangeResponse::UnprocessableContentErrorResponse(error_response),
+            );
+        }
+
         // 1. Call get_job. If the job doesn't exist, return a 404.
         let mut job = match self.jobs_api.get_job(id, context).await? {
             GetJobResponse::SuccessfulResponse(job) => job,
