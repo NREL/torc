@@ -217,7 +217,7 @@ where
         let compute_node_expiration_buffer_seconds =
             body.compute_node_expiration_buffer_seconds.unwrap_or(60);
         let compute_node_wait_for_new_jobs_seconds =
-            body.compute_node_wait_for_new_jobs_seconds.unwrap_or(0);
+            body.compute_node_wait_for_new_jobs_seconds.unwrap_or(60);
         let compute_node_ignore_workflow_completion = body
             .compute_node_ignore_workflow_completion
             .unwrap_or(false) as i64;

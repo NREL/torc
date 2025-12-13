@@ -33,7 +33,7 @@ class WorkflowModel(BaseModel):
     description: Optional[StrictStr] = Field(default=None, description="Description of the workflow")
     timestamp: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
     compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(default=60, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.")
-    compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=0, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
+    compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=60, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
     compute_node_ignore_workflow_completion: Optional[StrictBool] = Field(default=False, description="Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.")
     compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(default=20, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
     jobs_sort_method: Optional[JobsSortMethod] = JobsSortMethod.GPUS_RUNTIME_MEMORY
@@ -97,7 +97,7 @@ class WorkflowModel(BaseModel):
             "description": obj.get("description"),
             "timestamp": obj.get("timestamp"),
             "compute_node_expiration_buffer_seconds": obj.get("compute_node_expiration_buffer_seconds") if obj.get("compute_node_expiration_buffer_seconds") is not None else 60,
-            "compute_node_wait_for_new_jobs_seconds": obj.get("compute_node_wait_for_new_jobs_seconds") if obj.get("compute_node_wait_for_new_jobs_seconds") is not None else 0,
+            "compute_node_wait_for_new_jobs_seconds": obj.get("compute_node_wait_for_new_jobs_seconds") if obj.get("compute_node_wait_for_new_jobs_seconds") is not None else 60,
             "compute_node_ignore_workflow_completion": obj.get("compute_node_ignore_workflow_completion") if obj.get("compute_node_ignore_workflow_completion") is not None else False,
             "compute_node_wait_for_healthy_database_minutes": obj.get("compute_node_wait_for_healthy_database_minutes") if obj.get("compute_node_wait_for_healthy_database_minutes") is not None else 20,
             "jobs_sort_method": obj.get("jobs_sort_method") if obj.get("jobs_sort_method") is not None else JobsSortMethod.GPUS_RUNTIME_MEMORY,
