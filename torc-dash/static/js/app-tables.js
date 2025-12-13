@@ -1,0 +1,359 @@
+/**
+ * Torc Dashboard - Table Rendering
+ * All table rendering functions for different data types
+ */
+
+Object.assign(TorcDashboard.prototype, {
+    renderJobsTable(jobs) {
+        const controls = this.renderTableControls('jobs');
+        const count = `<span class="table-count">${jobs.length} job${jobs.length !== 1 ? 's' : ''}</span>`;
+
+        if (!jobs || jobs.length === 0) {
+            return `${controls}<div class="placeholder-message">No jobs in this workflow</div>`;
+        }
+
+        const statusNames = ['Uninitialized', 'Blocked', 'Ready', 'Pending', 'Running', 'Completed', 'Failed', 'Canceled', 'Terminated', 'Disabled'];
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Name', 'name')}
+                        ${this.renderSortableHeader('Status', 'status')}
+                        ${this.renderSortableHeader('Command', 'command')}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${jobs.map(job => `
+                        <tr>
+                            <td><code>${job.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(job.name || '-')}</td>
+                            <td><span class="status-badge status-${statusNames[job.status]?.toLowerCase() || 'unknown'}">${statusNames[job.status] || job.status}</span></td>
+                            <td><code>${this.escapeHtml(this.truncate(job.command || '-', 80))}</code></td>
+                            <td><button class="btn-job-details" data-job-id="${job.id}" data-job-name="${this.escapeHtml(job.name || '')}">Details</button></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderFilesTable(files) {
+        const controls = this.renderTableControls('files');
+        const count = `<span class="table-count">${files.length} file${files.length !== 1 ? 's' : ''}</span>`;
+
+        if (!files || files.length === 0) {
+            return `${controls}<div class="placeholder-message">No files in this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Name', 'name')}
+                        ${this.renderSortableHeader('Path', 'path')}
+                        ${this.renderSortableHeader('Modified Time', 'st_mtime')}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${files.map(file => `
+                        <tr>
+                            <td><code>${file.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(file.name || '-')}</td>
+                            <td><code>${this.escapeHtml(file.path || '-')}</code></td>
+                            <td>${this.formatUnixTimestamp(file.st_mtime)}</td>
+                            <td>
+                                ${file.path ? `<button class="btn-view-file" data-path="${this.escapeHtml(file.path)}" data-name="${this.escapeHtml(file.name || 'File')}">View</button>` : '-'}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderUserDataTable(userData) {
+        const controls = this.renderTableControls('user-data');
+        const count = `<span class="table-count">${userData.length} record${userData.length !== 1 ? 's' : ''}</span>`;
+
+        if (!userData || userData.length === 0) {
+            return `${controls}<div class="placeholder-message">No user data in this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Name', 'name')}
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${userData.map(ud => `
+                        <tr>
+                            <td><code>${ud.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(ud.name || '-')}</td>
+                            <td><code>${this.escapeHtml(this.truncate(JSON.stringify(ud.data) || '-', 100))}</code></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderResultsTable(results, jobs, jobNameMapOverride) {
+        const controls = this.renderTableControls('results');
+        const count = `<span class="table-count">${results.length} result${results.length !== 1 ? 's' : ''}</span>`;
+
+        if (!results || results.length === 0) {
+            return `${controls}<div class="placeholder-message">No results in this workflow</div>`;
+        }
+
+        const jobNameMap = jobNameMapOverride || {};
+        if (!jobNameMapOverride && jobs) {
+            jobs.forEach(job => {
+                jobNameMap[job.id] = job.name;
+            });
+        }
+
+        const statusNames = ['Uninitialized', 'Blocked', 'Ready', 'Pending', 'Running', 'Completed', 'Failed', 'Canceled', 'Terminated', 'Disabled'];
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('Job ID', 'job_id')}
+                        ${this.renderSortableHeader('Job Name', 'job_name')}
+                        ${this.renderSortableHeader('Run ID', 'run_id')}
+                        ${this.renderSortableHeader('Return Code', 'return_code')}
+                        ${this.renderSortableHeader('Status', 'status')}
+                        ${this.renderSortableHeader('Exec Time (min)', 'exec_time_minutes')}
+                        ${this.renderSortableHeader('Peak Mem', 'peak_memory_bytes')}
+                        ${this.renderSortableHeader('Peak CPU %', 'peak_cpu_percent')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${results.map(result => `
+                        <tr>
+                            <td><code>${result.job_id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(jobNameMap[result.job_id] || '-')}</td>
+                            <td>${result.run_id ?? '-'}</td>
+                            <td class="${result.return_code === 0 ? 'return-code-0' : 'return-code-error'}">${result.return_code ?? '-'}</td>
+                            <td><span class="status-badge status-${statusNames[result.status]?.toLowerCase() || 'unknown'}">${statusNames[result.status] || result.status}</span></td>
+                            <td>${result.exec_time_minutes != null ? result.exec_time_minutes.toFixed(2) : '-'}</td>
+                            <td>${this.formatBytes(result.peak_memory_bytes)}</td>
+                            <td>${result.peak_cpu_percent != null ? result.peak_cpu_percent.toFixed(1) : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderWorkflowEventsTable(events) {
+        const items = Array.isArray(events) ? events : api.extractItems(events);
+        const controls = this.renderTableControls('events');
+        const count = `<span class="table-count">${items.length} event${items.length !== 1 ? 's' : ''}</span>`;
+
+        if (!items || items.length === 0) {
+            return `${controls}<div class="placeholder-message">No events in this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Timestamp', 'timestamp')}
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(event => `
+                        <tr>
+                            <td><code>${event.id ?? '-'}</code></td>
+                            <td>${this.formatTimestamp(event.timestamp)}</td>
+                            <td><code>${this.escapeHtml(this.truncate(JSON.stringify(event.data) || '-', 100))}</code></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderSchedulersTable(schedulers) {
+        const controls = this.renderTableControls('schedulers');
+        const count = `<span class="table-count">${schedulers.length} scheduler${schedulers.length !== 1 ? 's' : ''}</span>`;
+
+        if (!schedulers || schedulers.length === 0) {
+            return `${controls}<div class="placeholder-message">No Slurm schedulers configured for this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Name', 'name')}
+                        ${this.renderSortableHeader('Account', 'account')}
+                        ${this.renderSortableHeader('Partition', 'partition')}
+                        ${this.renderSortableHeader('Walltime', 'walltime')}
+                        ${this.renderSortableHeader('Nodes', 'nodes')}
+                        ${this.renderSortableHeader('Mem', 'mem')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${schedulers.map(s => `
+                        <tr>
+                            <td><code>${s.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(s.name || '-')}</td>
+                            <td>${this.escapeHtml(s.account || '-')}</td>
+                            <td>${this.escapeHtml(s.partition || '-')}</td>
+                            <td>${this.escapeHtml(s.walltime || '-')}</td>
+                            <td>${s.nodes ?? '-'}</td>
+                            <td>${this.escapeHtml(s.mem || '-')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderComputeNodesTable(nodes) {
+        const controls = this.renderTableControls('compute-nodes');
+        const count = `<span class="table-count">${nodes.length} node${nodes.length !== 1 ? 's' : ''}</span>`;
+
+        if (!nodes || nodes.length === 0) {
+            return `${controls}<div class="placeholder-message">No compute nodes in this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Hostname', 'hostname')}
+                        ${this.renderSortableHeader('CPUs', 'num_cpus')}
+                        ${this.renderSortableHeader('Memory (GB)', 'memory_gb')}
+                        ${this.renderSortableHeader('GPUs', 'num_gpus')}
+                        ${this.renderSortableHeader('Active', 'is_active')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${nodes.map(n => `
+                        <tr>
+                            <td><code>${n.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(n.hostname || '-')}</td>
+                            <td>${n.num_cpus ?? '-'}</td>
+                            <td>${n.memory_gb ?? '-'}</td>
+                            <td>${n.num_gpus ?? '-'}</td>
+                            <td>${n.is_active != null ? (n.is_active ? 'Yes' : 'No') : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderScheduledNodesTable(nodes) {
+        const controls = this.renderTableControls('scheduled-nodes');
+        const count = `<span class="table-count">${nodes.length} scheduled node${nodes.length !== 1 ? 's' : ''}</span>`;
+
+        if (!nodes || nodes.length === 0) {
+            return `${controls}<div class="placeholder-message">No scheduled compute nodes in this workflow</div>`;
+        }
+
+        const getStatusClass = (status) => {
+            const s = (status || '').toLowerCase();
+            if (s === 'running') return 'status-running';
+            if (s === 'pending' || s === 'scheduled') return 'status-pending';
+            if (s === 'completed' || s === 'done') return 'status-completed';
+            if (s === 'failed' || s === 'error') return 'status-failed';
+            return '';
+        };
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Scheduler ID', 'scheduler_id')}
+                        ${this.renderSortableHeader('Config ID', 'scheduler_config_id')}
+                        ${this.renderSortableHeader('Type', 'scheduler_type')}
+                        ${this.renderSortableHeader('Status', 'status')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${nodes.map(n => `
+                        <tr>
+                            <td><code>${n.id ?? '-'}</code></td>
+                            <td><code>${n.scheduler_id ?? '-'}</code></td>
+                            <td><code>${n.scheduler_config_id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(n.scheduler_type || '-')}</td>
+                            <td><span class="status-badge ${getStatusClass(n.status)}">${this.escapeHtml(n.status || '-')}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    renderResourcesTable(resources) {
+        const controls = this.renderTableControls('resources');
+        const count = `<span class="table-count">${resources.length} requirement${resources.length !== 1 ? 's' : ''}</span>`;
+
+        if (!resources || resources.length === 0) {
+            return `${controls}<div class="placeholder-message">No resource requirements in this workflow</div>`;
+        }
+
+        return `
+            ${controls}
+            ${count}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        ${this.renderSortableHeader('ID', 'id')}
+                        ${this.renderSortableHeader('Name', 'name')}
+                        ${this.renderSortableHeader('CPUs', 'num_cpus')}
+                        ${this.renderSortableHeader('Memory', 'memory')}
+                        ${this.renderSortableHeader('GPUs', 'num_gpus')}
+                        ${this.renderSortableHeader('Runtime', 'runtime')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${resources.map(r => `
+                        <tr>
+                            <td><code>${r.id ?? '-'}</code></td>
+                            <td>${this.escapeHtml(r.name || '-')}</td>
+                            <td>${r.num_cpus ?? '-'}</td>
+                            <td>${this.escapeHtml(r.memory || '-')}</td>
+                            <td>${r.num_gpus ?? '-'}</td>
+                            <td>${this.escapeHtml(r.runtime || '-')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+});
