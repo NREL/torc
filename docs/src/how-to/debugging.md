@@ -184,11 +184,13 @@ For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`):
   "job_stderr": "output/job_stdio/job_456.e",
   "job_runner_log": "output/job_runner_slurm_12345_node01_67890.log",
   "slurm_stdout": "output/slurm_output_12345.o",
-  "slurm_stderr": "output/slurm_output_12345.e"
+  "slurm_stderr": "output/slurm_output_12345.e",
+  "slurm_env_log": "output/slurm_env_12345_node01_67890.log",
+  "dmesg_log": "output/dmesg_slurm_12345_node01_67890.log"
 }
 ```
 
-In addition to the standard job logs, Slurm jobs include two additional log files:
+In addition to the standard job logs, Slurm jobs include additional log files:
 
 4. **slurm_stdout** (`output/slurm_output_<slurm_job_id>.o`):
    - Standard output from Slurm's perspective
@@ -199,6 +201,16 @@ In addition to the standard job logs, Slurm jobs include two additional log file
    - Standard error from Slurm's perspective
    - Contains Slurm-specific errors (allocation failures, node issues)
    - **Use for**: Investigating Slurm scheduler problems
+
+6. **slurm_env_log** (`output/slurm_env_<slurm_job_id>_<node_id>_<task_pid>.log`):
+   - All SLURM environment variables captured at job runner startup
+   - Contains job allocation details, resource limits, node assignments
+   - **Use for**: Verifying Slurm job configuration, debugging resource allocation issues
+
+7. **dmesg log** (`output/dmesg_slurm_<slurm_job_id>_<node_id>_<task_pid>.log`):
+   - Kernel message buffer captured when the Slurm job runner exits
+   - Contains system-level events: OOM killer activity, hardware errors, kernel panics
+   - **Use for**: Investigating job failures caused by system-level issues (e.g., out-of-memory kills, hardware failures)
 
 **Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID
 in the filename for correlation with Slurm's own logs.

@@ -20,6 +20,10 @@
 //! ```
 
 use log::{debug, error, info, warn};
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
+use std::process::Command;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -194,6 +198,95 @@ pub fn detect_nvidia_gpus() -> i64 {
                 e
             );
             0
+        }
+    }
+}
+
+/// Capture environment variables containing a substring and save them to a file.
+///
+/// This is useful for debugging job runner environment, especially for capturing
+/// all SLURM-related environment variables.
+///
+/// # Arguments
+/// * `file_path` - Path where the environment variables will be written
+/// * `substring` - Only environment variables whose names contain this substring will be captured
+///
+/// # Note
+/// Errors are logged but do not cause the function to fail, since environment capture
+/// is informational and should not block process exit.
+pub fn capture_env_vars(file_path: &Path, substring: &str) {
+    info!(
+        "Capturing environment variables containing '{}' to: {}",
+        substring,
+        file_path.display()
+    );
+
+    let mut env_vars: Vec<(String, String)> = std::env::vars()
+        .filter(|(key, _)| key.contains(substring))
+        .collect();
+
+    // Sort for consistent output
+    env_vars.sort_by(|a, b| a.0.cmp(&b.0));
+
+    match File::create(file_path) {
+        Ok(mut file) => {
+            for (key, value) in &env_vars {
+                if let Err(e) = writeln!(file, "{}={}", key, value) {
+                    error!("Error writing environment variable to file: {}", e);
+                    return;
+                }
+            }
+            info!(
+                "Successfully captured {} environment variables",
+                env_vars.len()
+            );
+        }
+        Err(e) => {
+            error!(
+                "Error creating environment variables file {}: {}",
+                file_path.display(),
+                e
+            );
+        }
+    }
+}
+
+/// Capture dmesg output and save it to a file.
+///
+/// This may contain useful debug information if any job failed (e.g., OOM killer,
+/// hardware errors, kernel panics).
+///
+/// # Arguments
+/// * `file_path` - Path where the dmesg output will be written
+///
+/// # Note
+/// Errors are logged but do not cause the function to fail, since dmesg capture
+/// is informational and should not block process exit.
+pub fn capture_dmesg(file_path: &Path) {
+    info!("Capturing dmesg output to: {}", file_path.display());
+
+    match Command::new("dmesg").arg("--ctime").output() {
+        Ok(output) => match File::create(file_path) {
+            Ok(mut file) => {
+                if let Err(e) = file.write_all(&output.stdout) {
+                    error!("Error writing dmesg stdout to file: {}", e);
+                }
+                if !output.stderr.is_empty() {
+                    if let Err(e) = file.write_all(b"\n--- stderr ---\n") {
+                        error!("Error writing dmesg separator: {}", e);
+                    }
+                    if let Err(e) = file.write_all(&output.stderr) {
+                        error!("Error writing dmesg stderr to file: {}", e);
+                    }
+                }
+                info!("Successfully captured dmesg output");
+            }
+            Err(e) => {
+                error!("Error creating dmesg file {}: {}", file_path.display(), e);
+            }
+        },
+        Err(e) => {
+            error!("Error running dmesg command: {}", e);
         }
     }
 }
