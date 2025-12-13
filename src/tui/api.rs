@@ -14,9 +14,15 @@ pub struct TorcClient {
 impl TorcClient {
     pub fn new() -> Result<Self> {
         // Load configuration from files (system, user, local) and environment variables
-        // Priority: env vars > local config > user config > system config > default
-        let file_config = TorcConfig::load().unwrap_or_default();
-        let base_url = file_config.client.api_url.clone();
+        // Priority: TORC_API_URL env var > config system > default
+        //
+        // Check TORC_API_URL directly for CLI compatibility. The config system uses
+        // TORC_CLIENT__API_URL (double underscore), but the CLI uses TORC_API_URL,
+        // so we check both to maintain consistency across all torc commands.
+        let base_url = std::env::var("TORC_API_URL").unwrap_or_else(|_| {
+            let file_config = TorcConfig::load().unwrap_or_default();
+            file_config.client.api_url.clone()
+        });
 
         let config = Configuration {
             base_path: base_url,
