@@ -36,7 +36,6 @@ class TorcDashboard {
 
         // Events tab state
         this.events = [];
-        this.lastEventId = null;
         this.eventPollInterval = null;
 
         // Debugging tab state

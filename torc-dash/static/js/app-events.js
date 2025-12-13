@@ -9,13 +9,11 @@ Object.assign(TorcDashboard.prototype, {
     setupEventsTab() {
         document.getElementById('events-workflow-selector')?.addEventListener('change', () => {
             this.events = [];
-            this.lastEventId = null;
             this.loadEvents();
         });
 
         document.getElementById('btn-clear-events')?.addEventListener('click', () => {
             this.events = [];
-            this.lastEventId = null;
             this.renderEvents();
         });
 
@@ -58,13 +56,15 @@ Object.assign(TorcDashboard.prototype, {
                 return;
             }
 
-            const newEvents = await api.listEvents(workflowId, 0, 50, this.lastEventId);
+            // Fetch latest events (replace, don't accumulate to avoid duplicates)
+            const events = await api.listEvents(workflowId, 0, 200, null);
 
-            if (newEvents && newEvents.length > 0) {
-                // Prepend new events
-                this.events = [...newEvents, ...this.events].slice(0, 200); // Keep last 200 events
-                this.lastEventId = newEvents[0].id;
-                this.updateEventBadge(newEvents.length);
+            // Check if there are new events since last load
+            const previousCount = this.events.length;
+            this.events = events || [];
+
+            if (this.events.length > previousCount) {
+                this.updateEventBadge(this.events.length - previousCount);
             }
 
             this.renderEvents();
@@ -89,13 +89,26 @@ Object.assign(TorcDashboard.prototype, {
             return;
         }
 
-        container.innerHTML = this.events.map(event => `
-            <div class="event-item">
-                <span class="event-time">${this.formatDate(event.timestamp)}</span>
-                <span class="event-type">${this.escapeHtml(event.event_type || '-')}</span>
-                <span class="event-message">${this.escapeHtml(event.message || '-')}</span>
-            </div>
-        `).join('');
+        container.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.events.map(event => `
+                        <tr>
+                            <td><code>${event.id ?? '-'}</code></td>
+                            <td>${this.formatTimestamp(event.timestamp)}</td>
+                            <td><code>${this.escapeHtml(this.truncate(JSON.stringify(event.data) || '-', 100))}</code></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     },
 
     updateEventBadge(count) {
