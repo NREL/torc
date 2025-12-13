@@ -245,6 +245,14 @@ List endpoints support `offset` and `limit` query parameters:
 - Default limit: 10,000 records
 - Maximum limit: 10,000 records (enforced)
 
+### Job Completion and Unblocking
+**CRITICAL**: Job completions trigger unblocking of dependent jobs via a background task for performance reasons.
+- When a job completes, `manage_job_status_change` sets `unblocking_processed = 0` and signals the background task
+- The background task runs periodically and processes all pending unblocks in batch
+- **Do NOT add direct calls to `unblock_jobs_waiting_for` in the completion path** - this would hurt performance
+- The API endpoint `manage_status_change` should NOT be used to set completion statuses; use `complete_job` instead
+- Tests simulating job completions MUST use `complete_job` (not `manage_status_change`) to ensure proper unblocking
+
 ### OpenAPI Code Generation
 - Server and client use OpenAPI-generated code for base types and routing
 - **Do not modify** generated code directly
