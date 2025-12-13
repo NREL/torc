@@ -360,6 +360,14 @@ paths:
         schema:
           type: string
         style: form
+      - description: Return events after this timestamp (milliseconds since epoch)
+        explode: true
+        in: query
+        name: after_timestamp
+        required: false
+        schema:
+          type: integer
+        style: form
       responses:
         "200":
           content:

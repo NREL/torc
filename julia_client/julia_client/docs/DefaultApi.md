@@ -2088,8 +2088,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_events**
-> list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing) -> ListEventsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing) -> Channel{ ListEventsResponse }, OpenAPI.Clients.ApiResponse
+> list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing) -> ListEventsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing) -> Channel{ ListEventsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all events for one workflow.
 
@@ -2111,6 +2111,7 @@ Name | Type | Description  | Notes
  **sort_by** | **String** |  | [default to nothing]
  **reverse_sort** | **Bool** |  | [default to false]
  **category** | **String** |  | [default to nothing]
+ **after_timestamp** | **Int64** | Return events after this timestamp (milliseconds since epoch) | [default to nothing]
 
 ### Return type
 

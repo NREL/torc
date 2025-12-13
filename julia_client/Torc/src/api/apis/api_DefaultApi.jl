@@ -1990,7 +1990,7 @@ const _returntypes_list_events_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing)
+function _oacinternal_list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_events_DefaultApi, "/events", [])
     OpenAPI.Clients.set_param(_ctx.query, "workflow_id", workflow_id; style="simple", is_explode=false)  # type Int64
     OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
@@ -1998,6 +1998,7 @@ function _oacinternal_list_events(_api::DefaultApi, workflow_id::Int64; offset=n
     OpenAPI.Clients.set_param(_ctx.query, "sort_by", sort_by; style="form", is_explode=true)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "reverse_sort", reverse_sort; style="form", is_explode=true)  # type Bool
     OpenAPI.Clients.set_param(_ctx.query, "category", category; style="form", is_explode=true)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "after_timestamp", after_timestamp; style="form", is_explode=true)  # type Int64
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
     return _ctx
@@ -2014,16 +2015,17 @@ Params:
 - sort_by::String
 - reverse_sort::Bool
 - category::String
+- after_timestamp::Int64
 
 Return: ListEventsResponse, OpenAPI.Clients.ApiResponse
 """
-function list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_events(_api, workflow_id; offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, category=category, _mediaType=_mediaType)
+function list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_events(_api, workflow_id; offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, category=category, after_timestamp=after_timestamp, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_events(_api, workflow_id; offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, category=category, _mediaType=_mediaType)
+function list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_events(_api, workflow_id; offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, category=category, after_timestamp=after_timestamp, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 

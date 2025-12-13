@@ -232,14 +232,6 @@ pub enum GetEventError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`list_events_after_timestamp`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetEventsAfterTimestampError {
-    Status500(models::ErrorResponse),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_file`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -2301,83 +2293,6 @@ pub fn get_event(
     }
 }
 
-/// Return all events newer than the event with timestamp.
-pub fn list_events_after_timestamp(
-    configuration: &configuration::Configuration,
-    id: i64,
-    timestamp: f64,
-    category: Option<&str>,
-    offset: Option<i64>,
-    limit: Option<i64>,
-) -> Result<models::ListEventsResponse, Error<GetEventsAfterTimestampError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_id = id;
-    let p_timestamp = timestamp;
-    let p_category = category;
-    let p_skip = offset;
-    let p_limit = limit;
-
-    let uri_str = format!(
-        "{}/workflows/{id}/events_after_timestamp/{timestamp}",
-        configuration.base_path,
-        id = p_id,
-        timestamp = p_timestamp
-    );
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref param_value) = p_category {
-        req_builder = req_builder.query(&[("category", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_skip {
-        req_builder = req_builder.query(&[("offset", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_limit {
-        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
-    }
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref auth) = configuration.basic_auth {
-        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
-    }
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req)?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text()?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => {
-                return Err(Error::from(serde_json::Error::custom(
-                    "Received `text/plain` content type response that cannot be converted to `models::ListEventsResponse`",
-                )));
-            }
-            ContentType::Unsupported(unknown_type) => {
-                return Err(Error::from(serde_json::Error::custom(format!(
-                    "Received `{unknown_type}` content type response that cannot be converted to `models::ListEventsResponse`"
-                ))));
-            }
-        }
-    } else {
-        let content = resp.text()?;
-        let entity: Option<GetEventsAfterTimestampError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent {
-            status,
-            content,
-            entity,
-        }))
-    }
-}
-
 /// Retrieve a file.
 pub fn get_file(
     configuration: &configuration::Configuration,
@@ -3347,7 +3262,7 @@ pub fn list_events(
     sort_by: Option<&str>,
     reverse_sort: Option<bool>,
     category: Option<&str>,
-    after_timestamp: Option<f64>,
+    after_timestamp: Option<i64>,
 ) -> Result<models::ListEventsResponse, Error<ListEventsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_workflow_id = workflow_id;

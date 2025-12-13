@@ -17127,6 +17127,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         category: Optional[StrictStr] = None,
+        after_timestamp: Annotated[Optional[StrictInt], Field(description="Return events after this timestamp (milliseconds since epoch)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -17156,6 +17157,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param category:
         :type category: str
+        :param after_timestamp: Return events after this timestamp (milliseconds since epoch)
+        :type after_timestamp: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17185,6 +17188,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             category=category,
+            after_timestamp=after_timestamp,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -17215,6 +17219,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         category: Optional[StrictStr] = None,
+        after_timestamp: Annotated[Optional[StrictInt], Field(description="Return events after this timestamp (milliseconds since epoch)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -17244,6 +17249,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param category:
         :type category: str
+        :param after_timestamp: Return events after this timestamp (milliseconds since epoch)
+        :type after_timestamp: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17273,6 +17280,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             category=category,
+            after_timestamp=after_timestamp,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -17303,6 +17311,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         category: Optional[StrictStr] = None,
+        after_timestamp: Annotated[Optional[StrictInt], Field(description="Return events after this timestamp (milliseconds since epoch)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -17332,6 +17341,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param category:
         :type category: str
+        :param after_timestamp: Return events after this timestamp (milliseconds since epoch)
+        :type after_timestamp: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17361,6 +17372,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             category=category,
+            after_timestamp=after_timestamp,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -17386,6 +17398,7 @@ class DefaultApi:
         sort_by,
         reverse_sort,
         category,
+        after_timestamp,
         _request_auth,
         _content_type,
         _headers,
@@ -17431,6 +17444,10 @@ class DefaultApi:
         if category is not None:
             
             _query_params.append(('category', category))
+            
+        if after_timestamp is not None:
+            
+            _query_params.append(('after_timestamp', after_timestamp))
             
         # process the header parameters
         # process the form parameters

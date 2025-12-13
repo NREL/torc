@@ -3842,7 +3842,7 @@ where
                     let param_after_timestamp = match param_after_timestamp {
                         Some(param_after_timestamp) => {
                             let param_after_timestamp =
-                                <f64 as std::str::FromStr>::from_str(&param_after_timestamp);
+                                <i64 as std::str::FromStr>::from_str(&param_after_timestamp);
                             match param_after_timestamp {
                             Ok(param_after_timestamp) => Some(param_after_timestamp),
                             Err(e) => return Ok(Response::builder()

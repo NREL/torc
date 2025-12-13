@@ -2294,7 +2294,7 @@ where
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
         context: &C,
     ) -> Result<ListEventsResponse, ApiError> {
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;

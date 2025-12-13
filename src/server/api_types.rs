@@ -1259,7 +1259,7 @@ pub trait Api<C: Send + Sync> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
         context: &C,
     ) -> Result<ListEventsResponse, ApiError>;
 
@@ -1989,7 +1989,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
     ) -> Result<ListEventsResponse, ApiError>;
 
     /// Retrieve all files for one workflow.
@@ -2749,7 +2749,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
     ) -> Result<ListEventsResponse, ApiError> {
         let context = self.context().clone();
         self.api()

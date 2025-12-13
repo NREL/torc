@@ -39,7 +39,7 @@ pub trait EventsApi<C> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
         context: &C,
     ) -> Result<ListEventsResponse, ApiError>;
 
@@ -188,7 +188,7 @@ where
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         category: Option<String>,
-        after_timestamp: Option<f64>,
+        after_timestamp: Option<i64>,
         context: &C,
     ) -> Result<ListEventsResponse, ApiError> {
         debug!(
@@ -211,8 +211,7 @@ where
 
         // Add timestamp filter if provided (timestamp is stored as INTEGER milliseconds)
         // The after_timestamp parameter is in milliseconds since epoch
-        let timestamp_ms: Option<i64> = after_timestamp.map(|ts| ts as i64);
-        if timestamp_ms.is_some() {
+        if after_timestamp.is_some() {
             where_conditions.push("timestamp > ?".to_string());
         }
 
@@ -236,7 +235,7 @@ where
         sqlx_query = sqlx_query.bind(workflow_id);
 
         // Bind timestamp if provided (direct integer comparison)
-        if let Some(ts) = timestamp_ms {
+        if let Some(ts) = after_timestamp {
             sqlx_query = sqlx_query.bind(ts);
         }
 
@@ -275,7 +274,7 @@ where
         count_sqlx_query = count_sqlx_query.bind(workflow_id);
 
         // Bind timestamp for count query if provided
-        if let Some(ts) = timestamp_ms {
+        if let Some(ts) = after_timestamp {
             count_sqlx_query = count_sqlx_query.bind(ts);
         }
 

@@ -386,7 +386,7 @@ fn handle_monitor_events(
             None, // sort_by
             None, // reverse_sort
             category.as_deref(),
-            Some(last_timestamp_ms as f64), // API still takes f64 for compatibility
+            Some(last_timestamp_ms),
         ) {
             Ok(response) => {
                 if let Some(events) = response.items {
