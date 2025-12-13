@@ -19,6 +19,20 @@ Object.assign(TorcDashboard.prototype, {
         document.getElementById('workflow-filter')?.addEventListener('input', (e) => {
             this.filterWorkflows(e.target.value);
         });
+
+        // Select all checkbox
+        document.getElementById('workflows-select-all')?.addEventListener('change', (e) => {
+            this.toggleSelectAllWorkflows(e.target.checked);
+        });
+
+        // Bulk action buttons
+        document.getElementById('btn-bulk-delete')?.addEventListener('click', () => {
+            this.bulkDeleteWorkflows();
+        });
+
+        document.getElementById('btn-clear-selection')?.addEventListener('click', () => {
+            this.clearWorkflowSelection();
+        });
     },
 
     async loadWorkflows() {
@@ -60,12 +74,22 @@ Object.assign(TorcDashboard.prototype, {
         if (!tbody) return;
 
         if (!workflows || workflows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="placeholder-message">No workflows found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="placeholder-message">No workflows found</td></tr>';
+            this.updateBulkActionBar();
             return;
         }
 
-        tbody.innerHTML = workflows.map(workflow => `
-            <tr data-workflow-id="${workflow.id}">
+        tbody.innerHTML = workflows.map(workflow => {
+            const isSelected = this.selectedWorkflowIds.has(workflow.id);
+            return `
+            <tr data-workflow-id="${workflow.id}" class="${isSelected ? 'selected' : ''}">
+                <td class="checkbox-column">
+                    <input type="checkbox"
+                           class="workflow-checkbox"
+                           data-workflow-id="${workflow.id}"
+                           ${isSelected ? 'checked' : ''}
+                           onchange="app.toggleWorkflowSelection('${workflow.id}', this.checked)">
+                </td>
                 <td><code>${workflow.id ?? '-'}</code></td>
                 <td>${this.escapeHtml(workflow.name || 'Unnamed')}</td>
                 <td>${this.formatTimestamp(workflow.timestamp)}</td>
@@ -81,7 +105,11 @@ Object.assign(TorcDashboard.prototype, {
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
+
+        this.updateSelectAllCheckbox();
+        this.updateBulkActionBar();
     },
 
     getStatusBadge(workflow) {
@@ -374,5 +402,123 @@ Object.assign(TorcDashboard.prototype, {
         }
 
         this.showModal('init-confirm-modal');
+    },
+
+    // ==================== Multi-Select and Bulk Operations ====================
+
+    toggleWorkflowSelection(workflowId, isSelected) {
+        if (isSelected) {
+            this.selectedWorkflowIds.add(workflowId);
+        } else {
+            this.selectedWorkflowIds.delete(workflowId);
+        }
+
+        // Update row styling
+        const row = document.querySelector(`tr[data-workflow-id="${workflowId}"]`);
+        if (row) {
+            row.classList.toggle('selected', isSelected);
+        }
+
+        this.updateSelectAllCheckbox();
+        this.updateBulkActionBar();
+    },
+
+    toggleSelectAllWorkflows(selectAll) {
+        const checkboxes = document.querySelectorAll('.workflow-checkbox');
+
+        if (selectAll) {
+            // Select all currently visible workflows
+            checkboxes.forEach(cb => {
+                const workflowId = cb.dataset.workflowId;
+                this.selectedWorkflowIds.add(workflowId);
+                cb.checked = true;
+                cb.closest('tr')?.classList.add('selected');
+            });
+        } else {
+            // Deselect all
+            this.selectedWorkflowIds.clear();
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                cb.closest('tr')?.classList.remove('selected');
+            });
+        }
+
+        this.updateBulkActionBar();
+    },
+
+    clearWorkflowSelection() {
+        this.selectedWorkflowIds.clear();
+        document.querySelectorAll('.workflow-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('tr')?.classList.remove('selected');
+        });
+        const selectAll = document.getElementById('workflows-select-all');
+        if (selectAll) selectAll.checked = false;
+        this.updateBulkActionBar();
+    },
+
+    updateSelectAllCheckbox() {
+        const selectAll = document.getElementById('workflows-select-all');
+        const checkboxes = document.querySelectorAll('.workflow-checkbox');
+        if (!selectAll || checkboxes.length === 0) return;
+
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+        selectAll.checked = allChecked;
+        selectAll.indeterminate = someChecked && !allChecked;
+    },
+
+    updateBulkActionBar() {
+        const bar = document.getElementById('workflows-bulk-actions');
+        const countSpan = document.getElementById('workflows-selection-count');
+        const count = this.selectedWorkflowIds.size;
+
+        if (bar) {
+            bar.style.display = count > 0 ? 'flex' : 'none';
+        }
+        if (countSpan) {
+            countSpan.textContent = count;
+        }
+    },
+
+    async bulkDeleteWorkflows() {
+        const count = this.selectedWorkflowIds.size;
+        if (count === 0) return;
+
+        const plural = count === 1 ? 'workflow' : 'workflows';
+        if (!confirm(`Delete ${count} ${plural}? This action cannot be undone.`)) {
+            return;
+        }
+
+        const idsToDelete = Array.from(this.selectedWorkflowIds);
+        let successCount = 0;
+        let errorCount = 0;
+
+        this.showToast(`Deleting ${count} ${plural}...`, 'info');
+
+        // Delete in parallel with a reasonable concurrency limit
+        const results = await Promise.allSettled(
+            idsToDelete.map(id => api.cliDeleteWorkflow(id))
+        );
+
+        results.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value.success) {
+                successCount++;
+                this.selectedWorkflowIds.delete(idsToDelete[index]);
+            } else {
+                errorCount++;
+                console.error(`Failed to delete workflow ${idsToDelete[index]}:`, result);
+            }
+        });
+
+        if (successCount > 0) {
+            this.showToast(`Deleted ${successCount} ${successCount === 1 ? 'workflow' : 'workflows'}`, 'success');
+        }
+        if (errorCount > 0) {
+            this.showToast(`Failed to delete ${errorCount} ${errorCount === 1 ? 'workflow' : 'workflows'}`, 'error');
+        }
+
+        await this.loadWorkflows();
     },
 });

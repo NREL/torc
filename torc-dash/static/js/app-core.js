@@ -79,9 +79,9 @@ Object.assign(TorcDashboard.prototype, {
     getAllThemes() {
         return [
             { id: 'light', name: 'Light', dark: false },
+            { id: 'warm', name: 'Warm Gray', dark: true },
             { id: 'neutral', name: 'Neutral', dark: true },
             { id: 'dimmed', name: 'Dimmed', dark: true },
-            { id: 'warm', name: 'Warm Gray', dark: true },
             { id: 'nord', name: 'Nord', dark: true },
             { id: 'dracula', name: 'Dracula', dark: true },
             { id: 'midnight', name: 'Midnight Blue', dark: true },
@@ -95,7 +95,7 @@ Object.assign(TorcDashboard.prototype, {
         const isDark = document.body.classList.contains('dark-mode');
         if (!isDark) return 0; // light mode
 
-        const currentTheme = localStorage.getItem('torc-theme') || 'monokai';
+        const currentTheme = localStorage.getItem('torc-theme') || 'warm';
         const index = themes.findIndex(t => t.id === currentTheme);
         return index >= 0 ? index : 1;
     },

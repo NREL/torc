@@ -77,10 +77,16 @@
                         </button>
                     </div>
                 </div>
+                <div class="bulk-action-bar" id="workflows-bulk-actions" style="display: none;">
+                    <span class="bulk-selection-count"><span id="workflows-selection-count">0</span> selected</span>
+                    <button class="btn btn-danger btn-sm" id="btn-bulk-delete">Delete Selected</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-selection">Clear Selection</button>
+                </div>
                 <div class="table-container">
                     <table class="data-table" id="workflows-table">
                         <thead>
                             <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="workflows-select-all" title="Select all"></th>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Timestamp</th>
@@ -91,7 +97,7 @@
                         </thead>
                         <tbody id="workflows-body">
                             <tr>
-                                <td colspan="6" class="loading">Loading workflows...</td>
+                                <td colspan="7" class="loading">Loading workflows...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -392,9 +398,9 @@
                             <label for="theme-selector">Dark Theme</label>
                             <select id="theme-selector" class="select-input">
                                 <optgroup label="Subtle">
+                                    <option value="warm">Warm Gray (Slack)</option>
                                     <option value="neutral">Neutral (GitHub dark)</option>
                                     <option value="dimmed">Dimmed (GitHub dimmed)</option>
-                                    <option value="warm">Warm Gray (Slack)</option>
                                     <option value="nord">Nord</option>
                                     <option value="dracula">Dracula</option>
                                     <option value="midnight">Midnight Blue</option>

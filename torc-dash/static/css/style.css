@@ -164,7 +164,6 @@ body {
 .sidebar-header .version {
     font-size: 24px;
     font-weight: 600;
-    opacity: 0.7;
 }
 
 .nav-menu {
@@ -387,6 +386,44 @@ body {
     text-align: center;
     color: var(--text-secondary);
     padding: 40px;
+}
+
+/* Checkbox column */
+.checkbox-column {
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-column input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+/* Selected row highlight */
+.data-table tbody tr.selected {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.data-table tbody tr.selected:hover {
+    background: rgba(0, 123, 255, 0.15);
+}
+
+/* Bulk action bar */
+.bulk-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.bulk-selection-count {
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 /* Status badges */
