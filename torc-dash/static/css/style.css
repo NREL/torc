@@ -865,6 +865,86 @@ textarea.text-input {
     border-bottom: 2px solid var(--border-color);
 }
 
+/* Job Details Logs Tab */
+.job-logs-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+}
+
+.job-logs-controls {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.job-logs-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.job-logs-control-group label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.job-logs-control-group input,
+.job-logs-control-group select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.job-logs-control-group input {
+    width: 200px;
+}
+
+.job-logs-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.job-log-path {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.job-log-content-wrapper {
+    flex: 1;
+    min-height: 200px;
+    max-height: 350px;
+    overflow: auto;
+    border-radius: var(--border-radius);
+}
+
+.job-log-content {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+    min-height: 100%;
+}
+
+.job-log-content.stderr {
+    color: #f48771;
+}
+
 /* Execution output panel */
 .execution-output-panel {
     position: fixed;
@@ -2013,6 +2093,100 @@ textarea.text-input {
 
 .strategy-help a:hover {
     text-decoration: underline;
+}
+
+/* Clickable table rows */
+tr.clickable {
+    cursor: pointer;
+}
+
+tr.clickable:hover {
+    background-color: var(--bg-tertiary);
+}
+
+tr.clickable.selected {
+    background-color: var(--bg-tertiary);
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+
+/* Events split view layout */
+.events-split-view {
+    display: flex;
+    gap: 16px;
+    height: calc(100vh - 350px);
+    min-height: 300px;
+}
+
+.events-table-container {
+    flex: 1;
+    overflow: auto;
+    min-width: 0;
+}
+
+.events-table-container .data-table {
+    margin-bottom: 0;
+}
+
+/* Event data preview panel - side layout */
+.event-data-preview-side {
+    width: 400px;
+    min-width: 300px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.event-data-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.event-data-content {
+    padding: 12px;
+    margin: 0;
+    flex: 1;
+    overflow: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Poll interval input */
+.poll-interval-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.poll-interval-input {
+    width: 50px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    text-align: center;
+}
+
+.poll-interval-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 /* Keyboard Hint in Sidebar */

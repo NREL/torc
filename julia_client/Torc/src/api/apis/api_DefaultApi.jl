@@ -2027,46 +2027,6 @@ function list_events(_api::DefaultApi, response_stream::Channel, workflow_id::In
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_list_events_after_timestamp_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ListEventsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
-)
-
-function _oacinternal_list_events_after_timestamp(_api::DefaultApi, id::Int64, timestamp::Float64; category=nothing, offset=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_events_after_timestamp_DefaultApi, "/workflows/{id}/events_after_timestamp/{timestamp}", [])
-    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
-    OpenAPI.Clients.set_param(_ctx.path, "timestamp", timestamp)  # type Float64
-    OpenAPI.Clients.set_param(_ctx.query, "category", category; style="form", is_explode=true)  # type String
-    OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
-    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Int64
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Return all events newer than the event with timestamp.
-
-Return all events newer than the event with timestamp.
-
-Params:
-- id::Int64 (required)
-- timestamp::Float64 (required)
-- category::String
-- offset::Int64
-- limit::Int64
-
-Return: ListEventsResponse, OpenAPI.Clients.ApiResponse
-"""
-function list_events_after_timestamp(_api::DefaultApi, id::Int64, timestamp::Float64; category=nothing, offset=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_events_after_timestamp(_api, id, timestamp; category=category, offset=offset, limit=limit, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function list_events_after_timestamp(_api::DefaultApi, response_stream::Channel, id::Int64, timestamp::Float64; category=nothing, offset=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_events_after_timestamp(_api, id, timestamp; category=category, offset=offset, limit=limit, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
 const _returntypes_list_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListFilesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -3380,7 +3340,6 @@ export is_workflow_complete
 export is_workflow_uninitialized
 export list_compute_nodes
 export list_events
-export list_events_after_timestamp
 export list_files
 export list_job_dependencies
 export list_job_file_relationships

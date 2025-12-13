@@ -276,6 +276,10 @@ Object.assign(TorcDashboard.prototype, {
                 }
                 break;
 
+            case 'logs':
+                this.renderJobLogsTab(contentEl);
+                break;
+
             case 'dependencies':
                 let depsHtml = '';
 
@@ -380,5 +384,135 @@ Object.assign(TorcDashboard.prototype, {
                 </tbody>
             </table>
         `;
+    },
+
+    // ==================== Job Logs Tab ====================
+
+    renderJobLogsTab(contentEl) {
+        const data = this.jobDetailsData;
+
+        if (data.results.length === 0) {
+            contentEl.innerHTML = '<div class="job-details-empty">No results yet - logs will be available after the job runs</div>';
+            return;
+        }
+
+        // Get stored output directory or default
+        const outputDir = localStorage.getItem('torc-job-logs-output-dir') || 'output';
+        const currentLogTab = this._jobLogTab || 'stdout';
+
+        // Build run selector if multiple runs
+        const runOptions = data.results.map((r, idx) =>
+            `<option value="${idx}" ${idx === data.results.length - 1 ? 'selected' : ''}>Run ${r.run_id} (Return: ${r.return_code})</option>`
+        ).join('');
+
+        contentEl.innerHTML = `
+            <div class="job-logs-container">
+                <div class="job-logs-controls">
+                    <div class="job-logs-control-group">
+                        <label for="job-logs-output-dir">Output Directory:</label>
+                        <input type="text" id="job-logs-output-dir" value="${this.escapeHtml(outputDir)}" placeholder="output">
+                    </div>
+                    ${data.results.length > 1 ? `
+                        <div class="job-logs-control-group">
+                            <label for="job-logs-run-selector">Run:</label>
+                            <select id="job-logs-run-selector">${runOptions}</select>
+                        </div>
+                    ` : ''}
+                    <button class="btn btn-primary btn-sm" id="btn-load-job-logs">Load Logs</button>
+                </div>
+                <div class="job-logs-tabs">
+                    <button class="sub-tab ${currentLogTab === 'stdout' ? 'active' : ''}" data-joblogtab="stdout">stdout</button>
+                    <button class="sub-tab ${currentLogTab === 'stderr' ? 'active' : ''}" data-joblogtab="stderr">stderr</button>
+                </div>
+                <div id="job-log-path" class="job-log-path"></div>
+                <div id="job-log-content-wrapper" class="job-log-content-wrapper">
+                    <pre id="job-log-content" class="job-log-content">Click "Load Logs" to view log content</pre>
+                </div>
+            </div>
+        `;
+
+        // Setup event handlers
+        this.setupJobLogsHandlers();
+    },
+
+    setupJobLogsHandlers() {
+        // Output dir change - save to localStorage
+        document.getElementById('job-logs-output-dir')?.addEventListener('change', (e) => {
+            localStorage.setItem('torc-job-logs-output-dir', e.target.value);
+        });
+
+        // Run selector change
+        document.getElementById('job-logs-run-selector')?.addEventListener('change', () => {
+            this.loadJobLogContent();
+        });
+
+        // Load logs button
+        document.getElementById('btn-load-job-logs')?.addEventListener('click', () => {
+            this.loadJobLogContent();
+        });
+
+        // Log tab switching
+        document.querySelectorAll('[data-joblogtab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this._jobLogTab = tab.dataset.joblogtab;
+                document.querySelectorAll('[data-joblogtab]').forEach(t => {
+                    t.classList.toggle('active', t.dataset.joblogtab === this._jobLogTab);
+                });
+                this.loadJobLogContent();
+            });
+        });
+    },
+
+    async loadJobLogContent() {
+        const data = this.jobDetailsData;
+        const logPathEl = document.getElementById('job-log-path');
+        const logContentEl = document.getElementById('job-log-content');
+
+        if (!logPathEl || !logContentEl) return;
+
+        // Get selected run (default to latest)
+        const runSelector = document.getElementById('job-logs-run-selector');
+        const runIndex = runSelector ? parseInt(runSelector.value) : data.results.length - 1;
+        const result = data.results[runIndex];
+
+        if (!result) {
+            logContentEl.textContent = 'No result selected';
+            logPathEl.textContent = '';
+            return;
+        }
+
+        // Get output directory
+        const outputDir = document.getElementById('job-logs-output-dir')?.value || 'output';
+        const isStdout = (this._jobLogTab || 'stdout') === 'stdout';
+
+        // Construct log file path based on naming convention
+        const stdioBase = `${outputDir}/job_stdio/job_${result.workflow_id}_${result.job_id}_${result.run_id}`;
+        const filePath = isStdout ? `${stdioBase}.o` : `${stdioBase}.e`;
+
+        logPathEl.textContent = filePath;
+        logContentEl.classList.toggle('stderr', !isStdout);
+        logContentEl.textContent = 'Loading...';
+
+        try {
+            const response = await fetch('/api/cli/read-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: filePath }),
+            });
+
+            const responseData = await response.json();
+
+            if (!responseData.exists) {
+                logContentEl.textContent = '(file does not exist)';
+            } else if (!responseData.success) {
+                logContentEl.textContent = `Error: ${responseData.error || 'Unknown error'}`;
+            } else if (!responseData.content || responseData.content.trim() === '') {
+                logContentEl.textContent = '(empty)';
+            } else {
+                logContentEl.textContent = responseData.content;
+            }
+        } catch (error) {
+            logContentEl.textContent = `Error loading file: ${error.message}`;
+        }
     },
 });

@@ -1,14 +1,14 @@
 //! Event-related API endpoints
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use log::{debug, error};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
 use crate::server::api_types::{
     CreateEventResponse, DeleteEventResponse, DeleteEventsResponse, GetEventResponse,
-    GetLatestEventTimestampResponse, ListEventsResponse, UpdateEventResponse,
+    ListEventsResponse, UpdateEventResponse,
 };
 
 use crate::models;
@@ -66,13 +66,6 @@ pub trait EventsApi<C> {
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<DeleteEventsResponse, ApiError>;
-
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-        context: &C,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError>;
 }
 
 /// Implementation of events API for the server
@@ -104,10 +97,11 @@ where
             context.get().0.clone()
         );
 
-        let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+        // Store timestamp as milliseconds since epoch (UTC)
+        let timestamp = Utc::now().timestamp_millis();
         let data = body.data.to_string();
 
-        let result = match sqlx::query!(
+        let result = match sqlx::query(
             r#"
             INSERT INTO event
             (
@@ -116,12 +110,12 @@ where
                 data
             )
             VALUES ($1, $2, $3)
-            RETURNING rowid
+            RETURNING id
             "#,
-            body.workflow_id,
-            timestamp,
-            data,
         )
+        .bind(body.workflow_id)
+        .bind(timestamp)
+        .bind(&data)
         .fetch_one(self.context.pool.as_ref())
         .await
         {
@@ -131,7 +125,8 @@ where
             }
         };
 
-        body.id = Some(result.id);
+        body.id = Some(result.get("id"));
+        body.timestamp = timestamp;
         Ok(CreateEventResponse::SuccessfulResponse(body))
     }
 
@@ -143,14 +138,14 @@ where
             context.get().0.clone()
         );
 
-        let record = match sqlx::query!(
+        let record = match sqlx::query(
             r#"
-            SELECT id, workflow_id, timestamp, data as "data: String"
+            SELECT id, workflow_id, timestamp, data
             FROM event
             WHERE id = $1
             "#,
-            id
         )
+        .bind(id)
         .fetch_optional(self.context.pool.as_ref())
         .await
         {
@@ -166,7 +161,8 @@ where
             }
         };
 
-        let data = match serde_json::from_str(&record.data) {
+        let data_str: String = record.get("data");
+        let data = match serde_json::from_str(&data_str) {
             Ok(json) => json,
             Err(e) => {
                 return Err(json_parse_error(e));
@@ -174,9 +170,9 @@ where
         };
 
         let event = models::EventModel {
-            id: Some(record.id),
-            workflow_id: record.workflow_id,
-            timestamp: record.timestamp,
+            id: Some(record.get("id")),
+            workflow_id: record.get("workflow_id"),
+            timestamp: record.get("timestamp"),
             data,
         };
 
@@ -213,27 +209,12 @@ where
         // Build WHERE clause conditions
         let mut where_conditions = vec!["workflow_id = ?".to_string()];
 
-        // Add timestamp filter if provided
-        let timestamp_str = if let Some(timestamp) = after_timestamp {
-            // Convert timestamp from milliseconds since epoch to DateTime
-            let timestamp_seconds = timestamp / 1000.0;
-            let datetime = match DateTime::from_timestamp(
-                timestamp_seconds as i64,
-                (timestamp_seconds.fract() * 1_000_000_000.0) as u32,
-            ) {
-                Some(dt) => dt,
-                None => {
-                    return Err(ApiError(format!("Invalid timestamp: {}", timestamp)));
-                }
-            };
-
-            // Convert to ISO 8601 string format for comparison
-            let ts_str = datetime.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+        // Add timestamp filter if provided (timestamp is stored as INTEGER milliseconds)
+        // The after_timestamp parameter is in milliseconds since epoch
+        let timestamp_ms: Option<i64> = after_timestamp.map(|ts| ts as i64);
+        if timestamp_ms.is_some() {
             where_conditions.push("timestamp > ?".to_string());
-            Some(ts_str)
-        } else {
-            None
-        };
+        }
 
         // Note: Category filtering is not implemented in current schema
         let _category = category; // Acknowledge the parameter to avoid unused warnings
@@ -254,9 +235,9 @@ where
         // Bind workflow_id
         sqlx_query = sqlx_query.bind(workflow_id);
 
-        // Bind timestamp if provided
-        if let Some(ref ts_str) = timestamp_str {
-            sqlx_query = sqlx_query.bind(ts_str);
+        // Bind timestamp if provided (direct integer comparison)
+        if let Some(ts) = timestamp_ms {
+            sqlx_query = sqlx_query.bind(ts);
         }
 
         let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
@@ -294,8 +275,8 @@ where
         count_sqlx_query = count_sqlx_query.bind(workflow_id);
 
         // Bind timestamp for count query if provided
-        if let Some(ref ts_str) = timestamp_str {
-            count_sqlx_query = count_sqlx_query.bind(ts_str);
+        if let Some(ts) = timestamp_ms {
+            count_sqlx_query = count_sqlx_query.bind(ts);
         }
 
         let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {
@@ -454,70 +435,5 @@ where
             context.get().0.clone()
         );
         Err(ApiError("Api-Error: Operation is NOT implemented".into()))
-    }
-
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-        context: &C,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError> {
-        debug!(
-            "get_latest_event_timestamp({}) - X-Span-ID: {:?}",
-            id,
-            context.get().0.clone()
-        );
-
-        // Find the event with the highest ID for the given workflow
-        let record = match sqlx::query!(
-            r#"
-            SELECT timestamp
-            FROM event
-            WHERE workflow_id = $1
-            ORDER BY id DESC
-            LIMIT 1
-            "#,
-            id
-        )
-        .fetch_optional(self.context.pool.as_ref())
-        .await
-        {
-            Ok(Some(rec)) => rec,
-            Ok(None) => {
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": format!("No events found for workflow_id: {}", id)
-                }));
-                return Ok(GetLatestEventTimestampResponse::NotFoundErrorResponse(
-                    error_response,
-                ));
-            }
-            Err(e) => {
-                return Err(database_error(e));
-            }
-        };
-
-        // Parse the ISO 8601 timestamp string
-        let datetime = match DateTime::parse_from_rfc3339(&record.timestamp) {
-            Ok(dt) => dt.with_timezone(&Utc),
-            Err(e) => {
-                return Err(ApiError(format!(
-                    "Failed to parse timestamp '{}': {}",
-                    record.timestamp, e
-                )));
-            }
-        };
-
-        // Convert to milliseconds since epoch
-        let timestamp_ms = datetime.timestamp_millis();
-
-        debug!(
-            "Latest event timestamp for workflow {}: {} ms ({})",
-            id, timestamp_ms, record.timestamp
-        );
-
-        // TODO: change this to a proper data model
-        Ok(GetLatestEventTimestampResponse::SuccessfulResponse(
-            serde_json::json!({ "timestamp": timestamp_ms }),
-        ))
     }
 }

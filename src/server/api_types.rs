@@ -516,17 +516,6 @@ pub enum GetJobResponse {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
-pub enum GetLatestEventTimestampResponse {
-    /// Successful response
-    SuccessfulResponse(serde_json::Value),
-    /// Not found error response
-    NotFoundErrorResponse(models::ErrorResponse),
-    /// Default error response
-    DefaultErrorResponse(models::ErrorResponse),
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[must_use]
 pub enum GetLocalSchedulerResponse {
     /// Successful response
     SuccessfulResponse(models::LocalSchedulerModel),
@@ -1462,13 +1451,6 @@ pub trait Api<C: Send + Sync> {
     /// Retrieve a job.
     async fn get_job(&self, id: i64, context: &C) -> Result<GetJobResponse, ApiError>;
 
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-        context: &C,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError>;
-
     /// Retrieve a local scheduler.
     async fn get_local_scheduler(
         &self,
@@ -2180,12 +2162,6 @@ pub trait ApiNoContext<C: Send + Sync> {
 
     /// Retrieve a job.
     async fn get_job(&self, id: i64) -> Result<GetJobResponse, ApiError>;
-
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError>;
 
     /// Retrieve a local scheduler.
     async fn get_local_scheduler(&self, id: i64) -> Result<GetLocalSchedulerResponse, ApiError>;
@@ -3135,15 +3111,6 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
     async fn get_job(&self, id: i64) -> Result<GetJobResponse, ApiError> {
         let context = self.context().clone();
         self.api().get_job(id, &context).await
-    }
-
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError> {
-        let context = self.context().clone();
-        self.api().get_latest_event_timestamp(id, &context).await
     }
 
     /// Retrieve a local scheduler.

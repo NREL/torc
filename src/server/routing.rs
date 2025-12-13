@@ -33,23 +33,22 @@ use crate::server::api_types::{
     DeleteScheduledComputeNodeResponse, DeleteScheduledComputeNodesResponse,
     DeleteSlurmSchedulerResponse, DeleteSlurmSchedulersResponse, DeleteUserDataResponse,
     DeleteWorkflowResponse, GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse,
-    GetFileResponse, GetJobResponse, GetLatestEventTimestampResponse, GetLocalSchedulerResponse,
-    GetPendingActionsResponse, GetReadyJobRequirementsResponse, GetResourceRequirementsResponse,
-    GetResultResponse, GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse,
-    GetUserDataResponse, GetVersionResponse, GetWorkflowActionsResponse, GetWorkflowResponse,
-    GetWorkflowStatusResponse, InitializeJobsResponse, IsWorkflowCompleteResponse,
-    IsWorkflowUninitializedResponse, ListComputeNodesResponse, ListEventsResponse,
-    ListFilesResponse, ListJobDependenciesResponse, ListJobFileRelationshipsResponse,
-    ListJobIdsResponse, ListJobUserDataRelationshipsResponse, ListJobsResponse,
-    ListLocalSchedulersResponse, ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
-    ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
-    ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
-    ManageStatusChangeResponse, PingResponse, ProcessChangedJobInputsResponse,
-    ResetJobStatusResponse, ResetWorkflowStatusResponse, StartJobResponse,
-    UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse, UpdateJobResponse,
-    UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse, UpdateResultResponse,
-    UpdateScheduledComputeNodeResponse, UpdateSlurmSchedulerResponse, UpdateUserDataResponse,
-    UpdateWorkflowResponse, UpdateWorkflowStatusResponse,
+    GetFileResponse, GetJobResponse, GetLocalSchedulerResponse, GetPendingActionsResponse,
+    GetReadyJobRequirementsResponse, GetResourceRequirementsResponse, GetResultResponse,
+    GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse, GetUserDataResponse,
+    GetVersionResponse, GetWorkflowActionsResponse, GetWorkflowResponse, GetWorkflowStatusResponse,
+    InitializeJobsResponse, IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse,
+    ListComputeNodesResponse, ListEventsResponse, ListFilesResponse, ListJobDependenciesResponse,
+    ListJobFileRelationshipsResponse, ListJobIdsResponse, ListJobUserDataRelationshipsResponse,
+    ListJobsResponse, ListLocalSchedulersResponse, ListMissingUserDataResponse,
+    ListRequiredExistingFilesResponse, ListResourceRequirementsResponse, ListResultsResponse,
+    ListScheduledComputeNodesResponse, ListSlurmSchedulersResponse, ListUserDataResponse,
+    ListWorkflowsResponse, ManageStatusChangeResponse, PingResponse,
+    ProcessChangedJobInputsResponse, ResetJobStatusResponse, ResetWorkflowStatusResponse,
+    StartJobResponse, UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse,
+    UpdateJobResponse, UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse,
+    UpdateResultResponse, UpdateScheduledComputeNodeResponse, UpdateSlurmSchedulerResponse,
+    UpdateUserDataResponse, UpdateWorkflowResponse, UpdateWorkflowStatusResponse,
 };
 
 mod paths {
@@ -6762,101 +6761,6 @@ where
                                     *response.body_mut() = Body::from(body);
                                 }
                                 GetJobResponse::DefaultErrorResponse(body) => {
-                                    *response.status_mut() = StatusCode::from_u16(500)
-                                        .expect("Unable to turn 500 into a StatusCode");
-                                    response.headers_mut().insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json")
-                                                            .expect("Unable to create Content-Type header for application/json"));
-                                    // JSON Body
-                                    let body = serde_json::to_string(&body)
-                                        .expect("impossible to fail to serialize");
-                                    *response.body_mut() = Body::from(body);
-                                }
-                            }
-                        }
-                        Err(_) => {
-                            // Application code returned an error. This should not happen, as the implementation should
-                            // return a valid response.
-                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
-                            *response.body_mut() = Body::from("An internal error occurred");
-                        }
-                    }
-
-                    Ok(response)
-                }
-
-                // GetLatestEventTimestamp - GET /workflows/{id}/latest_event_timestamp
-                hyper::Method::GET
-                    if path.matched(paths::ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP) =>
-                {
-                    // Path parameters
-                    let path: &str = uri.path();
-                    let path_params =
-                    paths::REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP
-                    .captures(path)
-                    .unwrap_or_else(||
-                        panic!("Path {} matched RE WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP.as_str())
-                    );
-
-                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
-                    Ok(param_id) => match param_id.parse::<i64>() {
-                        Ok(param_id) => param_id,
-                        Err(e) => return Ok(Response::builder()
-                                        .status(StatusCode::BAD_REQUEST)
-                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
-                                        .expect("Unable to create Bad Request response for invalid path parameter")),
-                    },
-                    Err(_) => return Ok(Response::builder()
-                                        .status(StatusCode::BAD_REQUEST)
-                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
-                                        .expect("Unable to create Bad Request response for invalid percent decode"))
-                };
-
-                    let result = api_impl
-                        .get_latest_event_timestamp(param_id, &context)
-                        .await;
-                    let mut response = Response::new(Body::empty());
-                    response.headers_mut().insert(
-                        HeaderName::from_static("x-span-id"),
-                        HeaderValue::from_str(
-                            (&context as &dyn Has<XSpanIdString>)
-                                .get()
-                                .0
-                                .clone()
-                                .as_str(),
-                        )
-                        .expect("Unable to create X-Span-ID header value"),
-                    );
-
-                    match result {
-                        Ok(rsp) => {
-                            match rsp {
-                                GetLatestEventTimestampResponse::SuccessfulResponse(body) => {
-                                    *response.status_mut() = StatusCode::from_u16(200)
-                                        .expect("Unable to turn 200 into a StatusCode");
-                                    response.headers_mut().insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json")
-                                                            .expect("Unable to create Content-Type header for application/json"));
-                                    // JSON Body
-                                    let body = serde_json::to_string(&body)
-                                        .expect("impossible to fail to serialize");
-                                    *response.body_mut() = Body::from(body);
-                                }
-                                GetLatestEventTimestampResponse::NotFoundErrorResponse(body) => {
-                                    *response.status_mut() = StatusCode::from_u16(404)
-                                        .expect("Unable to turn 404 into a StatusCode");
-                                    response.headers_mut().insert(
-                                                        CONTENT_TYPE,
-                                                        HeaderValue::from_str("application/json")
-                                                            .expect("Unable to create Content-Type header for application/json"));
-                                    // JSON Body
-                                    let body = serde_json::to_string(&body)
-                                        .expect("impossible to fail to serialize");
-                                    *response.body_mut() = Body::from(body);
-                                }
-                                GetLatestEventTimestampResponse::DefaultErrorResponse(body) => {
                                     *response.status_mut() = StatusCode::from_u16(500)
                                         .expect("Unable to turn 500 into a StatusCode");
                                     response.headers_mut().insert(
@@ -14053,10 +13957,6 @@ impl<T> RequestParser<T> for ApiRequestParser {
             hyper::Method::GET if path.matched(paths::ID_FILES_ID) => Some("GetFile"),
             // GetJob - GET /jobs/{id}
             hyper::Method::GET if path.matched(paths::ID_JOBS_ID) => Some("GetJob"),
-            // GetLatestEventTimestamp - GET /workflows/{id}/latest_event_timestamp
-            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP) => {
-                Some("GetLatestEventTimestamp")
-            }
             // GetLocalScheduler - GET /local_schedulers/{id}
             hyper::Method::GET if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
                 Some("GetLocalScheduler")

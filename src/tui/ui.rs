@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local, Utc};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -8,6 +9,17 @@ use ratatui::{
 
 use super::app::{App, DetailViewType, Focus, PopupType};
 use super::components::HelpPopup;
+
+/// Format a timestamp (milliseconds since epoch) as a human-readable local time string
+fn format_timestamp_ms(timestamp_ms: i64) -> String {
+    DateTime::from_timestamp_millis(timestamp_ms)
+        .map(|dt: DateTime<Utc>| {
+            dt.with_timezone(&Local)
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string()
+        })
+        .unwrap_or_else(|| format!("{}ms", timestamp_ms))
+}
 
 /// Format bytes into human-readable format (KB, MB, GB)
 fn format_bytes(bytes: i64) -> String {
@@ -566,7 +578,7 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
         let id = event.id.map(|i| i.to_string()).unwrap_or_default();
         let workflow_id = event.workflow_id.to_string();
         let data = event.data.to_string();
-        let timestamp = event.timestamp.to_string();
+        let timestamp = format_timestamp_ms(event.timestamp);
 
         Row::new(vec![
             Cell::from(id),

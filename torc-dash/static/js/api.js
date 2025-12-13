@@ -184,7 +184,7 @@ class TorcAPI {
 
     // ==================== Events ====================
 
-    async listEvents(workflowId = null, offset = 0, limit = 100, afterId = null) {
+    async listEvents(workflowId = null, offset = 0, limit = 100, afterTimestamp = null) {
         const params = new URLSearchParams();
 
         if (workflowId) {
@@ -194,8 +194,8 @@ class TorcAPI {
         params.set('offset', offset);
         params.set('limit', limit);
 
-        if (afterId !== null) {
-            params.set('after_id', afterId);
+        if (afterTimestamp !== null) {
+            params.set('after_timestamp', afterTimestamp);
         }
 
         const response = await this.request(`/events?${params.toString()}`);

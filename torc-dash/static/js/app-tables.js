@@ -175,25 +175,65 @@ Object.assign(TorcDashboard.prototype, {
         return `
             ${controls}
             ${count}
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        ${this.renderSortableHeader('ID', 'id')}
-                        ${this.renderSortableHeader('Timestamp', 'timestamp')}
-                        <th>Data</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items.map(event => `
-                        <tr>
-                            <td><code>${event.id ?? '-'}</code></td>
-                            <td>${this.formatTimestamp(event.timestamp)}</td>
-                            <td><code>${this.escapeHtml(this.truncate(JSON.stringify(event.data) || '-', 100))}</code></td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            <div class="events-split-view">
+                <div class="events-table-container">
+                    <table class="data-table" id="events-detail-table">
+                        <thead>
+                            <tr>
+                                ${this.renderSortableHeader('ID', 'id')}
+                                ${this.renderSortableHeader('Timestamp', 'timestamp')}
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map((event, index) => `
+                                <tr class="event-row clickable" data-event-index="${index}">
+                                    <td><code>${event.id ?? '-'}</code></td>
+                                    <td>${this.formatTimestamp(event.timestamp)}</td>
+                                    <td>${this.escapeHtml(event.data?.message || '')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="event-data-preview" class="event-data-preview-side">
+                    <div class="event-data-header">
+                        <span>Event Data</span>
+                    </div>
+                    <pre id="event-data-content" class="event-data-content">Click on an event to view details</pre>
+                </div>
+            </div>
         `;
+    },
+
+    // Store events for preview lookup
+    setEventsForPreview(events) {
+        this._eventsForPreview = Array.isArray(events) ? events : api.extractItems(events);
+    },
+
+    setupEventRowClickHandlers() {
+        const table = document.getElementById('events-detail-table');
+        const previewContent = document.getElementById('event-data-content');
+
+        if (!table || !previewContent) {
+            return;
+        }
+
+        // Add click handler to each row
+        table.querySelectorAll('.event-row').forEach(row => {
+            row.onclick = () => {
+                const index = parseInt(row.dataset.eventIndex);
+                const event = this._eventsForPreview?.[index];
+                if (!event) return;
+
+                // Highlight selected row
+                table.querySelectorAll('.event-row').forEach(r => r.classList.remove('selected'));
+                row.classList.add('selected');
+
+                // Show preview with pretty-printed JSON
+                previewContent.textContent = JSON.stringify(event.data, null, 2);
+            };
+        });
     },
 
     renderSchedulersTable(schedulers) {

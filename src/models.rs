@@ -1417,9 +1417,9 @@ pub struct EventModel {
     #[serde(rename = "workflow_id")]
     pub workflow_id: i64,
 
-    /// Timestamp of the event
+    /// Timestamp of the event in milliseconds since epoch (UTC)
     #[serde(rename = "timestamp")]
-    pub timestamp: String,
+    pub timestamp: i64,
 
     /// User-defined data associated with the event
     #[serde(rename = "data")]
@@ -1432,9 +1432,17 @@ impl EventModel {
         EventModel {
             id: None,
             workflow_id,
-            timestamp: Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(),
+            timestamp: Utc::now().timestamp_millis(),
             data,
         }
+    }
+
+    /// Format the timestamp as a human-readable ISO 8601 string
+    pub fn timestamp_as_string(&self) -> String {
+        use chrono::{DateTime, Utc};
+        DateTime::from_timestamp_millis(self.timestamp)
+            .map(|dt: DateTime<Utc>| dt.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string())
+            .unwrap_or_else(|| format!("{}ms", self.timestamp))
     }
 }
 
@@ -1471,7 +1479,7 @@ impl std::str::FromStr for EventModel {
         struct IntermediateRep {
             pub id: Vec<i64>,
             pub workflow_id: Vec<i64>,
-            pub timestamp: Vec<String>,
+            pub timestamp: Vec<i64>,
             pub data: Vec<serde_json::Value>,
         }
 
@@ -1504,7 +1512,7 @@ impl std::str::FromStr for EventModel {
                     ),
                     #[allow(clippy::redundant_clone)]
                     "timestamp" => intermediate_rep.timestamp.push(
-                        <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                        <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
                     #[allow(clippy::redundant_clone)]
                     "data" => intermediate_rep.data.push(

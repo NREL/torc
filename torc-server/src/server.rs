@@ -1603,13 +1603,13 @@ use torc::server::{
     DeleteResultsResponse, DeleteScheduledComputeNodeResponse, DeleteScheduledComputeNodesResponse,
     DeleteSlurmSchedulerResponse, DeleteSlurmSchedulersResponse, DeleteUserDataResponse,
     DeleteWorkflowResponse, GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse,
-    GetFileResponse, GetJobResponse, GetLatestEventTimestampResponse, GetLocalSchedulerResponse,
-    GetReadyJobRequirementsResponse, GetResourceRequirementsResponse, GetResultResponse,
-    GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse, GetUserDataResponse,
-    GetVersionResponse, GetWorkflowResponse, GetWorkflowStatusResponse, InitializeJobsResponse,
-    IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse, ListComputeNodesResponse,
-    ListEventsResponse, ListFilesResponse, ListJobIdsResponse, ListJobsResponse,
-    ListLocalSchedulersResponse, ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
+    GetFileResponse, GetJobResponse, GetLocalSchedulerResponse, GetReadyJobRequirementsResponse,
+    GetResourceRequirementsResponse, GetResultResponse, GetScheduledComputeNodeResponse,
+    GetSlurmSchedulerResponse, GetUserDataResponse, GetVersionResponse, GetWorkflowResponse,
+    GetWorkflowStatusResponse, InitializeJobsResponse, IsWorkflowCompleteResponse,
+    IsWorkflowUninitializedResponse, ListComputeNodesResponse, ListEventsResponse,
+    ListFilesResponse, ListJobIdsResponse, ListJobsResponse, ListLocalSchedulersResponse,
+    ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
     ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
     ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
     ManageStatusChangeResponse, PingResponse, ProcessChangedJobInputsResponse,
@@ -2627,17 +2627,6 @@ where
     /// Retrieve a job.
     async fn get_job(&self, id: i64, context: &C) -> Result<GetJobResponse, ApiError> {
         self.jobs_api.get_job(id, context).await
-    }
-
-    /// Return the timestamp of the latest event in ms since the epoch in UTC.
-    async fn get_latest_event_timestamp(
-        &self,
-        id: i64,
-        context: &C,
-    ) -> Result<GetLatestEventTimestampResponse, ApiError> {
-        self.events_api
-            .get_latest_event_timestamp(id, context)
-            .await
     }
 
     /// Retrieve a local scheduler.

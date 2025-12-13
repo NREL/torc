@@ -82,7 +82,6 @@ Class | Method
 *DefaultApi* | [**is_workflow_uninitialized**](docs/DefaultApi.md#is_workflow_uninitialized)<br/>**GET** /workflows/{id}/is_uninitialized<br/>Return true if all jobs in the workflow are uninitialized or disabled.
 *DefaultApi* | [**list_compute_nodes**](docs/DefaultApi.md#list_compute_nodes)<br/>**GET** /compute_nodes<br/>Retrieve all compute node records for one workflow.
 *DefaultApi* | [**list_events**](docs/DefaultApi.md#list_events)<br/>**GET** /events<br/>Retrieve all events for one workflow.
-*DefaultApi* | [**list_events_after_timestamp**](docs/DefaultApi.md#list_events_after_timestamp)<br/>**GET** /workflows/{id}/events_after_timestamp/{timestamp}<br/>Return all events newer than the event with timestamp.
 *DefaultApi* | [**list_files**](docs/DefaultApi.md#list_files)<br/>**GET** /files<br/>Retrieve all files for one workflow.
 *DefaultApi* | [**list_job_dependencies**](docs/DefaultApi.md#list_job_dependencies)<br/>**GET** /workflows/{id}/job_dependencies<br/>Retrieve job blocking relationships for a workflow.
 *DefaultApi* | [**list_job_file_relationships**](docs/DefaultApi.md#list_job_file_relationships)<br/>**GET** /workflows/{id}/job_file_relationships<br/>Retrieve job-file relationships for a workflow.
