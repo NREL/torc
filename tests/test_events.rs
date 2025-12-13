@@ -34,15 +34,20 @@ fn test_events_add_command_json(start_server: &ServerProcess) {
     let expected_data: serde_json::Value = serde_json::from_str(test_data).unwrap();
     assert_eq!(json_output.get("data").unwrap(), &expected_data);
 
-    // Verify timestamp is in correct format (ISO 8601)
-    let timestamp = json_output.get("timestamp").unwrap().as_str().unwrap();
+    // Verify timestamp is a valid integer (milliseconds since epoch)
+    let timestamp = json_output.get("timestamp").unwrap().as_i64().unwrap();
+    // Timestamp should be a reasonable value (after year 2020 and before year 2100)
+    let min_timestamp: i64 = 1577836800000; // 2020-01-01 00:00:00 UTC
+    let max_timestamp: i64 = 4102444800000; // 2100-01-01 00:00:00 UTC
     assert!(
-        timestamp.ends_with("Z"),
-        "Timestamp should be in UTC (end with Z)"
+        timestamp > min_timestamp,
+        "Timestamp {} should be after year 2020",
+        timestamp
     );
     assert!(
-        timestamp.contains("T"),
-        "Timestamp should contain 'T' separator"
+        timestamp < max_timestamp,
+        "Timestamp {} should be before year 2100",
+        timestamp
     );
 }
 
@@ -140,8 +145,9 @@ fn test_events_list_command_json(start_server: &ServerProcess) {
         assert!(event.get("data").is_some());
     }
 
-    let first_timestamp = events_array[0].get("timestamp").unwrap().as_str().unwrap();
-    let second_timestamp = events_array[1].get("timestamp").unwrap().as_str().unwrap();
+    // Timestamps are now integers (milliseconds since epoch)
+    let first_timestamp = events_array[0].get("timestamp").unwrap().as_i64().unwrap();
+    let second_timestamp = events_array[1].get("timestamp").unwrap().as_i64().unwrap();
     assert!(
         second_timestamp > first_timestamp,
         "Events should be sorted oldest first"
@@ -261,16 +267,17 @@ fn test_events_list_sorting(start_server: &ServerProcess) {
     assert!(events_array_reverse.len() >= 3);
 
     // With reverse-sort flag, we should get oldest first
+    // Timestamps are now integers (milliseconds since epoch)
     if events_array_reverse.len() >= 2 {
         let first_timestamp = events_array_reverse[0]
             .get("timestamp")
             .unwrap()
-            .as_str()
+            .as_i64()
             .unwrap();
         let second_timestamp = events_array_reverse[1]
             .get("timestamp")
             .unwrap()
-            .as_str()
+            .as_i64()
             .unwrap();
         assert!(
             first_timestamp >= second_timestamp,
@@ -468,13 +475,14 @@ fn test_events_timestamp_ordering(start_server: &ServerProcess) {
     assert!(events_array.len() >= 3);
 
     // Verify events are in correct order (oldest first)
-    let mut previous_timestamp: Option<&str> = None;
+    // Timestamps are now integers (milliseconds since epoch)
+    let mut previous_timestamp: Option<i64> = None;
     for event in events_array {
-        let current_timestamp = event.get("timestamp").unwrap().as_str().unwrap();
+        let current_timestamp = event.get("timestamp").unwrap().as_i64().unwrap();
         if let Some(prev) = previous_timestamp {
             assert!(
                 prev < current_timestamp,
-                "Events should be ordered newest first"
+                "Events should be ordered oldest first"
             );
         }
         previous_timestamp = Some(current_timestamp);

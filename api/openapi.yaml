@@ -360,6 +360,14 @@ paths:
         schema:
           type: string
         style: form
+      - description: Return events after this timestamp (milliseconds since epoch)
+        explode: true
+        in: query
+        name: after_timestamp
+        required: false
+        schema:
+          type: integer
+        style: form
       responses:
         "200":
           content:
@@ -3031,69 +3039,6 @@ paths:
       summary: Cancel a workflow. Workers will detect the status change and cancel jobs.
       tags: []
       x-codegen-request-body-name: body
-  /workflows/{id}/events_after_timestamp/{timestamp}:
-    get:
-      description: Return all events newer than the event with timestamp.
-      operationId: list_events_after_timestamp
-      parameters:
-      - description: Workflow ID
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-        style: simple
-      - description: Timestamp expressed as number of milliseconds since the epoch
-          in UTC
-        explode: false
-        in: path
-        name: timestamp
-        required: true
-        schema:
-          type: number
-        style: simple
-      - explode: true
-        in: query
-        name: category
-        required: false
-        schema:
-          default: null
-          type: string
-        style: form
-      - description: Ignored
-        explode: true
-        in: query
-        name: offset
-        required: false
-        schema:
-          default: 0
-          type: integer
-        style: form
-      - explode: true
-        in: query
-        name: limit
-        required: false
-        schema:
-          default: 100000
-          type: integer
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/list_events_response"
-          description: Successful response
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/default_error_response"
-          description: Default error response
-      security: []
-      summary: Return all events newer than the event with timestamp.
-      tags: []
   /workflows/{id}/initialize_jobs:
     post:
       description: Initialize job relationships based on file and user_data relationships.

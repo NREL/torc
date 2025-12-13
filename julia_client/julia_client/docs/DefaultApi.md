@@ -65,7 +65,6 @@ Method | HTTP request | Description
 [**is_workflow_uninitialized**](DefaultApi.md#is_workflow_uninitialized) | **GET** /workflows/{id}/is_uninitialized | Return true if all jobs in the workflow are uninitialized or disabled.
 [**list_compute_nodes**](DefaultApi.md#list_compute_nodes) | **GET** /compute_nodes | Retrieve all compute node records for one workflow.
 [**list_events**](DefaultApi.md#list_events) | **GET** /events | Retrieve all events for one workflow.
-[**list_events_after_timestamp**](DefaultApi.md#list_events_after_timestamp) | **GET** /workflows/{id}/events_after_timestamp/{timestamp} | Return all events newer than the event with timestamp.
 [**list_files**](DefaultApi.md#list_files) | **GET** /files | Retrieve all files for one workflow.
 [**list_job_dependencies**](DefaultApi.md#list_job_dependencies) | **GET** /workflows/{id}/job_dependencies | Retrieve job blocking relationships for a workflow.
 [**list_job_file_relationships**](DefaultApi.md#list_job_file_relationships) | **GET** /workflows/{id}/job_file_relationships | Retrieve job-file relationships for a workflow.
@@ -2089,8 +2088,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_events**
-> list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing) -> ListEventsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, _mediaType=nothing) -> Channel{ ListEventsResponse }, OpenAPI.Clients.ApiResponse
+> list_events(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing) -> ListEventsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing) -> Channel{ ListEventsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all events for one workflow.
 
@@ -2112,45 +2111,7 @@ Name | Type | Description  | Notes
  **sort_by** | **String** |  | [default to nothing]
  **reverse_sort** | **Bool** |  | [default to false]
  **category** | **String** |  | [default to nothing]
-
-### Return type
-
-[**ListEventsResponse**](ListEventsResponse.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-# **list_events_after_timestamp**
-> list_events_after_timestamp(_api::DefaultApi, id::Int64, timestamp::Float64; category=nothing, offset=nothing, limit=nothing, _mediaType=nothing) -> ListEventsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_events_after_timestamp(_api::DefaultApi, response_stream::Channel, id::Int64, timestamp::Float64; category=nothing, offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListEventsResponse }, OpenAPI.Clients.ApiResponse
-
-Return all events newer than the event with timestamp.
-
-Return all events newer than the event with timestamp.
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **_api** | **DefaultApi** | API context | 
-**id** | **Int64** | Workflow ID |
-**timestamp** | **Float64** | Timestamp expressed as number of milliseconds since the epoch in UTC |
-
-### Optional Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **category** | **String** |  | [default to nothing]
- **offset** | **Int64** | Ignored | [default to 0]
- **limit** | **Int64** |  | [default to 100000]
+ **after_timestamp** | **Int64** | Return events after this timestamp (milliseconds since epoch) | [default to nothing]
 
 ### Return type
 

@@ -55,6 +55,9 @@
                     <span class="status-dot disconnected"></span>
                     <span class="status-text">Disconnected</span>
                 </div>
+                <div class="keyboard-hint" id="keyboard-hint" title="Show keyboard shortcuts">
+                    Press <kbd>?</kbd> for shortcuts
+                </div>
             </div>
         </nav>
 
@@ -74,10 +77,16 @@
                         </button>
                     </div>
                 </div>
+                <div class="bulk-action-bar" id="workflows-bulk-actions" style="display: none;">
+                    <span class="bulk-selection-count"><span id="workflows-selection-count">0</span> selected</span>
+                    <button class="btn btn-danger btn-sm" id="btn-bulk-delete">Delete Selected</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-selection">Clear Selection</button>
+                </div>
                 <div class="table-container">
                     <table class="data-table" id="workflows-table">
                         <thead>
                             <tr>
+                                <th class="checkbox-column"><input type="checkbox" id="workflows-select-all" title="Select all"></th>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Timestamp</th>
@@ -88,7 +97,7 @@
                         </thead>
                         <tbody id="workflows-body">
                             <tr>
-                                <td colspan="6" class="loading">Loading workflows...</td>
+                                <td colspan="7" class="loading">Loading workflows...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -117,7 +126,7 @@
                         <h4>Management</h4>
                         <button class="btn btn-primary" id="btn-init-workflow" title="Initialize a workflow, including all job statuses">Initialize</button>
                         <button class="btn btn-warning" id="btn-reinit-workflow" title="Reinitialize a workflow. This will reinitialize all jobs with a status of canceled, submitting, pending, or terminated. Jobs with a status of done will also be reinitialized if an input_file or user_data record has changed.">Re-initialize</button>
-                        <button class="btn btn-warning" id="btn-reset-workflow" title="Reset workflow and job status">Reset</button>
+                        <button class="btn btn-danger" id="btn-reset-workflow" title="Reset workflow and job status">Reset</button>
                     </div>
                     <div class="action-group">
                         <h4>Execution</h4>
@@ -191,6 +200,10 @@
                         <label class="toggle-label">
                             <input type="checkbox" id="auto-refresh-events" checked>
                             Auto-refresh
+                        </label>
+                        <label class="poll-interval-label">
+                            <input type="number" id="events-poll-interval" class="poll-interval-input" value="10" min="1" max="300">
+                            sec
                         </label>
                     </div>
                 </div>
@@ -380,6 +393,24 @@
                                 <input type="checkbox" id="dark-mode">
                                 Dark Mode
                             </label>
+                        </div>
+                        <div class="form-group" id="theme-selector-group" style="display: none;">
+                            <label for="theme-selector">Dark Theme</label>
+                            <select id="theme-selector" class="select-input">
+                                <optgroup label="Subtle">
+                                    <option value="warm">Warm Gray (Slack)</option>
+                                    <option value="neutral">Neutral (GitHub dark)</option>
+                                    <option value="dimmed">Dimmed (GitHub dimmed)</option>
+                                    <option value="nord">Nord</option>
+                                    <option value="dracula">Dracula</option>
+                                    <option value="midnight">Midnight Blue</option>
+                                </optgroup>
+                                <optgroup label="More Contrast">
+                                    <option value="high-contrast">High Contrast</option>
+                                    <option value="monokai">Monokai (warm olive)</option>
+                                </optgroup>
+                            </select>
+                            <small>Choose a color scheme for dark mode</small>
                         </div>
                     </div>
 
@@ -697,6 +728,7 @@
                 <!-- Sub-tabs for related data -->
                 <div class="sub-tabs job-details-tabs" id="job-details-tabs">
                     <button class="sub-tab active" data-jobdetailtab="results">Results</button>
+                    <button class="sub-tab" data-jobdetailtab="logs">Logs</button>
                     <button class="sub-tab" data-jobdetailtab="input-files">Input Files</button>
                     <button class="sub-tab" data-jobdetailtab="output-files">Output Files</button>
                     <button class="sub-tab" data-jobdetailtab="input-user-data">Input User Data</button>
@@ -744,5 +776,6 @@
     <script src="/static/js/app-modals.js"></script>
     <script src="/static/js/app-job-details.js"></script>
     <script src="/static/js/app-wizard.js"></script>
+    <script src="/static/js/app-keyboard.js"></script>
 </body>
 </html>

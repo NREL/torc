@@ -7,8 +7,20 @@ use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
+use chrono::{DateTime, Local, Utc};
 use serde_json;
 use tabled::Tabled;
+
+/// Format a timestamp (milliseconds since epoch) as a human-readable local time string
+fn format_timestamp_ms(timestamp_ms: i64) -> String {
+    DateTime::from_timestamp_millis(timestamp_ms)
+        .map(|dt: DateTime<Utc>| {
+            dt.with_timezone(&Local)
+                .format("%Y-%m-%d %H:%M:%S%.3f")
+                .to_string()
+        })
+        .unwrap_or_else(|| format!("{}ms", timestamp_ms))
+}
 
 #[derive(Tabled)]
 struct EventTableRow {
@@ -115,7 +127,10 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                         println!("Successfully created event:");
                         println!("  ID: {}", created_event.id.unwrap_or(-1));
                         println!("  Workflow ID: {}", created_event.workflow_id);
-                        println!("  Timestamp: {}", created_event.timestamp);
+                        println!(
+                            "  Timestamp: {}",
+                            format_timestamp_ms(created_event.timestamp)
+                        );
                         println!(
                             "  Data: {}",
                             serde_json::to_string_pretty(&created_event.data)
@@ -176,7 +191,7 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                                 .iter()
                                 .map(|event| EventTableRow {
                                     id: event.id.unwrap_or(-1),
-                                    timestamp: event.timestamp.clone(),
+                                    timestamp: format_timestamp_ms(event.timestamp),
                                     data: serde_json::to_string(&event.data)
                                         .unwrap_or_else(|_| "Unable to display".to_string()),
                                 })
@@ -243,7 +258,10 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                             } else {
                                 println!("Latest event for workflow {}:", selected_workflow_id);
                                 println!("  ID: {}", latest_event.id.unwrap_or(-1));
-                                println!("  Timestamp: {}", latest_event.timestamp);
+                                println!(
+                                    "  Timestamp: {}",
+                                    format_timestamp_ms(latest_event.timestamp)
+                                );
                                 println!(
                                     "  Data: {}",
                                     serde_json::to_string_pretty(&latest_event.data)
@@ -298,29 +316,32 @@ fn handle_monitor_events(
     use std::thread;
     use std::time::{Duration as StdDuration, Instant};
 
-    // Get the latest event timestamp to start monitoring from
-    let mut last_timestamp: f64 = match default_api::get_latest_event_timestamp(config, workflow_id)
-    {
-        Ok(timestamp_value) => {
-            // The API returns a JSON value, extract the float
-            match timestamp_value["timestamp"].as_f64() {
-                Some(ts) => ts,
-                None => {
-                    eprintln!(
-                        "Error: Unable to parse latest event timestamp: {:?}",
-                        timestamp_value
-                    );
-                    std::process::exit(1);
-                }
-            }
+    // Get the latest event timestamp to start monitoring from (in milliseconds since epoch)
+    // Use list_events with limit=1 and reverse_sort=true to get the newest event
+    let mut last_timestamp_ms: i64 = match default_api::list_events(
+        config,
+        workflow_id,
+        None,       // offset
+        Some(1),    // limit to 1 event
+        Some("id"), // sort by id
+        Some(true), // reverse sort (newest first)
+        None,       // category
+        None,       // after_timestamp
+    ) {
+        Ok(response) => {
+            // Extract the timestamp from the latest event
+            response
+                .items
+                .and_then(|items| items.first().map(|e| e.timestamp))
+                .unwrap_or(0)
         }
         Err(e) => {
-            // If there are no events yet, start from 0.0
+            // If there are no events yet, start from 0
             eprintln!(
                 "Note: No events found yet, starting from epoch. Error: {:?}",
                 e
             );
-            0.0
+            0
         }
     };
 
@@ -341,18 +362,10 @@ fn handle_monitor_events(
         println!("Filtering by category: {}", cat);
     }
 
-    let timestamp_seconds = last_timestamp / 1000.0;
-    let start_time_str = chrono::DateTime::from_timestamp(
-        timestamp_seconds as i64,
-        (timestamp_seconds.fract() * 1_000_000_000.0) as u32,
-    )
-    .map(|dt| {
-        dt.with_timezone(&chrono::Local)
-            .format("%Y-%m-%d %H:%M:%S %Z")
-            .to_string()
-    })
-    .unwrap_or_else(|| "unknown".to_string());
-    eprintln!("Starting from timestamp: {}", start_time_str);
+    eprintln!(
+        "Starting from timestamp: {}",
+        format_timestamp_ms(last_timestamp_ms)
+    );
     eprintln!("Press Ctrl+C to stop monitoring\n");
 
     loop {
@@ -364,7 +377,7 @@ fn handle_monitor_events(
             }
         }
 
-        // Fetch events after the last timestamp
+        // Fetch events after the last timestamp (timestamp is in milliseconds)
         match default_api::list_events(
             config,
             workflow_id,
@@ -373,7 +386,7 @@ fn handle_monitor_events(
             None, // sort_by
             None, // reverse_sort
             category.as_deref(),
-            Some(last_timestamp),
+            Some(last_timestamp_ms),
         ) {
             Ok(response) => {
                 if let Some(events) = response.items {
@@ -390,7 +403,7 @@ fn handle_monitor_events(
                             } else {
                                 println!(
                                     "[{}] Event ID {}: {}",
-                                    event.timestamp,
+                                    format_timestamp_ms(event.timestamp),
                                     event.id.unwrap_or(-1),
                                     serde_json::to_string(&event.data)
                                         .unwrap_or_else(|_| "Unable to display".to_string())
@@ -398,19 +411,10 @@ fn handle_monitor_events(
                             }
                         }
 
-                        // Update last_timestamp to the newest event's timestamp
+                        // Update last_timestamp_ms to the newest event's timestamp
+                        // Timestamp is now stored as i64 milliseconds, no parsing needed
                         if let Some(latest_event) = events.last() {
-                            // Parse the timestamp string to f64
-                            // The timestamp is in ISO format, we need to convert it to Unix timestamp
-                            match chrono::DateTime::parse_from_rfc3339(&latest_event.timestamp) {
-                                Ok(dt) => {
-                                    last_timestamp = dt.timestamp() as f64
-                                        + (dt.timestamp_subsec_millis() as f64 / 1000.0);
-                                }
-                                Err(e) => {
-                                    eprintln!("Error parsing timestamp: {}", e);
-                                }
-                            }
+                            last_timestamp_ms = latest_event.timestamp;
                         }
                     }
                 }

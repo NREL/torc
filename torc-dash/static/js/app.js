@@ -61,6 +61,9 @@ class TorcDashboard {
         // Execution streaming
         this.currentEventSource = null;
 
+        // Multi-select state for bulk operations
+        this.selectedWorkflowIds = new Set();
+
         // Table state for sorting/filtering
         this.tableState = {
             data: [],
@@ -94,6 +97,7 @@ class TorcDashboard {
         this.setupJobDetailsModal();
         this.setupWizard();
         this.setupExecutionPanel();
+        this.setupKeyboardShortcuts();
 
         // Test connection and load data
         await this.testConnection();

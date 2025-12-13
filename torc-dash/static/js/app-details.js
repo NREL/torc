@@ -247,7 +247,9 @@ Object.assign(TorcDashboard.prototype, {
                 content.innerHTML = this.renderResultsTable(filteredData, null, jobNameMap);
                 break;
             case 'events':
+                this.setEventsForPreview(filteredData);
                 content.innerHTML = this.renderWorkflowEventsTable(filteredData);
+                this.setupEventRowClickHandlers();
                 break;
             case 'files':
                 content.innerHTML = this.renderFilesTable(filteredData);

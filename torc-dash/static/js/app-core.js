@@ -8,11 +8,20 @@ Object.assign(TorcDashboard.prototype, {
 
     loadSettings() {
         const darkMode = localStorage.getItem('torc-dark-mode') === 'true';
+        const theme = localStorage.getItem('torc-theme') || 'neutral';
+
         if (darkMode) {
             document.body.classList.add('dark-mode');
+            this.applyTheme(theme);
             const checkbox = document.getElementById('dark-mode');
             if (checkbox) checkbox.checked = true;
         }
+
+        // Set theme selector value and visibility
+        const themeSelector = document.getElementById('theme-selector');
+        const themeSelectorGroup = document.getElementById('theme-selector-group');
+        if (themeSelector) themeSelector.value = theme;
+        if (themeSelectorGroup) themeSelectorGroup.style.display = darkMode ? 'block' : 'none';
 
         const refreshInterval = localStorage.getItem('torc-refresh-interval') || '30';
         const intervalInput = document.getElementById('refresh-interval');
@@ -21,21 +30,127 @@ Object.assign(TorcDashboard.prototype, {
         const apiUrl = api.getBaseUrl();
         const apiInput = document.getElementById('api-url');
         if (apiInput) apiInput.value = apiUrl;
+
+        // Setup theme change listeners
+        this.setupThemeListeners();
+    },
+
+    setupThemeListeners() {
+        const darkModeCheckbox = document.getElementById('dark-mode');
+        const themeSelector = document.getElementById('theme-selector');
+        const themeSelectorGroup = document.getElementById('theme-selector-group');
+
+        // Toggle theme selector visibility when dark mode changes
+        darkModeCheckbox?.addEventListener('change', (e) => {
+            if (themeSelectorGroup) {
+                themeSelectorGroup.style.display = e.target.checked ? 'block' : 'none';
+            }
+            if (e.target.checked) {
+                const theme = themeSelector?.value || 'neutral';
+                this.applyTheme(theme);
+            } else {
+                this.removeAllThemes();
+            }
+        });
+
+        // Apply theme immediately when selector changes
+        themeSelector?.addEventListener('change', (e) => {
+            this.applyTheme(e.target.value);
+            localStorage.setItem('torc-theme', e.target.value);
+        });
+    },
+
+    applyTheme(theme) {
+        this.removeAllThemes();
+        if (theme && theme !== 'midnight') {
+            document.body.classList.add(`theme-${theme}`);
+        }
+    },
+
+    removeAllThemes() {
+        const themes = [
+            'theme-midnight', 'theme-neutral', 'theme-warm', 'theme-nord',
+            'theme-dracula', 'theme-monokai', 'theme-dimmed', 'theme-high-contrast'
+        ];
+        themes.forEach(t => document.body.classList.remove(t));
+    },
+
+    // All available themes in rotation order (light first, then dark themes)
+    getAllThemes() {
+        return [
+            { id: 'light', name: 'Light', dark: false },
+            { id: 'warm', name: 'Warm Gray', dark: true },
+            { id: 'neutral', name: 'Neutral', dark: true },
+            { id: 'dimmed', name: 'Dimmed', dark: true },
+            { id: 'nord', name: 'Nord', dark: true },
+            { id: 'dracula', name: 'Dracula', dark: true },
+            { id: 'midnight', name: 'Midnight Blue', dark: true },
+            { id: 'high-contrast', name: 'High Contrast', dark: true },
+            { id: 'monokai', name: 'Monokai', dark: true }
+        ];
+    },
+
+    getCurrentThemeIndex() {
+        const themes = this.getAllThemes();
+        const isDark = document.body.classList.contains('dark-mode');
+        if (!isDark) return 0; // light mode
+
+        const currentTheme = localStorage.getItem('torc-theme') || 'warm';
+        const index = themes.findIndex(t => t.id === currentTheme);
+        return index >= 0 ? index : 1;
+    },
+
+    cycleTheme() {
+        const themes = this.getAllThemes();
+        const currentIndex = this.getCurrentThemeIndex();
+        const nextIndex = (currentIndex + 1) % themes.length;
+        const nextTheme = themes[nextIndex];
+
+        if (nextTheme.dark) {
+            document.body.classList.add('dark-mode');
+            this.applyTheme(nextTheme.id);
+            localStorage.setItem('torc-dark-mode', 'true');
+            localStorage.setItem('torc-theme', nextTheme.id);
+
+            // Update UI
+            const checkbox = document.getElementById('dark-mode');
+            if (checkbox) checkbox.checked = true;
+            const selector = document.getElementById('theme-selector');
+            if (selector) selector.value = nextTheme.id;
+            const selectorGroup = document.getElementById('theme-selector-group');
+            if (selectorGroup) selectorGroup.style.display = 'block';
+        } else {
+            document.body.classList.remove('dark-mode');
+            this.removeAllThemes();
+            localStorage.setItem('torc-dark-mode', 'false');
+
+            // Update UI
+            const checkbox = document.getElementById('dark-mode');
+            if (checkbox) checkbox.checked = false;
+            const selectorGroup = document.getElementById('theme-selector-group');
+            if (selectorGroup) selectorGroup.style.display = 'none';
+        }
+
+        this.showToast(`Theme: ${nextTheme.name}`, 'info');
     },
 
     saveSettings() {
         const darkMode = document.getElementById('dark-mode')?.checked || false;
+        const theme = document.getElementById('theme-selector')?.value || 'neutral';
         const refreshInterval = document.getElementById('refresh-interval')?.value || '30';
         const apiUrl = document.getElementById('api-url')?.value || '/torc-service/v1';
 
         localStorage.setItem('torc-dark-mode', darkMode);
+        localStorage.setItem('torc-theme', theme);
         localStorage.setItem('torc-refresh-interval', refreshInterval);
         api.setBaseUrl(apiUrl);
 
         if (darkMode) {
             document.body.classList.add('dark-mode');
+            this.applyTheme(theme);
         } else {
             document.body.classList.remove('dark-mode');
+            this.removeAllThemes();
         }
 
         this.showToast('Settings saved', 'success');
