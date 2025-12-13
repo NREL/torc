@@ -4518,7 +4518,7 @@ components:
             \ to jobs. If not set, take the database's default value of 60 seconds."
           type: integer
         compute_node_wait_for_new_jobs_seconds:
-          default: 120
+          default: 60
           description: Inform all compute nodes to wait for new jobs for this time
             period before exiting. Does not apply if the workflow is complete.
           type: integer

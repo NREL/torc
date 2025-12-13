@@ -1482,7 +1482,7 @@ impl WorkflowSpec {
         if let Some(value) = spec.compute_node_wait_for_new_jobs_seconds {
             workflow_model.compute_node_wait_for_new_jobs_seconds = Some(value);
         } else {
-            workflow_model.compute_node_wait_for_new_jobs_seconds = Some(120);
+            workflow_model.compute_node_wait_for_new_jobs_seconds = Some(60);
         }
         if let Some(value) = spec.compute_node_ignore_workflow_completion {
             workflow_model.compute_node_ignore_workflow_completion = Some(value);
