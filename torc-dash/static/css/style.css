@@ -28,8 +28,8 @@
     --transition: all 0.2s ease;
 }
 
-/* Dark mode */
-.dark-mode {
+/* Dark mode themes */
+.dark-mode, .dark-mode.theme-midnight {
     --bg-primary: #1a1a2e;
     --bg-secondary: #16213e;
     --bg-tertiary: #0f3460;
@@ -37,6 +37,76 @@
     --text-secondary: #a0a0a0;
     --border-color: #2d3748;
     --sidebar-bg: #0f0f1a;
+}
+
+.dark-mode.theme-neutral {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --border-color: #30363d;
+    --sidebar-bg: #010409;
+}
+
+.dark-mode.theme-warm {
+    --bg-primary: #1a1d21;
+    --bg-secondary: #222529;
+    --bg-tertiary: #2c2f33;
+    --text-primary: #e8e6e3;
+    --text-secondary: #9e9b98;
+    --border-color: #3a3d41;
+    --sidebar-bg: #121416;
+}
+
+.dark-mode.theme-nord {
+    --bg-primary: #2e3440;
+    --bg-secondary: #3b4252;
+    --bg-tertiary: #434c5e;
+    --text-primary: #eceff4;
+    --text-secondary: #d8dee9;
+    --border-color: #4c566a;
+    --sidebar-bg: #242933;
+}
+
+.dark-mode.theme-dracula {
+    --bg-primary: #282a36;
+    --bg-secondary: #1e1f29;
+    --bg-tertiary: #44475a;
+    --text-primary: #f8f8f2;
+    --text-secondary: #bfbfbf;
+    --border-color: #6272a4;
+    --sidebar-bg: #191a21;
+}
+
+.dark-mode.theme-monokai {
+    --bg-primary: #272822;
+    --bg-secondary: #3e3d32;
+    --bg-tertiary: #49483e;
+    --text-primary: #f8f8f2;
+    --text-secondary: #a6a69c;
+    --border-color: #75715e;
+    --sidebar-bg: #1e1f1c;
+}
+
+.dark-mode.theme-dimmed {
+    --bg-primary: #22272e;
+    --bg-secondary: #2d333b;
+    --bg-tertiary: #444c56;
+    --text-primary: #adbac7;
+    --text-secondary: #768390;
+    --border-color: #545d68;
+    --sidebar-bg: #1c2128;
+}
+
+.dark-mode.theme-high-contrast {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #333333;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #555555;
+    --sidebar-bg: #000000;
 }
 
 * {
@@ -1943,6 +2013,64 @@ textarea.text-input {
 
 .strategy-help a:hover {
     text-decoration: underline;
+}
+
+/* Keyboard Hint in Sidebar */
+.keyboard-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.keyboard-hint:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.keyboard-hint kbd {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    box-shadow: none;
+}
+
+/* Keyboard Shortcuts Help */
+.shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.shortcut-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+kbd {
+    display: inline-block;
+    padding: 4px 8px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    min-width: 24px;
+    text-align: center;
 }
 
 /* Responsive */

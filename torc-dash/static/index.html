@@ -55,6 +55,9 @@
                     <span class="status-dot disconnected"></span>
                     <span class="status-text">Disconnected</span>
                 </div>
+                <div class="keyboard-hint" id="keyboard-hint" title="Show keyboard shortcuts">
+                    Press <kbd>?</kbd> for shortcuts
+                </div>
             </div>
         </nav>
 
@@ -380,6 +383,24 @@
                                 <input type="checkbox" id="dark-mode">
                                 Dark Mode
                             </label>
+                        </div>
+                        <div class="form-group" id="theme-selector-group" style="display: none;">
+                            <label for="theme-selector">Dark Theme</label>
+                            <select id="theme-selector" class="select-input">
+                                <optgroup label="Subtle">
+                                    <option value="neutral">Neutral (GitHub dark)</option>
+                                    <option value="dimmed">Dimmed (GitHub dimmed)</option>
+                                    <option value="warm">Warm Gray (Slack)</option>
+                                    <option value="nord">Nord</option>
+                                    <option value="dracula">Dracula</option>
+                                    <option value="midnight">Midnight Blue</option>
+                                </optgroup>
+                                <optgroup label="More Contrast">
+                                    <option value="high-contrast">High Contrast</option>
+                                    <option value="monokai">Monokai (warm olive)</option>
+                                </optgroup>
+                            </select>
+                            <small>Choose a color scheme for dark mode</small>
                         </div>
                     </div>
 
@@ -744,5 +765,6 @@
     <script src="/static/js/app-modals.js"></script>
     <script src="/static/js/app-job-details.js"></script>
     <script src="/static/js/app-wizard.js"></script>
+    <script src="/static/js/app-keyboard.js"></script>
 </body>
 </html>

@@ -94,6 +94,7 @@ class TorcDashboard {
         this.setupJobDetailsModal();
         this.setupWizard();
         this.setupExecutionPanel();
+        this.setupKeyboardShortcuts();
 
         // Test connection and load data
         await this.testConnection();
