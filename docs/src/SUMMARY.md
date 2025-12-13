@@ -66,6 +66,7 @@
   - [Advanced Parameterization](./tutorials/advanced-params.md)
   - [Multi-Stage Workflows with Barriers](./tutorials/multi-stage-barrier.md)
   - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
+  - [Filtering CLI Output with Nushell](./tutorials/filtering-with-nushell.md)
 
 ---
 

@@ -83,32 +83,32 @@ For detailed documentation, see the [docs](docs/) directory.
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Torc Server                          │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │            REST API (Tokio 1-thread)               │     │
-│  │  /workflows  /jobs  /files  /user_data  /results  │     │
-│  └───────────────────┬────────────────────────────────┘     │
-│                      │                                       │
-│  ┌───────────────────▼────────────────────────────────┐     │
-│  │              SQLite Database (WAL)                 │     │
-│  │  • Workflow state    • Job dependencies           │     │
-│  │  • Resource tracking • Execution results          │     │
-│  └────────────────────────────────────────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
-                             ▲
-                             │ HTTP/REST
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-┌───────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐
-│  Torc CLI      │  │  Job Runner 1   │  │  Job Runner N  │
-│                │  │  (compute-01)   │  │  (compute-nn)  │
-│ • Create       │  │                 │  │                │
-│   workflows    │  │ • Poll for jobs │  │ • Poll for jobs│
-│ • Submit specs │  │ • Execute tasks │  │ • Execute tasks│
-│ • Monitor      │  │ • Report results│  │ • Report results│
-└────────────────┘  └─────────────────┘  └────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                        Torc Server                        │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │              REST API (Tokio 1-thread)              │  │
+│  │   /workflows  /jobs  /files  /user_data  /results   │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+│                         │                                 │
+│  ┌──────────────────────▼──────────────────────────────┐  │
+│  │               SQLite Database (WAL)                 │  │
+│  │   • Workflow state    • Job dependencies            │  │
+│  │   • Resource tracking • Execution results           │  │
+│  └─────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
+                            ▲
+                            │ HTTP/REST
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼───────┐  ┌────────▼────────┐  ┌───────▼───────┐
+│   Torc CLI    │  │  Job Runner 1   │  │ Job Runner N  │
+│               │  │   (compute-01)  │  │  (compute-nn) │
+│ • Create      │  │                 │  │               │
+│   workflows   │  │ • Poll for jobs │  │ • Poll for jobs│
+│ • Submit specs│  │ • Execute tasks │  │ • Execute tasks│
+│ • Monitor     │  │ • Report results│  │ • Report results│
+└───────────────┘  └─────────────────┘  └───────────────┘
 ```
 
 ## Command-Line Interface

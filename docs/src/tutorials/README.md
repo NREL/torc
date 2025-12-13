@@ -14,6 +14,7 @@ This section contains learning-oriented lessons to help you get started with Tor
 8. [Advanced Parameterization](./advanced-params.md) - Multi-dimensional hyperparameter grid search
 9. [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
 10. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
+11. [Filtering CLI Output with Nushell](./filtering-with-nushell.md) - Filter jobs, results, and user data with readable queries
 
 Start with the Configuration Files tutorial to set up your environment, then try the Dashboard Deployment tutorial if you want to use the web interface.
 
