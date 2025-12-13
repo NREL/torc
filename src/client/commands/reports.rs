@@ -533,8 +533,8 @@ fn generate_results_report(
 
                                     let log_path = get_slurm_job_runner_log_file(
                                         output_dir.clone(),
-                                        &slurm_job_id_str.to_string(),
-                                        &node_id.to_string(),
+                                        slurm_job_id_str,
+                                        node_id,
                                         task_pid,
                                     );
                                     check_log_file_exists(&log_path, "slurm job runner", job_id);

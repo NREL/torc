@@ -19,8 +19,8 @@ pub fn get_job_runner_log_file(
 /// Return the name of the job runner log file for Slurm schedulers.
 pub fn get_slurm_job_runner_log_file(
     output_dir: PathBuf,
-    job_id: &String,
-    node_id: &String,
+    job_id: &str,
+    node_id: &str,
     task_pid: usize,
 ) -> String {
     format!(
