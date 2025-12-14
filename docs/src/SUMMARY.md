@@ -37,6 +37,7 @@
   - [Terminal UI (TUI)](./how-to/tui.md)
   - [Web Dashboard](./how-to/dashboard.md)
   - [Debugging Workflows](./how-to/debugging.md)
+  - [Debugging Slurm Workflows](./how-to/debugging-slurm.md)
   - [Authentication](./how-to/authentication.md)
   - [Shell Completions](./how-to/shell-completions.md)
   - [Server Deployment](./how-to/server-deployment.md)
