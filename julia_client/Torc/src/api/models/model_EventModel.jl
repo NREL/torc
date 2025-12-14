@@ -14,13 +14,13 @@ Data model for events.
 
     - id::Int64 : Database ID of the event.
     - workflow_id::Int64 : Database ID of the workflow this record is associated with.
-    - timestamp::String : Timestamp of the event
+    - timestamp::Int64 : Timestamp of the event
     - data::Any : User-defined data associated with the event
 """
 Base.@kwdef mutable struct EventModel <: OpenAPI.APIModel
     id::Union{Nothing, Int64} = nothing
     workflow_id::Union{Nothing, Int64} = nothing
-    timestamp::Union{Nothing, String} = nothing
+    timestamp::Union{Nothing, Int64} = nothing
     data::Union{Nothing, Any} = nothing
 
     function EventModel(id, workflow_id, timestamp, data, )
@@ -30,7 +30,7 @@ Base.@kwdef mutable struct EventModel <: OpenAPI.APIModel
     end
 end # type EventModel
 
-const _property_types_EventModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("timestamp")=>"String", Symbol("data")=>"Any", )
+const _property_types_EventModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("timestamp")=>"Int64", Symbol("data")=>"Any", )
 OpenAPI.property_type(::Type{ EventModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_EventModel[name]))}
 
 function OpenAPI.check_required(o::EventModel)

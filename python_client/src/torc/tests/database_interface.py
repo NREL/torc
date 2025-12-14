@@ -22,11 +22,11 @@ class DatabaseInterface:
         """
         self._api = api
         self._workflow = workflow
-        self._names_to_keys = self._map_names_to_keys(api, workflow.key)
+        self._names_to_ids = self._map_names_to_ids(api, workflow.id)
 
     @staticmethod
-    def _map_names_to_keys(api: DefaultApi, workflow_key: str) -> dict[str, dict[str, str]]:
-        """Map document names to keys for all document types."""
+    def _map_names_to_ids(api: DefaultApi, workflow_id: int) -> dict[str, dict[str, int]]:
+        """Map document names to IDs for all document types."""
         doc_types = (
             "files",
             "jobs",
@@ -35,12 +35,12 @@ class DatabaseInterface:
             "slurm_schedulers",
             "user_data",
         )
-        lookup: dict[str, dict[str, str]] = defaultdict(dict)
+        lookup: dict[str, dict[str, int]] = defaultdict(dict)
         for doc_type in doc_types:
             method = getattr(api, f"list_{doc_type}")
-            for doc in iter_documents(method, workflow_key):
+            for doc in iter_documents(method, workflow_id):
                 assert doc.name not in lookup[doc_type], f"{doc_type=} {doc.name=}"
-                lookup[doc_type][doc.name] = doc.key
+                lookup[doc_type][doc.name] = doc.id
         return lookup
 
     @property
@@ -73,10 +73,10 @@ class DatabaseInterface:
         else:
             get_one = f"get_{document_type[:-1]}"
         method = getattr(self._api, get_one)
-        return method(self._workflow.key, self._names_to_keys[document_type][name])
+        return method(self._names_to_ids[document_type][name])
 
-    def get_document_key(self, document_type: str, name: str) -> str:
-        """Return the key for name.
+    def get_document_id(self, document_type: str, name: str) -> int:
+        """Return the ID for name.
 
         Parameters
         ----------
@@ -87,10 +87,10 @@ class DatabaseInterface:
 
         Returns
         -------
-        str
-            Document key.
+        int
+            Document ID.
         """
-        return self._names_to_keys[document_type][name]
+        return self._names_to_ids[document_type][name]
 
     def list_documents(self, document_type: str) -> list[Any]:
         """Return all documents of the given type.
@@ -106,7 +106,7 @@ class DatabaseInterface:
             List of documents.
         """
         method = getattr(self._api, f"list_{document_type}")
-        return list(iter_documents(method, self._workflow.key))
+        return list(iter_documents(method, self._workflow.id))
 
     @property
     def url(self) -> str:

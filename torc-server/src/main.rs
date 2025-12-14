@@ -367,7 +367,8 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
         let connect_options = SqliteConnectOptions::from_str(&database_url)?
             .journal_mode(SqliteJournalMode::Wal)
             .foreign_keys(true)
-            .create_if_missing(true);
+            .create_if_missing(true)
+            .busy_timeout(std::time::Duration::from_secs(45));
 
         let pool = SqlitePoolOptions::new()
             .connect_with(connect_options)

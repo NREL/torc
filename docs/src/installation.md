@@ -68,6 +68,45 @@ cargo build --release -p torc-slurm-job-runner
 Binaries will be in `target/release/`. We recommend adding this directory
 to your system path so that you can run all binaries without specifying the full path.
 
+## Python Client
+
+The Python client provides programmatic workflow management for Python users.
+
+### Prerequisites
+
+- Python 3.11 or later
+
+### Installation
+
+```bash
+pip install "torc @ git+https://github.com/NREL/torc.git#subdirectory=python_client"
+```
+
+The `pytorc` command will be available after installation.
+
+## Julia Client
+
+The Julia client provides programmatic workflow management for Julia users.
+
+### Prerequisites
+
+- Julia 1.10 or later
+
+### Installation
+
+Since the package is not yet registered in the Julia General registry, install it directly from GitHub:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/NREL/torc.git", subdir="julia_client/Torc")
+```
+
+Then use it in your code:
+
+```julia
+using Torc
+```
+
 ## For Developers
 
 ### Running Tests

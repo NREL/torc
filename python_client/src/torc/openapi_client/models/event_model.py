@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -28,7 +28,7 @@ class EventModel(BaseModel):
     """ # noqa: E501
     id: Optional[StrictInt] = Field(default=None, description="Database ID of the event.")
     workflow_id: StrictInt = Field(description="Database ID of the workflow this record is associated with.")
-    timestamp: StrictStr = Field(description="Timestamp of the event")
+    timestamp: StrictInt = Field(description="Timestamp of the event")
     data: Dict[str, Any] = Field(description="User-defined data associated with the event")
     __properties: ClassVar[List[str]] = ["id", "workflow_id", "timestamp", "data"]
 

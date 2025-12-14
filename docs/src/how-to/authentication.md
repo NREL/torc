@@ -320,7 +320,7 @@ torc-htpasswd add --file /etc/torc/prod_htpasswd --cost 14 alice
 
 ### Programmatic Access
 
-When using Torc's Rust or Python clients programmatically:
+When using Torc's Rust, Python, or Julia clients programmatically:
 
 **Rust:**
 ```rust
@@ -340,6 +340,19 @@ config = Configuration(
     username="alice",
     password="password"
 )
+```
+
+**Julia:**
+```julia
+using Torc
+using Base64
+import OpenAPI
+
+client = OpenAPI.Clients.Client(
+    "http://localhost:8080/torc-service/v1";
+    headers = Dict("Authorization" => "Basic " * base64encode("alice:password"))
+)
+api = Torc.APIClient.DefaultApi(client)
 ```
 
 ### Load Balancer Considerations
