@@ -88,6 +88,67 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
+      # Python and Julia client tests (Unix only for now)
+      - name: Setup Python
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python client dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd python_client
+          pip install -e .[dev]
+
+      - name: Setup Julia
+        if: matrix.os == 'ubuntu-latest'
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      - name: Install Julia dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          julia --project=julia_client/Torc -e 'using Pkg; Pkg.instantiate()'
+          julia --project=julia_client/Torc/test -e 'using Pkg; Pkg.develop(path="julia_client/Torc"); Pkg.instantiate()'
+
+      - name: Build release binaries for integration tests
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo build --release
+
+      - name: Start torc server
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ./target/release/torc-server run &
+          # Wait for server to be ready
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/torc-service/v1/health > /dev/null 2>&1; then
+              echo "Server is ready"
+              break
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+          done
+        env:
+          DATABASE_URL: sqlite:db/sqlite/dev.db
+
+      - name: Run Python client tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd python_client
+          pytest tests/ -v
+        env:
+          TORC_API_URL: http://localhost:8080/torc-service/v1
+
+      - name: Run Julia client tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          julia --project=julia_client/Torc/test julia_client/Torc/test/runtests.jl
+        env:
+          TORC_API_URL: http://localhost:8080/torc-service/v1
+          PATH: ${{ github.workspace }}/target/release:$PATH
+
       # - name: Install cargo-llvm-cov
       #   if: matrix.os == 'ubuntu-latest'
       #   run: cargo install cargo-llvm-cov

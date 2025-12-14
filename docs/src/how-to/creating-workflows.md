@@ -151,6 +151,58 @@ print(f"Created workflow {workflow.id}")
 
 For more details, see the [Map Python Functions](../tutorials/map_python_function_across_workers.md) tutorial.
 
+## Using the Julia API
+
+The Julia client provides similar functionality for programmatic workflow construction:
+
+```julia
+using Torc
+import Torc: APIClient
+
+# Connect to the server
+api = make_api("http://localhost:8080/torc-service/v1")
+
+# Create workflow
+workflow = send_api_command(
+    api,
+    APIClient.create_workflow,
+    APIClient.WorkflowModel(;
+        name = "my_workflow",
+        user = get_user(),
+        description = "Programmatically created workflow",
+    ),
+)
+
+# Add resource requirements
+rr = send_api_command(
+    api,
+    APIClient.create_resource_requirements,
+    APIClient.ResourceRequirementsModel(;
+        workflow_id = workflow.id,
+        name = "small",
+        num_cpus = 1,
+        memory = "1g",
+        runtime = "PT10M",
+    ),
+)
+
+# Add jobs
+send_api_command(
+    api,
+    APIClient.create_job,
+    APIClient.JobModel(;
+        workflow_id = workflow.id,
+        name = "job1",
+        command = "echo 'Hello World'",
+        resource_requirements_id = rr.id,
+    ),
+)
+
+println("Created workflow $(workflow.id)")
+```
+
+The Julia client also supports `map_function_to_jobs` for mapping a function across parameters, similar to the Python client.
+
 ## Choosing a Method
 
 | Method | Best For |
@@ -158,6 +210,7 @@ For more details, see the [Map Python Functions](../tutorials/map_python_functio
 | **Specification files** | Most workflows; declarative, version-controllable |
 | **CLI step-by-step** | Scripted workflows, testing individual components |
 | **Python API** | Complex dynamic workflows, integration with Python pipelines |
+| **Julia API** | Complex dynamic workflows, integration with Julia pipelines |
 
 ## Common Tasks
 

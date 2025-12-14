@@ -10,20 +10,20 @@ function process_mapped_function_cli_args(
     end
 
     # These environment variables get set by the torc job runner.
-    for key in ("TORC_WORKFLOW_KEY", "TORC_JOB_KEY")
+    for key in ("TORC_WORKFLOW_ID", "TORC_JOB_ID")
         !haskey(ENV, key) && error("Bug: environment variable $key is not defined")
     end
-    workflow_key = ENV["TORC_WORKFLOW_KEY"]
-    job_key = ENV["TORC_JOB_KEY"]
+    workflow_id = parse(Int64, ENV["TORC_WORKFLOW_ID"])
+    job_id = parse(Int64, ENV["TORC_JOB_ID"])
 
     url = ARGS[1]
     command = ARGS[2]
     api = make_api(url)
     response = send_api_command(
         api,
-        APIClient.list_job_user_data_consumes,
-        workflow_key,
-        job_key,
+        APIClient.list_user_data,
+        workflow_id;
+        consumer_job_id = job_id,
     )
     items = response.items
 
@@ -34,7 +34,7 @@ function process_mapped_function_cli_args(
     end
 
     if !isnothing(result)
-        _store_result(api, workflow_key, job_key, result)
+        _store_result(api, workflow_id, job_id, result)
     end
 end
 
@@ -48,17 +48,17 @@ function _postprocess_function(input_items::Vector, run_postprocess_function::Fu
     return run_postprocess_function([x.data for x in input_items])
 end
 
-function _store_result(api, workflow_key, job_key, result::Dict)
+function _store_result(api, workflow_id::Int64, job_id::Int64, result::Dict)
     resp = send_api_command(
         api,
-        APIClient.list_job_user_data_stores,
-        workflow_key,
-        job_key,
+        APIClient.list_user_data,
+        workflow_id;
+        producer_job_id = job_id,
     )
     if length(resp.items) != 1
         error(
             "Received unexpected output data placeholder from database: " *
-            "job_key = $(job_key) response = $(resp)",
+            "job_id = $(job_id) response = $(resp)",
         )
     end
 
@@ -66,10 +66,9 @@ function _store_result(api, workflow_key, job_key, result::Dict)
     output.data = result
     send_api_command(
         api,
-        APIClient.modify_user_data,
-        workflow_key,
-        output._key,
+        APIClient.update_user_data,
+        output.id,
         output,
     )
-    @info "Stored result for $(job_key)"
+    @info "Stored result for $(job_id)"
 end

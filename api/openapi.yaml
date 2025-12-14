@@ -4039,7 +4039,7 @@ components:
           type: integer
         timestamp:
           description: Timestamp of the event
-          type: string
+          type: integer
         data:
           description: User-defined data associated with the event
           type: object

@@ -73,7 +73,7 @@ def wait_for_healthy_database(
     raise DatabaseOffline(msg)
 
 
-def iter_documents(func: Callable, *args, skip: int = 0, **kwargs) -> Generator[Any, None, None]:
+def iter_documents(func: Callable, *args, offset: int = 0, **kwargs) -> Generator[Any, None, None]:
     """Return a generator of documents where the API service employs batching.
 
     Parameters
@@ -82,7 +82,7 @@ def iter_documents(func: Callable, *args, skip: int = 0, **kwargs) -> Generator[
         API function to call.
     *args
         Positional arguments to pass to the function.
-    skip : int, optional
+    offset : int, optional
         Number of documents to skip, by default 0.
     **kwargs
         Keyword arguments to pass to the function.
@@ -99,9 +99,9 @@ def iter_documents(func: Callable, *args, skip: int = 0, **kwargs) -> Generator[
     has_more = True
     docs_received = 0
     while has_more and (limit is None or docs_received < limit):
-        result = func(*args, skip=skip, **kwargs)
+        result = func(*args, offset=offset, **kwargs)
         yield from result.items
-        skip += result.count
+        offset += result.count
         docs_received += result.count
         has_more = result.has_more
 

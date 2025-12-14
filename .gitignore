@@ -27,8 +27,12 @@ Cargo.lock
 # Python (for python_client)
 python_client/.venv/
 python_client/**/__pycache__/
+examples/python/**/__pycache__/
 python_client/**/*.pyc
 python_client/**/*.pyo
 python_client/**/*.egg-info/
 torc-server/db/sqlite/dev.db-shm
 torc-server/db/sqlite/dev.db-wal
+
+julia_client/Torc/Manifest.toml
+output

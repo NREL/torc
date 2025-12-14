@@ -449,7 +449,7 @@ class TestEventCRUD:
         event = api_client.create_event(
             EventModel(
                 workflow_id=test_workflow.id,
-                timestamp=str(datetime.now()),
+                timestamp=int(datetime.now().timestamp()),
                 data={"message": "test event"},
             ),
         )
@@ -460,7 +460,7 @@ class TestEventCRUD:
         created_event = api_client.create_event(
             EventModel(
                 workflow_id=test_workflow.id,
-                timestamp=str(datetime.now()),
+                timestamp=int(datetime.now().timestamp()),
                 data={"job_name": "test_job"},
             ),
         )
@@ -472,14 +472,14 @@ class TestEventCRUD:
         api_client.create_event(
             EventModel(
                 workflow_id=test_workflow.id,
-                timestamp=str(datetime.now()),
+                timestamp=int(datetime.now().timestamp()),
                 data={"val": 3},
             ),
         )
         api_client.create_event(
             EventModel(
                 workflow_id=test_workflow.id,
-                timestamp=str(datetime.now()),
+                timestamp=int(datetime.now().timestamp()),
                 data={"val": 3},
             ),
         )
@@ -506,7 +506,7 @@ class TestEventCRUD:
         event = api_client.create_event(
             EventModel(
                 workflow_id=test_workflow.id,
-                timestamp=str(datetime.now()),
+                timestamp=int(datetime.now().timestamp()),
                 data={"val": 3},
             ),
         )
