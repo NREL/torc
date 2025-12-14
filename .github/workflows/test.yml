@@ -120,18 +120,25 @@ jobs:
       - name: Start torc server
         if: matrix.os == 'ubuntu-latest'
         run: |
-          ./target/release/torc-server run &
+          export DATABASE_URL=sqlite:db/sqlite/dev.db
+          ./target/release/torc-server run > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Server started with PID $SERVER_PID"
           # Wait for server to be ready
           for i in {1..30}; do
-            if curl -s http://localhost:8080/torc-service/v1/health > /dev/null 2>&1; then
+            if curl -s http://localhost:8080/torc-service/v1/ping > /dev/null 2>&1; then
               echo "Server is ready"
               break
             fi
             echo "Waiting for server... ($i/30)"
             sleep 1
           done
-        env:
-          DATABASE_URL: sqlite:db/sqlite/dev.db
+          # Show server log if it failed to start
+          if ! curl -s http://localhost:8080/torc-service/v1/ping > /dev/null 2>&1; then
+            echo "Server failed to start. Log:"
+            cat server.log
+            exit 1
+          fi
 
       - name: Run Python client tests
         if: matrix.os == 'ubuntu-latest'

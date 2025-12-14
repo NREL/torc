@@ -1,5 +1,6 @@
 """pytest fixtures"""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -29,11 +30,13 @@ CREATE_RESOURCE_JOB = Path("tests") / "scripts" / "create_resource.py"
 USE_RESOURCE_JOB = Path("tests") / "scripts" / "use_resource.py"
 SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
 
+DEFAULT_API_URL = "http://localhost:8080/torc-service/v1"
+
 
 def _initialize_api():
     setup_logging()
     configuration = Configuration()
-    configuration.host = "http://localhost:8080/torc-service/v1"
+    configuration.host = os.getenv("TORC_API_URL", DEFAULT_API_URL)
     return DefaultApi(ApiClient(configuration))
 
 
