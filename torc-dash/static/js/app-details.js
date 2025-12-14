@@ -626,4 +626,117 @@ Object.assign(TorcDashboard.prototype, {
         const arrow = isActive ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : '';
         return `<th data-sort="${column}" class="sortable${isActive ? ' sorted' : ''}">${label}${arrow}</th>`;
     },
+
+    // ==================== Slurm Logs Viewer ====================
+
+    setupSlurmLogsModal() {
+        // Modal close handlers
+        document.getElementById('slurm-logs-modal-close')?.addEventListener('click', () => {
+            this.hideModal('slurm-logs-modal');
+        });
+
+        document.getElementById('btn-close-slurm-logs')?.addEventListener('click', () => {
+            this.hideModal('slurm-logs-modal');
+        });
+
+        // Tab navigation for Slurm logs
+        document.querySelectorAll('.sub-tab[data-slurm-logtab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.switchSlurmLogTab(tab.dataset.slurmLogtab);
+            });
+        });
+
+        // Event delegation for Slurm logs buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-slurm-logs')) {
+                const schedulerId = e.target.dataset.schedulerId;
+                if (schedulerId) {
+                    this.showSlurmLogs(schedulerId);
+                }
+            }
+        });
+    },
+
+    showSlurmLogs(schedulerId) {
+        this.currentSlurmJobId = schedulerId;
+        this.currentSlurmLogTab = 'stdout';
+
+        // Get output directory from the debugging tab or use default
+        const outputDir = document.getElementById('debug-output-dir')?.value || 'output';
+        this.slurmLogsOutputDir = outputDir;
+
+        // Update modal title and info
+        document.getElementById('slurm-logs-title').textContent = `Slurm Job ${schedulerId} Logs`;
+        document.getElementById('slurm-logs-info').innerHTML = `
+            <div class="slurm-logs-summary">
+                <strong>Slurm Job ID:</strong> ${this.escapeHtml(schedulerId)}
+                <span style="margin-left: 20px;"><strong>Output Directory:</strong> <code>${this.escapeHtml(outputDir)}</code></span>
+            </div>
+        `;
+
+        // Reset tab state
+        document.querySelectorAll('.sub-tab[data-slurm-logtab]').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.slurmLogtab === 'stdout');
+        });
+
+        // Load initial log content
+        this.loadSlurmLogContent();
+
+        // Show modal
+        this.showModal('slurm-logs-modal');
+    },
+
+    switchSlurmLogTab(logtab) {
+        this.currentSlurmLogTab = logtab;
+
+        document.querySelectorAll('.sub-tab[data-slurm-logtab]').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.slurmLogtab === logtab);
+        });
+
+        this.loadSlurmLogContent();
+    },
+
+    async loadSlurmLogContent() {
+        const logPath = document.getElementById('slurm-log-path');
+        const logContent = document.getElementById('slurm-log-content');
+
+        if (!this.currentSlurmJobId) {
+            logContent.textContent = 'No Slurm job selected';
+            logPath.textContent = '';
+            return;
+        }
+
+        // Construct the log file path based on the naming convention
+        // stdout: {output_dir}/slurm_output_{slurm_job_id}.o
+        // stderr: {output_dir}/slurm_output_{slurm_job_id}.e
+        const outputDir = this.slurmLogsOutputDir || 'output';
+        const extension = this.currentSlurmLogTab === 'stdout' ? 'o' : 'e';
+        const filePath = `${outputDir}/slurm_output_${this.currentSlurmJobId}.${extension}`;
+
+        logPath.textContent = filePath;
+        logContent.classList.toggle('stderr', this.currentSlurmLogTab !== 'stdout');
+        logContent.textContent = 'Loading...';
+
+        try {
+            const response = await fetch('/api/cli/read-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: filePath }),
+            });
+
+            const data = await response.json();
+
+            if (!data.exists) {
+                logContent.textContent = '(file does not exist)';
+            } else if (!data.success) {
+                logContent.textContent = `Error: ${data.error || 'Unknown error'}`;
+            } else if (!data.content || data.content.trim() === '') {
+                logContent.textContent = '(empty)';
+            } else {
+                logContent.textContent = data.content;
+            }
+        } catch (error) {
+            logContent.textContent = `Error loading file: ${error.message}`;
+        }
+    },
 });

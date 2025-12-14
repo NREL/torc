@@ -1603,6 +1603,82 @@ impl App {
         Ok(())
     }
 
+    // === Slurm Log Viewer ===
+
+    pub fn get_selected_scheduled_node(&self) -> Option<&ScheduledComputeNodesModel> {
+        self.scheduled_nodes_state
+            .selected()
+            .and_then(|idx| self.scheduled_nodes.get(idx))
+    }
+
+    pub fn show_slurm_logs(&mut self) {
+        if let Some(node) = self.get_selected_scheduled_node() {
+            // Only show logs for Slurm nodes
+            if node.scheduler_type.to_lowercase() != "slurm" {
+                self.set_status(StatusMessage::warning(
+                    "Log viewing is only available for Slurm scheduled nodes",
+                ));
+                return;
+            }
+
+            let scheduler_id = node.scheduler_id.to_string();
+            let node_name = format!("Slurm Job {}", scheduler_id);
+
+            // Use job_id of 0 and custom name since this is for a Slurm job, not a Torc job
+            let mut viewer = LogViewer::new(0, node_name);
+
+            // Load Slurm logs
+            if let Err(e) = self.load_slurm_logs(&mut viewer, &scheduler_id) {
+                self.set_status(StatusMessage::warning(&format!(
+                    "Could not load Slurm logs: {}",
+                    e
+                )));
+            }
+
+            self.previous_focus = self.focus;
+            self.focus = Focus::Popup;
+            self.popup = Some(PopupType::LogViewer(viewer));
+        } else {
+            self.set_status(StatusMessage::warning("No scheduled node selected"));
+        }
+    }
+
+    fn load_slurm_logs(&self, viewer: &mut LogViewer, scheduler_id: &str) -> Result<()> {
+        use crate::client::log_paths::{get_slurm_stderr_path, get_slurm_stdout_path};
+        use std::path::PathBuf;
+
+        // Default output directory is "output" in the current working directory
+        let output_dir = PathBuf::from("output");
+
+        let stdout_path = get_slurm_stdout_path(&output_dir, scheduler_id);
+        let stderr_path = get_slurm_stderr_path(&output_dir, scheduler_id);
+
+        viewer.stdout_path = Some(stdout_path.clone());
+        viewer.stderr_path = Some(stderr_path.clone());
+
+        // Try to read stdout
+        if let Ok(content) = std::fs::read_to_string(&stdout_path) {
+            viewer.stdout_content = content;
+        } else {
+            viewer.stdout_content = format!(
+                "Could not read file: {}\n\nThe file may not exist if:\n- The Slurm job has not run yet\n- The output directory is different\n- You are on a different system",
+                stdout_path
+            );
+        }
+
+        // Try to read stderr
+        if let Ok(content) = std::fs::read_to_string(&stderr_path) {
+            viewer.stderr_content = content;
+        } else {
+            viewer.stderr_content = format!(
+                "Could not read file: {}\n\nThe file may not exist if:\n- The Slurm job has not run yet\n- The output directory is different\n- You are on a different system",
+                stderr_path
+            );
+        }
+
+        Ok(())
+    }
+
     // === File Viewer ===
 
     pub fn get_selected_file(&self) -> Option<&FileModel> {

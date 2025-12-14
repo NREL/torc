@@ -2284,6 +2284,261 @@ kbd {
     text-align: center;
 }
 
+/* ==================== Slurm Debugging Styles ==================== */
+
+.section-description {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.slurm-summary,
+.sacct-summary {
+    background: var(--bg-tertiary);
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+}
+
+.slurm-issues-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.slurm-job-group {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.slurm-job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.slurm-job-header .issue-count {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.affected-jobs {
+    padding: 8px 14px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.job-tag {
+    display: inline-block;
+    background: var(--info-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin: 2px 4px 2px 0;
+}
+
+.slurm-job-issues {
+    padding: 10px 14px;
+}
+
+.slurm-issue {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.slurm-issue:last-child {
+    margin-bottom: 0;
+}
+
+.slurm-issue.severity-error {
+    border-left: 3px solid var(--danger-color);
+}
+
+.slurm-issue.severity-warning {
+    border-left: 3px solid var(--warning-color);
+}
+
+.issue-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+}
+
+.severity-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.severity-badge.severity-error {
+    background: var(--danger-color);
+    color: white;
+}
+
+.severity-badge.severity-warning {
+    background: var(--warning-color);
+    color: #212529;
+}
+
+.issue-description {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.issue-details {
+    padding: 10px 12px;
+}
+
+.issue-line {
+    display: block;
+    background: var(--bg-tertiary);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 6px;
+}
+
+.issue-location {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.sacct-results-table {
+    margin-top: 12px;
+}
+
+.sacct-results-table code {
+    font-size: 11px;
+    word-break: break-all;
+}
+
+.sacct-errors {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+    border: 1px solid var(--danger-color);
+}
+
+.sacct-errors ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.sacct-errors li {
+    margin: 4px 0;
+}
+
+.status-unknown {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.success-message {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+}
+
+.error-message {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+}
+
+.error-text {
+    color: var(--danger-color);
+}
+
+.loading-indicator {
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 12px;
+}
+
+/* Slurm Logs Modal */
+.slurm-logs-info {
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.slurm-logs-summary {
+    font-size: 13px;
+}
+
+.slurm-logs-summary code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.slurm-log-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+    max-height: 500px;
+}
+
+.slurm-log-viewer .log-path {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.slurm-log-viewer .log-content {
+    flex: 1;
+    margin: 0;
+    padding: 12px 16px;
+    background: var(--bg-primary);
+    overflow: auto;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.btn-slurm-logs {
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--info-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-slurm-logs:hover {
+    background: #138496;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {

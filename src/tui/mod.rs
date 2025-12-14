@@ -623,12 +623,18 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             KeyCode::Char('O') => {
                                 app.show_server_output();
                             }
-                            // Job actions (only in Jobs tab)
+                            // Log viewing actions
                             KeyCode::Char('l') => {
-                                if app.focus == Focus::Details
-                                    && app.detail_view == DetailViewType::Jobs
-                                {
-                                    app.show_job_logs();
+                                if app.focus == Focus::Details {
+                                    match app.detail_view {
+                                        DetailViewType::Jobs => {
+                                            app.show_job_logs();
+                                        }
+                                        DetailViewType::ScheduledNodes => {
+                                            app.show_slurm_logs();
+                                        }
+                                        _ => {}
+                                    }
                                 }
                             }
                             KeyCode::Char('t') => {
