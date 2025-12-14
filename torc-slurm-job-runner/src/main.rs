@@ -25,7 +25,9 @@ mod unix_main {
     use torc::client::hpc::hpc_interface::HpcInterface;
     use torc::client::hpc::slurm_interface::SlurmInterface;
     use torc::client::job_runner::JobRunner;
-    use torc::client::log_paths::get_slurm_job_runner_log_file;
+    use torc::client::log_paths::{
+        get_slurm_dmesg_log_file, get_slurm_env_log_file, get_slurm_job_runner_log_file,
+    };
     use torc::client::utils;
 
     const STYLES: styling::Styles = styling::Styles::styled()
@@ -121,6 +123,15 @@ mod unix_main {
         info!("Hostname: {}", hostname);
         info!("Output directory: {}", args.output_dir.display());
         info!("Log file: {}", log_file_path);
+
+        // Capture SLURM environment variables for debugging
+        let slurm_env_path = get_slurm_env_log_file(
+            args.output_dir.clone(),
+            &job_id,
+            &node_id,
+            task_pid as usize,
+        );
+        utils::capture_env_vars(std::path::Path::new(&slurm_env_path), "SLURM");
 
         // Set up configuration
         let mut config = Configuration::new();
@@ -248,7 +259,18 @@ mod unix_main {
             }
         });
 
-        match job_runner.run_worker() {
+        let job_runner_result = job_runner.run_worker();
+
+        // Capture dmesg output before exiting - may contain useful debug info if any job failed
+        let dmesg_path = get_slurm_dmesg_log_file(
+            args.output_dir.clone(),
+            &job_id,
+            &node_id,
+            task_pid as usize,
+        );
+        utils::capture_dmesg(std::path::Path::new(&dmesg_path));
+
+        match job_runner_result {
             Ok(_) => {
                 info!("JobRunner completed successfully");
             }
