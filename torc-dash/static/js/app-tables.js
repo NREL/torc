@@ -342,18 +342,25 @@ Object.assign(TorcDashboard.prototype, {
                         ${this.renderSortableHeader('Config ID', 'scheduler_config_id')}
                         ${this.renderSortableHeader('Type', 'scheduler_type')}
                         ${this.renderSortableHeader('Status', 'status')}
+                        <th>Logs</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${nodes.map(n => `
+                    ${nodes.map(n => {
+                        const isSlurm = (n.scheduler_type || '').toLowerCase() === 'slurm';
+                        const logsButton = isSlurm && n.scheduler_id
+                            ? `<button class="btn-slurm-logs" data-scheduler-id="${n.scheduler_id}">View Logs</button>`
+                            : '-';
+                        return `
                         <tr>
                             <td><code>${n.id ?? '-'}</code></td>
                             <td><code>${n.scheduler_id ?? '-'}</code></td>
                             <td><code>${n.scheduler_config_id ?? '-'}</code></td>
                             <td>${this.escapeHtml(n.scheduler_type || '-')}</td>
                             <td><span class="status-badge ${getStatusClass(n.status)}">${this.escapeHtml(n.status || '-')}</span></td>
+                            <td>${logsButton}</td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         `;

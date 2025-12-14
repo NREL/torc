@@ -323,7 +323,7 @@ impl HelpPopup {
                     .add_modifier(Modifier::BOLD),
             )]),
             Line::from(""),
-            Self::key_line("l", "View job logs"),
+            Self::key_line("l", "View logs (Jobs/Scheduled Nodes)"),
             Self::key_line("Enter", "View job details"),
             Self::key_line("c", "Cancel job"),
             Self::key_line("t", "Terminate job"),

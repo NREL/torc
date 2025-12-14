@@ -1,9 +1,14 @@
 use chrono::Utc;
 use clap::Subcommand;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
-use std::path::Path;
+use std::fs;
+use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
@@ -244,6 +249,30 @@ pub enum SlurmCommands {
         /// Start one worker per node
         #[arg(long, default_value = "false")]
         start_one_worker_per_node: bool,
+    },
+    /// Parse Slurm log files for known error messages
+    ParseLogs {
+        /// Workflow ID
+        #[arg()]
+        workflow_id: Option<i64>,
+        /// Output directory containing Slurm log files
+        #[arg(short, long, default_value = "output")]
+        output_dir: PathBuf,
+        /// Only show errors (skip warnings)
+        #[arg(long, default_value = "false")]
+        errors_only: bool,
+    },
+    /// Call sacct for scheduled compute nodes and display summary
+    Sacct {
+        /// Workflow ID
+        #[arg()]
+        workflow_id: Option<i64>,
+        /// Output directory for sacct JSON files (only used with --save-json)
+        #[arg(short, long, default_value = "output")]
+        output_dir: PathBuf,
+        /// Save full JSON output to files in addition to displaying summary
+        #[arg(long, default_value = "false")]
+        save_json: bool,
     },
 }
 
@@ -603,6 +632,34 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 }
             }
         }
+        SlurmCommands::ParseLogs {
+            workflow_id,
+            output_dir,
+            errors_only,
+        } => {
+            let user_name = get_env_user_name();
+            let wf_id = workflow_id.unwrap_or_else(|| {
+                select_workflow_interactively(config, &user_name).unwrap_or_else(|e| {
+                    eprintln!("Error selecting workflow: {}", e);
+                    std::process::exit(1);
+                })
+            });
+            parse_slurm_logs(config, wf_id, output_dir, *errors_only, format);
+        }
+        SlurmCommands::Sacct {
+            workflow_id,
+            output_dir,
+            save_json,
+        } => {
+            let user_name = get_env_user_name();
+            let wf_id = workflow_id.unwrap_or_else(|| {
+                select_workflow_interactively(config, &user_name).unwrap_or_else(|e| {
+                    eprintln!("Error selecting workflow: {}", e);
+                    std::process::exit(1);
+                })
+            });
+            run_sacct_for_workflow(config, wf_id, output_dir, *save_json, format);
+        }
     }
 }
 
@@ -824,4 +881,1007 @@ pub fn create_compute_node(
     };
 
     compute_node
+}
+
+/// Known Slurm error patterns and their descriptions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SlurmErrorPattern {
+    pub pattern: String,
+    pub description: String,
+    pub severity: String, // "error", "warning", "info"
+}
+
+/// Information about a Torc job affected by a Slurm error
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AffectedJob {
+    pub job_id: i64,
+    pub job_name: String,
+}
+
+/// A detected error in a Slurm log file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SlurmLogError {
+    pub file: String,
+    pub slurm_job_id: String,
+    pub line_number: usize,
+    pub line: String,
+    pub pattern_description: String,
+    pub severity: String,
+    pub node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub affected_jobs: Option<Vec<AffectedJob>>,
+}
+
+/// Get known Slurm error patterns to search for
+fn get_slurm_error_patterns() -> Vec<SlurmErrorPattern> {
+    vec![
+        // Memory-related errors
+        SlurmErrorPattern {
+            pattern: r"(?i)out of memory".to_string(),
+            description: "Out of memory error".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)oom-kill".to_string(),
+            description: "OOM killer terminated process".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)cannot allocate memory".to_string(),
+            description: "Memory allocation failure".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)memory cgroup out of memory".to_string(),
+            description: "Cgroup memory limit exceeded".to_string(),
+            severity: "error".to_string(),
+        },
+        // Slurm-specific errors
+        SlurmErrorPattern {
+            pattern: r"(?i)slurmstepd: error:".to_string(),
+            description: "Slurm step daemon error".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)srun: error:".to_string(),
+            description: "Slurm srun error".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)DUE TO TIME LIMIT".to_string(),
+            description: "Job terminated due to time limit".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)CANCELLED".to_string(),
+            description: "Job was cancelled".to_string(),
+            severity: "warning".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)DUE TO PREEMPTION".to_string(),
+            description: "Job terminated due to preemption".to_string(),
+            severity: "warning".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)NODE_FAIL".to_string(),
+            description: "Node failure".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)FAILED".to_string(),
+            description: "Job failed".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Exceeded job memory limit".to_string(),
+            description: "Exceeded job memory limit".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)task/cgroup: .*: Killed".to_string(),
+            description: "Task killed by cgroup".to_string(),
+            severity: "error".to_string(),
+        },
+        // File system errors
+        SlurmErrorPattern {
+            pattern: r"(?i)No space left on device".to_string(),
+            description: "Disk full".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Disk quota exceeded".to_string(),
+            description: "Disk quota exceeded".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Read-only file system".to_string(),
+            description: "Read-only file system".to_string(),
+            severity: "error".to_string(),
+        },
+        // Network errors
+        SlurmErrorPattern {
+            pattern: r"(?i)Connection refused".to_string(),
+            description: "Connection refused".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Connection timed out".to_string(),
+            description: "Connection timed out".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Network is unreachable".to_string(),
+            description: "Network unreachable".to_string(),
+            severity: "error".to_string(),
+        },
+        // GPU errors
+        SlurmErrorPattern {
+            pattern: r"(?i)CUDA out of memory".to_string(),
+            description: "CUDA out of memory".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)CUDA error".to_string(),
+            description: "CUDA error".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)GPU memory.*exceeded".to_string(),
+            description: "GPU memory exceeded".to_string(),
+            severity: "error".to_string(),
+        },
+        // Signal-related
+        SlurmErrorPattern {
+            pattern: r"(?i)Segmentation fault".to_string(),
+            description: "Segmentation fault".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)SIGSEGV".to_string(),
+            description: "SIGSEGV signal".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)Bus error".to_string(),
+            description: "Bus error".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)SIGBUS".to_string(),
+            description: "SIGBUS signal".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)killed by signal".to_string(),
+            description: "Process killed by signal".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"(?i)core dumped".to_string(),
+            description: "Core dump generated".to_string(),
+            severity: "error".to_string(),
+        },
+        // Python errors
+        SlurmErrorPattern {
+            pattern: r"Traceback \(most recent call last\)".to_string(),
+            description: "Python traceback".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"ModuleNotFoundError".to_string(),
+            description: "Python module not found".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"ImportError".to_string(),
+            description: "Python import error".to_string(),
+            severity: "error".to_string(),
+        },
+        // Memory allocation errors (C++/Python)
+        SlurmErrorPattern {
+            pattern: r"std::bad_alloc".to_string(),
+            description: "C++ memory allocation failure".to_string(),
+            severity: "error".to_string(),
+        },
+        SlurmErrorPattern {
+            pattern: r"MemoryError".to_string(),
+            description: "Python memory error".to_string(),
+            severity: "error".to_string(),
+        },
+        // Permission errors
+        SlurmErrorPattern {
+            pattern: r"(?i)Permission denied".to_string(),
+            description: "Permission denied".to_string(),
+            severity: "error".to_string(),
+        },
+        // Slurm job info
+        SlurmErrorPattern {
+            pattern: r"slurmstepd: error: .*Exceeded.*step.*limit".to_string(),
+            description: "Exceeded step resource limit".to_string(),
+            severity: "error".to_string(),
+        },
+    ]
+}
+
+/// Extract node name from log line if present
+fn extract_node_from_line(line: &str) -> Option<String> {
+    // Common patterns for node names in Slurm logs
+    // Pattern: "node123" or "x1234c0s1b0n0" or "r123i1n2"
+    let node_patterns = [
+        r"\b([a-z]+\d+[a-z]*\d*)\b",                       // Simple: node123
+        r"\b([xrc]\d+[a-z]\d+[a-z]\d+[a-z]\d+[a-z]\d+)\b", // HPC: x1234c0s1b0n0
+    ];
+
+    for pattern in node_patterns.iter() {
+        if let Ok(re) = Regex::new(pattern) {
+            if let Some(caps) = re.captures(line) {
+                if let Some(node) = caps.get(1) {
+                    return Some(node.as_str().to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Extract Slurm job ID from filename
+fn extract_slurm_job_id_from_filename(filename: &str) -> Option<String> {
+    // Pattern: slurm_output_12345.o or slurm_output_12345.e
+    let re = Regex::new(r"slurm_output_(\d+)\.[oe]$").ok()?;
+    re.captures(filename)
+        .and_then(|caps| caps.get(1))
+        .map(|m| m.as_str().to_string())
+}
+
+/// Build a map of Slurm job ID -> affected Torc jobs
+/// This queries the API to correlate:
+/// 1. ComputeNode.scheduler.slurm_job_id -> compute_node_id
+/// 2. Result.compute_node_id -> job_id
+/// 3. Job.id -> job_name
+fn build_slurm_to_jobs_map(
+    config: &Configuration,
+    workflow_id: i64,
+) -> HashMap<String, Vec<AffectedJob>> {
+    let mut slurm_to_jobs: HashMap<String, Vec<AffectedJob>> = HashMap::new();
+
+    // Step 1: Get all compute nodes and build slurm_job_id -> compute_node_ids map
+    let compute_nodes = match default_api::list_compute_nodes(
+        config,
+        workflow_id,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None,
+        None,
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            warn!("Could not fetch compute nodes for job correlation: {}", e);
+            return slurm_to_jobs;
+        }
+    };
+
+    // Build slurm_job_id -> Vec<compute_node_id> map
+    let mut slurm_to_compute_nodes: HashMap<String, Vec<i64>> = HashMap::new();
+    for node in &compute_nodes {
+        if node.compute_node_type != "slurm" {
+            continue;
+        }
+        if let Some(scheduler) = &node.scheduler {
+            if let Some(slurm_job_id) = scheduler.get("slurm_job_id") {
+                let slurm_id_str = slurm_job_id
+                    .as_str()
+                    .map(|s| s.to_string())
+                    .or_else(|| slurm_job_id.as_i64().map(|i| i.to_string()))
+                    .unwrap_or_default();
+                if !slurm_id_str.is_empty() {
+                    if let Some(node_id) = node.id {
+                        slurm_to_compute_nodes
+                            .entry(slurm_id_str)
+                            .or_default()
+                            .push(node_id);
+                    }
+                }
+            }
+        }
+    }
+
+    if slurm_to_compute_nodes.is_empty() {
+        return slurm_to_jobs;
+    }
+
+    // Step 2: Get all results and build compute_node_id -> Vec<job_id> map
+    let results = match default_api::list_results(
+        config,
+        workflow_id,
+        None,
+        None,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None,
+        None,
+        Some(true), // all_runs
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            warn!("Could not fetch results for job correlation: {}", e);
+            return slurm_to_jobs;
+        }
+    };
+
+    let mut compute_node_to_jobs: HashMap<i64, Vec<i64>> = HashMap::new();
+    for result in &results {
+        compute_node_to_jobs
+            .entry(result.compute_node_id)
+            .or_default()
+            .push(result.job_id);
+    }
+
+    // Step 3: Get all jobs and build job_id -> job_name map
+    let jobs = match default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None,
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            warn!("Could not fetch jobs for job correlation: {}", e);
+            return slurm_to_jobs;
+        }
+    };
+
+    let job_id_to_name: HashMap<i64, String> = jobs
+        .iter()
+        .filter_map(|j| j.id.map(|id| (id, j.name.clone())))
+        .collect();
+
+    // Step 4: Build the final slurm_job_id -> Vec<AffectedJob> map
+    for (slurm_id, compute_node_ids) in &slurm_to_compute_nodes {
+        let mut affected_jobs: Vec<AffectedJob> = Vec::new();
+        let mut seen_job_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+
+        for compute_node_id in compute_node_ids {
+            if let Some(job_ids) = compute_node_to_jobs.get(compute_node_id) {
+                for job_id in job_ids {
+                    if seen_job_ids.insert(*job_id) {
+                        let job_name = job_id_to_name
+                            .get(job_id)
+                            .cloned()
+                            .unwrap_or_else(|| format!("job_{}", job_id));
+                        affected_jobs.push(AffectedJob {
+                            job_id: *job_id,
+                            job_name,
+                        });
+                    }
+                }
+            }
+        }
+
+        if !affected_jobs.is_empty() {
+            // Sort by job_id for consistent output
+            affected_jobs.sort_by_key(|j| j.job_id);
+            slurm_to_jobs.insert(slurm_id.clone(), affected_jobs);
+        }
+    }
+
+    slurm_to_jobs
+}
+
+/// Parse Slurm log files for known error messages
+pub fn parse_slurm_logs(
+    config: &Configuration,
+    workflow_id: i64,
+    output_dir: &PathBuf,
+    errors_only: bool,
+    format: &str,
+) {
+    if !output_dir.exists() {
+        eprintln!(
+            "Error: Output directory does not exist: {}",
+            output_dir.display()
+        );
+        std::process::exit(1);
+    }
+
+    // Get scheduled compute nodes for this workflow to find valid Slurm job IDs
+    let scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None,
+        None,
+        Some("slurm"),
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            print_error("listing scheduled compute nodes", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Build set of valid Slurm job IDs for this workflow
+    let valid_slurm_job_ids: std::collections::HashSet<String> = scheduled_nodes
+        .iter()
+        .map(|n| n.scheduler_id.to_string())
+        .collect();
+
+    if valid_slurm_job_ids.is_empty() {
+        if format == "json" {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "workflow_id": workflow_id,
+                    "output_dir": output_dir.display().to_string(),
+                    "message": "No Slurm scheduled compute nodes found for this workflow",
+                    "total_issues": 0,
+                    "errors": 0,
+                    "warnings": 0,
+                    "issues": []
+                }))
+                .unwrap()
+            );
+        } else {
+            println!(
+                "No Slurm scheduled compute nodes found for workflow {}",
+                workflow_id
+            );
+        }
+        return;
+    }
+
+    info!(
+        "Found {} Slurm job(s) for workflow {}: {:?}",
+        valid_slurm_job_ids.len(),
+        workflow_id,
+        valid_slurm_job_ids
+    );
+
+    // Build job correlation map
+    let slurm_to_jobs = build_slurm_to_jobs_map(config, workflow_id);
+
+    let patterns = get_slurm_error_patterns();
+    let compiled_patterns: Vec<(Regex, &SlurmErrorPattern)> = patterns
+        .iter()
+        .filter_map(|p| Regex::new(&p.pattern).ok().map(|re| (re, p)))
+        .collect();
+
+    let mut all_errors: Vec<SlurmLogError> = Vec::new();
+    let mut scanned_files = 0;
+
+    // Find all slurm log files (*.o and *.e files matching slurm_output_*.*)
+    let entries = match fs::read_dir(output_dir) {
+        Ok(entries) => entries,
+        Err(e) => {
+            eprintln!("Error reading directory: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let filename = match path.file_name().and_then(|n| n.to_str()) {
+            Some(name) => name,
+            None => continue,
+        };
+
+        // Check if this is a slurm output file
+        if !filename.starts_with("slurm_output_") {
+            continue;
+        }
+
+        let slurm_job_id = match extract_slurm_job_id_from_filename(filename) {
+            Some(id) => id,
+            None => continue,
+        };
+
+        // Only process log files for Slurm jobs belonging to this workflow
+        if !valid_slurm_job_ids.contains(&slurm_job_id) {
+            debug!(
+                "Skipping log file {} - Slurm job {} not in workflow {}",
+                filename, slurm_job_id, workflow_id
+            );
+            continue;
+        }
+
+        debug!("Scanning log file: {}", path.display());
+        scanned_files += 1;
+
+        let file = match fs::File::open(&path) {
+            Ok(f) => f,
+            Err(e) => {
+                warn!("Could not open file {}: {}", path.display(), e);
+                continue;
+            }
+        };
+
+        let reader = BufReader::new(file);
+        for (line_num, line_result) in reader.lines().enumerate() {
+            let line = match line_result {
+                Ok(l) => l,
+                Err(_) => continue,
+            };
+
+            for (regex, pattern) in &compiled_patterns {
+                if errors_only && pattern.severity != "error" {
+                    continue;
+                }
+
+                if regex.is_match(&line) {
+                    let node = extract_node_from_line(&line);
+                    let affected_jobs = slurm_to_jobs.get(&slurm_job_id).cloned();
+                    all_errors.push(SlurmLogError {
+                        file: path.display().to_string(),
+                        slurm_job_id: slurm_job_id.clone(),
+                        line_number: line_num + 1,
+                        line: line.clone(),
+                        pattern_description: pattern.description.clone(),
+                        severity: pattern.severity.clone(),
+                        node,
+                        affected_jobs,
+                    });
+                    break; // Only match one pattern per line
+                }
+            }
+        }
+    }
+
+    info!(
+        "Scanned {} log file(s) for workflow {}",
+        scanned_files, workflow_id
+    );
+
+    // Output results
+    if format == "json" {
+        let output = serde_json::json!({
+            "workflow_id": workflow_id,
+            "output_dir": output_dir.display().to_string(),
+            "slurm_jobs_count": valid_slurm_job_ids.len(),
+            "files_scanned": scanned_files,
+            "total_issues": all_errors.len(),
+            "errors": all_errors.iter().filter(|e| e.severity == "error").count(),
+            "warnings": all_errors.iter().filter(|e| e.severity == "warning").count(),
+            "issues": all_errors,
+        });
+        println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    } else {
+        if all_errors.is_empty() {
+            println!(
+                "No issues found in Slurm log files for workflow {} (scanned {} file(s) in {})",
+                workflow_id,
+                scanned_files,
+                output_dir.display()
+            );
+        } else {
+            println!("Found {} issue(s) in Slurm log files:\n", all_errors.len());
+
+            // Group by Slurm job ID
+            let mut errors_by_job: HashMap<String, Vec<&SlurmLogError>> = HashMap::new();
+            for err in &all_errors {
+                errors_by_job
+                    .entry(err.slurm_job_id.clone())
+                    .or_default()
+                    .push(err);
+            }
+
+            for (job_id, errors) in errors_by_job.iter() {
+                let job_label = if job_id.is_empty() {
+                    "Unknown Job".to_string()
+                } else {
+                    format!("Slurm Job {}", job_id)
+                };
+
+                // Get affected Torc jobs for this Slurm job (from first error, they should all be the same)
+                let affected_jobs_info = errors
+                    .first()
+                    .and_then(|e| e.affected_jobs.as_ref())
+                    .map(|jobs| {
+                        let job_list: Vec<String> = jobs
+                            .iter()
+                            .map(|j| format!("{} (ID: {})", j.job_name, j.job_id))
+                            .collect();
+                        format!("\n  Affected Torc jobs: {}", job_list.join(", "))
+                    })
+                    .unwrap_or_default();
+
+                println!("=== {} ==={}", job_label, affected_jobs_info);
+                for err in errors {
+                    let severity_marker = match err.severity.as_str() {
+                        "error" => "[ERROR]",
+                        "warning" => "[WARN]",
+                        _ => "[INFO]",
+                    };
+                    let node_info = err
+                        .node
+                        .as_ref()
+                        .map(|n| format!(" (node: {})", n))
+                        .unwrap_or_default();
+
+                    println!(
+                        "  {} {}{}: {}",
+                        severity_marker, err.pattern_description, node_info, err.line
+                    );
+                    println!("    Location: {}:{}", err.file, err.line_number);
+                }
+                println!();
+            }
+
+            // Summary
+            let error_count = all_errors.iter().filter(|e| e.severity == "error").count();
+            let warning_count = all_errors
+                .iter()
+                .filter(|e| e.severity == "warning")
+                .count();
+            println!(
+                "Summary: {} error(s), {} warning(s)",
+                error_count, warning_count
+            );
+        }
+    }
+}
+
+/// Table row for sacct summary output
+#[derive(Tabled, Serialize, Deserialize, Clone)]
+pub struct SacctSummaryRow {
+    #[tabled(rename = "Slurm Job")]
+    pub slurm_job_id: String,
+    #[tabled(rename = "Job Step")]
+    pub job_step: String,
+    #[tabled(rename = "State")]
+    pub state: String,
+    #[tabled(rename = "Exit Code")]
+    pub exit_code: String,
+    #[tabled(rename = "Elapsed")]
+    pub elapsed: String,
+    #[tabled(rename = "Max RSS")]
+    pub max_rss: String,
+    #[tabled(rename = "CPU Time")]
+    pub cpu_time: String,
+    #[tabled(rename = "Nodes")]
+    pub nodes: String,
+}
+
+/// Extract state string from various sacct JSON formats
+/// Handles: state.current (array or string), state (string), job_state (array or string)
+fn extract_state_from_job(job: &serde_json::Value) -> String {
+    // Try state.current first (newer API format)
+    if let Some(state_obj) = job.get("state") {
+        if let Some(current) = state_obj.get("current") {
+            // current might be an array of strings or a single string
+            if let Some(arr) = current.as_array() {
+                // Join multiple states (e.g., ["CANCELLED", "TIMEOUT"])
+                let states: Vec<&str> = arr.iter().filter_map(|v| v.as_str()).collect();
+                if !states.is_empty() {
+                    return states.join(", ");
+                }
+            } else if let Some(s) = current.as_str() {
+                return s.to_string();
+            }
+        }
+        // state might be a simple string
+        if let Some(s) = state_obj.as_str() {
+            return s.to_string();
+        }
+    }
+
+    // Try job_state (alternative field name in some versions)
+    if let Some(job_state) = job.get("job_state") {
+        if let Some(arr) = job_state.as_array() {
+            let states: Vec<&str> = arr.iter().filter_map(|v| v.as_str()).collect();
+            if !states.is_empty() {
+                return states.join(", ");
+            }
+        } else if let Some(s) = job_state.as_str() {
+            return s.to_string();
+        }
+    }
+
+    "-".to_string()
+}
+
+/// Parse sacct JSON output and extract summary rows
+fn parse_sacct_json_to_rows(
+    sacct_json: &serde_json::Value,
+    slurm_job_id: &str,
+) -> Vec<SacctSummaryRow> {
+    let mut rows = Vec::new();
+
+    if let Some(jobs) = sacct_json.get("jobs").and_then(|j| j.as_array()) {
+        for job in jobs {
+            // Get job step name
+            let job_step = job
+                .get("name")
+                .and_then(|n| n.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            // Get state - handles various sacct JSON formats
+            let state = extract_state_from_job(job);
+
+            // Get exit code - handle different sacct JSON formats
+            let exit_code = job
+                .get("exit_code")
+                .and_then(|e| {
+                    // Could be {"status": "SUCCESS", "return_code": 0} or just a number
+                    if let Some(obj) = e.as_object() {
+                        obj.get("return_code")
+                            .and_then(|r| r.as_i64())
+                            .map(|r| r.to_string())
+                    } else {
+                        e.as_i64().map(|r| r.to_string())
+                    }
+                })
+                .unwrap_or("-".to_string());
+
+            // Get elapsed time - could be in different formats
+            let elapsed = job
+                .get("time")
+                .and_then(|t| t.get("elapsed"))
+                .and_then(|e| e.as_i64())
+                .map(|secs| format_duration_seconds(secs))
+                .or_else(|| {
+                    job.get("elapsed")
+                        .and_then(|e| e.as_str())
+                        .map(|s| s.to_string())
+                })
+                .unwrap_or("-".to_string());
+
+            // Get max RSS - handle different formats
+            let max_rss = job
+                .get("tres")
+                .and_then(|t| t.get("requested"))
+                .and_then(|r| r.get("max"))
+                .and_then(|m| m.as_array())
+                .and_then(|arr| {
+                    arr.iter()
+                        .find(|item| item.get("type").and_then(|t| t.as_str()) == Some("mem"))
+                })
+                .and_then(|mem| mem.get("count").and_then(|c| c.as_i64()))
+                .map(|bytes| format_bytes(bytes as u64))
+                .or_else(|| {
+                    job.get("steps")
+                        .and_then(|s| s.as_array())
+                        .and_then(|arr| arr.first())
+                        .and_then(|step| step.get("tres").and_then(|t| t.get("requested")))
+                        .and_then(|r| r.get("max"))
+                        .and_then(|m| m.as_array())
+                        .and_then(|arr| {
+                            arr.iter().find(|item| {
+                                item.get("type").and_then(|t| t.as_str()) == Some("mem")
+                            })
+                        })
+                        .and_then(|mem| mem.get("count").and_then(|c| c.as_i64()))
+                        .map(|bytes| format_bytes(bytes as u64))
+                })
+                .unwrap_or("-".to_string());
+
+            // Get CPU time
+            let cpu_time = job
+                .get("time")
+                .and_then(|t| t.get("total"))
+                .and_then(|t| t.get("seconds"))
+                .and_then(|s| s.as_i64())
+                .map(|secs| format_duration_seconds(secs))
+                .unwrap_or("-".to_string());
+
+            // Get nodes
+            let nodes = job
+                .get("nodes")
+                .and_then(|n| n.as_str())
+                .unwrap_or("-")
+                .to_string();
+
+            rows.push(SacctSummaryRow {
+                slurm_job_id: slurm_job_id.to_string(),
+                job_step,
+                state,
+                exit_code,
+                elapsed,
+                max_rss,
+                cpu_time,
+                nodes,
+            });
+        }
+    }
+
+    rows
+}
+
+/// Format duration in seconds to human-readable format
+fn format_duration_seconds(secs: i64) -> String {
+    if secs < 60 {
+        format!("{}s", secs)
+    } else if secs < 3600 {
+        format!("{}m {}s", secs / 60, secs % 60)
+    } else {
+        let hours = secs / 3600;
+        let mins = (secs % 3600) / 60;
+        format!("{}h {}m", hours, mins)
+    }
+}
+
+/// Format bytes to human-readable format
+fn format_bytes(bytes: u64) -> String {
+    if bytes < 1024 {
+        format!("{}B", bytes)
+    } else if bytes < 1024 * 1024 {
+        format!("{:.1}KB", bytes as f64 / 1024.0)
+    } else if bytes < 1024 * 1024 * 1024 {
+        format!("{:.1}MB", bytes as f64 / (1024.0 * 1024.0))
+    } else {
+        format!("{:.1}GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+    }
+}
+
+/// Run sacct for all scheduled compute nodes of type slurm and display summary
+pub fn run_sacct_for_workflow(
+    config: &Configuration,
+    workflow_id: i64,
+    output_dir: &PathBuf,
+    save_json: bool,
+    format: &str,
+) {
+    // Get scheduled compute nodes for the workflow
+    let nodes = match default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None,
+        None,
+        Some("slurm"), // Filter by scheduler_type
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            print_error("listing scheduled compute nodes", &e);
+            std::process::exit(1);
+        }
+    };
+
+    if nodes.is_empty() {
+        if format == "json" {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "workflow_id": workflow_id,
+                    "message": "No Slurm scheduled compute nodes found",
+                    "summary": []
+                }))
+                .unwrap()
+            );
+        } else {
+            println!(
+                "No Slurm scheduled compute nodes found for workflow {}",
+                workflow_id
+            );
+        }
+        return;
+    }
+
+    // Create output directory if saving JSON
+    if save_json {
+        if let Err(e) = fs::create_dir_all(output_dir) {
+            eprintln!("Error creating output directory: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    let mut all_summary_rows: Vec<SacctSummaryRow> = Vec::new();
+    let mut errors: Vec<String> = Vec::new();
+
+    for node in &nodes {
+        let slurm_job_id = node.scheduler_id.to_string();
+
+        info!("Running sacct for Slurm job ID: {}", slurm_job_id);
+
+        // Run sacct with JSON output
+        let sacct_result = Command::new("sacct")
+            .args(&["-j", &slurm_job_id, "--json"])
+            .output();
+
+        match sacct_result {
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+
+                    // Parse the JSON output
+                    match serde_json::from_str::<serde_json::Value>(&stdout) {
+                        Ok(sacct_json) => {
+                            // Extract summary rows
+                            let rows = parse_sacct_json_to_rows(&sacct_json, &slurm_job_id);
+                            all_summary_rows.extend(rows);
+
+                            // Optionally save full JSON to file
+                            if save_json {
+                                let output_file =
+                                    output_dir.join(format!("sacct_{}.json", slurm_job_id));
+                                if let Err(e) = fs::write(&output_file, stdout.as_bytes()) {
+                                    error!(
+                                        "Failed to write sacct output for job {}: {}",
+                                        slurm_job_id, e
+                                    );
+                                    errors.push(format!(
+                                        "Job {}: Failed to write output: {}",
+                                        slurm_job_id, e
+                                    ));
+                                } else {
+                                    info!("Saved sacct output to {}", output_file.display());
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            error!("Failed to parse sacct JSON for job {}: {}", slurm_job_id, e);
+                            errors
+                                .push(format!("Job {}: Invalid JSON output: {}", slurm_job_id, e));
+                        }
+                    }
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    error!("sacct command failed for job {}: {}", slurm_job_id, stderr);
+                    errors.push(format!("Job {}: sacct failed: {}", slurm_job_id, stderr));
+                }
+            }
+            Err(e) => {
+                error!("Failed to run sacct for job {}: {}", slurm_job_id, e);
+                errors.push(format!(
+                    "Job {}: Failed to execute sacct: {}",
+                    slurm_job_id, e
+                ));
+            }
+        }
+    }
+
+    // Output results
+    if format == "json" {
+        let output = serde_json::json!({
+            "workflow_id": workflow_id,
+            "total_slurm_jobs": nodes.len(),
+            "summary": all_summary_rows,
+            "errors": errors,
+        });
+        println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    } else {
+        if all_summary_rows.is_empty() && errors.is_empty() {
+            println!(
+                "No sacct data available for workflow {} (checked {} Slurm job(s))",
+                workflow_id,
+                nodes.len()
+            );
+        } else {
+            println!("Slurm Accounting Summary for Workflow {}\n", workflow_id);
+
+            if !all_summary_rows.is_empty() {
+                display_table_with_count(&all_summary_rows, "job steps");
+            }
+
+            if !errors.is_empty() {
+                println!("\nErrors:");
+                for err in &errors {
+                    println!("  {}", err);
+                }
+            }
+
+            if save_json {
+                println!("\nFull JSON saved to: {}", output_dir.display());
+            }
+        }
+    }
 }

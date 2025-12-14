@@ -353,6 +353,12 @@ async fn main() -> Result<()> {
             "/api/cli/list-resource-dbs",
             post(cli_list_resource_dbs_handler),
         )
+        // Slurm debugging endpoints
+        .route(
+            "/api/cli/slurm-parse-logs",
+            post(cli_slurm_parse_logs_handler),
+        )
+        .route("/api/cli/slurm-sacct", post(cli_slurm_sacct_handler))
         // Server management endpoints
         .route("/api/server/start", post(server_start_handler))
         .route("/api/server/stop", post(server_stop_handler))
@@ -1260,6 +1266,179 @@ async fn cli_list_resource_dbs_handler(
         databases,
         error: None,
     })
+}
+
+// ============== Slurm Debugging Handlers ==============
+
+#[derive(Deserialize)]
+struct SlurmParseLogsRequest {
+    /// Workflow ID
+    workflow_id: i64,
+    /// Output directory containing Slurm log files
+    #[serde(default = "default_output_dir")]
+    output_dir: String,
+    /// Only show errors (skip warnings)
+    #[serde(default)]
+    errors_only: bool,
+}
+
+fn default_output_dir() -> String {
+    "output".to_string()
+}
+
+#[derive(Serialize)]
+struct SlurmParseLogsResponse {
+    success: bool,
+    /// Parsed JSON output from the CLI command
+    data: Option<serde_json::Value>,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct SlurmSacctRequest {
+    /// Workflow ID
+    workflow_id: i64,
+    /// Output directory for sacct JSON files
+    #[serde(default = "default_output_dir")]
+    output_dir: String,
+}
+
+#[derive(Serialize)]
+struct SlurmSacctResponse {
+    success: bool,
+    /// Parsed JSON output from the CLI command
+    data: Option<serde_json::Value>,
+    error: Option<String>,
+}
+
+/// Parse Slurm log files for known error messages
+async fn cli_slurm_parse_logs_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SlurmParseLogsRequest>,
+) -> impl IntoResponse {
+    let workflow_id_str = req.workflow_id.to_string();
+
+    let mut args = vec![
+        "-f",
+        "json",
+        "slurm",
+        "parse-logs",
+        &workflow_id_str,
+        "--output-dir",
+        &req.output_dir,
+    ];
+
+    if req.errors_only {
+        args.push("--errors-only");
+    }
+
+    info!("Running: {} {}", state.torc_bin, args.join(" "));
+
+    let output = Command::new(&state.torc_bin)
+        .args(&args)
+        .env("TORC_API_URL", &state.api_url)
+        .output()
+        .await;
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            if !output.status.success() {
+                return Json(SlurmParseLogsResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!("Command failed: {}", stderr)),
+                });
+            }
+
+            // Parse the JSON output
+            match serde_json::from_str::<serde_json::Value>(&stdout) {
+                Ok(data) => Json(SlurmParseLogsResponse {
+                    success: true,
+                    data: Some(data),
+                    error: None,
+                }),
+                Err(e) => Json(SlurmParseLogsResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!(
+                        "Failed to parse JSON output: {}. Output: {}",
+                        e, stdout
+                    )),
+                }),
+            }
+        }
+        Err(e) => Json(SlurmParseLogsResponse {
+            success: false,
+            data: None,
+            error: Some(format!("Failed to execute command: {}", e)),
+        }),
+    }
+}
+
+/// Run sacct for scheduled compute nodes and save JSON output
+async fn cli_slurm_sacct_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SlurmSacctRequest>,
+) -> impl IntoResponse {
+    let workflow_id_str = req.workflow_id.to_string();
+
+    let args = vec![
+        "-f",
+        "json",
+        "slurm",
+        "sacct",
+        &workflow_id_str,
+        "--output-dir",
+        &req.output_dir,
+    ];
+
+    info!("Running: {} {}", state.torc_bin, args.join(" "));
+
+    let output = Command::new(&state.torc_bin)
+        .args(&args)
+        .env("TORC_API_URL", &state.api_url)
+        .output()
+        .await;
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            if !output.status.success() {
+                return Json(SlurmSacctResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!("Command failed: {}", stderr)),
+                });
+            }
+
+            // Parse the JSON output
+            match serde_json::from_str::<serde_json::Value>(&stdout) {
+                Ok(data) => Json(SlurmSacctResponse {
+                    success: true,
+                    data: Some(data),
+                    error: None,
+                }),
+                Err(e) => Json(SlurmSacctResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!(
+                        "Failed to parse JSON output: {}. Output: {}",
+                        e, stdout
+                    )),
+                }),
+            }
+        }
+        Err(e) => Json(SlurmSacctResponse {
+            success: false,
+            data: None,
+            error: Some(format!("Failed to execute command: {}", e)),
+        }),
+    }
 }
 
 // ============== Server Management Handlers ==============
