@@ -110,7 +110,7 @@ jobs:
       - name: Install Julia dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
-          julia --project=julia_client/Torc -e 'using Pkg; Pkg.instantiate()'
+          julia --project=julia_client/Torc -e 'using Pkg; Pkg.instantiate(); using Torc'
           julia --project=julia_client/Torc/test -e 'using Pkg; Pkg.develop(path="julia_client/Torc"); Pkg.instantiate()'
 
       - name: Start torc server
@@ -147,7 +147,7 @@ jobs:
       - name: Run Julia client tests
         if: matrix.os == 'ubuntu-latest'
         run: |
-          julia --project=julia_client/Torc/test julia_client/Torc/test/runtests.jl
+          julia --project=julia_client/Torc -e "import Pkg; Pkg.test()"
         env:
           TORC_API_URL: http://localhost:8080/torc-service/v1
           PATH: ${{ github.workspace }}/target/debug:$PATH
