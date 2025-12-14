@@ -1294,7 +1294,7 @@ pub fn parse_slurm_logs(
     }
 
     // Get scheduled compute nodes for this workflow to find valid Slurm job IDs
-    let scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+    let all_scheduled_nodes = match default_api::list_scheduled_compute_nodes(
         config,
         workflow_id,
         Some(0),
@@ -1303,7 +1303,7 @@ pub fn parse_slurm_logs(
         None,
         None,
         None,
-        Some("slurm"),
+        None, // Don't filter by status
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1311,6 +1311,12 @@ pub fn parse_slurm_logs(
             std::process::exit(1);
         }
     };
+
+    // Filter for Slurm scheduler type only
+    let scheduled_nodes: Vec<_> = all_scheduled_nodes
+        .into_iter()
+        .filter(|n| n.scheduler_type.to_lowercase() == "slurm")
+        .collect();
 
     // Build set of valid Slurm job IDs for this workflow
     let valid_slurm_job_ids: std::collections::HashSet<String> = scheduled_nodes
@@ -1738,7 +1744,7 @@ pub fn run_sacct_for_workflow(
     format: &str,
 ) {
     // Get scheduled compute nodes for the workflow
-    let nodes = match default_api::list_scheduled_compute_nodes(
+    let all_nodes = match default_api::list_scheduled_compute_nodes(
         config,
         workflow_id,
         Some(0),
@@ -1747,7 +1753,7 @@ pub fn run_sacct_for_workflow(
         None,
         None,
         None,
-        Some("slurm"), // Filter by scheduler_type
+        None, // Don't filter by status
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1755,6 +1761,12 @@ pub fn run_sacct_for_workflow(
             std::process::exit(1);
         }
     };
+
+    // Filter for Slurm scheduler type only
+    let nodes: Vec<_> = all_nodes
+        .into_iter()
+        .filter(|n| n.scheduler_type.to_lowercase() == "slurm")
+        .collect();
 
     if nodes.is_empty() {
         if format == "json" {
