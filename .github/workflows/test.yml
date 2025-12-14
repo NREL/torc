@@ -113,15 +113,11 @@ jobs:
           julia --project=julia_client/Torc -e 'using Pkg; Pkg.instantiate()'
           julia --project=julia_client/Torc/test -e 'using Pkg; Pkg.develop(path="julia_client/Torc"); Pkg.instantiate()'
 
-      - name: Build release binaries for integration tests
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo build --release --workspace
-
       - name: Start torc server
         if: matrix.os == 'ubuntu-latest'
         run: |
           export DATABASE_URL=sqlite:db/sqlite/dev.db
-          ./target/release/torc-server run > server.log 2>&1 &
+          ./target/debug/torc-server run > server.log 2>&1 &
           SERVER_PID=$!
           echo "Server started with PID $SERVER_PID"
           # Wait for server to be ready
@@ -154,7 +150,7 @@ jobs:
           julia --project=julia_client/Torc/test julia_client/Torc/test/runtests.jl
         env:
           TORC_API_URL: http://localhost:8080/torc-service/v1
-          PATH: ${{ github.workspace }}/target/release:$PATH
+          PATH: ${{ github.workspace }}/target/debug:$PATH
 
       # - name: Install cargo-llvm-cov
       #   if: matrix.os == 'ubuntu-latest'
