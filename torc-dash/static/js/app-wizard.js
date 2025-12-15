@@ -376,8 +376,8 @@ Object.assign(TorcDashboard.prototype, {
         const schedulerId = ++this.wizardSchedulerIdCounter;
         const defaultName = `scheduler-${schedulerId}`;
         const schedulerName = prompt('Enter a name for the new scheduler:', defaultName);
-        if (!schedulerName) {
-            // User cancelled
+        if (!schedulerName || !schedulerName.trim()) {
+            // User cancelled or entered only whitespace
             this.wizardSchedulerIdCounter--;
             return;
         }

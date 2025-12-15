@@ -336,10 +336,16 @@ Object.assign(TorcDashboard.prototype, {
             }
 
             // Parse the JSON output
-            const plan = JSON.parse(result.stdout);
+            let plan;
+            try {
+                plan = JSON.parse(result.stdout);
+            } catch (parseError) {
+                content.innerHTML = `<div class="placeholder-message">Invalid JSON response from server: ${this.escapeHtml(parseError.message)}</div>`;
+                return;
+            }
             content.innerHTML = this.renderExecutionPlan(plan);
         } catch (error) {
-            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${error.message}</div>`;
+            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${this.escapeHtml(error.message)}</div>`;
         }
     },
 
