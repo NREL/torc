@@ -24,7 +24,8 @@ Object.assign(TorcDashboard.prototype, {
 
         this.resourcePresets = {
             'small': { name: 'Small', num_cpus: 1, memory: '1g', num_gpus: 0 },
-            'medium': { name: 'Medium', num_cpus: 8, memory: '50g', num_gpus: 0 },
+            'medium': { name: 'Medium', num_cpus: 4, memory: '10g', num_gpus: 0 },
+            'large': { name: 'Large', num_cpus: 8, memory: '50g', num_gpus: 0 },
             'gpu': { name: 'GPU', num_cpus: 1, memory: '10g', num_gpus: 1 },
             'custom': { name: 'Custom', num_cpus: 1, memory: '1g', num_gpus: 0 }
         };
@@ -373,16 +374,22 @@ Object.assign(TorcDashboard.prototype, {
 
     wizardAddSchedulerFromJob(jobId) {
         const schedulerId = ++this.wizardSchedulerIdCounter;
-        const schedulerName = `scheduler-${schedulerId}`;
+        const defaultName = `scheduler-${schedulerId}`;
+        const schedulerName = prompt('Enter a name for the new scheduler:', defaultName);
+        if (!schedulerName) {
+            // User cancelled
+            this.wizardSchedulerIdCounter--;
+            return;
+        }
         const scheduler = {
-            id: schedulerId, name: schedulerName, account: '', nodes: 1, walltime: '01:00:00',
+            id: schedulerId, name: schedulerName.trim(), account: '', nodes: 1, walltime: '01:00:00',
             partition: '', qos: '', gres: '', mem: '', tmp: '', extra: ''
         };
         this.wizardSchedulers.push(scheduler);
         const job = this.wizardJobs.find(j => j.id === jobId);
-        if (job) job.scheduler = schedulerName;
+        if (job) job.scheduler = schedulerName.trim();
         this.wizardRenderJobs();
-        this.showToast(`Scheduler "${schedulerName}" created. Configure it in step 3.`, 'info');
+        this.showToast(`Scheduler "${schedulerName.trim()}" created. Configure it in step 3.`, 'info');
     },
 
     wizardToggleScheduler(schedulerId) {
