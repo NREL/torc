@@ -334,6 +334,15 @@ class TorcAPI {
     }
 
     /**
+     * Get execution plan for a workflow (includes scheduler allocations per stage)
+     * @param {string} workflowId - Workflow ID
+     * @returns {object} CLI response with JSON execution plan in stdout
+     */
+    async cliExecutionPlan(workflowId) {
+        return this.cliRequest('/api/cli/execution-plan', { workflow_id: workflowId });
+    }
+
+    /**
      * Make a CLI command request
      */
     async cliRequest(endpoint, body) {

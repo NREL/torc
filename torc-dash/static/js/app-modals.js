@@ -327,93 +327,78 @@ Object.assign(TorcDashboard.prototype, {
         content.innerHTML = '<div class="placeholder-message">Loading execution plan...</div>';
 
         try {
-            // Get jobs and dependencies
-            const [jobs, dependencies] = await Promise.all([
-                api.listJobs(workflowId),
-                api.getJobsDependencies(workflowId),
-            ]);
+            // Get execution plan from CLI (includes scheduler allocations)
+            const result = await api.cliExecutionPlan(workflowId);
 
-            // Build dependency graph and compute stages
-            const stages = this.computeExecutionStages(jobs, dependencies);
-            content.innerHTML = this.renderExecutionPlan(stages, jobs);
-        } catch (error) {
-            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${error.message}</div>`;
-        }
-    },
-
-    computeExecutionStages(jobs, dependencies) {
-        // Build a map of job dependencies
-        const blockedBy = {};
-        dependencies.forEach(dep => {
-            if (!blockedBy[dep.job_id]) blockedBy[dep.job_id] = [];
-            blockedBy[dep.job_id].push(dep.depends_on_job_id);
-        });
-
-        // Create job map
-        const jobMap = {};
-        jobs.forEach(j => jobMap[j.id] = j);
-
-        // Compute stages using topological sort levels
-        const stages = [];
-        const completed = new Set();
-        const remaining = new Set(jobs.map(j => j.id));
-
-        let stageNum = 1;
-        while (remaining.size > 0) {
-            const ready = [];
-            remaining.forEach(jobId => {
-                const deps = blockedBy[jobId] || [];
-                if (deps.every(d => completed.has(d))) {
-                    ready.push(jobId);
-                }
-            });
-
-            if (ready.length === 0 && remaining.size > 0) {
-                // Circular dependency or error - break to avoid infinite loop
-                break;
+            if (!result.success) {
+                content.innerHTML = `<div class="placeholder-message">Error: ${this.escapeHtml(result.stderr || result.stdout || 'Unknown error')}</div>`;
+                return;
             }
 
-            stages.push({
-                stageNumber: stageNum++,
-                jobs: ready.map(id => jobMap[id]),
-            });
-
-            ready.forEach(id => {
-                completed.add(id);
-                remaining.delete(id);
-            });
+            // Parse the JSON output
+            let plan;
+            try {
+                plan = JSON.parse(result.stdout);
+            } catch (parseError) {
+                content.innerHTML = `<div class="placeholder-message">Invalid JSON response from server: ${this.escapeHtml(parseError.message)}</div>`;
+                return;
+            }
+            content.innerHTML = this.renderExecutionPlan(plan);
+        } catch (error) {
+            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${this.escapeHtml(error.message)}</div>`;
         }
-
-        return stages;
     },
 
-    renderExecutionPlan(stages, jobs) {
-        if (stages.length === 0) {
+    renderExecutionPlan(plan) {
+        if (!plan.stages || plan.stages.length === 0) {
             return '<div class="placeholder-message">No execution stages computed</div>';
         }
 
         return `
             <div class="plan-summary" style="margin-bottom: 16px;">
-                <strong>Total Stages:</strong> ${stages.length} |
-                <strong>Total Jobs:</strong> ${jobs.length}
+                <strong>Workflow:</strong> ${this.escapeHtml(plan.workflow_name || 'Unnamed')} |
+                <strong>Total Stages:</strong> ${plan.total_stages} |
+                <strong>Total Jobs:</strong> ${plan.total_jobs}
             </div>
-            ${stages.map(stage => `
+            ${plan.stages.map(stage => `
                 <div class="plan-stage">
                     <div class="plan-stage-header">
-                        <div class="plan-stage-number">${stage.stageNumber}</div>
-                        <div class="plan-stage-trigger">Stage ${stage.stageNumber}</div>
+                        <div class="plan-stage-number">${stage.stage_number}</div>
+                        <div class="plan-stage-trigger">${this.escapeHtml(stage.trigger)}</div>
                     </div>
                     <div class="plan-stage-content">
-                        <h5>Jobs Ready (${stage.jobs.length})</h5>
+                        <h5>Jobs Becoming Ready (${stage.jobs_becoming_ready.length})</h5>
                         <ul>
-                            ${stage.jobs.slice(0, 10).map(job => `
-                                <li>${this.escapeHtml(job.name || job.id)}</li>
+                            ${stage.jobs_becoming_ready.slice(0, 10).map(jobName => `
+                                <li>${this.escapeHtml(jobName)}</li>
                             `).join('')}
-                            ${stage.jobs.length > 10 ? `<li>... and ${stage.jobs.length - 10} more</li>` : ''}
+                            ${stage.jobs_becoming_ready.length > 10 ? `<li>... and ${stage.jobs_becoming_ready.length - 10} more</li>` : ''}
                         </ul>
+                        ${this.renderSchedulerAllocations(stage.scheduler_allocations)}
                     </div>
                 </div>
             `).join('')}
+        `;
+    },
+
+    renderSchedulerAllocations(allocations) {
+        if (!allocations || allocations.length === 0) {
+            return '';
+        }
+
+        return `
+            <div class="scheduler-allocations" style="margin-top: 12px;">
+                <h5>Scheduler Allocations</h5>
+                ${allocations.map(alloc => `
+                    <div class="scheduler-allocation" style="margin-left: 16px; margin-bottom: 8px; padding: 8px; background: var(--surface-color); border-radius: 4px;">
+                        <div><strong>Scheduler:</strong> ${this.escapeHtml(alloc.scheduler)} (${this.escapeHtml(alloc.scheduler_type)})</div>
+                        <div><strong>Allocations:</strong> ${alloc.num_allocations}</div>
+                        ${alloc.job_names && alloc.job_names.length > 0 ? `
+                            <div><strong>Jobs:</strong> ${alloc.job_names.slice(0, 5).map(n => this.escapeHtml(n)).join(', ')}${alloc.job_names.length > 5 ? ` ... and ${alloc.job_names.length - 5} more` : ''}</div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
         `;
     },
 });

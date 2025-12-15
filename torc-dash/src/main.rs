@@ -346,6 +346,7 @@ async fn main() -> Result<()> {
             post(cli_check_reinitialize_handler),
         )
         .route("/api/cli/reset-status", post(cli_reset_status_handler))
+        .route("/api/cli/execution-plan", post(cli_execution_plan_handler))
         .route("/api/cli/run-stream", get(cli_run_stream_handler))
         .route("/api/cli/read-file", post(cli_read_file_handler))
         .route("/api/cli/plot-resources", post(cli_plot_resources_handler))
@@ -727,6 +728,26 @@ async fn cli_reset_status_handler(
             "workflows",
             "reset-status",
             "--no-prompts",
+            &req.workflow_id,
+        ],
+        &state.api_url,
+    )
+    .await;
+    Json(result)
+}
+
+/// Get execution plan for a workflow (includes scheduler allocations per stage)
+async fn cli_execution_plan_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<WorkflowIdRequest>,
+) -> impl IntoResponse {
+    let result = run_torc_command(
+        &state.torc_bin,
+        &[
+            "-f",
+            "json",
+            "workflows",
+            "execution-plan",
             &req.workflow_id,
         ],
         &state.api_url,
