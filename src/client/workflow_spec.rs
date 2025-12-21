@@ -2,12 +2,13 @@ use crate::client::apis::{configuration::Configuration, default_api};
 use crate::client::parameter_expansion::{
     ParameterValue, cartesian_product, parse_parameter_value, substitute_parameters, zip_parameters,
 };
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::Path;
+
 use crate::models;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 
 /// Result of validating a workflow specification (dry-run)
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -552,6 +553,12 @@ impl WorkflowSpec {
         }
     }
 
+    /// Deserialize a WorkflowSpec from a serde_json::Value
+    /// This is the common conversion point for all file formats
+    pub fn from_json_value(value: serde_json::Value) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(serde_json::from_value(value)?)
+    }
+
     /// Expand all parameterized jobs and files in this workflow spec
     /// This modifies the spec in-place, replacing parameterized specs with their expanded versions
     ///
@@ -851,8 +858,6 @@ impl WorkflowSpec {
     /// # Returns
     /// A `ValidationResult` containing validation status and summary
     pub fn validate_spec<P: AsRef<Path>>(path: P) -> ValidationResult {
-        use std::collections::{HashMap, HashSet};
-
         let mut errors = Vec::new();
         let mut warnings = Vec::new();
 
@@ -1870,8 +1875,6 @@ impl WorkflowSpec {
         jobs: &'a [JobSpec],
         dependencies: &HashMap<String, Vec<String>>,
     ) -> Result<Vec<Vec<&'a JobSpec>>, Box<dyn std::error::Error>> {
-        use std::collections::HashSet;
-
         let mut levels = Vec::new();
         let mut remaining: HashSet<String> = jobs.iter().map(|j| j.name.clone()).collect();
         let mut processed = HashSet::new();
@@ -2141,24 +2144,35 @@ impl WorkflowSpec {
         Ok((job_name_to_id, created_jobs))
     }
 
-    /// Parse parameters from a KDL node's children
-    /// Expects a structure like:
-    /// ```kdl
-    /// parameters {
-    ///     i "1:100"
-    ///     lr "[0.001,0.01,0.1]"
-    /// }
-    /// ```
-    /// Returns a HashMap of parameter name -> value string
+    /// Convert a byte offset to (line, column) for error reporting
     #[cfg(feature = "client")]
-    fn parse_kdl_parameters(
+    fn offset_to_line_col(content: &str, offset: usize) -> (usize, usize) {
+        let mut line = 1;
+        let mut col = 1;
+        for (i, ch) in content.char_indices() {
+            if i >= offset {
+                break;
+            }
+            if ch == '\n' {
+                line += 1;
+                col = 1;
+            } else {
+                col += 1;
+            }
+        }
+        (line, col)
+    }
+
+    /// Convert a KDL parameters block to a JSON object
+    #[cfg(feature = "client")]
+    fn kdl_parameters_to_json(
         node: &KdlNode,
-    ) -> Result<Option<HashMap<String, String>>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<serde_json::Value>, Box<dyn std::error::Error>> {
         let Some(children) = node.children() else {
             return Ok(None);
         };
 
-        let mut params = HashMap::new();
+        let mut params = serde_json::Map::new();
         for child in children.nodes() {
             let param_name = child.name().value().to_string();
             let param_value = child
@@ -2167,153 +2181,19 @@ impl WorkflowSpec {
                 .and_then(|e| e.value().as_string())
                 .ok_or_else(|| format!("Parameter '{}' must have a string value", param_name))?
                 .to_string();
-            params.insert(param_name, param_value);
+            params.insert(param_name, serde_json::Value::String(param_value));
         }
 
         if params.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(params))
+            Ok(Some(serde_json::Value::Object(params)))
         }
     }
 
-    /// Parse a WorkflowSpec from a KDL string
+    /// Convert a KDL job node to a JSON object
     #[cfg(feature = "client")]
-    fn from_kdl_str(content: &str) -> Result<WorkflowSpec, Box<dyn std::error::Error>> {
-        let doc: KdlDocument = content
-            .parse()
-            .map_err(|e| format!("Failed to parse KDL document: {}", e))?;
-
-        let mut spec = WorkflowSpec::default();
-        let mut jobs = Vec::new();
-        let mut files = Vec::new();
-        let mut user_data = Vec::new();
-        let mut resource_requirements = Vec::new();
-        let mut slurm_schedulers = Vec::new();
-        let mut actions = Vec::new();
-
-        for node in doc.nodes() {
-            match node.name().value() {
-                "name" => {
-                    spec.name = node
-                        .entries()
-                        .first()
-                        .and_then(|e| e.value().as_string())
-                        .ok_or("name must have a string value")?
-                        .to_string();
-                }
-                "user" => {
-                    spec.user = Some(
-                        node.entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("user must have a string value")?
-                            .to_string(),
-                    );
-                }
-                "description" => {
-                    spec.description = Some(
-                        node.entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("description must have a string value")?
-                            .to_string(),
-                    );
-                }
-                "compute_node_expiration_buffer_seconds" => {
-                    spec.compute_node_expiration_buffer_seconds = node
-                        .entries()
-                        .first()
-                        .and_then(|e| e.value().as_integer())
-                        .and_then(|i| i.try_into().ok());
-                }
-                "compute_node_wait_for_new_jobs_seconds" => {
-                    spec.compute_node_wait_for_new_jobs_seconds = node
-                        .entries()
-                        .first()
-                        .and_then(|e| e.value().as_integer())
-                        .and_then(|i| i.try_into().ok());
-                }
-                "compute_node_ignore_workflow_completion" => {
-                    spec.compute_node_ignore_workflow_completion =
-                        node.entries().first().and_then(|e| e.value().as_bool());
-                }
-                "compute_node_wait_for_healthy_database_minutes" => {
-                    spec.compute_node_wait_for_healthy_database_minutes = node
-                        .entries()
-                        .first()
-                        .and_then(|e| e.value().as_integer())
-                        .and_then(|i| i.try_into().ok());
-                }
-                "jobs_sort_method" => {
-                    if let Some(value_str) =
-                        node.entries().first().and_then(|e| e.value().as_string())
-                    {
-                        spec.jobs_sort_method = match value_str {
-                            "gpus_runtime_memory" => {
-                                Some(models::ClaimJobsSortMethod::GpusRuntimeMemory)
-                            }
-                            "gpus_memory_runtime" => {
-                                Some(models::ClaimJobsSortMethod::GpusMemoryRuntime)
-                            }
-                            "none" => Some(models::ClaimJobsSortMethod::None),
-                            _ => {
-                                return Err(
-                                    format!("Invalid jobs_sort_method: {}", value_str).into()
-                                );
-                            }
-                        };
-                    }
-                }
-                "parameters" => {
-                    spec.parameters = Self::parse_kdl_parameters(node)?;
-                }
-                "job" => {
-                    let job_spec = Self::parse_kdl_job(node)?;
-                    jobs.push(job_spec);
-                }
-                "file" => {
-                    let file_spec = Self::parse_kdl_file(node)?;
-                    files.push(file_spec);
-                }
-                "user_data" => {
-                    let user_data_spec = Self::parse_kdl_user_data(node)?;
-                    user_data.push(user_data_spec);
-                }
-                "resource_requirements" => {
-                    let resource_req_spec = Self::parse_kdl_resource_requirements(node)?;
-                    resource_requirements.push(resource_req_spec);
-                }
-                "slurm_scheduler" => {
-                    let scheduler_spec = Self::parse_kdl_slurm_scheduler(node)?;
-                    slurm_schedulers.push(scheduler_spec);
-                }
-                "action" => {
-                    let action_spec = Self::parse_kdl_action(node)?;
-                    actions.push(action_spec);
-                }
-                "resource_monitor" => {
-                    let monitor_config = Self::parse_kdl_resource_monitor(node)?;
-                    spec.resource_monitor = Some(monitor_config);
-                }
-                _ => {
-                    // Ignore unknown nodes
-                }
-            }
-        }
-
-        spec.jobs = jobs;
-        spec.files = Some(files).filter(|v| !v.is_empty());
-        spec.user_data = Some(user_data).filter(|v| !v.is_empty());
-        spec.resource_requirements = Some(resource_requirements).filter(|v| !v.is_empty());
-        spec.slurm_schedulers = Some(slurm_schedulers).filter(|v| !v.is_empty());
-        spec.actions = Some(actions).filter(|v| !v.is_empty());
-
-        Ok(spec)
-    }
-
-    #[cfg(feature = "client")]
-    fn parse_kdl_job(node: &KdlNode) -> Result<JobSpec, Box<dyn std::error::Error>> {
+    fn kdl_job_to_json(node: &KdlNode) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let name = node
             .entries()
             .first()
@@ -2321,140 +2201,137 @@ impl WorkflowSpec {
             .ok_or("job must have a name")?
             .to_string();
 
-        let mut job_spec = JobSpec {
-            name,
-            ..Default::default()
-        };
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".to_string(), serde_json::Value::String(name));
+
+        // Collect array fields
+        let mut depends_on: Vec<serde_json::Value> = Vec::new();
+        let mut depends_on_regexes: Vec<serde_json::Value> = Vec::new();
+        let mut input_files: Vec<serde_json::Value> = Vec::new();
+        let mut output_files: Vec<serde_json::Value> = Vec::new();
+        let mut input_user_data: Vec<serde_json::Value> = Vec::new();
+        let mut output_user_data: Vec<serde_json::Value> = Vec::new();
 
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "command" => {
-                        job_spec.command = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("command must have a string value")?
-                            .to_string();
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "command".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "invocation_script" => {
-                        job_spec.invocation_script = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "invocation_script".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "cancel_on_blocking_job_failure" => {
-                        job_spec.cancel_on_blocking_job_failure =
-                            child.entries().first().and_then(|e| e.value().as_bool());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert(
+                                "cancel_on_blocking_job_failure".to_string(),
+                                serde_json::Value::Bool(v),
+                            );
+                        }
                     }
                     "supports_termination" => {
-                        job_spec.supports_termination =
-                            child.entries().first().and_then(|e| e.value().as_bool());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert(
+                                "supports_termination".to_string(),
+                                serde_json::Value::Bool(v),
+                            );
+                        }
                     }
                     "resource_requirements" => {
-                        job_spec.resource_requirements = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "depends_on_job" => {
-                        if job_spec.depends_on.is_none() {
-                            job_spec.depends_on = Some(Vec::new());
-                        }
-                        if let Some(job_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            job_spec
-                                .depends_on
-                                .as_mut()
-                                .unwrap()
-                                .push(job_name.to_string());
+                            obj.insert(
+                                "resource_requirements".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "depends_on" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            depends_on.push(serde_json::Value::String(v.to_string()));
+                        }
+                    }
+                    "depends_on_regexes" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            depends_on_regexes.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "input_file" => {
-                        if job_spec.input_files.is_none() {
-                            job_spec.input_files = Some(Vec::new());
-                        }
-                        if let Some(file_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            job_spec
-                                .input_files
-                                .as_mut()
-                                .unwrap()
-                                .push(file_name.to_string());
+                            input_files.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "output_file" => {
-                        if job_spec.output_files.is_none() {
-                            job_spec.output_files = Some(Vec::new());
-                        }
-                        if let Some(file_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            job_spec
-                                .output_files
-                                .as_mut()
-                                .unwrap()
-                                .push(file_name.to_string());
+                            output_files.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "input_user_data" => {
-                        if job_spec.input_user_data.is_none() {
-                            job_spec.input_user_data = Some(Vec::new());
-                        }
-                        if let Some(data_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            job_spec
-                                .input_user_data
-                                .as_mut()
-                                .unwrap()
-                                .push(data_name.to_string());
+                            input_user_data.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "output_user_data" => {
-                        if job_spec.output_user_data.is_none() {
-                            job_spec.output_user_data = Some(Vec::new());
-                        }
-                        if let Some(data_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            job_spec
-                                .output_user_data
-                                .as_mut()
-                                .unwrap()
-                                .push(data_name.to_string());
+                            output_user_data.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "scheduler" => {
-                        job_spec.scheduler = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "scheduler".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "parameters" => {
-                        job_spec.parameters = Self::parse_kdl_parameters(child)?;
+                        if let Some(params) = Self::kdl_parameters_to_json(child)? {
+                            obj.insert("parameters".to_string(), params);
+                        }
                     }
                     "parameter_mode" => {
-                        job_spec.parameter_mode = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "parameter_mode".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "use_parameters" => {
-                        // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
-                        let param_names: Vec<String> = child
+                        let param_names: Vec<serde_json::Value> = child
                             .entries()
                             .iter()
-                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .filter_map(|e| {
+                                e.value()
+                                    .as_string()
+                                    .map(|s| serde_json::Value::String(s.to_string()))
+                            })
                             .collect();
                         if !param_names.is_empty() {
-                            job_spec.use_parameters = Some(param_names);
+                            obj.insert(
+                                "use_parameters".to_string(),
+                                serde_json::Value::Array(param_names),
+                            );
                         }
                     }
                     _ => {}
@@ -2462,11 +2339,50 @@ impl WorkflowSpec {
             }
         }
 
-        Ok(job_spec)
+        // Add collected arrays if non-empty
+        if !depends_on.is_empty() {
+            obj.insert(
+                "depends_on".to_string(),
+                serde_json::Value::Array(depends_on),
+            );
+        }
+        if !depends_on_regexes.is_empty() {
+            obj.insert(
+                "depends_on_regexes".to_string(),
+                serde_json::Value::Array(depends_on_regexes),
+            );
+        }
+        if !input_files.is_empty() {
+            obj.insert(
+                "input_files".to_string(),
+                serde_json::Value::Array(input_files),
+            );
+        }
+        if !output_files.is_empty() {
+            obj.insert(
+                "output_files".to_string(),
+                serde_json::Value::Array(output_files),
+            );
+        }
+        if !input_user_data.is_empty() {
+            obj.insert(
+                "input_user_data".to_string(),
+                serde_json::Value::Array(input_user_data),
+            );
+        }
+        if !output_user_data.is_empty() {
+            obj.insert(
+                "output_user_data".to_string(),
+                serde_json::Value::Array(output_user_data),
+            );
+        }
+
+        Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL file node to a JSON object
     #[cfg(feature = "client")]
-    fn parse_kdl_file(node: &KdlNode) -> Result<FileSpec, Box<dyn std::error::Error>> {
+    fn kdl_file_to_json(node: &KdlNode) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let name = node
             .entries()
             .first()
@@ -2474,47 +2390,59 @@ impl WorkflowSpec {
             .ok_or("file must have a name")?
             .to_string();
 
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".to_string(), serde_json::Value::String(name));
+
         // Path can be specified as a property (file "name" path="/path")
-        // or as a child node for parameterized files
-        let mut path = node
-            .get("path")
-            .and_then(|e| e.as_string())
-            .map(|s| s.to_string());
+        if let Some(path) = node.get("path").and_then(|e| e.as_string()) {
+            obj.insert(
+                "path".to_string(),
+                serde_json::Value::String(path.to_string()),
+            );
+        }
 
-        let mut parameters = None;
-        let mut parameter_mode = None;
-        let mut use_parameters = None;
-
-        // Check for child nodes (path, parameters, parameter_mode, use_parameters)
+        // Check for child nodes
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "path" => {
-                        path = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "path".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "parameters" => {
-                        parameters = Self::parse_kdl_parameters(child)?;
+                        if let Some(params) = Self::kdl_parameters_to_json(child)? {
+                            obj.insert("parameters".to_string(), params);
+                        }
                     }
                     "parameter_mode" => {
-                        parameter_mode = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "parameter_mode".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "use_parameters" => {
-                        // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
-                        let param_names: Vec<String> = child
+                        let param_names: Vec<serde_json::Value> = child
                             .entries()
                             .iter()
-                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .filter_map(|e| {
+                                e.value()
+                                    .as_string()
+                                    .map(|s| serde_json::Value::String(s.to_string()))
+                            })
                             .collect();
                         if !param_names.is_empty() {
-                            use_parameters = Some(param_names);
+                            obj.insert(
+                                "use_parameters".to_string(),
+                                serde_json::Value::Array(param_names),
+                            );
                         }
                     }
                     _ => {}
@@ -2522,33 +2450,38 @@ impl WorkflowSpec {
             }
         }
 
-        let path = path.ok_or("file must have a path property")?;
+        // Validate required path field
+        if !obj.contains_key("path") {
+            return Err("file must have a path property".into());
+        }
 
-        Ok(FileSpec {
-            name,
-            path,
-            parameters,
-            parameter_mode,
-            use_parameters,
-        })
+        Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL user_data node to a JSON object
     #[cfg(feature = "client")]
-    fn parse_kdl_user_data(node: &KdlNode) -> Result<UserDataSpec, Box<dyn std::error::Error>> {
-        let name = node
-            .entries()
-            .first()
-            .and_then(|e| e.value().as_string())
-            .map(|s| s.to_string());
+    fn kdl_user_data_to_json(
+        node: &KdlNode,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mut obj = serde_json::Map::new();
 
-        let mut is_ephemeral = None;
+        // Name is optional
+        if let Some(name) = node.entries().first().and_then(|e| e.value().as_string()) {
+            obj.insert(
+                "name".to_string(),
+                serde_json::Value::String(name.to_string()),
+            );
+        }
+
         let mut data_str: Option<&str> = None;
 
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "is_ephemeral" => {
-                        is_ephemeral = child.entries().first().and_then(|e| e.value().as_bool());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert("is_ephemeral".to_string(), serde_json::Value::Bool(v));
+                        }
                     }
                     "data" => {
                         data_str = child.entries().first().and_then(|e| e.value().as_string());
@@ -2558,20 +2491,19 @@ impl WorkflowSpec {
             }
         }
 
+        // Parse data string as JSON
         let data_str = data_str.ok_or("user_data must have a data property")?;
         let data: serde_json::Value = serde_json::from_str(data_str)?;
+        obj.insert("data".to_string(), data);
 
-        Ok(UserDataSpec {
-            is_ephemeral,
-            name,
-            data: Some(data),
-        })
+        Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL resource_requirements node to a JSON object
     #[cfg(feature = "client")]
-    fn parse_kdl_resource_requirements(
+    fn kdl_resource_requirements_to_json(
         node: &KdlNode,
-    ) -> Result<ResourceRequirementsSpec, Box<dyn std::error::Error>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let name = node
             .entries()
             .first()
@@ -2579,359 +2511,919 @@ impl WorkflowSpec {
             .ok_or("resource_requirements must have a name")?
             .to_string();
 
-        let mut spec = ResourceRequirementsSpec {
-            name,
-            num_cpus: 0,
-            num_gpus: 0,
-            num_nodes: 0,
-            memory: String::new(),
-            runtime: String::new(),
-        };
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".to_string(), serde_json::Value::String(name));
 
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "num_cpus" => {
-                        spec.num_cpus = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok())
-                            .ok_or("num_cpus must have a valid integer value")?;
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "num_cpus".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
                     }
                     "num_gpus" => {
-                        spec.num_gpus = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok())
-                            .ok_or("num_gpus must have a valid integer value")?;
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "num_gpus".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
                     }
                     "num_nodes" => {
-                        spec.num_nodes = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok())
-                            .ok_or("num_nodes must have a valid integer value")?;
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "num_nodes".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
                     }
                     "memory" => {
-                        spec.memory = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("memory must have a string value")?
-                            .to_string();
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "memory".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "runtime" => {
-                        spec.runtime = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("runtime must have a string value")?
-                            .to_string();
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "runtime".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     _ => {}
                 }
             }
         }
 
-        Ok(spec)
+        Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL slurm_scheduler node to a JSON object
     #[cfg(feature = "client")]
-    fn parse_kdl_slurm_scheduler(
+    fn kdl_slurm_scheduler_to_json(
         node: &KdlNode,
-    ) -> Result<SlurmSchedulerSpec, Box<dyn std::error::Error>> {
-        let name = node
-            .entries()
-            .first()
-            .and_then(|e| e.value().as_string())
-            .map(|s| s.to_string());
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mut obj = serde_json::Map::new();
 
-        let mut spec = SlurmSchedulerSpec {
-            name,
-            account: String::new(),
-            gres: None,
-            mem: None,
-            nodes: 0,
-            ntasks_per_node: None,
-            partition: None,
-            qos: None,
-            tmp: None,
-            walltime: String::new(),
-            extra: None,
-        };
+        // Name is optional
+        if let Some(name) = node.entries().first().and_then(|e| e.value().as_string()) {
+            obj.insert(
+                "name".to_string(),
+                serde_json::Value::String(name.to_string()),
+            );
+        }
 
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "account" => {
-                        spec.account = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("account must have a string value")?
-                            .to_string();
-                    }
-                    "gres" => {
-                        spec.gres = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "mem" => {
-                        spec.mem = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "nodes" => {
-                        spec.nodes = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok())
-                            .ok_or("nodes must have a valid integer value")?;
-                    }
-                    "ntasks_per_node" => {
-                        spec.ntasks_per_node = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok());
-                    }
-                    "partition" => {
-                        spec.partition = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "qos" => {
-                        spec.qos = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "tmp" => {
-                        spec.tmp = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    "walltime" => {
-                        spec.walltime = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("walltime must have a string value")?
-                            .to_string();
-                    }
-                    "extra" => {
-                        spec.extra = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        // Validate required fields
-        if spec.walltime.is_empty() {
-            return Err("walltime is required for Slurm scheduler".into());
-        }
-
-        Ok(spec)
-    }
-
-    #[cfg(feature = "client")]
-    fn parse_kdl_resource_monitor(
-        node: &KdlNode,
-    ) -> Result<crate::client::resource_monitor::ResourceMonitorConfig, Box<dyn std::error::Error>>
-    {
-        let mut config = crate::client::resource_monitor::ResourceMonitorConfig::default();
-
-        if let Some(children) = node.children() {
-            for child in children.nodes() {
-                match child.name().value() {
-                    "enabled" => {
-                        config.enabled = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_bool())
-                            .ok_or("enabled must have a boolean value")?;
-                    }
-                    "granularity" => {
-                        if let Some(value_str) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            config.granularity = match value_str {
-                                "summary" => {
-                                    crate::client::resource_monitor::MonitorGranularity::Summary
-                                }
-                                "time_series" => {
-                                    crate::client::resource_monitor::MonitorGranularity::TimeSeries
-                                }
-                                _ => {
-                                    return Err(
-                                        format!("Invalid granularity: {}", value_str).into()
-                                    );
-                                }
-                            };
+                            obj.insert(
+                                "account".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
                         }
                     }
-                    "sample_interval_seconds" => {
-                        config.sample_interval_seconds = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok())
-                            .ok_or("sample_interval_seconds must have a valid integer value")?;
+                    "gres" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "gres".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
-                    "generate_plots" => {
-                        config.generate_plots = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_bool())
-                            .ok_or("generate_plots must have a boolean value")?;
+                    "mem" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert("mem".to_string(), serde_json::Value::String(v.to_string()));
+                        }
+                    }
+                    "nodes" => {
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "nodes".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
+                    }
+                    "ntasks_per_node" => {
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "ntasks_per_node".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
+                    }
+                    "partition" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "partition".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "qos" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert("qos".to_string(), serde_json::Value::String(v.to_string()));
+                        }
+                    }
+                    "tmp" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert("tmp".to_string(), serde_json::Value::String(v.to_string()));
+                        }
+                    }
+                    "walltime" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "walltime".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "extra" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "extra".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     _ => {}
                 }
             }
         }
 
-        Ok(config)
+        Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL action node to a JSON object
     #[cfg(feature = "client")]
-    fn parse_kdl_action(node: &KdlNode) -> Result<WorkflowActionSpec, Box<dyn std::error::Error>> {
-        let mut spec = WorkflowActionSpec {
-            trigger_type: String::new(),
-            action_type: String::new(),
-            jobs: None,
-            job_name_regexes: None,
-            commands: None,
-            scheduler: None,
-            scheduler_type: None,
-            num_allocations: None,
-            start_one_worker_per_node: None,
-            max_parallel_jobs: None,
-            persistent: None,
-        };
+    fn kdl_action_to_json(node: &KdlNode) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mut obj = serde_json::Map::new();
+
+        // Collect array fields
+        let mut job_names: Vec<serde_json::Value> = Vec::new();
+        let mut job_name_regexes: Vec<serde_json::Value> = Vec::new();
+        let mut commands: Vec<serde_json::Value> = Vec::new();
 
         if let Some(children) = node.children() {
             for child in children.nodes() {
                 match child.name().value() {
                     "trigger_type" => {
-                        spec.trigger_type = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("trigger_type must have a string value")?
-                            .to_string();
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "trigger_type".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "action_type" => {
-                        spec.action_type = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .ok_or("action_type must have a string value")?
-                            .to_string();
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "action_type".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "job" => {
+                        // Collect individual job entries: job "prep_a" / job "prep_b"
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            job_names.push(serde_json::Value::String(v.to_string()));
+                        }
                     }
                     "jobs" => {
                         // Parse jobs as multiple string arguments: jobs "job1" "job2" "job3"
-                        let job_names: Vec<String> = child
-                            .entries()
-                            .iter()
-                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
-                            .collect();
-                        if !job_names.is_empty() {
-                            spec.jobs = Some(job_names);
+                        for e in child.entries().iter() {
+                            if let Some(s) = e.value().as_string() {
+                                job_names.push(serde_json::Value::String(s.to_string()));
+                            }
                         }
                     }
                     "job_name_regexes" => {
-                        if spec.job_name_regexes.is_none() {
-                            spec.job_name_regexes = Some(Vec::new());
-                        }
-                        if let Some(regex) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            spec.job_name_regexes
-                                .as_mut()
-                                .unwrap()
-                                .push(regex.to_string());
+                            job_name_regexes.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "command" => {
-                        if spec.commands.is_none() {
-                            spec.commands = Some(Vec::new());
-                        }
-                        if let Some(command) =
-                            child.entries().first().and_then(|e| e.value().as_string())
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
                         {
-                            spec.commands.as_mut().unwrap().push(command.to_string());
+                            commands.push(serde_json::Value::String(v.to_string()));
                         }
                     }
                     "scheduler" => {
-                        spec.scheduler = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "scheduler".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "scheduler_type" => {
-                        spec.scheduler_type = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "scheduler_type".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
                     }
                     "num_allocations" => {
-                        spec.num_allocations = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok());
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "num_allocations".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
                     }
                     "start_one_worker_per_node" => {
-                        spec.start_one_worker_per_node =
-                            child.entries().first().and_then(|e| e.value().as_bool());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert(
+                                "start_one_worker_per_node".to_string(),
+                                serde_json::Value::Bool(v),
+                            );
+                        }
                     }
                     "max_parallel_jobs" => {
-                        spec.max_parallel_jobs = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_integer())
-                            .and_then(|i| i.try_into().ok());
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "max_parallel_jobs".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
                     }
                     "persistent" => {
-                        spec.persistent = child.entries().first().and_then(|e| e.value().as_bool());
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert("persistent".to_string(), serde_json::Value::Bool(v));
+                        }
                     }
                     _ => {}
                 }
             }
         }
 
-        // Validate required fields
-        if spec.trigger_type.is_empty() {
-            return Err("trigger_type is required for action".into());
+        // Add collected arrays if non-empty
+        if !job_names.is_empty() {
+            obj.insert("jobs".to_string(), serde_json::Value::Array(job_names));
         }
-        if spec.action_type.is_empty() {
-            return Err("action_type is required for action".into());
+        if !job_name_regexes.is_empty() {
+            obj.insert(
+                "job_name_regexes".to_string(),
+                serde_json::Value::Array(job_name_regexes),
+            );
+        }
+        if !commands.is_empty() {
+            obj.insert("commands".to_string(), serde_json::Value::Array(commands));
         }
 
-        Ok(spec)
+        Ok(serde_json::Value::Object(obj))
     }
 
-    /// Deserialize a WorkflowSpec from a specification file (JSON, JSON5, or YAML)
+    /// Convert a KDL resource_monitor node to a JSON object
+    #[cfg(feature = "client")]
+    fn kdl_resource_monitor_to_json(
+        node: &KdlNode,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mut obj = serde_json::Map::new();
+
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                match child.name().value() {
+                    "enabled" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert("enabled".to_string(), serde_json::Value::Bool(v));
+                        }
+                    }
+                    "granularity" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "granularity".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "sample_interval_seconds" => {
+                        if let Some(v) =
+                            child.entries().first().and_then(|e| e.value().as_integer())
+                        {
+                            obj.insert(
+                                "sample_interval_seconds".to_string(),
+                                serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                            );
+                        }
+                    }
+                    "generate_plots" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_bool()) {
+                            obj.insert("generate_plots".to_string(), serde_json::Value::Bool(v));
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(serde_json::Value::Object(obj))
+    }
+
+    /// Convert a KDL document string to a serde_json::Value
+    /// This is the intermediate representation used by all file formats
+    #[cfg(feature = "client")]
+    fn kdl_to_json_value(content: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let doc: KdlDocument = content.parse().map_err(|e: kdl::KdlError| {
+            // Extract detailed diagnostic information from KDL parse errors
+            let mut error_msg = String::from("Failed to parse KDL document:\n");
+            for diag in e.diagnostics.iter() {
+                let offset = diag.span.offset();
+                let (line, col) = Self::offset_to_line_col(content, offset);
+
+                if let Some(msg) = &diag.message {
+                    error_msg.push_str(&format!("  Line {}, column {}: {}", line, col, msg));
+                } else {
+                    error_msg.push_str(&format!("  Line {}, column {}: syntax error", line, col));
+                }
+                if let Some(label) = &diag.label {
+                    error_msg.push_str(&format!(" ({})", label));
+                }
+                error_msg.push('\n');
+                if let Some(help) = &diag.help {
+                    error_msg.push_str(&format!("    Help: {}\n", help));
+                }
+            }
+            // Show the problematic line if we can
+            if let Some(first_diag) = e.diagnostics.first() {
+                let offset = first_diag.span.offset();
+                let (line_num, col) = Self::offset_to_line_col(content, offset);
+                if let Some(line_content) = content.lines().nth(line_num.saturating_sub(1)) {
+                    error_msg.push_str(&format!("\n  {} | {}\n", line_num, line_content));
+                    error_msg.push_str(&format!(
+                        "  {} | {}^\n",
+                        " ".repeat(line_num.to_string().len()),
+                        " ".repeat(col.saturating_sub(1))
+                    ));
+                }
+            }
+            error_msg
+        })?;
+
+        let mut obj = serde_json::Map::new();
+        let mut jobs: Vec<serde_json::Value> = Vec::new();
+        let mut files: Vec<serde_json::Value> = Vec::new();
+        let mut user_data: Vec<serde_json::Value> = Vec::new();
+        let mut resource_requirements: Vec<serde_json::Value> = Vec::new();
+        let mut slurm_schedulers: Vec<serde_json::Value> = Vec::new();
+        let mut actions: Vec<serde_json::Value> = Vec::new();
+
+        for node in doc.nodes() {
+            match node.name().value() {
+                "name" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_string()) {
+                        obj.insert("name".to_string(), serde_json::Value::String(v.to_string()));
+                    }
+                }
+                "user" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_string()) {
+                        obj.insert("user".to_string(), serde_json::Value::String(v.to_string()));
+                    }
+                }
+                "description" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_string()) {
+                        obj.insert(
+                            "description".to_string(),
+                            serde_json::Value::String(v.to_string()),
+                        );
+                    }
+                }
+                "compute_node_expiration_buffer_seconds" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_integer()) {
+                        obj.insert(
+                            "compute_node_expiration_buffer_seconds".to_string(),
+                            serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                        );
+                    }
+                }
+                "compute_node_wait_for_new_jobs_seconds" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_integer()) {
+                        obj.insert(
+                            "compute_node_wait_for_new_jobs_seconds".to_string(),
+                            serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                        );
+                    }
+                }
+                "compute_node_ignore_workflow_completion" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_bool()) {
+                        obj.insert(
+                            "compute_node_ignore_workflow_completion".to_string(),
+                            serde_json::Value::Bool(v),
+                        );
+                    }
+                }
+                "compute_node_wait_for_healthy_database_minutes" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_integer()) {
+                        obj.insert(
+                            "compute_node_wait_for_healthy_database_minutes".to_string(),
+                            serde_json::Value::Number(serde_json::Number::from(v as i64)),
+                        );
+                    }
+                }
+                "jobs_sort_method" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_string()) {
+                        obj.insert(
+                            "jobs_sort_method".to_string(),
+                            serde_json::Value::String(v.to_string()),
+                        );
+                    }
+                }
+                "parameters" => {
+                    if let Some(params) = Self::kdl_parameters_to_json(node)? {
+                        obj.insert("parameters".to_string(), params);
+                    }
+                }
+                "job" => {
+                    jobs.push(Self::kdl_job_to_json(node)?);
+                }
+                "file" => {
+                    files.push(Self::kdl_file_to_json(node)?);
+                }
+                "user_data" => {
+                    user_data.push(Self::kdl_user_data_to_json(node)?);
+                }
+                "resource_requirements" => {
+                    resource_requirements.push(Self::kdl_resource_requirements_to_json(node)?);
+                }
+                "slurm_scheduler" => {
+                    slurm_schedulers.push(Self::kdl_slurm_scheduler_to_json(node)?);
+                }
+                "action" => {
+                    actions.push(Self::kdl_action_to_json(node)?);
+                }
+                "resource_monitor" => {
+                    obj.insert(
+                        "resource_monitor".to_string(),
+                        Self::kdl_resource_monitor_to_json(node)?,
+                    );
+                }
+                _ => {
+                    // Ignore unknown nodes
+                }
+            }
+        }
+
+        // Add collected arrays - jobs is required (can be empty), others are optional
+        obj.insert("jobs".to_string(), serde_json::Value::Array(jobs));
+        if !files.is_empty() {
+            obj.insert("files".to_string(), serde_json::Value::Array(files));
+        }
+        if !user_data.is_empty() {
+            obj.insert("user_data".to_string(), serde_json::Value::Array(user_data));
+        }
+        if !resource_requirements.is_empty() {
+            obj.insert(
+                "resource_requirements".to_string(),
+                serde_json::Value::Array(resource_requirements),
+            );
+        }
+        if !slurm_schedulers.is_empty() {
+            obj.insert(
+                "slurm_schedulers".to_string(),
+                serde_json::Value::Array(slurm_schedulers),
+            );
+        }
+        if !actions.is_empty() {
+            obj.insert("actions".to_string(), serde_json::Value::Array(actions));
+        }
+
+        Ok(serde_json::Value::Object(obj))
+    }
+
+    /// Serialize WorkflowSpec to KDL format
+    #[cfg(feature = "client")]
+    pub fn to_kdl_str(&self) -> String {
+        let mut lines = Vec::new();
+
+        // Helper to escape strings for KDL
+        fn kdl_escape(s: &str) -> String {
+            // Use raw strings for multi-line or strings with special chars
+            if s.contains('\n') || s.contains('"') || s.contains('\\') {
+                // Count the number of # needed for raw string
+                let mut hashes = 0;
+                loop {
+                    let delimiter: String = std::iter::repeat('#').take(hashes).collect();
+                    if !s.contains(&format!("\"{}", delimiter)) {
+                        break;
+                    }
+                    hashes += 1;
+                }
+                let delimiter: String = std::iter::repeat('#').take(hashes).collect();
+                // KDL raw string format: r#"..."# where # count can vary
+                format!("r{}\"{}\"{}", delimiter, s, delimiter)
+            } else {
+                format!("\"{}\"", s)
+            }
+        }
+
+        // Top-level fields
+        lines.push(format!("name {}", kdl_escape(&self.name)));
+        if let Some(ref user) = self.user {
+            lines.push(format!("user {}", kdl_escape(user)));
+        }
+        if let Some(ref desc) = self.description {
+            lines.push(format!("description {}", kdl_escape(desc)));
+        }
+        if let Some(val) = self.compute_node_expiration_buffer_seconds {
+            lines.push(format!("compute_node_expiration_buffer_seconds {}", val));
+        }
+        if let Some(val) = self.compute_node_wait_for_new_jobs_seconds {
+            lines.push(format!("compute_node_wait_for_new_jobs_seconds {}", val));
+        }
+        if let Some(val) = self.compute_node_ignore_workflow_completion {
+            lines.push(format!(
+                "compute_node_ignore_workflow_completion {}",
+                if val { "#true" } else { "#false" }
+            ));
+        }
+        if let Some(val) = self.compute_node_wait_for_healthy_database_minutes {
+            lines.push(format!(
+                "compute_node_wait_for_healthy_database_minutes {}",
+                val
+            ));
+        }
+        if let Some(ref method) = self.jobs_sort_method {
+            let method_str = match method {
+                models::ClaimJobsSortMethod::GpusRuntimeMemory => "gpus_runtime_memory",
+                models::ClaimJobsSortMethod::GpusMemoryRuntime => "gpus_memory_runtime",
+                models::ClaimJobsSortMethod::None => "none",
+            };
+            lines.push(format!("jobs_sort_method \"{}\"", method_str));
+        }
+
+        // Parameters
+        if let Some(ref params) = self.parameters {
+            if !params.is_empty() {
+                lines.push("parameters {".to_string());
+                for (key, value) in params {
+                    lines.push(format!("    {} {}", key, kdl_escape(value)));
+                }
+                lines.push("}".to_string());
+            }
+        }
+
+        lines.push(String::new()); // Empty line for readability
+
+        // Files
+        if let Some(ref files) = self.files {
+            for file in files {
+                Self::file_spec_to_kdl(&mut lines, file, &kdl_escape);
+            }
+            if !files.is_empty() {
+                lines.push(String::new());
+            }
+        }
+
+        // User data
+        if let Some(ref user_data) = self.user_data {
+            for ud in user_data {
+                Self::user_data_spec_to_kdl(&mut lines, ud, &kdl_escape);
+            }
+            if !user_data.is_empty() {
+                lines.push(String::new());
+            }
+        }
+
+        // Resource requirements
+        if let Some(ref reqs) = self.resource_requirements {
+            for req in reqs {
+                Self::resource_requirements_spec_to_kdl(&mut lines, req, &kdl_escape);
+            }
+            if !reqs.is_empty() {
+                lines.push(String::new());
+            }
+        }
+
+        // Resource monitor
+        if let Some(ref monitor) = self.resource_monitor {
+            lines.push("resource_monitor {".to_string());
+            lines.push(format!(
+                "    enabled {}",
+                if monitor.enabled { "#true" } else { "#false" }
+            ));
+            let granularity = match monitor.granularity {
+                crate::client::resource_monitor::MonitorGranularity::Summary => "summary",
+                crate::client::resource_monitor::MonitorGranularity::TimeSeries => "time_series",
+            };
+            lines.push(format!("    granularity \"{}\"", granularity));
+            lines.push(format!(
+                "    sample_interval_seconds {}",
+                monitor.sample_interval_seconds
+            ));
+            lines.push(format!(
+                "    generate_plots {}",
+                if monitor.generate_plots {
+                    "#true"
+                } else {
+                    "#false"
+                }
+            ));
+            lines.push("}".to_string());
+            lines.push(String::new());
+        }
+
+        // Jobs
+        for job in &self.jobs {
+            Self::job_spec_to_kdl(&mut lines, job, &kdl_escape);
+        }
+        if !self.jobs.is_empty() {
+            lines.push(String::new());
+        }
+
+        // Slurm schedulers (placed after jobs since they may be auto-generated)
+        if let Some(ref schedulers) = self.slurm_schedulers {
+            for sched in schedulers {
+                Self::slurm_scheduler_spec_to_kdl(&mut lines, sched, &kdl_escape);
+            }
+            if !schedulers.is_empty() {
+                lines.push(String::new());
+            }
+        }
+
+        // Actions (placed last since they may be auto-generated)
+        if let Some(ref actions) = self.actions {
+            for action in actions {
+                Self::action_spec_to_kdl(&mut lines, action, &kdl_escape);
+            }
+        }
+
+        lines.join("\n")
+    }
+
+    #[cfg(feature = "client")]
+    fn file_spec_to_kdl(lines: &mut Vec<String>, file: &FileSpec, escape: &dyn Fn(&str) -> String) {
+        let has_params = file
+            .parameters
+            .as_ref()
+            .map(|p| !p.is_empty())
+            .unwrap_or(false);
+        let has_mode = file.parameter_mode.is_some();
+        let has_use_params = file.use_parameters.is_some();
+
+        if !has_params && !has_mode && !has_use_params {
+            // Simple form: file "name" path="value"
+            lines.push(format!(
+                "file {} path={}",
+                escape(&file.name),
+                escape(&file.path)
+            ));
+        } else {
+            lines.push(format!("file {} {{", escape(&file.name)));
+            lines.push(format!("    path {}", escape(&file.path)));
+            if let Some(ref params) = file.parameters {
+                if !params.is_empty() {
+                    lines.push("    parameters {".to_string());
+                    for (key, value) in params {
+                        lines.push(format!("        {} {}", key, escape(value)));
+                    }
+                    lines.push("    }".to_string());
+                }
+            }
+            if let Some(ref mode) = file.parameter_mode {
+                lines.push(format!("    parameter_mode {}", escape(mode)));
+            }
+            if let Some(ref use_params) = file.use_parameters {
+                for param in use_params {
+                    lines.push(format!("    use_parameter {}", escape(param)));
+                }
+            }
+            lines.push("}".to_string());
+        }
+    }
+
+    #[cfg(feature = "client")]
+    fn user_data_spec_to_kdl(
+        lines: &mut Vec<String>,
+        ud: &UserDataSpec,
+        escape: &dyn Fn(&str) -> String,
+    ) {
+        let name = ud.name.as_deref().unwrap_or("unnamed");
+        lines.push(format!("user_data {} {{", escape(name)));
+        if ud.is_ephemeral.unwrap_or(false) {
+            lines.push("    is_ephemeral #true".to_string());
+        }
+        if let Some(ref data) = ud.data {
+            // Serialize JSON value to string
+            let data_str = serde_json::to_string(data).unwrap_or_default();
+            lines.push(format!("    data {}", escape(&data_str)));
+        }
+        lines.push("}".to_string());
+    }
+
+    #[cfg(feature = "client")]
+    fn resource_requirements_spec_to_kdl(
+        lines: &mut Vec<String>,
+        req: &ResourceRequirementsSpec,
+        escape: &dyn Fn(&str) -> String,
+    ) {
+        lines.push(format!("resource_requirements {} {{", escape(&req.name)));
+        lines.push(format!("    num_cpus {}", req.num_cpus));
+        lines.push(format!("    num_gpus {}", req.num_gpus));
+        lines.push(format!("    num_nodes {}", req.num_nodes));
+        lines.push(format!("    memory {}", escape(&req.memory)));
+        lines.push(format!("    runtime {}", escape(&req.runtime)));
+        lines.push("}".to_string());
+    }
+
+    #[cfg(feature = "client")]
+    fn slurm_scheduler_spec_to_kdl(
+        lines: &mut Vec<String>,
+        sched: &SlurmSchedulerSpec,
+        escape: &dyn Fn(&str) -> String,
+    ) {
+        if let Some(ref name) = sched.name {
+            lines.push(format!("slurm_scheduler {} {{", escape(name)));
+        } else {
+            lines.push("slurm_scheduler {".to_string());
+        }
+        lines.push(format!("    account {}", escape(&sched.account)));
+        if let Some(ref gres) = sched.gres {
+            lines.push(format!("    gres {}", escape(gres)));
+        }
+        if let Some(ref mem) = sched.mem {
+            lines.push(format!("    mem {}", escape(mem)));
+        }
+        lines.push(format!("    nodes {}", sched.nodes));
+        if let Some(ntasks) = sched.ntasks_per_node {
+            lines.push(format!("    ntasks_per_node {}", ntasks));
+        }
+        if let Some(ref partition) = sched.partition {
+            lines.push(format!("    partition {}", escape(partition)));
+        }
+        if let Some(ref qos) = sched.qos {
+            lines.push(format!("    qos {}", escape(qos)));
+        }
+        if let Some(ref tmp) = sched.tmp {
+            lines.push(format!("    tmp {}", escape(tmp)));
+        }
+        lines.push(format!("    walltime {}", escape(&sched.walltime)));
+        if let Some(ref extra) = sched.extra {
+            lines.push(format!("    extra {}", escape(extra)));
+        }
+        lines.push("}".to_string());
+    }
+
+    #[cfg(feature = "client")]
+    fn action_spec_to_kdl(
+        lines: &mut Vec<String>,
+        action: &WorkflowActionSpec,
+        escape: &dyn Fn(&str) -> String,
+    ) {
+        lines.push("action {".to_string());
+        lines.push(format!("    trigger_type {}", escape(&action.trigger_type)));
+        lines.push(format!("    action_type {}", escape(&action.action_type)));
+        if let Some(ref jobs) = action.jobs {
+            for job in jobs {
+                lines.push(format!("    job {}", escape(job)));
+            }
+        }
+        if let Some(ref regexes) = action.job_name_regexes {
+            for regex in regexes {
+                lines.push(format!("    job_name_regexes {}", escape(regex)));
+            }
+        }
+        if let Some(ref commands) = action.commands {
+            for cmd in commands {
+                lines.push(format!("    command {}", escape(cmd)));
+            }
+        }
+        if let Some(ref scheduler) = action.scheduler {
+            lines.push(format!("    scheduler {}", escape(scheduler)));
+        }
+        if let Some(ref scheduler_type) = action.scheduler_type {
+            lines.push(format!("    scheduler_type {}", escape(scheduler_type)));
+        }
+        if let Some(count) = action.num_allocations {
+            lines.push(format!("    num_allocations {}", count));
+        }
+        if let Some(val) = action.start_one_worker_per_node {
+            lines.push(format!(
+                "    start_one_worker_per_node {}",
+                if val { "#true" } else { "#false" }
+            ));
+        }
+        if let Some(max) = action.max_parallel_jobs {
+            lines.push(format!("    max_parallel_jobs {}", max));
+        }
+        if let Some(val) = action.persistent {
+            lines.push(format!(
+                "    persistent {}",
+                if val { "#true" } else { "#false" }
+            ));
+        }
+        lines.push("}".to_string());
+    }
+
+    #[cfg(feature = "client")]
+    fn job_spec_to_kdl(lines: &mut Vec<String>, job: &JobSpec, escape: &dyn Fn(&str) -> String) {
+        lines.push(format!("job {} {{", escape(&job.name)));
+        lines.push(format!("    command {}", escape(&job.command)));
+        if let Some(ref script) = job.invocation_script {
+            lines.push(format!("    invocation_script {}", escape(script)));
+        }
+        if let Some(val) = job.cancel_on_blocking_job_failure {
+            lines.push(format!(
+                "    cancel_on_blocking_job_failure {}",
+                if val { "#true" } else { "#false" }
+            ));
+        }
+        if let Some(val) = job.supports_termination {
+            lines.push(format!(
+                "    supports_termination {}",
+                if val { "#true" } else { "#false" }
+            ));
+        }
+        if let Some(ref req) = job.resource_requirements {
+            lines.push(format!("    resource_requirements {}", escape(req)));
+        }
+        if let Some(ref deps) = job.depends_on {
+            for dep in deps {
+                lines.push(format!("    depends_on {}", escape(dep)));
+            }
+        }
+        if let Some(ref regexes) = job.depends_on_regexes {
+            for regex in regexes {
+                lines.push(format!("    depends_on_regexes {}", escape(regex)));
+            }
+        }
+        if let Some(ref files) = job.input_files {
+            for file in files {
+                lines.push(format!("    input_file {}", escape(file)));
+            }
+        }
+        if let Some(ref files) = job.output_files {
+            for file in files {
+                lines.push(format!("    output_file {}", escape(file)));
+            }
+        }
+        if let Some(ref ud) = job.input_user_data {
+            for name in ud {
+                lines.push(format!("    input_user_data {}", escape(name)));
+            }
+        }
+        if let Some(ref ud) = job.output_user_data {
+            for name in ud {
+                lines.push(format!("    output_user_data {}", escape(name)));
+            }
+        }
+        if let Some(ref sched) = job.scheduler {
+            lines.push(format!("    scheduler {}", escape(sched)));
+        }
+        if let Some(ref params) = job.parameters {
+            if !params.is_empty() {
+                lines.push("    parameters {".to_string());
+                for (key, value) in params {
+                    lines.push(format!("        {} {}", key, escape(value)));
+                }
+                lines.push("    }".to_string());
+            }
+        }
+        lines.push("}".to_string());
+    }
+
+    /// Deserialize a WorkflowSpec from a specification file (JSON, JSON5, YAML, or KDL)
+    /// All formats are first converted to serde_json::Value, then to WorkflowSpec,
+    /// ensuring consistent behavior across all file formats.
     pub fn from_spec_file<P: AsRef<Path>>(
         path: P,
     ) -> Result<WorkflowSpec, Box<dyn std::error::Error>> {
@@ -2944,24 +3436,26 @@ impl WorkflowSpec {
             .and_then(|ext| ext.to_str())
             .unwrap_or("");
 
-        let workflow_spec: WorkflowSpec = match extension.to_lowercase().as_str() {
+        // Parse to JSON Value first, then convert to WorkflowSpec
+        // This ensures consistent behavior across all formats
+        let json_value: serde_json::Value = match extension.to_lowercase().as_str() {
             "json" => serde_json::from_str(&file_content)?,
             "json5" => json5::from_str(&file_content)?,
             "yaml" | "yml" => serde_yaml::from_str(&file_content)?,
             #[cfg(feature = "client")]
-            "kdl" => Self::from_kdl_str(&file_content)?,
+            "kdl" => Self::kdl_to_json_value(&file_content)?,
             _ => {
                 // Try to parse as JSON first, then JSON5, then YAML, then KDL
-                if let Ok(spec) = serde_json::from_str::<WorkflowSpec>(&file_content) {
-                    spec
-                } else if let Ok(spec) = json5::from_str::<WorkflowSpec>(&file_content) {
-                    spec
-                } else if let Ok(spec) = serde_yaml::from_str::<WorkflowSpec>(&file_content) {
-                    spec
+                if let Ok(value) = serde_json::from_str::<serde_json::Value>(&file_content) {
+                    value
+                } else if let Ok(value) = json5::from_str::<serde_json::Value>(&file_content) {
+                    value
+                } else if let Ok(value) = serde_yaml::from_str::<serde_json::Value>(&file_content) {
+                    value
                 } else {
                     #[cfg(feature = "client")]
                     {
-                        Self::from_kdl_str(&file_content)?
+                        Self::kdl_to_json_value(&file_content)?
                     }
                     #[cfg(not(feature = "client"))]
                     {
@@ -2971,11 +3465,13 @@ impl WorkflowSpec {
             }
         };
 
-        Ok(workflow_spec)
+        Self::from_json_value(json_value)
     }
 
     /// Deserialize a WorkflowSpec from string content with a specified format
     /// Useful for testing or when content is already loaded
+    /// All formats are first converted to serde_json::Value, then to WorkflowSpec,
+    /// ensuring consistent behavior across all file formats.
     ///
     /// # Arguments
     /// * `content` - The workflow spec content as a string
@@ -2984,18 +3480,19 @@ impl WorkflowSpec {
         content: &str,
         format: &str,
     ) -> Result<WorkflowSpec, Box<dyn std::error::Error>> {
-        let workflow_spec: WorkflowSpec = match format.to_lowercase().as_str() {
+        // Parse to JSON Value first, then convert to WorkflowSpec
+        let json_value: serde_json::Value = match format.to_lowercase().as_str() {
             "json" => serde_json::from_str(content)?,
             "json5" => json5::from_str(content)?,
             "yaml" | "yml" => serde_yaml::from_str(content)?,
             #[cfg(feature = "client")]
-            "kdl" => Self::from_kdl_str(content)?,
+            "kdl" => Self::kdl_to_json_value(content)?,
             #[cfg(not(feature = "client"))]
             "kdl" => return Err("KDL format requires 'client' feature".into()),
             _ => return Err(format!("Unknown format: {}", format).into()),
         };
 
-        Ok(workflow_spec)
+        Self::from_json_value(json_value)
     }
 
     /// Perform variable substitution on job commands and invocation scripts

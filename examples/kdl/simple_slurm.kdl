@@ -1,0 +1,41 @@
+// Simple Workflow with Slurm Actions in KDL format
+// Demonstrates scheduler actions for different workflow stages
+
+name "Simple Workflow with Actions"
+user "demo"
+description "Demonstrates scheduler actions for different workflow stages"
+
+// Resource requirements
+resource_requirements "small" {
+    num_cpus 2
+    num_gpus 0
+    num_nodes 1
+    memory "4g"
+    runtime "PT30M"
+}
+
+resource_requirements "medium" {
+    num_cpus 8
+    num_gpus 0
+    num_nodes 1
+    memory "16g"
+    runtime "PT2H"
+}
+
+// Jobs
+job "setup" {
+    command "echo 'Setting up...' && sleep 2"
+    resource_requirements "small"
+}
+
+job "process" {
+    command "echo 'Processing data...' && sleep 5"
+    depends_on_job "setup"
+    resource_requirements "medium"
+}
+
+job "finalize" {
+    command "echo 'Finalizing...' && sleep 2"
+    depends_on_job "process"
+    resource_requirements "small"
+}

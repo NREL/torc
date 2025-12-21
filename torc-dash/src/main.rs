@@ -20,6 +20,8 @@ use axum::{
 use clap::Parser;
 use rust_embed::Embed;
 use serde::{Deserialize, Serialize};
+use std::path::Path as FsPath;
+use std::process::Command as StdCommand;
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -346,6 +348,7 @@ async fn main() -> Result<()> {
             post(cli_check_reinitialize_handler),
         )
         .route("/api/cli/reset-status", post(cli_reset_status_handler))
+        .route("/api/cli/execution-plan", post(cli_execution_plan_handler))
         .route("/api/cli/run-stream", get(cli_run_stream_handler))
         .route("/api/cli/read-file", post(cli_read_file_handler))
         .route("/api/cli/plot-resources", post(cli_plot_resources_handler))
@@ -359,6 +362,9 @@ async fn main() -> Result<()> {
             post(cli_slurm_parse_logs_handler),
         )
         .route("/api/cli/slurm-sacct", post(cli_slurm_sacct_handler))
+        // Slurm scheduler generation endpoints
+        .route("/api/cli/slurm-generate", post(cli_slurm_generate_handler))
+        .route("/api/cli/hpc-profiles", get(cli_hpc_profiles_handler))
         // Server management endpoints
         .route("/api/server/start", post(server_start_handler))
         .route("/api/server/stop", post(server_stop_handler))
@@ -735,6 +741,73 @@ async fn cli_reset_status_handler(
     Json(result)
 }
 
+#[derive(Serialize)]
+struct ExecutionPlanResponse {
+    success: bool,
+    /// Parsed execution plan data
+    data: Option<serde_json::Value>,
+    error: Option<String>,
+}
+
+/// Get the execution plan for a workflow
+async fn cli_execution_plan_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<WorkflowIdRequest>,
+) -> impl IntoResponse {
+    let args = vec![
+        "-f",
+        "json",
+        "workflows",
+        "execution-plan",
+        &req.workflow_id,
+    ];
+
+    info!("Running: {} {}", state.torc_bin, args.join(" "));
+
+    let output = Command::new(&state.torc_bin)
+        .args(&args)
+        .env("TORC_API_URL", &state.api_url)
+        .output()
+        .await;
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            if !output.status.success() {
+                return Json(ExecutionPlanResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!("Command failed: {}", stderr)),
+                });
+            }
+
+            // Parse the JSON output
+            match serde_json::from_str::<serde_json::Value>(&stdout) {
+                Ok(data) => Json(ExecutionPlanResponse {
+                    success: true,
+                    data: Some(data),
+                    error: None,
+                }),
+                Err(e) => Json(ExecutionPlanResponse {
+                    success: false,
+                    data: None,
+                    error: Some(format!(
+                        "Failed to parse JSON output: {}. Output: {}",
+                        e, stdout
+                    )),
+                }),
+            }
+        }
+        Err(e) => Json(ExecutionPlanResponse {
+            success: false,
+            data: None,
+            error: Some(format!("Failed to execute command: {}", e)),
+        }),
+    }
+}
+
 /// Streaming workflow run handler using Server-Sent Events
 async fn cli_run_stream_handler(
     State(state): State<Arc<AppState>>,
@@ -954,9 +1027,7 @@ async fn cli_run_stream_handler(
 
 /// Read file contents from filesystem
 async fn cli_read_file_handler(Json(req): Json<ReadFileRequest>) -> impl IntoResponse {
-    use std::path::Path;
-
-    let path = Path::new(&req.path);
+    let path = FsPath::new(&req.path);
     let exists = path.exists();
 
     if !exists {
@@ -1194,9 +1265,7 @@ async fn cli_plot_resources_handler(
 async fn cli_list_resource_dbs_handler(
     Json(req): Json<ListResourceDbsRequest>,
 ) -> impl IntoResponse {
-    use std::path::Path;
-
-    let base_path = Path::new(&req.base_dir);
+    let base_path = FsPath::new(&req.base_dir);
 
     if !base_path.exists() {
         return Json(ListResourceDbsResponse {
@@ -1441,6 +1510,259 @@ async fn cli_slurm_sacct_handler(
     }
 }
 
+// ============== Slurm Scheduler Generation Handlers ==============
+
+#[derive(Deserialize)]
+struct SlurmGenerateRequest {
+    /// Workflow specification (as JSON)
+    spec: serde_json::Value,
+    /// Slurm account name
+    account: String,
+    /// HPC profile name (optional, auto-detected if not provided)
+    #[serde(default)]
+    profile: Option<String>,
+}
+
+#[derive(Serialize)]
+struct SlurmGenerateResponse {
+    success: bool,
+    /// Generated slurm_schedulers array
+    schedulers: Option<Vec<serde_json::Value>>,
+    /// Generated actions array
+    actions: Option<Vec<serde_json::Value>>,
+    /// Profile that was used
+    profile_used: Option<String>,
+    error: Option<String>,
+}
+
+#[derive(Serialize)]
+struct HpcProfileInfo {
+    name: String,
+    display_name: String,
+    description: String,
+    is_detected: bool,
+}
+
+#[derive(Serialize)]
+struct HpcProfilesResponse {
+    success: bool,
+    profiles: Vec<HpcProfileInfo>,
+    detected_profile: Option<String>,
+    error: Option<String>,
+}
+
+/// Generate Slurm schedulers from a workflow specification
+async fn cli_slurm_generate_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SlurmGenerateRequest>,
+) -> impl IntoResponse {
+    // Write the spec to a temp file
+    let unique_id = uuid::Uuid::new_v4();
+    let temp_path = format!("/tmp/torc_spec_{}.json", unique_id);
+
+    let spec_str = match serde_json::to_string_pretty(&req.spec) {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(SlurmGenerateResponse {
+                success: false,
+                schedulers: None,
+                actions: None,
+                profile_used: None,
+                error: Some(format!("Failed to serialize spec: {}", e)),
+            });
+        }
+    };
+
+    if let Err(e) = tokio::fs::write(&temp_path, &spec_str).await {
+        return Json(SlurmGenerateResponse {
+            success: false,
+            schedulers: None,
+            actions: None,
+            profile_used: None,
+            error: Some(format!("Failed to write temp file: {}", e)),
+        });
+    }
+
+    // Build command arguments
+    let mut args = vec![
+        "-f".to_string(),
+        "json".to_string(),
+        "slurm".to_string(),
+        "generate".to_string(),
+        "--account".to_string(),
+        req.account.clone(),
+    ];
+
+    if let Some(ref profile) = req.profile {
+        args.push("--profile".to_string());
+        args.push(profile.clone());
+    }
+
+    args.push(temp_path.clone());
+
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    info!("Running: {} {}", state.torc_bin, args_refs.join(" "));
+
+    let output = Command::new(&state.torc_bin)
+        .args(&args_refs)
+        .env("TORC_API_URL", &state.api_url)
+        .output()
+        .await;
+
+    // Clean up temp file
+    let _ = tokio::fs::remove_file(&temp_path).await;
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            if !output.status.success() {
+                return Json(SlurmGenerateResponse {
+                    success: false,
+                    schedulers: None,
+                    actions: None,
+                    profile_used: None,
+                    error: Some(format!("Command failed: {}", stderr)),
+                });
+            }
+
+            // Parse the JSON output - it should contain the full spec with schedulers and actions
+            match serde_json::from_str::<serde_json::Value>(&stdout) {
+                Ok(data) => {
+                    let schedulers = data
+                        .get("slurm_schedulers")
+                        .and_then(|v| v.as_array())
+                        .cloned();
+                    let actions = data.get("actions").and_then(|v| v.as_array()).cloned();
+                    let profile_used = data
+                        .get("profile_used")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+
+                    Json(SlurmGenerateResponse {
+                        success: true,
+                        schedulers,
+                        actions,
+                        profile_used,
+                        error: None,
+                    })
+                }
+                Err(e) => Json(SlurmGenerateResponse {
+                    success: false,
+                    schedulers: None,
+                    actions: None,
+                    profile_used: None,
+                    error: Some(format!(
+                        "Failed to parse JSON output: {}. Output: {}",
+                        e, stdout
+                    )),
+                }),
+            }
+        }
+        Err(e) => Json(SlurmGenerateResponse {
+            success: false,
+            schedulers: None,
+            actions: None,
+            profile_used: None,
+            error: Some(format!("Failed to execute command: {}", e)),
+        }),
+    }
+}
+
+/// List available HPC profiles and detect current profile
+async fn cli_hpc_profiles_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // Run: torc hpc list -f json
+    let args = vec!["-f", "json", "hpc", "list"];
+
+    info!("Running: {} {}", state.torc_bin, args.join(" "));
+
+    let output = Command::new(&state.torc_bin)
+        .args(&args)
+        .env("TORC_API_URL", &state.api_url)
+        .output()
+        .await;
+
+    match output {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            if !output.status.success() {
+                return Json(HpcProfilesResponse {
+                    success: false,
+                    profiles: vec![],
+                    detected_profile: None,
+                    error: Some(format!("Command failed: {}", stderr)),
+                });
+            }
+
+            // Parse the JSON output - it's an array of profiles directly
+            match serde_json::from_str::<Vec<serde_json::Value>>(&stdout) {
+                Ok(items) => {
+                    let mut profiles = Vec::new();
+                    let mut detected_profile = None;
+
+                    for item in items {
+                        let name = item
+                            .get("name")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let display_name = item
+                            .get("display_name")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or(&name)
+                            .to_string();
+                        let description = item
+                            .get("description")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let is_detected = item
+                            .get("detected")
+                            .and_then(|v| v.as_bool())
+                            .unwrap_or(false);
+
+                        if is_detected {
+                            detected_profile = Some(name.clone());
+                        }
+
+                        profiles.push(HpcProfileInfo {
+                            name,
+                            display_name,
+                            description,
+                            is_detected,
+                        });
+                    }
+
+                    Json(HpcProfilesResponse {
+                        success: true,
+                        profiles,
+                        detected_profile,
+                        error: None,
+                    })
+                }
+                Err(e) => Json(HpcProfilesResponse {
+                    success: false,
+                    profiles: vec![],
+                    detected_profile: None,
+                    error: Some(format!(
+                        "Failed to parse JSON output: {}. Output: {}",
+                        e, stdout
+                    )),
+                }),
+            }
+        }
+        Err(e) => Json(HpcProfilesResponse {
+            success: false,
+            profiles: vec![],
+            detected_profile: None,
+            error: Some(format!("Failed to execute command: {}", e)),
+        }),
+    }
+}
+
 // ============== Server Management Handlers ==============
 
 #[derive(Deserialize)]
@@ -1625,7 +1947,6 @@ async fn server_stop_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
         // Try to kill the process
         #[cfg(unix)]
         {
-            use std::process::Command as StdCommand;
             let result = StdCommand::new("kill").arg(pid.to_string()).status();
 
             match result {
@@ -1662,7 +1983,6 @@ async fn server_stop_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
         #[cfg(not(unix))]
         {
             // On Windows, try taskkill
-            use std::process::Command as StdCommand;
             let result = StdCommand::new("taskkill")
                 .args(["/PID", &pid.to_string(), "/F"])
                 .status();
@@ -1701,7 +2021,6 @@ async fn server_status_handler(State(state): State<Arc<AppState>>) -> impl IntoR
     if let Some(pid) = managed.pid {
         #[cfg(unix)]
         {
-            use std::process::Command as StdCommand;
             // Check if process exists by sending signal 0
             if let Ok(status) = StdCommand::new("kill")
                 .args(["-0", &pid.to_string()])
@@ -1714,7 +2033,6 @@ async fn server_status_handler(State(state): State<Arc<AppState>>) -> impl IntoR
         #[cfg(not(unix))]
         {
             // On Windows, check with tasklist
-            use std::process::Command as StdCommand;
             if let Ok(output) = StdCommand::new("tasklist")
                 .args(["/FI", &format!("PID eq {}", pid)])
                 .output()

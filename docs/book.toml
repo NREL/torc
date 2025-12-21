@@ -12,6 +12,7 @@ create-missing = true
 [output.html]
 default-theme = "light"
 preferred-dark-theme = "navy"
+favicon = "images/torc_icon_256.png"
 git-repository-url = "https://github.com/NREL/torc"
 edit-url-template = "https://github.com/NREL/torc/edit/main/docs/{path}"
 site-url = "/torc/"

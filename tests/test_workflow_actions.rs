@@ -1,9 +1,14 @@
 mod common;
 
+use std::thread;
+use std::time::Duration;
+
 use common::{ServerProcess, create_test_workflow, start_server};
 use rstest::rstest;
 use serde_json::json;
 use torc::client::default_api;
+use torc::client::workflow_manager::WorkflowManager;
+use torc::config::TorcConfig;
 use torc::models::JobModel;
 
 /// Helper function to create a test job
@@ -516,11 +521,6 @@ fn test_action_status_lifecycle(start_server: &ServerProcess) {
 /// - Expected: The workflow action should trigger again when postprocess_job becomes ready
 #[rstest]
 fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess) {
-    use std::thread;
-    use std::time::Duration;
-    use torc::client::workflow_manager::WorkflowManager;
-    use torc::config::TorcConfig;
-
     let config = &start_server.config;
     let workflow = create_test_workflow(config, "action_reinit_test_workflow");
     let workflow_id = workflow.id.unwrap();

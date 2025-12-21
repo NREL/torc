@@ -101,10 +101,12 @@ export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
 # Quick workflow execution (convenience commands)
 ./target/release/torc run examples/sample_workflow.yaml    # Create and run locally
-./target/release/torc submit examples/sample_workflow.yaml # Create and submit to scheduler
+./target/release/torc submit examples/sample_workflow.yaml # Submit (requires scheduler actions)
+./target/release/torc submit-slurm --account myproject examples/sample_workflow.yaml  # Auto-generate Slurm schedulers
 
 # Or use explicit workflow management
 ./target/release/torc workflows create examples/sample_workflow.yaml
+./target/release/torc workflows create-slurm --account myproject examples/sample_workflow.yaml  # With Slurm schedulers
 ./target/release/torc workflows submit <workflow_id>  # Submit to scheduler
 ./target/release/torc workflows run <workflow_id>     # Run locally
 
@@ -287,12 +289,15 @@ List endpoints support `offset` and `limit` query parameters:
 5. Launch interactive UI: `torc tui`
 
 ### Submitting a Workflow to Scheduler
-**Quick method:**
-- `torc submit <spec_file>` - Create from spec and submit to scheduler (requires on_workflow_start/schedule_nodes action)
+**Quick method (Slurm with auto-generated schedulers):**
+- `torc submit-slurm --account <account> <spec_file>` - Auto-generate Slurm schedulers, create workflow, and submit
+
+**Quick method (pre-configured schedulers):**
+- `torc submit <spec_file>` - Create from spec and submit (requires on_workflow_start/schedule_nodes action in spec)
 - `torc submit <workflow_id>` - Submit existing workflow to scheduler
 
 **Explicit method:**
-1. Create workflow: `torc workflows create <spec_file>`
+1. Create workflow: `torc workflows create <spec_file>` or `torc workflows create-slurm --account <account> <spec_file>`
 2. Submit workflow: `torc workflows submit <workflow_id>`
 
 ### Debugging
@@ -337,10 +342,12 @@ sqlite3 server/db/sqlite/dev.db
 
 **Quick Workflow Execution** (convenience commands):
 - `torc run <spec_file|id>` - Create from spec and run locally, or run existing workflow
-- `torc submit <spec_file|id>` - Create from spec and submit to scheduler, or submit existing workflow
+- `torc submit <spec_file|id>` - Submit workflow to scheduler (requires pre-configured scheduler actions)
+- `torc submit-slurm --account <account> <spec_file>` - Auto-generate Slurm schedulers and submit
 
 **Workflow Management**:
 - `torc workflows create <file>` - Create workflow from specification
+- `torc workflows create-slurm --account <account> <file>` - Create workflow with auto-generated Slurm schedulers
 - `torc workflows new` - Create empty workflow interactively
 - `torc workflows list` - List all workflows
 - `torc workflows submit <id>` - Submit workflow to scheduler (requires on_workflow_start/schedule_nodes action)
@@ -348,6 +355,14 @@ sqlite3 server/db/sqlite/dev.db
 - `torc workflows initialize <id>` - Initialize workflow (set up dependencies without execution)
 - `torc workflows status <id>` - Check workflow status
 - `torc workflows cancel <id>` - Cancel workflow
+
+**Slurm/HPC Commands**:
+- `torc slurm generate --account <account> <spec_file>` - Generate Slurm schedulers for a workflow
+- `torc hpc list` - List available HPC profiles
+- `torc hpc detect` - Detect current HPC system
+- `torc hpc show <profile>` - Show profile details
+- `torc hpc partitions <profile>` - List partitions for a profile
+- `torc hpc match <profile> --cpus N --memory SIZE` - Find matching partitions
 
 **Job Management**:
 - `torc jobs list <workflow_id>` - List jobs for workflow
@@ -357,6 +372,7 @@ sqlite3 server/db/sqlite/dev.db
 **Execution**:
 - `torc run <workflow_spec_or_id>` - Run workflow locally (top-level command)
 - `torc submit <workflow_spec_or_id>` - Submit workflow to scheduler (top-level command)
+- `torc submit-slurm --account <account> <spec_file>` - Submit with auto-generated Slurm schedulers
 - `torc tui` - Interactive terminal UI
 
 **Utilities**:

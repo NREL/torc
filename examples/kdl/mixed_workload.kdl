@@ -1,0 +1,53 @@
+// Simple Workflow with 100 Independent Jobs (Parameterized Version)
+// This demonstrates how parameterization makes it easy to create many parallel jobs
+// Compare this file to hundred_jobs_workflow.kdl - same result, 90% less code!
+
+name "mixed_workload"
+description "A workflow with mixed job workloads"
+
+resource_requirements "short_work" {
+    num_cpus 50
+    num_gpus 0
+    num_nodes 1
+    memory "20g"
+    runtime "P0DT1H"
+}
+
+resource_requirements "long_work" {
+    num_cpus 10
+    num_gpus 0
+    num_nodes 1
+    memory "50g"
+    runtime "P0DT48H"
+}
+
+resource_requirements "small" {
+    num_cpus 1
+    num_gpus 0
+    num_nodes 1
+    memory "1g"
+    runtime "P0DT1H"
+}
+
+
+job "short_job_{i:03d}" {
+    command "echo hello {i}"
+    resource_requirements "short_work"
+    parameters {
+        i "1:100"
+    }
+}
+
+job "long_job_{i:03d}" {
+    command "echo hello {i}"
+    resource_requirements "long_work"
+    parameters {
+        i "1:20"
+    }
+}
+
+job "postprocess" {
+    command "echo postprocess"
+    resource_requirements "small"
+    depends_on_regexes "short_job_\\d+" "long_job_\\d+"
+}

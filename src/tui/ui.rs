@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Local, Utc};
+use petgraph::visit::{EdgeRef, Topo};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -936,8 +939,30 @@ fn draw_dag(f: &mut Frame, area: Rect, app: &App) {
                 )]));
             }
 
+            // Group jobs in this layer by their predecessors to show subgraphs
+            let mut current_pred_group: Option<usize> = None;
+
             // Display all jobs in this layer
             for &node_idx in layer {
+                // Check if this job belongs to a different subgraph
+                let first_pred: Option<usize> = dag
+                    .graph
+                    .edges_directed(node_idx, petgraph::Direction::Incoming)
+                    .next()
+                    .map(|e| e.source().index());
+
+                // Add a separator between different subgraph groups within the same layer
+                if layer.len() > 1
+                    && first_pred != current_pred_group
+                    && current_pred_group.is_some()
+                {
+                    lines.push(Line::from(vec![Span::styled(
+                        "  ─ ─ ─",
+                        Style::default().fg(Color::DarkGray),
+                    )]));
+                }
+                current_pred_group = first_pred;
+
                 let node_data = &dag.graph[node_idx];
 
                 // Determine color based on status
@@ -1014,9 +1039,6 @@ fn draw_dag(f: &mut Frame, area: Rect, app: &App) {
 fn dag_compute_layers(
     graph: &petgraph::Graph<super::dag::JobNode, ()>,
 ) -> Vec<Vec<petgraph::graph::NodeIndex>> {
-    use petgraph::visit::{EdgeRef, Topo};
-    use std::collections::HashMap;
-
     let mut layers: Vec<Vec<petgraph::graph::NodeIndex>> = Vec::new();
     let mut node_layer: HashMap<petgraph::graph::NodeIndex, usize> = HashMap::new();
 
@@ -1038,6 +1060,38 @@ fn dag_compute_layers(
             layers.push(Vec::new());
         }
         layers[max_predecessor_layer].push(node);
+    }
+
+    // Sort nodes within each layer to group related subgraphs together
+    // Group by their parent nodes to keep subgraphs visually connected
+    for layer in &mut layers {
+        layer.sort_by(|a, b| {
+            // Get predecessor indices as sort keys
+            let a_preds: Vec<usize> = graph
+                .edges_directed(*a, petgraph::Direction::Incoming)
+                .map(|e| e.source().index())
+                .collect();
+            let b_preds: Vec<usize> = graph
+                .edges_directed(*b, petgraph::Direction::Incoming)
+                .map(|e| e.source().index())
+                .collect();
+
+            // Sort by first predecessor, then by job name for consistency
+            match (a_preds.first(), b_preds.first()) {
+                (Some(a_pred), Some(b_pred)) => a_pred.cmp(b_pred).then_with(|| {
+                    let a_name = &graph[*a].name;
+                    let b_name = &graph[*b].name;
+                    a_name.cmp(b_name)
+                }),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => {
+                    let a_name = &graph[*a].name;
+                    let b_name = &graph[*b].name;
+                    a_name.cmp(b_name)
+                }
+            }
+        });
     }
 
     layers

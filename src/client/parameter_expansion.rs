@@ -54,8 +54,25 @@ impl ParameterValue {
 /// - Integer ranges: "1:100" (inclusive), "1:100:5" (with step)
 /// - Float ranges: "0.0:1.0:0.1"
 /// - Lists: "[1,5,10,50,100]" or "['train','test','validation']"
+///
+/// Also tolerates curly braces around values (e.g., "{1:100}" is treated as "1:100")
+/// since users sometimes confuse parameter value syntax with template substitution syntax.
 pub fn parse_parameter_value(value: &str) -> Result<Vec<ParameterValue>, String> {
     let trimmed = value.trim();
+
+    // Strip curly braces if they wrap the entire value
+    // This handles the common mistake of using {1:100} instead of 1:100
+    // (users confuse parameter values with template substitution syntax like {index})
+    let trimmed = if trimmed.starts_with('{') && trimmed.ends_with('}') && !trimmed.contains(',') {
+        // Only strip if it looks like a wrapped range, not a JSON object
+        trimmed
+            .strip_prefix('{')
+            .and_then(|s| s.strip_suffix('}'))
+            .unwrap_or(trimmed)
+            .trim()
+    } else {
+        trimmed
+    };
 
     // Check for list notation
     if trimmed.starts_with('[') && trimmed.ends_with(']') {
@@ -353,6 +370,20 @@ mod tests {
         assert_eq!(values.len(), 5);
         assert_eq!(values[0], ParameterValue::Integer(1));
         assert_eq!(values[4], ParameterValue::Integer(5));
+    }
+
+    #[test]
+    fn test_parse_integer_range_with_curly_braces() {
+        // Users sometimes confuse parameter values with template substitution syntax
+        // e.g., writing {1:1000} instead of 1:1000
+        let values = parse_parameter_value("{1:5}").unwrap();
+        assert_eq!(values.len(), 5);
+        assert_eq!(values[0], ParameterValue::Integer(1));
+        assert_eq!(values[4], ParameterValue::Integer(5));
+
+        // Should also work with spaces
+        let values = parse_parameter_value("{ 1:100 }").unwrap();
+        assert_eq!(values.len(), 100);
     }
 
     #[test]

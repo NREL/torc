@@ -13,11 +13,15 @@ use std::process::Command;
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::hpc::{
+    create_registry_with_config_public, generate_schedulers_for_workflow,
+};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::workflow_manager::WorkflowManager;
+use crate::client::workflow_spec::WorkflowSpec;
 use crate::config::TorcConfig;
 use crate::models;
 use tabled::Tabled;
@@ -273,6 +277,42 @@ pub enum SlurmCommands {
         /// Save full JSON output to files in addition to displaying summary
         #[arg(long, default_value = "false")]
         save_json: bool,
+    },
+    /// Generate Slurm schedulers for a workflow based on job resource requirements
+    Generate {
+        /// Path to workflow specification file (YAML, JSON, JSON5, or KDL)
+        #[arg()]
+        workflow_file: PathBuf,
+
+        /// Slurm account to use
+        #[arg(long)]
+        account: String,
+
+        /// HPC profile to use (if not specified, tries to detect current system)
+        #[arg(long)]
+        profile: Option<String>,
+
+        /// Output file path (if not specified, prints to stdout)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
+        /// Bundle all nodes into a single Slurm allocation per scheduler
+        ///
+        /// By default, creates one Slurm allocation per node (N×1 mode), which allows
+        /// jobs to start as nodes become available and provides better fault tolerance.
+        ///
+        /// With this flag, creates one large allocation with all nodes (1×N mode),
+        /// which requires all nodes to be available simultaneously but uses a single sbatch.
+        #[arg(long)]
+        single_allocation: bool,
+
+        /// Don't add workflow actions for scheduling nodes
+        #[arg(long)]
+        no_actions: bool,
+
+        /// Force overwrite of existing schedulers in the workflow
+        #[arg(long)]
+        force: bool,
     },
 }
 
@@ -659,6 +699,26 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 })
             });
             run_sacct_for_workflow(config, wf_id, output_dir, *save_json, format);
+        }
+        SlurmCommands::Generate {
+            workflow_file,
+            account,
+            profile: profile_name,
+            output,
+            single_allocation,
+            no_actions,
+            force,
+        } => {
+            handle_generate(
+                workflow_file,
+                account,
+                profile_name.as_deref(),
+                output.as_ref(),
+                *single_allocation,
+                *no_actions,
+                *force,
+                format,
+            );
         }
     }
 }
@@ -1893,6 +1953,131 @@ pub fn run_sacct_for_workflow(
 
             if save_json {
                 println!("\nFull JSON saved to: {}", output_dir.display());
+            }
+        }
+    }
+}
+
+/// Handle the generate command - generates Slurm schedulers for a workflow
+fn handle_generate(
+    workflow_file: &PathBuf,
+    account: &str,
+    profile_name: Option<&str>,
+    output: Option<&PathBuf>,
+    single_allocation: bool,
+    no_actions: bool,
+    force: bool,
+    format: &str,
+) {
+    // Load HPC config and registry
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let registry = create_registry_with_config_public(&torc_config.client.hpc);
+
+    // Get the HPC profile
+    let profile = if let Some(n) = profile_name {
+        registry.get(n)
+    } else {
+        registry.detect()
+    };
+
+    let profile = match profile {
+        Some(p) => p,
+        None => {
+            if profile_name.is_some() {
+                eprintln!("Unknown HPC profile: {}", profile_name.unwrap());
+            } else {
+                eprintln!("No HPC profile specified and no system detected.");
+                eprintln!("Use --profile <name> or run on an HPC system.");
+            }
+            std::process::exit(1);
+        }
+    };
+
+    // Parse the workflow spec (supports YAML, JSON, JSON5, and KDL)
+    let mut spec: WorkflowSpec = match WorkflowSpec::from_spec_file(workflow_file) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Failed to parse workflow file: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Generate schedulers
+    let result = match generate_schedulers_for_workflow(
+        &mut spec,
+        profile,
+        account,
+        single_allocation,
+        !no_actions,
+        force,
+    ) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Output the result in the same format as the input
+    let output_content = match workflow_file.extension().and_then(|e| e.to_str()) {
+        Some("json") => serde_json::to_string_pretty(&spec).unwrap(),
+        Some("json5") => serde_json::to_string_pretty(&spec).unwrap(), // Output as JSON
+        Some("kdl") => spec.to_kdl_str(),
+        _ => serde_yaml::to_string(&spec).unwrap(), // YAML, YML, or unknown
+    };
+
+    if let Some(output_path) = output {
+        match std::fs::write(output_path, &output_content) {
+            Ok(_) => {
+                if format != "json" {
+                    println!("Generated workflow written to: {}", output_path.display());
+                    println!();
+                    println!("Summary:");
+                    println!("  Schedulers generated: {}", result.scheduler_count);
+                    println!("  Actions added: {}", result.action_count);
+                    println!(
+                        "  Profile used: {} ({})",
+                        profile.display_name, profile.name
+                    );
+
+                    if !result.warnings.is_empty() {
+                        println!();
+                        println!("Warnings:");
+                        for warning in &result.warnings {
+                            println!("  - {}", warning);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to write output file: {}", e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        // Print to stdout
+        if format == "json" {
+            println!("{}", serde_json::to_string_pretty(&spec).unwrap());
+        } else {
+            println!("{}", output_content);
+
+            // Print summary to stderr so it doesn't mix with the workflow output
+            // Use // for KDL-compatible comments
+            eprintln!();
+            eprintln!("// Summary:");
+            eprintln!("//   Schedulers generated: {}", result.scheduler_count);
+            eprintln!("//   Actions added: {}", result.action_count);
+            eprintln!(
+                "//   Profile used: {} ({})",
+                profile.display_name, profile.name
+            );
+
+            if !result.warnings.is_empty() {
+                eprintln!("//");
+                eprintln!("// Warnings:");
+                for warning in &result.warnings {
+                    eprintln!("//   - {}", warning);
+                }
             }
         }
     }

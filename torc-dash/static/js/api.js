@@ -334,6 +334,15 @@ class TorcAPI {
     }
 
     /**
+     * Get execution plan for a workflow
+     * @param {string} workflowId - Workflow ID
+     * @returns {object} Response with execution plan data
+     */
+    async getExecutionPlan(workflowId) {
+        return this.cliRequest('/api/cli/execution-plan', { workflow_id: workflowId });
+    }
+
+    /**
      * Make a CLI command request
      */
     async cliRequest(endpoint, body) {
@@ -377,6 +386,37 @@ class TorcAPI {
             db_paths: dbPaths,
             prefix: prefix,
         });
+    }
+
+    // ==================== HPC Profiles & Slurm Generation ====================
+
+    /**
+     * Get available HPC profiles and detect current system
+     * @returns {object} Response with profiles array and detected_profile
+     */
+    async getHpcProfiles() {
+        try {
+            const response = await fetch('/api/cli/hpc-profiles');
+            return await response.json();
+        } catch (error) {
+            console.error('HPC profiles error:', error);
+            return { success: false, profiles: [], error: error.message };
+        }
+    }
+
+    /**
+     * Generate Slurm schedulers from a workflow specification
+     * @param {object} spec - Workflow specification object
+     * @param {string} account - Slurm account name
+     * @param {string} [profile] - HPC profile name (auto-detected if not provided)
+     * @returns {object} Response with schedulers and actions arrays
+     */
+    async generateSlurmSchedulers(spec, account, profile = null) {
+        const body = { spec, account };
+        if (profile) {
+            body.profile = profile;
+        }
+        return this.cliRequest('/api/cli/slurm-generate', body);
     }
 
     // ==================== Server Management ====================

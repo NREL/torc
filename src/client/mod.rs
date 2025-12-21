@@ -18,6 +18,7 @@ pub mod log_paths;
 pub mod parameter_expansion;
 pub mod resource_monitor;
 pub mod utils;
+pub mod workflow_graph;
 pub mod workflow_manager;
 pub mod workflow_spec;
 
@@ -25,8 +26,8 @@ pub mod workflow_spec;
 pub use apis::configuration::Configuration;
 pub use apis::default_api;
 pub use hpc::{
-    HpcInterface, HpcJobInfo, HpcJobStats, HpcJobStatus, HpcManager, HpcType, SlurmInterface,
-    create_hpc_interface,
+    HpcDetection, HpcInterface, HpcJobInfo, HpcJobStats, HpcJobStatus, HpcManager, HpcPartition,
+    HpcProfile, HpcProfileRegistry, HpcType, SlurmInterface, create_hpc_interface,
 };
 pub use job_runner::JobRunner;
 // JobModel is re-exported from models (which re-exports from crate::models)

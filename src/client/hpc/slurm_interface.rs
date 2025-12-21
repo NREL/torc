@@ -13,6 +13,9 @@ use std::thread;
 use std::time::Duration;
 use sysinfo::SystemExt;
 
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 use super::common::{HpcJobInfo, HpcJobStats, HpcJobStatus};
 use super::hpc_interface::HpcInterface;
 
@@ -278,7 +281,6 @@ impl HpcInterface for SlurmInterface {
         // Make the script executable
         #[cfg(unix)]
         {
-            use std::os::unix::fs::PermissionsExt;
             let mut perms = fs::metadata(filename)?.permissions();
             perms.set_mode(0o755);
             fs::set_permissions(filename, perms)?;

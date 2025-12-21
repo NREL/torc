@@ -28,7 +28,10 @@ mod dash;
 mod loader;
 mod server;
 
-pub use client::{ClientConfig, ClientRunConfig, ClientSlurmConfig};
+pub use client::{
+    ClientConfig, ClientHpcConfig, ClientRunConfig, ClientSlurmConfig, HpcPartitionConfig,
+    HpcProfileConfig, HpcProfileOverride,
+};
 pub use dash::DashConfig;
 pub use loader::{ConfigPaths, TorcConfig};
 pub use server::{ServerConfig, ServerLoggingConfig};

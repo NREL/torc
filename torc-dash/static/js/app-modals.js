@@ -327,93 +327,154 @@ Object.assign(TorcDashboard.prototype, {
         content.innerHTML = '<div class="placeholder-message">Loading execution plan...</div>';
 
         try {
-            // Get jobs and dependencies
-            const [jobs, dependencies] = await Promise.all([
-                api.listJobs(workflowId),
-                api.getJobsDependencies(workflowId),
-            ]);
+            // Get execution plan from the CLI
+            const response = await api.getExecutionPlan(workflowId);
 
-            // Build dependency graph and compute stages
-            const stages = this.computeExecutionStages(jobs, dependencies);
-            content.innerHTML = this.renderExecutionPlan(stages, jobs);
+            if (!response.success) {
+                content.innerHTML = `<div class="placeholder-message">Error: ${response.error || 'Unknown error'}</div>`;
+                return;
+            }
+
+            const plan = response.data;
+            content.innerHTML = this.renderExecutionPlan(plan);
         } catch (error) {
             content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${error.message}</div>`;
         }
     },
 
-    computeExecutionStages(jobs, dependencies) {
-        // Build a map of job dependencies
-        const blockedBy = {};
-        dependencies.forEach(dep => {
-            if (!blockedBy[dep.job_id]) blockedBy[dep.job_id] = [];
-            blockedBy[dep.job_id].push(dep.depends_on_job_id);
-        });
+    renderExecutionPlan(plan) {
+        if (!plan || !plan.events || plan.events.length === 0) {
+            return '<div class="placeholder-message">No execution events computed</div>';
+        }
 
-        // Create job map
-        const jobMap = {};
-        jobs.forEach(j => jobMap[j.id] = j);
+        const events = plan.events;
+        const rootEvents = plan.root_events || [];
+        const leafEvents = plan.leaf_events || [];
 
-        // Compute stages using topological sort levels
-        const stages = [];
-        const completed = new Set();
-        const remaining = new Set(jobs.map(j => j.id));
+        // Build event map for quick lookup
+        const eventMap = {};
+        events.forEach(e => eventMap[e.id] = e);
 
-        let stageNum = 1;
-        while (remaining.size > 0) {
-            const ready = [];
-            remaining.forEach(jobId => {
-                const deps = blockedBy[jobId] || [];
-                if (deps.every(d => completed.has(d))) {
-                    ready.push(jobId);
-                }
-            });
+        // Count total jobs
+        let totalJobs = 0;
+        events.forEach(e => totalJobs += (e.jobs_becoming_ready || []).length);
 
-            if (ready.length === 0 && remaining.size > 0) {
-                // Circular dependency or error - break to avoid infinite loop
-                break;
+        // Render events in a topological order using BFS from roots
+        const visited = new Set();
+        const orderedEvents = [];
+        const queue = [...rootEvents];
+
+        while (queue.length > 0) {
+            const eventId = queue.shift();
+            if (visited.has(eventId)) continue;
+            visited.add(eventId);
+
+            const event = eventMap[eventId];
+            if (event) {
+                orderedEvents.push(event);
+                // Add unlocked events to queue
+                (event.unlocks_events || []).forEach(next => {
+                    if (!visited.has(next)) {
+                        queue.push(next);
+                    }
+                });
             }
-
-            stages.push({
-                stageNumber: stageNum++,
-                jobs: ready.map(id => jobMap[id]),
-            });
-
-            ready.forEach(id => {
-                completed.add(id);
-                remaining.delete(id);
-            });
         }
 
-        return stages;
-    },
-
-    renderExecutionPlan(stages, jobs) {
-        if (stages.length === 0) {
-            return '<div class="placeholder-message">No execution stages computed</div>';
-        }
+        // Also add any events not reachable from roots (shouldn't happen, but just in case)
+        events.forEach(e => {
+            if (!visited.has(e.id)) {
+                orderedEvents.push(e);
+            }
+        });
 
         return `
             <div class="plan-summary" style="margin-bottom: 16px;">
-                <strong>Total Stages:</strong> ${stages.length} |
-                <strong>Total Jobs:</strong> ${jobs.length}
+                <strong>Total Events:</strong> ${events.length} |
+                <strong>Total Jobs:</strong> ${totalJobs}
             </div>
-            ${stages.map(stage => `
-                <div class="plan-stage">
-                    <div class="plan-stage-header">
-                        <div class="plan-stage-number">${stage.stageNumber}</div>
-                        <div class="plan-stage-trigger">Stage ${stage.stageNumber}</div>
-                    </div>
-                    <div class="plan-stage-content">
-                        <h5>Jobs Ready (${stage.jobs.length})</h5>
+            <div class="plan-events">
+                ${orderedEvents.map((event, idx) => this.renderExecutionEvent(event, idx, rootEvents, leafEvents)).join('')}
+            </div>
+        `;
+    },
+
+    renderExecutionEvent(event, index, rootEvents, leafEvents) {
+        const isRoot = rootEvents.includes(event.id);
+        const isLeaf = leafEvents.includes(event.id);
+        const jobs = event.jobs_becoming_ready || [];
+        const schedulers = event.scheduler_allocations || [];
+        const dependsOn = event.depends_on_events || [];
+        const unlocks = event.unlocks_events || [];
+
+        // Determine event type icon and style
+        let eventIcon = '→';
+        let eventClass = '';
+        if (isRoot) {
+            eventIcon = '▶';
+            eventClass = 'event-root';
+        } else if (isLeaf) {
+            eventIcon = '◆';
+            eventClass = 'event-leaf';
+        }
+
+        // Format trigger description
+        const triggerDesc = event.trigger_description || this.formatEventTrigger(event.trigger);
+
+        return `
+            <div class="plan-stage ${eventClass}">
+                <div class="plan-stage-header">
+                    <div class="plan-stage-number">${eventIcon}</div>
+                    <div class="plan-stage-trigger">${this.escapeHtml(triggerDesc)}</div>
+                </div>
+                <div class="plan-stage-content">
+                    ${schedulers.length > 0 ? `
+                        <div class="plan-section">
+                            <h5>Scheduler Allocations</h5>
+                            <ul>
+                                ${schedulers.map(s => `
+                                    <li>
+                                        <strong>${this.escapeHtml(s.scheduler)}</strong>
+                                        (${this.escapeHtml(s.scheduler_type)})
+                                        - ${s.num_allocations} allocation${s.num_allocations !== 1 ? 's' : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    <div class="plan-section">
+                        <h5>Jobs Becoming Ready (${jobs.length})</h5>
                         <ul>
-                            ${stage.jobs.slice(0, 10).map(job => `
-                                <li>${this.escapeHtml(job.name || job.id)}</li>
+                            ${jobs.slice(0, 10).map(job => `
+                                <li>${this.escapeHtml(job)}</li>
                             `).join('')}
-                            ${stage.jobs.length > 10 ? `<li>... and ${stage.jobs.length - 10} more</li>` : ''}
+                            ${jobs.length > 10 ? `<li>... and ${jobs.length - 10} more</li>` : ''}
                         </ul>
                     </div>
+                    ${unlocks.length > 0 ? `
+                        <div class="plan-section plan-flow">
+                            <span class="flow-arrow">↓</span>
+                            <span class="flow-text">unlocks ${unlocks.length} event${unlocks.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    ` : ''}
                 </div>
-            `).join('')}
+            </div>
         `;
+    },
+
+    formatEventTrigger(trigger) {
+        if (!trigger) return 'Unknown trigger';
+
+        if (trigger.type === 'WorkflowStart') {
+            return 'Workflow Start';
+        } else if (trigger.type === 'JobsComplete') {
+            const jobs = trigger.data?.jobs || [];
+            if (jobs.length === 0) return 'Jobs Complete';
+            if (jobs.length === 1) return `When job '${jobs[0]}' completes`;
+            if (jobs.length <= 3) return `When jobs complete: ${jobs.map(j => `'${j}'`).join(', ')}`;
+            return `When ${jobs.length} jobs complete ('${jobs[0]}', '${jobs[1]}'...)`;
+        }
+
+        return 'Unknown trigger';
     },
 });

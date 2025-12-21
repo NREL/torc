@@ -7,6 +7,8 @@
 - [Getting Started](./getting-started.md)
   - [Installation](./installation.md)
   - [Quick Start](./quick-start.md)
+    - [Quick Start (Local)](./quick-start-local.md)
+    - [Quick Start (HPC)](./quick-start-hpc.md)
 
 # Understanding Torc
 
@@ -21,6 +23,7 @@
   - [Dependency Resolution](./explanation/dependencies.md)
   - [Parallelization Strategies](./explanation/parallelization.md)
   - [Workflow Actions](./explanation/workflow-actions.md)
+  - [Slurm Workflows](./explanation/slurm-workflows.md)
   - [Design](./explanation/design/README.md)
     - [Server API Handler](./explanation/design/server.md)
     - [Central Database](./explanation/design/database.md)
@@ -32,10 +35,12 @@
   - [Configuration Files](./how-to/configuration-files.md)
   - [Creating Workflows](./how-to/creating-workflows.md)
   - [Working with Slurm](./how-to/slurm.md)
+  - [HPC Profiles](./how-to/hpc-profiles.md)
   - [Job Checkpointing](./how-to/checkpointing.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
   - [Terminal UI (TUI)](./how-to/tui.md)
   - [Web Dashboard](./how-to/dashboard.md)
+  - [Visualizing Workflow Structure](./how-to/visualizing-workflows.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Debugging Slurm Workflows](./how-to/debugging-slurm.md)
   - [Authentication](./how-to/authentication.md)
@@ -49,6 +54,7 @@
   - [Workflow Specification Formats](./reference/workflow-formats.md)
   - [Job Parameterization](./reference/parameterization.md)
   - [Resource Requirements](./reference/resources.md)
+  - [HPC Profiles](./reference/hpc-profiles.md)
   - [Resource Monitoring](./reference/resource-monitoring.md)
   - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
@@ -68,6 +74,7 @@
   - [Multi-Stage Workflows with Barriers](./tutorials/multi-stage-barrier.md)
   - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
   - [Filtering CLI Output with Nushell](./tutorials/filtering-with-nushell.md)
+  - [Custom HPC Profile](./tutorials/custom-hpc-profile.md)
 
 ---
 

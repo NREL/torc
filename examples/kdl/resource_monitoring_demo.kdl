@@ -14,26 +14,42 @@ resource_monitor {
 }
 
 // Resource requirements
-resource_requirements "medium" {
-    num_cpus 2
+resource_requirements "cpu" {
+    num_cpus 3
     num_gpus 0
     num_nodes 1
-    memory "2g"
-    runtime "PT5M"
+    memory "1g"
+    runtime "PT15M"
+}
+
+resource_requirements "memory" {
+    num_cpus 1
+    num_gpus 0
+    num_nodes 1
+    memory "5g"
+    runtime "PT10M"
+}
+
+resource_requirements "mixed" {
+    num_cpus 3
+    num_gpus 0
+    num_nodes 1
+    memory "5g"
+    runtime "PT15M"
 }
 
 // Three independent jobs that run concurrently
 job "cpu_heavy_job" {
     command "python3 examples/scripts/cpu_intensive.py"
-    resource_requirements "medium"
+    resource_requirements "cpu"
 }
 
 job "memory_heavy_job" {
     command "python3 examples/scripts/memory_intensive.py"
-    resource_requirements "medium"
+    resource_requirements "memory"
 }
 
 job "mixed_workload_job" {
     command "python3 examples/scripts/mixed_workload.py"
-    resource_requirements "medium"
+    resource_requirements "mixed"
 }

@@ -576,11 +576,13 @@
 
                     <!-- Step 3: Schedulers -->
                     <div class="wizard-content" id="wizard-step-3">
+                        <!-- Auto-generate section (populated by JS) -->
+                        <div id="wizard-auto-generate-container"></div>
+
                         <div class="wizard-schedulers-header">
-                            <h4>Slurm Schedulers</h4>
+                            <h4>Manual Schedulers</h4>
                             <button type="button" class="btn btn-sm btn-success" id="wizard-add-scheduler">+ Add Scheduler</button>
                         </div>
-                        <p class="wizard-help-text">Schedulers define Slurm job allocation settings. Jobs can reference schedulers by name to run on HPC clusters.</p>
                         <div id="wizard-schedulers-list" class="wizard-schedulers-list">
                             <!-- Scheduler cards will be added here -->
                         </div>

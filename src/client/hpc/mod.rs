@@ -3,15 +3,21 @@
 //! This module provides abstractions for working with HPC schedulers like Slurm.
 //! It includes traits for HPC interfaces and concrete implementations for different
 //! scheduler types.
+//!
+//! It also provides HPC system profiles for known HPC systems (like NREL Kestrel)
+//! that include partition configurations, resource limits, and auto-detection.
 
 pub mod common;
 pub mod hpc_interface;
 pub mod hpc_manager;
+pub mod kestrel;
+pub mod profiles;
 pub mod slurm_interface;
 
 pub use common::{HpcJobInfo, HpcJobStats, HpcJobStatus, HpcType};
 pub use hpc_interface::HpcInterface;
 pub use hpc_manager::HpcManager;
+pub use profiles::{HpcDetection, HpcPartition, HpcProfile, HpcProfileRegistry};
 pub use slurm_interface::SlurmInterface;
 
 use anyhow::Result;

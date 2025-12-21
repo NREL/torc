@@ -11,6 +11,7 @@ use crate::server::api_types::{
 };
 
 use crate::models;
+use crate::models::JobStatus;
 
 use super::{ApiContext, database_error};
 
@@ -724,8 +725,6 @@ impl WorkflowActionsApiImpl {
         job_ids: &[i64],
         trigger_type: &str,
     ) -> Result<i64, ApiError> {
-        use crate::models::JobStatus;
-
         let mut count = 0i64;
 
         for job_id in job_ids {

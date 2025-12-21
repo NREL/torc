@@ -1,3 +1,6 @@
+use std::thread;
+use std::time::{Duration as StdDuration, Instant};
+
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
@@ -313,9 +316,6 @@ fn handle_monitor_events(
     category: &Option<String>,
     format: &str,
 ) {
-    use std::thread;
-    use std::time::{Duration as StdDuration, Instant};
-
     // Get the latest event timestamp to start monitoring from (in milliseconds since epoch)
     // Use list_events with limit=1 and reverse_sort=true to get the newest event
     let mut last_timestamp_ms: i64 = match default_api::list_events(

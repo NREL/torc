@@ -1,8 +1,16 @@
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use anyhow::Result;
+use petgraph::graph::NodeIndex;
+use ratatui::widgets::TableState;
+
+use crate::client::log_paths::{
+    get_job_stderr_path, get_job_stdout_path, get_slurm_stderr_path, get_slurm_stdout_path,
+};
 use crate::models::{
     EventModel, FileModel, JobModel, ResultModel, ScheduledComputeNodesModel, WorkflowModel,
 };
-use anyhow::Result;
-use ratatui::widgets::TableState;
 
 use super::api::TorcClient;
 use super::components::{
@@ -772,9 +780,6 @@ impl App {
     }
 
     pub fn build_dag_from_jobs(&mut self) {
-        use petgraph::graph::NodeIndex;
-        use std::collections::HashMap;
-
         let mut dag = DagLayout::new();
         let mut job_id_to_node: HashMap<i64, NodeIndex> = HashMap::new();
 
@@ -1549,9 +1554,6 @@ impl App {
     }
 
     fn load_job_logs(&self, viewer: &mut LogViewer) -> Result<()> {
-        use crate::client::log_paths::{get_job_stderr_path, get_job_stdout_path};
-        use std::path::PathBuf;
-
         // Try to find log files based on job results
         if let Some(workflow_id) = self.selected_workflow_id {
             let results = self.client.list_results(workflow_id)?;
@@ -1644,9 +1646,6 @@ impl App {
     }
 
     fn load_slurm_logs(&self, viewer: &mut LogViewer, scheduler_id: &str) -> Result<()> {
-        use crate::client::log_paths::{get_slurm_stderr_path, get_slurm_stdout_path};
-        use std::path::PathBuf;
-
         // Default output directory is "output" in the current working directory
         let output_dir = PathBuf::from("output");
 

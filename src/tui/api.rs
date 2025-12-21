@@ -1,9 +1,10 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::config::TorcConfig;
+use crate::client::workflow_spec::WorkflowSpec;
 use crate::models::{
-    EventModel, FileModel, JobDependencyModel, JobModel, ResultModel, ScheduledComputeNodesModel,
-    WorkflowModel,
+    EventModel, FileModel, JobDependencyModel, JobModel, JobStatus, ResultModel,
+    ScheduledComputeNodesModel, WorkflowModel,
 };
 use anyhow::{Context, Result};
 
@@ -225,8 +226,6 @@ impl TorcClient {
     }
 
     pub fn cancel_job(&self, job_id: i64) -> Result<()> {
-        use crate::models::JobStatus;
-
         // Get the existing job, update status, and PUT back
         let mut job = self.get_job(job_id)?;
         job.status = Some(JobStatus::Canceled);
@@ -237,8 +236,6 @@ impl TorcClient {
     }
 
     pub fn terminate_job(&self, job_id: i64) -> Result<()> {
-        use crate::models::JobStatus;
-
         let mut job = self.get_job(job_id)?;
         job.status = Some(JobStatus::Terminated);
 
@@ -248,8 +245,6 @@ impl TorcClient {
     }
 
     pub fn retry_job(&self, job_id: i64) -> Result<()> {
-        use crate::models::JobStatus;
-
         let mut job = self.get_job(job_id)?;
         job.status = Some(JobStatus::Ready);
 
@@ -271,8 +266,6 @@ impl TorcClient {
     }
 
     pub fn create_workflow_from_file(&self, path: &str) -> Result<i64> {
-        use crate::client::workflow_spec::WorkflowSpec;
-
         // Get current user
         let user = std::env::var("USER")
             .or_else(|_| std::env::var("USERNAME"))
