@@ -338,7 +338,7 @@ Object.assign(TorcDashboard.prototype, {
             const plan = response.data;
             content.innerHTML = this.renderExecutionPlan(plan);
         } catch (error) {
-            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${error.message}</div>`;
+            content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${this.escapeHtml(error.message)}</div>`;
         }
     },
 
