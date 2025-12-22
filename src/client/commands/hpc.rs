@@ -145,14 +145,18 @@ pub fn generate_schedulers_for_workflow(
     add_actions: bool,
     force: bool,
 ) -> Result<GenerateResult, String> {
-    // Check if workflow already has schedulers
-    if !force
-        && spec.slurm_schedulers.is_some()
-        && !spec.slurm_schedulers.as_ref().unwrap().is_empty()
-    {
-        return Err(
-            "Workflow already has slurm_schedulers defined. Use --force to overwrite.".to_string(),
-        );
+    // Check if workflow already has schedulers or actions
+    if !force {
+        if spec.slurm_schedulers.is_some() && !spec.slurm_schedulers.as_ref().unwrap().is_empty() {
+            return Err(
+                "Workflow already has slurm_schedulers defined. Use a workflow spec without schedulers (e.g., *_no_slurm.* variants).".to_string(),
+            );
+        }
+        if spec.actions.is_some() && !spec.actions.as_ref().unwrap().is_empty() {
+            return Err(
+                "Workflow already has actions defined. Use a workflow spec without actions (e.g., *_no_slurm.* variants).".to_string(),
+            );
+        }
     }
 
     // Expand parameters before building the graph to properly detect file-based dependencies
@@ -240,8 +244,20 @@ pub fn generate_schedulers_for_workflow(
         };
 
         // Calculate total nodes needed based on job count and partition capacity
-        // Jobs per node is based on how many jobs can fit based on CPU requirements
-        let jobs_per_node = std::cmp::max(1, partition.cpus_per_node / rr.num_cpus as u32);
+        // Jobs per node is the minimum of what fits by CPU, memory, and GPU constraints
+        let jobs_per_node_by_cpu = partition.cpus_per_node / rr.num_cpus as u32;
+        let jobs_per_node_by_mem = (partition.memory_mb / memory_mb) as u32;
+        let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
+            (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
+            _ => u32::MAX, // No GPU constraint
+        };
+        let jobs_per_node = std::cmp::max(
+            1,
+            std::cmp::min(
+                jobs_per_node_by_cpu,
+                std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
+            ),
+        );
         // Total nodes needed to run all jobs concurrently (respecting num_nodes per job)
         let nodes_per_job = rr.num_nodes as u32;
         let total_nodes_needed =

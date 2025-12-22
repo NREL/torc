@@ -982,3 +982,180 @@ fn test_generate_schedulers_stage_aware_for_dependent_jobs() {
         .unwrap();
     assert_eq!(job2_action.trigger_type, "on_jobs_ready");
 }
+
+/// Test that jobs-per-node calculation considers memory, not just CPUs.
+/// When memory is the limiting factor, we should allocate more nodes.
+#[rstest]
+fn test_generate_schedulers_memory_constrained_allocation() {
+    // Create 10 jobs that are memory-heavy: 8 CPUs, 120GB each
+    // On Kestrel standard nodes (104 CPUs, 240GB):
+    // - CPU-based: 104/8 = 13 jobs per node
+    // - Memory-based: 240,000MB / 122,880MB = ~1.95 = 1 job per node
+    // Memory should be the limiting factor, so we need 10 nodes for 10 jobs
+    let jobs: Vec<JobSpec> = (0..10)
+        .map(|i| JobSpec {
+            name: format!("memory_job_{}", i),
+            command: "echo heavy".to_string(),
+            resource_requirements: Some("memory_heavy".to_string()),
+            ..Default::default()
+        })
+        .collect();
+
+    let mut spec = WorkflowSpec {
+        name: "memory_test".to_string(),
+        description: Some("Test memory-constrained allocation".to_string()),
+        jobs,
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "memory_heavy".to_string(),
+            num_cpus: 8, // Small CPU requirement
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "120g".to_string(), // Large memory requirement (120GB = 122,880MB)
+            runtime: "PT1H".to_string(),
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let result =
+        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
+            .unwrap();
+
+    assert_eq!(result.scheduler_count, 1);
+    assert_eq!(result.action_count, 1);
+
+    // Check the action's num_allocations
+    let actions = spec.actions.as_ref().unwrap();
+    assert_eq!(actions.len(), 1);
+
+    let action = &actions[0];
+    // With memory as limiting factor (1 job per node), we need 10 allocations for 10 jobs
+    // If only CPU was considered, it would be ceil(10/13) = 1 allocation (wrong!)
+    assert_eq!(
+        action.num_allocations,
+        Some(10),
+        "Should allocate 10 nodes for 10 memory-heavy jobs (1 job per node due to 120GB memory)"
+    );
+}
+
+/// Test mixed constraint: some jobs CPU-limited, some memory-limited
+#[rstest]
+fn test_generate_schedulers_cpu_vs_memory_constraint() {
+    let mut spec = WorkflowSpec {
+        name: "mixed_constraint_test".to_string(),
+        description: Some("Test CPU vs memory constraints".to_string()),
+        jobs: vec![
+            // 4 CPU-limited jobs: 52 CPUs, 60GB each
+            // On 104 CPU / 240GB node: 104/52=2 by CPU, 240000/61440=3.9 by memory -> CPU wins (2 per node)
+            // 4 jobs / 2 per node = 2 allocations
+            JobSpec {
+                name: "cpu_job_1".to_string(),
+                command: "echo cpu".to_string(),
+                resource_requirements: Some("cpu_heavy".to_string()),
+                ..Default::default()
+            },
+            JobSpec {
+                name: "cpu_job_2".to_string(),
+                command: "echo cpu".to_string(),
+                resource_requirements: Some("cpu_heavy".to_string()),
+                ..Default::default()
+            },
+            JobSpec {
+                name: "cpu_job_3".to_string(),
+                command: "echo cpu".to_string(),
+                resource_requirements: Some("cpu_heavy".to_string()),
+                ..Default::default()
+            },
+            JobSpec {
+                name: "cpu_job_4".to_string(),
+                command: "echo cpu".to_string(),
+                resource_requirements: Some("cpu_heavy".to_string()),
+                ..Default::default()
+            },
+        ],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "cpu_heavy".to_string(),
+            num_cpus: 52, // Half the CPUs
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "60g".to_string(), // Only 1/4 of memory
+            runtime: "PT1H".to_string(),
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result =
+        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
+            .unwrap();
+
+    let actions = spec.actions.as_ref().unwrap();
+    let action = &actions[0];
+
+    // CPU is limiting: 104/52 = 2 jobs per node
+    // Memory would allow: 240000/61440 = 3.9 = 3 jobs per node
+    // min(2, 3) = 2 jobs per node
+    // 4 jobs / 2 per node = 2 allocations
+    assert_eq!(
+        action.num_allocations,
+        Some(2),
+        "Should allocate 2 nodes for 4 CPU-heavy jobs (2 jobs per node, CPU-limited)"
+    );
+}
+
+/// Test that GPU constraints are considered in jobs-per-node calculation.
+/// When GPUs are the limiting factor, we should allocate more nodes.
+#[rstest]
+fn test_generate_schedulers_gpu_constrained_allocation() {
+    // Create 8 jobs that need 2 GPUs each
+    // On Kestrel GPU nodes (128 CPUs, 360GB, 4 GPUs):
+    // - CPU-based: 128/32 = 4 jobs per node
+    // - Memory-based: 360,000MB / 92,160MB = 3.9 = 3 jobs per node
+    // - GPU-based: 4/2 = 2 jobs per node
+    // GPU should be the limiting factor, so we need 4 nodes for 8 jobs
+    let jobs: Vec<JobSpec> = (0..8)
+        .map(|i| JobSpec {
+            name: format!("gpu_job_{}", i),
+            command: "python train.py".to_string(),
+            resource_requirements: Some("gpu_training".to_string()),
+            ..Default::default()
+        })
+        .collect();
+
+    let mut spec = WorkflowSpec {
+        name: "gpu_test".to_string(),
+        description: Some("Test GPU-constrained allocation".to_string()),
+        jobs,
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "gpu_training".to_string(),
+            num_cpus: 32, // 1/4 of node CPUs
+            num_gpus: 2,  // Half the GPUs - this should be limiting
+            num_nodes: 1,
+            memory: "90g".to_string(), // ~1/4 of node memory
+            runtime: "PT1H".to_string(),
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let result =
+        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
+            .unwrap();
+
+    assert_eq!(result.scheduler_count, 1);
+    assert_eq!(result.action_count, 1);
+
+    let actions = spec.actions.as_ref().unwrap();
+    let action = &actions[0];
+
+    // GPU is limiting: 4/2 = 2 jobs per node
+    // CPU would allow: 128/32 = 4 jobs per node
+    // Memory would allow: 360000/92160 = 3.9 = 3 jobs per node
+    // min(4, 3, 2) = 2 jobs per node
+    // 8 jobs / 2 per node = 4 allocations
+    assert_eq!(
+        action.num_allocations,
+        Some(4),
+        "Should allocate 4 nodes for 8 GPU jobs (2 jobs per node due to GPU constraint)"
+    );
+}

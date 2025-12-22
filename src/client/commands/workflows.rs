@@ -2219,13 +2219,14 @@ fn handle_create_slurm(
     };
 
     // Generate schedulers
+    // Don't allow force=true - if schedulers already exist, user should use the _no_slurm variant
     match generate_schedulers_for_workflow(
         &mut spec,
         profile,
         account,
         single_allocation,
         true,
-        true,
+        false,
     ) {
         Ok(result) => {
             if format != "json" {

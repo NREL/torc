@@ -404,7 +404,6 @@ Object.assign(TorcDashboard.prototype, {
         const isLeaf = leafEvents.includes(event.id);
         const jobs = event.jobs_becoming_ready || [];
         const schedulers = event.scheduler_allocations || [];
-        const dependsOn = event.depends_on_events || [];
         const unlocks = event.unlocks_events || [];
 
         // Determine event type icon and style
