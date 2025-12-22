@@ -10,6 +10,7 @@ use crate::client::commands::compute_nodes::ComputeNodeCommands;
 use crate::client::commands::config::ConfigCommands;
 use crate::client::commands::events::EventCommands;
 use crate::client::commands::files::FileCommands;
+use crate::client::commands::hpc::HpcCommands;
 use crate::client::commands::job_dependencies::JobDependencyCommands;
 use crate::client::commands::jobs::JobCommands;
 use crate::client::commands::reports::ReportCommands;
@@ -83,11 +84,57 @@ pub enum Commands {
     },
     /// Submit a workflow to scheduler (create from spec file or submit existing workflow by ID)
     ///
-    /// Requires workflow to have an on_workflow_start action with schedule_nodes
+    /// Requires workflow to have an on_workflow_start action with schedule_nodes.
+    /// For Slurm workflows without pre-configured schedulers, use `submit-slurm` instead.
     Submit {
         /// Path to workflow spec file (JSON/JSON5/YAML) or workflow ID
         #[arg()]
         workflow_spec_or_id: String,
+        /// Ignore missing data (defaults to false)
+        #[arg(short, long, default_value = "false")]
+        ignore_missing_data: bool,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
+    },
+    /// Submit a workflow to Slurm with auto-generated schedulers
+    ///
+    /// Automatically generates Slurm schedulers based on job resource requirements
+    /// and HPC profile.
+    ///
+    /// WARNING: This command uses heuristics to generate schedulers and workflow
+    /// actions. For complex workflows with unusual dependency patterns, the
+    /// generated configuration may not be optimal and could waste allocation time.
+    ///
+    /// RECOMMENDED: Preview the generated configuration first with:
+    ///
+    ///   torc slurm generate --account <account> workflow.yaml
+    ///
+    /// Review the schedulers and actions to ensure they are appropriate for your
+    /// workflow before submitting. You can save the output and submit manually:
+    ///
+    ///   torc slurm generate --account <account> -o workflow_with_schedulers.yaml workflow.yaml
+    ///   torc submit workflow_with_schedulers.yaml
+    #[command(name = "submit-slurm")]
+    SubmitSlurm {
+        /// Path to workflow spec file (JSON/JSON5/YAML/KDL)
+        #[arg()]
+        workflow_spec: String,
+        /// Slurm account to use for allocations
+        #[arg(long)]
+        account: String,
+        /// HPC profile to use (auto-detected if not specified)
+        #[arg(long)]
+        hpc_profile: Option<String>,
+        /// Bundle all nodes into a single Slurm allocation per scheduler
+        ///
+        /// By default, creates one Slurm allocation per node (N×1 mode), which allows
+        /// jobs to start as nodes become available and provides better fault tolerance.
+        ///
+        /// With this flag, creates one large allocation with all nodes (1×N mode),
+        /// which requires all nodes to be available simultaneously but uses a single sbatch.
+        #[arg(long)]
+        single_allocation: bool,
         /// Ignore missing data (defaults to false)
         #[arg(short, long, default_value = "false")]
         ignore_missing_data: bool,
@@ -149,6 +196,11 @@ pub enum Commands {
     ScheduledComputeNodes {
         #[command(subcommand)]
         command: ScheduledComputeNodeCommands,
+    },
+    /// HPC system profiles and partition information
+    Hpc {
+        #[command(subcommand)]
+        command: HpcCommands,
     },
     /// Generate reports and analytics
     Reports {

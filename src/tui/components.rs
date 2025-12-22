@@ -1,5 +1,8 @@
 //! Reusable UI components for the TUI
 
+use std::fs;
+use std::path::Path;
+
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -790,9 +793,6 @@ impl FileViewer {
     }
 
     pub fn load_content(&mut self) -> Result<(), String> {
-        use std::fs;
-        use std::path::Path;
-
         let path = Path::new(&self.file_path);
 
         if !path.exists() {

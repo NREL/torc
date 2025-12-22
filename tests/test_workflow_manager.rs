@@ -6,8 +6,8 @@
 mod common;
 
 use common::{
-    ServerProcess, create_test_compute_node, create_test_file, create_test_user_data,
-    create_test_workflow_advanced, start_server,
+    ServerProcess, create_diamond_workflow, create_test_compute_node, create_test_file,
+    create_test_user_data, create_test_workflow_advanced, start_server,
 };
 use rstest::rstest;
 use std::fs;
@@ -2407,11 +2407,6 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
 /// 5. Verify work1 is set to Ready (not Blocked), since preprocess is already Completed
 #[rstest]
 fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &ServerProcess) {
-    use common::create_diamond_workflow;
-    use std::fs;
-    use std::thread;
-    use std::time::Duration;
-
     let config = start_server.config.clone();
 
     // Create a temporary directory for workflow files

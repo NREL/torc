@@ -1,9 +1,11 @@
 mod common;
 
+use std::fs;
+use std::path::PathBuf;
+
 use common::{ServerProcess, start_server};
 use rstest::rstest;
 use serde_json;
-use std::fs;
 use tempfile::NamedTempFile;
 use torc::client::default_api;
 use torc::client::workflow_spec::{
@@ -1797,8 +1799,6 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
 
 #[rstest]
 fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
-    use std::path::PathBuf;
-
     // Define the subdirectories to check
     let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples");
     let subdirs = vec!["yaml", "json", "kdl"];
@@ -3060,4 +3060,877 @@ fn test_validate_spec_no_warning_with_scheduler_assignments() {
         "Expected no warnings when all jobs have scheduler assignments, got: {:?}",
         result.warnings
     );
+}
+
+// =============================================================================
+// Subgraph Workflow Tests
+// =============================================================================
+
+/// Test that the subgraph workflow examples parse correctly in all formats
+#[test]
+fn test_subgraph_workflow_parses_in_all_formats() {
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    // Test each format with slurm schedulers
+    let formats = vec![
+        "subgraphs_workflow.json",
+        "subgraphs_workflow.json5",
+        "subgraphs_workflow.yaml",
+        "subgraphs_workflow.kdl",
+    ];
+
+    for format in formats {
+        let spec_file = examples_dir.join(format);
+        if !spec_file.exists() {
+            eprintln!("Skipping {} (file not found)", format);
+            continue;
+        }
+
+        let mut spec = WorkflowSpec::from_spec_file(&spec_file)
+            .unwrap_or_else(|e| panic!("Failed to parse {}: {}", format, e));
+
+        assert_eq!(
+            spec.name, "two_subgraph_pipeline",
+            "Workflow name mismatch for {}",
+            format
+        );
+
+        // Expand parameters to get the full job list
+        spec.expand_parameters()
+            .unwrap_or_else(|e| panic!("Failed to expand parameters for {}: {}", format, e));
+
+        assert_eq!(spec.jobs.len(), 15, "Expected 15 jobs for {}", format);
+        assert!(
+            spec.slurm_schedulers.is_some(),
+            "Expected slurm_schedulers for {}",
+            format
+        );
+        assert!(spec.actions.is_some(), "Expected actions for {}", format);
+
+        eprintln!(
+            "✓ {} parses correctly with {} jobs",
+            format,
+            spec.jobs.len()
+        );
+    }
+}
+
+/// Test that the no_slurm versions parse correctly
+#[test]
+fn test_subgraph_workflow_no_slurm_parses_in_all_formats() {
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    let formats = vec![
+        "subgraphs_workflow_no_slurm.json",
+        "subgraphs_workflow_no_slurm.json5",
+        "subgraphs_workflow_no_slurm.yaml",
+        "subgraphs_workflow_no_slurm.kdl",
+    ];
+
+    for format in formats {
+        let spec_file = examples_dir.join(format);
+        if !spec_file.exists() {
+            eprintln!("Skipping {} (file not found)", format);
+            continue;
+        }
+
+        let mut spec = WorkflowSpec::from_spec_file(&spec_file)
+            .unwrap_or_else(|e| panic!("Failed to parse {}: {}", format, e));
+
+        assert_eq!(
+            spec.name, "two_subgraph_pipeline",
+            "Workflow name mismatch for {}",
+            format
+        );
+
+        // Expand parameters to get the full job list
+        spec.expand_parameters()
+            .unwrap_or_else(|e| panic!("Failed to expand parameters for {}: {}", format, e));
+
+        assert_eq!(spec.jobs.len(), 15, "Expected 15 jobs for {}", format);
+        assert!(
+            spec.slurm_schedulers.is_none(),
+            "Expected no slurm_schedulers for {}",
+            format
+        );
+        assert!(spec.actions.is_none(), "Expected no actions for {}", format);
+
+        eprintln!(
+            "✓ {} parses correctly with {} jobs (no slurm)",
+            format,
+            spec.jobs.len()
+        );
+    }
+}
+
+/// Test that execution plans have 4 stages for both slurm and no_slurm versions
+#[test]
+fn test_subgraph_workflow_execution_plan_has_4_stages() {
+    use torc::client::execution_plan::ExecutionPlan;
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    // Test with slurm schedulers
+    let slurm_spec_file = examples_dir.join("subgraphs_workflow.yaml");
+    if slurm_spec_file.exists() {
+        let mut spec =
+            WorkflowSpec::from_spec_file(&slurm_spec_file).expect("Failed to parse slurm workflow");
+        spec.expand_parameters()
+            .expect("Failed to expand parameters");
+
+        let plan = ExecutionPlan::from_spec(&spec).expect("Failed to build execution plan");
+
+        // With the DAG structure, we have 6 events for the subgraph workflow:
+        // 1. start event (prep_a, prep_b)
+        // 2. prep_a completes -> work_a_1..5
+        // 3. prep_b completes -> work_b_1..5
+        // 4. work_a_* complete -> post_a
+        // 5. work_b_* complete -> post_b
+        // 6. post_a, post_b complete -> final
+        assert_eq!(
+            plan.events.len(),
+            6,
+            "Expected 6 events for slurm workflow (DAG structure), got {}",
+            plan.events.len()
+        );
+
+        // Verify there's exactly one root event (start)
+        assert_eq!(plan.root_events.len(), 1, "Should have 1 root event");
+
+        // Verify the start event has workflow start trigger
+        let start_event = plan.events.get(&plan.root_events[0]).unwrap();
+        assert!(
+            start_event.trigger_description.contains("Workflow Start"),
+            "Root event should be workflow start"
+        );
+
+        eprintln!(
+            "✓ Slurm workflow has {} events (DAG structure)",
+            plan.events.len()
+        );
+    }
+
+    // Test without slurm schedulers
+    let no_slurm_spec_file = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+    if no_slurm_spec_file.exists() {
+        let mut spec = WorkflowSpec::from_spec_file(&no_slurm_spec_file)
+            .expect("Failed to parse no_slurm workflow");
+        spec.expand_parameters()
+            .expect("Failed to expand parameters");
+
+        let plan = ExecutionPlan::from_spec(&spec).expect("Failed to build execution plan");
+
+        assert_eq!(
+            plan.events.len(),
+            6,
+            "Expected 6 events for no_slurm workflow (DAG structure), got {}",
+            plan.events.len()
+        );
+
+        eprintln!(
+            "✓ No-slurm workflow has {} events (DAG structure)",
+            plan.events.len()
+        );
+    }
+}
+
+/// Test that slurm and no_slurm versions produce the same execution plan structure
+#[test]
+fn test_subgraph_workflow_slurm_and_no_slurm_have_same_events() {
+    use torc::client::execution_plan::ExecutionPlan;
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    let slurm_spec_file = examples_dir.join("subgraphs_workflow.yaml");
+    let no_slurm_spec_file = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+
+    if !slurm_spec_file.exists() || !no_slurm_spec_file.exists() {
+        eprintln!("Skipping test - example files not found");
+        return;
+    }
+
+    // Parse and expand both specs
+    let mut slurm_spec =
+        WorkflowSpec::from_spec_file(&slurm_spec_file).expect("Failed to parse slurm spec");
+    slurm_spec
+        .expand_parameters()
+        .expect("Failed to expand slurm parameters");
+
+    let mut no_slurm_spec =
+        WorkflowSpec::from_spec_file(&no_slurm_spec_file).expect("Failed to parse no_slurm spec");
+    no_slurm_spec
+        .expand_parameters()
+        .expect("Failed to expand no_slurm parameters");
+
+    // Build execution plans
+    let slurm_plan =
+        ExecutionPlan::from_spec(&slurm_spec).expect("Failed to build slurm execution plan");
+    let no_slurm_plan =
+        ExecutionPlan::from_spec(&no_slurm_spec).expect("Failed to build no_slurm execution plan");
+
+    // Verify same number of events
+    assert_eq!(
+        slurm_plan.events.len(),
+        no_slurm_plan.events.len(),
+        "Slurm and no_slurm workflows should have the same number of events"
+    );
+
+    // Collect all jobs becoming ready from both plans
+    let mut slurm_all_jobs: Vec<String> = slurm_plan
+        .events
+        .values()
+        .flat_map(|e| e.jobs_becoming_ready.clone())
+        .collect();
+    slurm_all_jobs.sort();
+
+    let mut no_slurm_all_jobs: Vec<String> = no_slurm_plan
+        .events
+        .values()
+        .flat_map(|e| e.jobs_becoming_ready.clone())
+        .collect();
+    no_slurm_all_jobs.sort();
+
+    assert_eq!(
+        slurm_all_jobs, no_slurm_all_jobs,
+        "Both plans should make the same jobs ready"
+    );
+
+    eprintln!(
+        "✓ Both versions have {} events with {} total jobs",
+        slurm_plan.events.len(),
+        slurm_all_jobs.len()
+    );
+}
+
+/// Test that all format pairs (slurm vs no_slurm) produce identical execution plans
+#[test]
+fn test_subgraph_workflow_all_formats_produce_same_execution_plan() {
+    use torc::client::execution_plan::ExecutionPlan;
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    // Compare JSON vs YAML (slurm versions)
+    let json_file = examples_dir.join("subgraphs_workflow.json");
+    let yaml_file = examples_dir.join("subgraphs_workflow.yaml");
+
+    if json_file.exists() && yaml_file.exists() {
+        let mut json_spec = WorkflowSpec::from_spec_file(&json_file).expect("Failed to parse JSON");
+        json_spec
+            .expand_parameters()
+            .expect("Failed to expand JSON parameters");
+
+        let mut yaml_spec = WorkflowSpec::from_spec_file(&yaml_file).expect("Failed to parse YAML");
+        yaml_spec
+            .expand_parameters()
+            .expect("Failed to expand YAML parameters");
+
+        let json_plan = ExecutionPlan::from_spec(&json_spec).expect("Failed to build JSON plan");
+        let yaml_plan = ExecutionPlan::from_spec(&yaml_spec).expect("Failed to build YAML plan");
+
+        assert_eq!(
+            json_plan.events.len(),
+            yaml_plan.events.len(),
+            "JSON and YAML should have same number of events"
+        );
+
+        // Verify total job counts match
+        let json_job_count: usize = json_plan
+            .events
+            .values()
+            .map(|e| e.jobs_becoming_ready.len())
+            .sum();
+        let yaml_job_count: usize = yaml_plan
+            .events
+            .values()
+            .map(|e| e.jobs_becoming_ready.len())
+            .sum();
+
+        assert_eq!(
+            json_job_count, yaml_job_count,
+            "Total job counts should match between JSON and YAML"
+        );
+
+        eprintln!("✓ JSON and YAML produce identical execution plans");
+    }
+
+    // Compare no_slurm versions
+    let json_no_slurm = examples_dir.join("subgraphs_workflow_no_slurm.json");
+    let yaml_no_slurm = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+
+    if json_no_slurm.exists() && yaml_no_slurm.exists() {
+        let mut json_spec =
+            WorkflowSpec::from_spec_file(&json_no_slurm).expect("Failed to parse JSON no_slurm");
+        json_spec
+            .expand_parameters()
+            .expect("Failed to expand parameters");
+
+        let mut yaml_spec =
+            WorkflowSpec::from_spec_file(&yaml_no_slurm).expect("Failed to parse YAML no_slurm");
+        yaml_spec
+            .expand_parameters()
+            .expect("Failed to expand parameters");
+
+        let json_plan = ExecutionPlan::from_spec(&json_spec).expect("Failed to build plan");
+        let yaml_plan = ExecutionPlan::from_spec(&yaml_spec).expect("Failed to build plan");
+
+        assert_eq!(
+            json_plan.events.len(),
+            yaml_plan.events.len(),
+            "No_slurm JSON and YAML should have same number of events"
+        );
+
+        eprintln!("✓ No_slurm JSON and YAML produce identical execution plans");
+    }
+}
+
+/// Test subgraph workflow job structure
+#[test]
+fn test_subgraph_workflow_job_structure() {
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+    let spec_file = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+
+    if !spec_file.exists() {
+        eprintln!("Skipping test - example file not found");
+        return;
+    }
+
+    let mut spec = WorkflowSpec::from_spec_file(&spec_file).expect("Failed to parse spec");
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Verify job counts after expansion
+    // prep_a, prep_b = 2
+    // work_a_1..5, work_b_1..5 = 10
+    // post_a, post_b = 2
+    // final = 1
+    // Total = 15
+    assert_eq!(spec.jobs.len(), 15, "Expected 15 jobs after expansion");
+
+    // Verify prep jobs have no dependencies
+    let prep_a = spec.jobs.iter().find(|j| j.name == "prep_a");
+    assert!(prep_a.is_some(), "prep_a job not found");
+    assert!(
+        prep_a.unwrap().depends_on.is_none()
+            || prep_a.unwrap().depends_on.as_ref().unwrap().is_empty(),
+        "prep_a should have no explicit dependencies"
+    );
+
+    // Verify work jobs have input_files
+    let work_a_1 = spec.jobs.iter().find(|j| j.name == "work_a_1");
+    assert!(work_a_1.is_some(), "work_a_1 job not found");
+    assert!(
+        work_a_1.unwrap().input_files.is_some(),
+        "work_a_1 should have input_files"
+    );
+
+    // Verify post jobs have input_files from work jobs
+    let post_a = spec.jobs.iter().find(|j| j.name == "post_a");
+    assert!(post_a.is_some(), "post_a job not found");
+    let post_a_inputs = post_a.unwrap().input_files.as_ref().unwrap();
+    assert_eq!(
+        post_a_inputs.len(),
+        5,
+        "post_a should have 5 input files from work_a jobs"
+    );
+
+    // Verify final job has input_files from both post jobs
+    let final_job = spec.jobs.iter().find(|j| j.name == "final");
+    assert!(final_job.is_some(), "final job not found");
+    let final_inputs = final_job.unwrap().input_files.as_ref().unwrap();
+    assert_eq!(
+        final_inputs.len(),
+        2,
+        "final should have 2 input files (post_a_out, post_b_out)"
+    );
+
+    eprintln!("✓ Job structure verified: 15 jobs with correct dependencies");
+}
+
+/// Test that subgraph workflow resource requirements are preserved
+#[test]
+fn test_subgraph_workflow_resource_requirements() {
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+    let spec_file = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+
+    if !spec_file.exists() {
+        eprintln!("Skipping test - example file not found");
+        return;
+    }
+
+    let spec = WorkflowSpec::from_spec_file(&spec_file).expect("Failed to parse spec");
+
+    let resource_reqs = spec
+        .resource_requirements
+        .as_ref()
+        .expect("Missing resource_requirements");
+    assert_eq!(
+        resource_reqs.len(),
+        5,
+        "Expected 5 resource requirement definitions"
+    );
+
+    // Verify specific resource requirements
+    let small = resource_reqs.iter().find(|r| r.name == "small");
+    assert!(small.is_some(), "small resource requirement not found");
+    assert_eq!(small.unwrap().num_cpus, 1);
+
+    let work_large = resource_reqs.iter().find(|r| r.name == "work_large");
+    assert!(
+        work_large.is_some(),
+        "work_large resource requirement not found"
+    );
+    assert_eq!(work_large.unwrap().num_cpus, 8);
+    assert_eq!(work_large.unwrap().memory, "32g");
+
+    let work_gpu = resource_reqs.iter().find(|r| r.name == "work_gpu");
+    assert!(
+        work_gpu.is_some(),
+        "work_gpu resource requirement not found"
+    );
+    assert_eq!(work_gpu.unwrap().num_gpus, 1);
+
+    eprintln!("✓ Resource requirements verified");
+}
+
+/// Integration test: create subgraph workflows on server
+#[rstest]
+fn test_create_subgraph_workflows_from_examples(start_server: &ServerProcess) {
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+
+    // Test both slurm and no_slurm YAML versions
+    let test_files = vec![
+        ("subgraphs_workflow.yaml", true),           // has schedulers
+        ("subgraphs_workflow_no_slurm.yaml", false), // no schedulers
+    ];
+
+    for (filename, has_schedulers) in test_files {
+        let spec_file = examples_dir.join(filename);
+        if !spec_file.exists() {
+            eprintln!("Skipping {} (file not found)", filename);
+            continue;
+        }
+
+        let workflow_id = WorkflowSpec::create_workflow_from_spec(
+            &start_server.config,
+            &spec_file,
+            "test_user",
+            false,
+            true, // skip_checks - we don't have a real Slurm environment
+        )
+        .unwrap_or_else(|e| panic!("Failed to create workflow from {}: {}", filename, e));
+
+        assert!(workflow_id > 0, "Invalid workflow ID for {}", filename);
+
+        // Verify the workflow was created
+        let workflow = default_api::get_workflow(&start_server.config, workflow_id)
+            .expect("Failed to get workflow");
+        assert_eq!(workflow.name, "two_subgraph_pipeline");
+
+        // Verify job count
+        let jobs = default_api::list_jobs(
+            &start_server.config,
+            workflow_id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .expect("Failed to list jobs");
+
+        let job_count = jobs.items.as_ref().map(|j| j.len()).unwrap_or(0);
+        assert_eq!(
+            job_count, 15,
+            "Expected 15 jobs for {}, got {}",
+            filename, job_count
+        );
+
+        // Verify schedulers if present
+        if has_schedulers {
+            let response = default_api::list_slurm_schedulers(
+                &start_server.config,
+                workflow_id,
+                Some(0),  // offset
+                Some(50), // limit
+                None,     // sort_by
+                None,     // reverse_sort
+                None,     // name filter
+                None,     // account filter
+                None,     // gres filter
+                None,     // mem filter
+                None,     // nodes filter
+                None,     // partition filter
+                None,     // qos filter
+                None,     // tmp filter
+                None,     // walltime filter
+            )
+            .expect("Failed to list schedulers");
+            let sched_count = response.items.unwrap_or_default().len();
+            assert!(
+                sched_count > 0,
+                "Expected schedulers for {}, got {}",
+                filename,
+                sched_count
+            );
+            eprintln!(
+                "✓ {} created with {} jobs and {} schedulers",
+                filename, job_count, sched_count
+            );
+        } else {
+            eprintln!(
+                "✓ {} created with {} jobs (no schedulers)",
+                filename, job_count
+            );
+        }
+
+        // Clean up
+        let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+    }
+}
+
+/// Test that generate_schedulers_for_workflow assigns correct trigger types
+/// Jobs without dependencies get on_workflow_start, jobs with dependencies get on_jobs_ready
+#[test]
+fn test_subgraph_workflow_generated_actions_have_correct_triggers() {
+    use torc::client::commands::slurm::generate_schedulers_for_workflow;
+    use torc::client::hpc::kestrel::kestrel_profile;
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+    let no_slurm_spec_file = examples_dir.join("subgraphs_workflow_no_slurm.yaml");
+
+    if !no_slurm_spec_file.exists() {
+        eprintln!("Skipping test - example file not found");
+        return;
+    }
+
+    // Parse the no_slurm spec
+    let mut spec =
+        WorkflowSpec::from_spec_file(&no_slurm_spec_file).expect("Failed to parse no_slurm spec");
+
+    // Generate schedulers
+    let profile = kestrel_profile();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false, // not single allocation
+        true,  // add actions
+        false, // don't force
+    )
+    .expect("Failed to generate schedulers");
+
+    eprintln!(
+        "Generated {} schedulers and {} actions",
+        result.scheduler_count, result.action_count
+    );
+
+    let actions = spec
+        .actions
+        .as_ref()
+        .expect("Should have generated actions");
+
+    // Build map of scheduler -> trigger_type
+    let scheduler_triggers: std::collections::HashMap<String, String> = actions
+        .iter()
+        .filter_map(|a| a.scheduler.clone().map(|s| (s, a.trigger_type.clone())))
+        .collect();
+
+    // Verify each job has the correct trigger type based on dependencies
+    // prep_a, prep_b: no dependencies -> on_workflow_start
+    // work_*: depend on prep_* outputs -> on_jobs_ready
+    // post_*: depend on work_* outputs -> on_jobs_ready
+    // final: depends on post_* outputs -> on_jobs_ready
+    for job in &spec.jobs {
+        let sched = job
+            .scheduler
+            .as_ref()
+            .expect(&format!("Job {} should have scheduler assigned", job.name));
+        let trigger = scheduler_triggers
+            .get(sched)
+            .expect(&format!("Scheduler {} should have action", sched));
+
+        let expected_trigger = if job.name == "prep_a" || job.name == "prep_b" {
+            "on_workflow_start"
+        } else {
+            "on_jobs_ready"
+        };
+
+        assert_eq!(
+            trigger, expected_trigger,
+            "Job {} (scheduler {}) should have trigger {}, got {}",
+            job.name, sched, expected_trigger, trigger
+        );
+    }
+
+    eprintln!("✓ All jobs have correct trigger types");
+}
+
+/// Test that execution plan from database correctly computes dependencies from file relationships
+#[test]
+fn test_subgraph_workflow_execution_plan_from_database() {
+    use torc::client::execution_plan::ExecutionPlan;
+
+    let start_server = common::start_server();
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+    let spec_file = examples_dir.join("subgraphs_workflow.yaml");
+
+    if !spec_file.exists() {
+        eprintln!("Skipping test - example file not found");
+        return;
+    }
+
+    // Create workflow on server
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &spec_file,
+        "test_user",
+        false,
+        true, // skip_checks
+    )
+    .expect("Failed to create workflow");
+
+    // Fetch workflow, jobs (with relationships), and actions from server
+    let workflow = default_api::get_workflow(&start_server.config, workflow_id)
+        .expect("Failed to get workflow");
+
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        Some(10000),
+        None,
+        None,
+        Some(true), // include_relationships - this is key!
+    )
+    .expect("Failed to list jobs")
+    .items
+    .unwrap_or_default();
+
+    let actions = default_api::get_workflow_actions(&start_server.config, workflow_id)
+        .expect("Failed to get actions");
+
+    let slurm_schedulers = default_api::list_slurm_schedulers(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .map(|r| r.items.unwrap_or_default())
+    .unwrap_or_default();
+
+    // Build execution plan from database models
+    let plan = ExecutionPlan::from_database_models(&workflow, &jobs, &actions, &slurm_schedulers)
+        .expect("Failed to build execution plan from database");
+
+    // With the DAG structure, we have 6 events:
+    // 1. start event (prep_a, prep_b)
+    // 2. prep_a completes -> work_a_1..5
+    // 3. prep_b completes -> work_b_1..5
+    // 4. work_a_* complete -> post_a
+    // 5. work_b_* complete -> post_b
+    // 6. post_a, post_b complete -> final
+    assert_eq!(
+        plan.events.len(),
+        6,
+        "Expected 6 events from database (DAG structure), got {}",
+        plan.events.len()
+    );
+
+    // Find the start event
+    let start_event = plan
+        .events
+        .get(&plan.root_events[0])
+        .expect("Start event not found");
+
+    // Verify start event has 2 jobs (prep_a, prep_b)
+    assert_eq!(
+        start_event.jobs_becoming_ready.len(),
+        2,
+        "Start event should have 2 jobs, got {} - {:?}",
+        start_event.jobs_becoming_ready.len(),
+        start_event.jobs_becoming_ready
+    );
+    assert!(
+        start_event
+            .jobs_becoming_ready
+            .contains(&"prep_a".to_string()),
+        "Start event should contain prep_a"
+    );
+    assert!(
+        start_event
+            .jobs_becoming_ready
+            .contains(&"prep_b".to_string()),
+        "Start event should contain prep_b"
+    );
+
+    // Collect all jobs becoming ready across all events
+    let all_jobs: Vec<String> = plan
+        .events
+        .values()
+        .flat_map(|e| e.jobs_becoming_ready.clone())
+        .collect();
+
+    // Should have 15 total jobs
+    assert_eq!(
+        all_jobs.len(),
+        15,
+        "Total jobs across all events should be 15, got {}",
+        all_jobs.len()
+    );
+
+    // Verify final job is in a leaf event
+    let leaf_event = plan
+        .events
+        .get(&plan.leaf_events[0])
+        .expect("Leaf event not found");
+    assert!(
+        leaf_event
+            .jobs_becoming_ready
+            .contains(&"final".to_string()),
+        "Leaf event should contain final job"
+    );
+
+    // Clean up
+    let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+
+    eprintln!("✓ Execution plan from database has correct 6 events (DAG structure)");
+}
+
+/// Test that execution plan from spec matches execution plan from database
+#[test]
+fn test_subgraph_workflow_execution_plan_spec_vs_database() {
+    use torc::client::execution_plan::ExecutionPlan;
+
+    let start_server = common::start_server();
+
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
+    let spec_file = examples_dir.join("subgraphs_workflow.yaml");
+
+    if !spec_file.exists() {
+        eprintln!("Skipping test - example file not found");
+        return;
+    }
+
+    // Build execution plan directly from spec
+    let mut spec = WorkflowSpec::from_spec_file(&spec_file).expect("Failed to parse spec");
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+    let spec_plan = ExecutionPlan::from_spec(&spec).expect("Failed to build plan from spec");
+
+    // Create workflow on server
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &spec_file,
+        "test_user",
+        false,
+        true, // skip_checks
+    )
+    .expect("Failed to create workflow");
+
+    // Fetch workflow, jobs (with relationships), and actions from server
+    let workflow = default_api::get_workflow(&start_server.config, workflow_id)
+        .expect("Failed to get workflow");
+
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        Some(10000),
+        None,
+        None,
+        Some(true), // include_relationships
+    )
+    .expect("Failed to list jobs")
+    .items
+    .unwrap_or_default();
+
+    let actions = default_api::get_workflow_actions(&start_server.config, workflow_id)
+        .expect("Failed to get actions");
+
+    let slurm_schedulers = default_api::list_slurm_schedulers(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .map(|r| r.items.unwrap_or_default())
+    .unwrap_or_default();
+
+    // Build execution plan from database models
+    let db_plan =
+        ExecutionPlan::from_database_models(&workflow, &jobs, &actions, &slurm_schedulers)
+            .expect("Failed to build plan from database");
+
+    // Compare event counts
+    assert_eq!(
+        spec_plan.events.len(),
+        db_plan.events.len(),
+        "Spec and database should have same number of events"
+    );
+
+    // Collect all jobs from both plans and compare
+    let mut spec_all_jobs: Vec<String> = spec_plan
+        .events
+        .values()
+        .flat_map(|e| e.jobs_becoming_ready.clone())
+        .collect();
+    spec_all_jobs.sort();
+
+    let mut db_all_jobs: Vec<String> = db_plan
+        .events
+        .values()
+        .flat_map(|e| e.jobs_becoming_ready.clone())
+        .collect();
+    db_all_jobs.sort();
+
+    assert_eq!(
+        spec_all_jobs,
+        db_all_jobs,
+        "Spec and database should have same total jobs.\nSpec: {:?}\nDB: {:?}",
+        spec_all_jobs.len(),
+        db_all_jobs.len()
+    );
+
+    eprintln!(
+        "✓ Both plans have {} events with {} total jobs",
+        spec_plan.events.len(),
+        spec_all_jobs.len()
+    );
+
+    // Clean up
+    let _ = default_api::delete_workflow(&start_server.config, workflow_id, None);
+
+    eprintln!("✓ Execution plan from spec matches execution plan from database");
 }

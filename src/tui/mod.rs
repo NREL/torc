@@ -1,3 +1,5 @@
+use std::io;
+
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
@@ -5,7 +7,8 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
-use std::io;
+
+use crate::client::apis::default_api;
 
 mod api;
 mod app;
@@ -18,8 +21,6 @@ use components::StatusMessage;
 
 /// Check if the Torc server is reachable by calling the ping endpoint
 fn check_server_connection(base_url: &str) -> bool {
-    use crate::client::apis::default_api;
-
     let config = crate::client::apis::configuration::Configuration {
         base_path: base_url.to_string(),
         ..Default::default()

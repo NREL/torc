@@ -70,6 +70,81 @@ memory_gb = 32.0
 num_gpus = 1
 ```
 
+### `[client.hpc]` Section
+
+Settings for HPC profile system (used by `torc hpc` and `torc slurm` commands).
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `profile_overrides` | table | `{}` | Override settings for built-in HPC profiles |
+| `custom_profiles` | table | `{}` | Define custom HPC profiles |
+
+### `[client.hpc.profile_overrides.<profile>]` Section
+
+Override settings for built-in profiles (e.g., `kestrel`).
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `default_account` | string | (none) | Default Slurm account for this profile |
+
+### `[client.hpc.custom_profiles.<name>]` Section
+
+Define a custom HPC profile.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `display_name` | string | No | Human-readable name |
+| `description` | string | No | Profile description |
+| `detect_env_var` | string | No | Environment variable for detection (`NAME=value`) |
+| `detect_hostname` | string | No | Regex pattern for hostname detection |
+| `default_account` | string | No | Default Slurm account |
+| `partitions` | array | Yes | List of partition configurations |
+
+### `[[client.hpc.custom_profiles.<name>.partitions]]` Section
+
+Define partitions for a custom profile.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Partition name |
+| `cpus_per_node` | int | Yes | CPU cores per node |
+| `memory_mb` | int | Yes | Memory per node in MB |
+| `max_walltime_secs` | int | Yes | Maximum walltime in seconds |
+| `gpus_per_node` | int | No | GPUs per node |
+| `gpu_type` | string | No | GPU model (e.g., "H100") |
+| `shared` | bool | No | Whether partition supports shared jobs |
+| `min_nodes` | int | No | Minimum required nodes |
+| `requires_explicit_request` | bool | No | Must be explicitly requested |
+
+### HPC Example
+
+```toml
+[client.hpc.profile_overrides.kestrel]
+default_account = "my_default_account"
+
+[client.hpc.custom_profiles.mycluster]
+display_name = "My Research Cluster"
+description = "Internal research HPC system"
+detect_env_var = "MY_CLUSTER=research"
+default_account = "default_project"
+
+[[client.hpc.custom_profiles.mycluster.partitions]]
+name = "compute"
+cpus_per_node = 64
+memory_mb = 256000
+max_walltime_secs = 172800
+shared = false
+
+[[client.hpc.custom_profiles.mycluster.partitions]]
+name = "gpu"
+cpus_per_node = 32
+memory_mb = 128000
+max_walltime_secs = 86400
+gpus_per_node = 4
+gpu_type = "A100"
+shared = false
+```
+
 ## Server Configuration
 
 Settings for `torc-server`.

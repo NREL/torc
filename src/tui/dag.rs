@@ -73,6 +73,40 @@ impl DagLayout {
             layers[max_predecessor_layer].push(node);
         }
 
+        // Sort nodes within each layer to group related subgraphs together
+        // Group by their parent nodes to keep subgraphs visually connected
+        for layer in &mut layers {
+            layer.sort_by(|a, b| {
+                // Get predecessor indices as sort keys
+                let a_preds: Vec<usize> = self
+                    .graph
+                    .edges_directed(*a, petgraph::Direction::Incoming)
+                    .map(|e| e.source().index())
+                    .collect();
+                let b_preds: Vec<usize> = self
+                    .graph
+                    .edges_directed(*b, petgraph::Direction::Incoming)
+                    .map(|e| e.source().index())
+                    .collect();
+
+                // Sort by first predecessor, then by job name for consistency
+                match (a_preds.first(), b_preds.first()) {
+                    (Some(a_pred), Some(b_pred)) => a_pred.cmp(b_pred).then_with(|| {
+                        let a_name = &self.graph[*a].name;
+                        let b_name = &self.graph[*b].name;
+                        a_name.cmp(b_name)
+                    }),
+                    (Some(_), None) => std::cmp::Ordering::Less,
+                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (None, None) => {
+                        let a_name = &self.graph[*a].name;
+                        let b_name = &self.graph[*b].name;
+                        a_name.cmp(b_name)
+                    }
+                }
+            });
+        }
+
         layers
     }
 

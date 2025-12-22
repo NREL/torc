@@ -1,0 +1,97 @@
+{
+  // Two Sub-graph Pipeline (without Slurm schedulers/actions)
+  // Run `torc slurm generate --account <account> subgraphs_workflow_no_slurm.json5` to auto-generate
+
+  name: "two_subgraph_pipeline",
+  description: "Demonstrates 2 independent sub-graphs with 4 stages, implicit file dependencies",
+
+  files: [
+    // Stage 1 inputs
+    {name: "input_a", path: "input_a.txt", must_exist: true},
+    {name: "input_b", path: "input_b.txt", must_exist: true},
+
+    // Stage 1 outputs
+    {name: "prep_a_out", path: "output/prep_a.txt"},
+    {name: "prep_b_out", path: "output/prep_b.txt"},
+
+    // Stage 2 outputs (parameterized)
+    {name: "work_a_{i}_out", path: "output/work_a_{i}.txt", parameters: {i: "1:5"}},
+    {name: "work_b_{i}_out", path: "output/work_b_{i}.txt", parameters: {i: "1:5"}},
+
+    // Stage 3 outputs
+    {name: "post_a_out", path: "output/post_a.txt"},
+    {name: "post_b_out", path: "output/post_b.txt"},
+
+    // Stage 4 output
+    {name: "final_out", path: "output/final.txt"},
+  ],
+
+  jobs: [
+    // Stage 1: Preprocessing
+    {
+      name: "prep_a",
+      command: "./scripts/prep.sh a",
+      input_files: ["input_a"],
+      output_files: ["prep_a_out"],
+      resource_requirements: "small",
+    },
+    {
+      name: "prep_b",
+      command: "./scripts/prep.sh b",
+      input_files: ["input_b"],
+      output_files: ["prep_b_out"],
+      resource_requirements: "small",
+    },
+
+    // Stage 2: Work (two independent sub-graphs)
+    {
+      name: "work_a_{i}",
+      command: "./scripts/work.sh a {i}",
+      input_files: ["prep_a_out"],
+      output_files: ["work_a_{i}_out"],
+      resource_requirements: "work_large",
+      parameters: {i: "1:5"},
+    },
+    {
+      name: "work_b_{i}",
+      command: "./scripts/work.sh b {i}",
+      input_files: ["prep_b_out"],
+      output_files: ["work_b_{i}_out"],
+      resource_requirements: "work_gpu",
+      parameters: {i: "1:5"},
+    },
+
+    // Stage 3: Post-processing
+    {
+      name: "post_a",
+      command: "./scripts/post.sh a",
+      input_files: ["work_a_1_out", "work_a_2_out", "work_a_3_out", "work_a_4_out", "work_a_5_out"],
+      output_files: ["post_a_out"],
+      resource_requirements: "medium",
+    },
+    {
+      name: "post_b",
+      command: "./scripts/post.sh b",
+      input_files: ["work_b_1_out", "work_b_2_out", "work_b_3_out", "work_b_4_out", "work_b_5_out"],
+      output_files: ["post_b_out"],
+      resource_requirements: "medium",
+    },
+
+    // Stage 4: Final aggregation
+    {
+      name: "final",
+      command: "./scripts/aggregate.sh",
+      input_files: ["post_a_out", "post_b_out"],
+      output_files: ["final_out"],
+      resource_requirements: "large",
+    },
+  ],
+
+  resource_requirements: [
+    {name: "small", num_cpus: 1, memory: "2g", runtime: "PT30M"},
+    {name: "work_large", num_cpus: 8, memory: "32g", runtime: "PT2H"},
+    {name: "work_gpu", num_cpus: 4, memory: "16g", num_gpus: 1, runtime: "PT4H"},
+    {name: "medium", num_cpus: 2, memory: "8g", runtime: "PT1H"},
+    {name: "large", num_cpus: 4, memory: "16g", runtime: "PT2H"},
+  ],
+}

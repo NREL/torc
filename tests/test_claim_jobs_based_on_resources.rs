@@ -1,5 +1,9 @@
 mod common;
 
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
+use std::thread;
+
 use common::{
     ServerProcess, create_custom_resources_workflow, create_dependency_chain_workflow,
     create_diverse_jobs_workflow, create_gpu_workflow, create_high_cpu_workflow,
@@ -1623,10 +1627,6 @@ fn test_prepare_jobs_different_sort_methods_different_orders(start_server: &Serv
 /// ensuring the server's database locking mechanism correctly prevents race conditions
 #[rstest]
 fn test_prepare_jobs_concurrent_allocation(start_server: &ServerProcess) {
-    use std::collections::{HashMap, HashSet};
-    use std::sync::{Arc, Mutex};
-    use std::thread;
-
     let config = &start_server.config;
 
     let num_threads = thread::available_parallelism()

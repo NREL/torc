@@ -237,26 +237,30 @@ class DAGVisualizer {
             }
 
             // Create edges from relationships
+            // API returns producer_job_id (job that outputs the file) and consumer_job_id (job that inputs the file)
             const edges = [];
             if (relationships) {
                 for (const rel of relationships) {
-                    if (rel.relationship_type === 'input') {
-                        // File -> Job (input)
+                    // Producer job -> File (output edge)
+                    if (rel.producer_job_id) {
                         edges.push({
                             data: {
-                                source: `file-${rel.file_id}`,
-                                target: `job-${rel.job_id}`,
-                            },
-                            classes: 'input',
-                        });
-                    } else if (rel.relationship_type === 'output') {
-                        // Job -> File (output)
-                        edges.push({
-                            data: {
-                                source: `job-${rel.job_id}`,
+                                id: `edge-job-${rel.producer_job_id}-file-${rel.file_id}`,
+                                source: `job-${rel.producer_job_id}`,
                                 target: `file-${rel.file_id}`,
                             },
                             classes: 'output',
+                        });
+                    }
+                    // File -> Consumer job (input edge)
+                    if (rel.consumer_job_id) {
+                        edges.push({
+                            data: {
+                                id: `edge-file-${rel.file_id}-job-${rel.consumer_job_id}`,
+                                source: `file-${rel.file_id}`,
+                                target: `job-${rel.consumer_job_id}`,
+                            },
+                            classes: 'input',
                         });
                     }
                 }
@@ -311,24 +315,30 @@ class DAGVisualizer {
             }
 
             // Create edges from relationships
+            // API returns producer_job_id (job that outputs user data) and consumer_job_id (job that inputs user data)
             const edges = [];
             if (relationships) {
                 for (const rel of relationships) {
-                    if (rel.relationship_type === 'input') {
+                    // Producer job -> UserData (output edge)
+                    if (rel.producer_job_id) {
                         edges.push({
                             data: {
-                                source: `ud-${rel.user_data_id}`,
-                                target: `job-${rel.job_id}`,
-                            },
-                            classes: 'input',
-                        });
-                    } else if (rel.relationship_type === 'output') {
-                        edges.push({
-                            data: {
-                                source: `job-${rel.job_id}`,
+                                id: `edge-job-${rel.producer_job_id}-ud-${rel.user_data_id}`,
+                                source: `job-${rel.producer_job_id}`,
                                 target: `ud-${rel.user_data_id}`,
                             },
                             classes: 'output',
+                        });
+                    }
+                    // UserData -> Consumer job (input edge)
+                    if (rel.consumer_job_id) {
+                        edges.push({
+                            data: {
+                                id: `edge-ud-${rel.user_data_id}-job-${rel.consumer_job_id}`,
+                                source: `ud-${rel.user_data_id}`,
+                                target: `job-${rel.consumer_job_id}`,
+                            },
+                            classes: 'input',
                         });
                     }
                 }

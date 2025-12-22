@@ -327,22 +327,15 @@ Object.assign(TorcDashboard.prototype, {
         content.innerHTML = '<div class="placeholder-message">Loading execution plan...</div>';
 
         try {
-            // Get execution plan from CLI (includes scheduler allocations)
-            const result = await api.cliExecutionPlan(workflowId);
+            // Get execution plan from the CLI
+            const response = await api.getExecutionPlan(workflowId);
 
-            if (!result.success) {
-                content.innerHTML = `<div class="placeholder-message">Error: ${this.escapeHtml(result.stderr || result.stdout || 'Unknown error')}</div>`;
+            if (!response.success) {
+                content.innerHTML = `<div class="placeholder-message">Error: ${response.error || 'Unknown error'}</div>`;
                 return;
             }
 
-            // Parse the JSON output
-            let plan;
-            try {
-                plan = JSON.parse(result.stdout);
-            } catch (parseError) {
-                content.innerHTML = `<div class="placeholder-message">Invalid JSON response from server: ${this.escapeHtml(parseError.message)}</div>`;
-                return;
-            }
+            const plan = response.data;
             content.innerHTML = this.renderExecutionPlan(plan);
         } catch (error) {
             content.innerHTML = `<div class="placeholder-message">Error loading execution plan: ${this.escapeHtml(error.message)}</div>`;
@@ -350,55 +343,137 @@ Object.assign(TorcDashboard.prototype, {
     },
 
     renderExecutionPlan(plan) {
-        if (!plan.stages || plan.stages.length === 0) {
-            return '<div class="placeholder-message">No execution stages computed</div>';
+        if (!plan || !plan.events || plan.events.length === 0) {
+            return '<div class="placeholder-message">No execution events computed</div>';
         }
+
+        const events = plan.events;
+        const rootEvents = plan.root_events || [];
+        const leafEvents = plan.leaf_events || [];
+
+        // Build event map for quick lookup
+        const eventMap = {};
+        events.forEach(e => eventMap[e.id] = e);
+
+        // Count total jobs
+        let totalJobs = 0;
+        events.forEach(e => totalJobs += (e.jobs_becoming_ready || []).length);
+
+        // Render events in a topological order using BFS from roots
+        const visited = new Set();
+        const orderedEvents = [];
+        const queue = [...rootEvents];
+
+        while (queue.length > 0) {
+            const eventId = queue.shift();
+            if (visited.has(eventId)) continue;
+            visited.add(eventId);
+
+            const event = eventMap[eventId];
+            if (event) {
+                orderedEvents.push(event);
+                // Add unlocked events to queue
+                (event.unlocks_events || []).forEach(next => {
+                    if (!visited.has(next)) {
+                        queue.push(next);
+                    }
+                });
+            }
+        }
+
+        // Also add any events not reachable from roots (shouldn't happen, but just in case)
+        events.forEach(e => {
+            if (!visited.has(e.id)) {
+                orderedEvents.push(e);
+            }
+        });
 
         return `
             <div class="plan-summary" style="margin-bottom: 16px;">
-                <strong>Workflow:</strong> ${this.escapeHtml(plan.workflow_name || 'Unnamed')} |
-                <strong>Total Stages:</strong> ${plan.total_stages} |
-                <strong>Total Jobs:</strong> ${plan.total_jobs}
+                <strong>Total Events:</strong> ${events.length} |
+                <strong>Total Jobs:</strong> ${totalJobs}
             </div>
-            ${plan.stages.map(stage => `
-                <div class="plan-stage">
-                    <div class="plan-stage-header">
-                        <div class="plan-stage-number">${stage.stage_number}</div>
-                        <div class="plan-stage-trigger">${this.escapeHtml(stage.trigger)}</div>
-                    </div>
-                    <div class="plan-stage-content">
-                        <h5>Jobs Becoming Ready (${stage.jobs_becoming_ready.length})</h5>
-                        <ul>
-                            ${stage.jobs_becoming_ready.slice(0, 10).map(jobName => `
-                                <li>${this.escapeHtml(jobName)}</li>
-                            `).join('')}
-                            ${stage.jobs_becoming_ready.length > 10 ? `<li>... and ${stage.jobs_becoming_ready.length - 10} more</li>` : ''}
-                        </ul>
-                        ${this.renderSchedulerAllocations(stage.scheduler_allocations)}
-                    </div>
-                </div>
-            `).join('')}
+            <div class="plan-events">
+                ${orderedEvents.map((event, idx) => this.renderExecutionEvent(event, idx, rootEvents, leafEvents)).join('')}
+            </div>
         `;
     },
 
-    renderSchedulerAllocations(allocations) {
-        if (!allocations || allocations.length === 0) {
-            return '';
+    renderExecutionEvent(event, index, rootEvents, leafEvents) {
+        const isRoot = rootEvents.includes(event.id);
+        const isLeaf = leafEvents.includes(event.id);
+        const jobs = event.jobs_becoming_ready || [];
+        const schedulers = event.scheduler_allocations || [];
+        const unlocks = event.unlocks_events || [];
+
+        // Determine event type icon and style
+        let eventIcon = '→';
+        let eventClass = '';
+        if (isRoot) {
+            eventIcon = '▶';
+            eventClass = 'event-root';
+        } else if (isLeaf) {
+            eventIcon = '◆';
+            eventClass = 'event-leaf';
         }
 
+        // Format trigger description
+        const triggerDesc = event.trigger_description || this.formatEventTrigger(event.trigger);
+
         return `
-            <div class="scheduler-allocations" style="margin-top: 12px;">
-                <h5>Scheduler Allocations</h5>
-                ${allocations.map(alloc => `
-                    <div class="scheduler-allocation" style="margin-left: 16px; margin-bottom: 8px; padding: 8px; background: var(--surface-color); border-radius: 4px;">
-                        <div><strong>Scheduler:</strong> ${this.escapeHtml(alloc.scheduler)} (${this.escapeHtml(alloc.scheduler_type)})</div>
-                        <div><strong>Allocations:</strong> ${alloc.num_allocations}</div>
-                        ${alloc.job_names && alloc.job_names.length > 0 ? `
-                            <div><strong>Jobs:</strong> ${alloc.job_names.slice(0, 5).map(n => this.escapeHtml(n)).join(', ')}${alloc.job_names.length > 5 ? ` ... and ${alloc.job_names.length - 5} more` : ''}</div>
-                        ` : ''}
+            <div class="plan-stage ${eventClass}">
+                <div class="plan-stage-header">
+                    <div class="plan-stage-number">${eventIcon}</div>
+                    <div class="plan-stage-trigger">${this.escapeHtml(triggerDesc)}</div>
+                </div>
+                <div class="plan-stage-content">
+                    ${schedulers.length > 0 ? `
+                        <div class="plan-section">
+                            <h5>Scheduler Allocations</h5>
+                            <ul>
+                                ${schedulers.map(s => `
+                                    <li>
+                                        <strong>${this.escapeHtml(s.scheduler)}</strong>
+                                        (${this.escapeHtml(s.scheduler_type)})
+                                        - ${s.num_allocations} allocation${s.num_allocations !== 1 ? 's' : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    <div class="plan-section">
+                        <h5>Jobs Becoming Ready (${jobs.length})</h5>
+                        <ul>
+                            ${jobs.slice(0, 10).map(job => `
+                                <li>${this.escapeHtml(job)}</li>
+                            `).join('')}
+                            ${jobs.length > 10 ? `<li>... and ${jobs.length - 10} more</li>` : ''}
+                        </ul>
                     </div>
-                `).join('')}
+                    ${unlocks.length > 0 ? `
+                        <div class="plan-section plan-flow">
+                            <span class="flow-arrow">↓</span>
+                            <span class="flow-text">unlocks ${unlocks.length} event${unlocks.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    ` : ''}
+                </div>
             </div>
         `;
+    },
+
+    formatEventTrigger(trigger) {
+        if (!trigger) return 'Unknown trigger';
+
+        if (trigger.type === 'WorkflowStart') {
+            return 'Workflow Start';
+        } else if (trigger.type === 'JobsComplete') {
+            const jobs = trigger.data?.jobs || [];
+            if (jobs.length === 0) return 'Jobs Complete';
+            if (jobs.length === 1) return `When job '${jobs[0]}' completes`;
+            if (jobs.length <= 3) return `When jobs complete: ${jobs.map(j => `'${j}'`).join(', ')}`;
+            return `When ${jobs.length} jobs complete ('${jobs[0]}', '${jobs[1]}'...)`;
+        }
+
+        return 'Unknown trigger';
     },
 });

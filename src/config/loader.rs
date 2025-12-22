@@ -216,6 +216,30 @@ poll_interval = 60
 # Keep submission scripts after job submission (useful for debugging)
 keep_submission_scripts = false
 
+[client.hpc]
+# Default account to use for HPC jobs (applies to all profiles)
+# default_account = "my_project"
+
+# Override settings for built-in profiles
+# [client.hpc.profile_overrides.kestrel]
+# default_account = "my_kestrel_account"
+
+# Define custom HPC profiles
+# [[client.hpc.custom_profiles]]
+# name = "my_cluster"
+# display_name = "My Custom Cluster"
+# description = "Our department's HPC cluster"
+# detect_env_var = "MY_CLUSTER=prod"
+# default_account = "dept_account"
+# charge_factor_cpu = 1.0
+# charge_factor_gpu = 10.0
+#
+# [[client.hpc.custom_profiles.my_cluster.partitions]]
+# name = "compute"
+# cpus_per_node = 64
+# memory_mb = 256000
+# max_walltime_secs = 172800  # 2 days
+
 [server]
 # Hostname/IP to bind to
 url = "localhost"

@@ -1,7 +1,11 @@
+use std::io::{self, Write};
+
 use clap::Subcommand;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::hpc::create_registry_with_config_public;
+use crate::client::commands::slurm::generate_schedulers_for_workflow;
 use crate::client::commands::{
     get_env_user_name, get_user_name, pagination, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -60,7 +64,7 @@ struct WorkflowActionTableRow {
 
 #[derive(Subcommand)]
 pub enum WorkflowCommands {
-    /// Create a workflow from a specification file (supports JSON, JSON5, and YAML formats)
+    /// Create a workflow from a specification file (supports JSON, JSON5, YAML, and KDL formats)
     Create {
         /// Path to specification file containing WorkflowSpec
         ///
@@ -68,6 +72,7 @@ pub enum WorkflowCommands {
         /// - JSON (.json): Standard JSON format
         /// - JSON5 (.json5): JSON with comments and trailing commas
         /// - YAML (.yaml, .yml): Human-readable YAML format
+        /// - KDL (.kdl): KDL document format
         ///
         /// Format is auto-detected from file extension, with fallback parsing attempted
         #[arg()]
@@ -83,6 +88,43 @@ pub enum WorkflowCommands {
         skip_checks: bool,
         /// Validate the workflow specification without creating it (dry-run mode)
         /// Returns a summary of what would be created including job count after parameter expansion
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Create a workflow with auto-generated Slurm schedulers
+    ///
+    /// Automatically generates Slurm schedulers based on job resource requirements
+    /// and HPC profile. For Slurm workflows without pre-configured schedulers.
+    #[command(name = "create-slurm")]
+    CreateSlurm {
+        /// Path to specification file containing WorkflowSpec
+        #[arg()]
+        file: String,
+        /// Slurm account to use for allocations
+        #[arg(long)]
+        account: String,
+        /// HPC profile to use (auto-detected if not specified)
+        #[arg(long)]
+        hpc_profile: Option<String>,
+        /// Bundle all nodes into a single Slurm allocation per scheduler
+        ///
+        /// By default, creates one Slurm allocation per node (N×1 mode), which allows
+        /// jobs to start as nodes become available and provides better fault tolerance.
+        ///
+        /// With this flag, creates one large allocation with all nodes (1×N mode),
+        /// which requires all nodes to be available simultaneously but uses a single sbatch.
+        #[arg(long)]
+        single_allocation: bool,
+        /// User that owns the workflow (defaults to USER environment variable)
+        #[arg(short, long, env = "USER")]
+        user: String,
+        /// Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
+        #[arg(long, default_value = "false")]
+        no_resource_monitoring: bool,
+        /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
+        #[arg(long, default_value = "false")]
+        skip_checks: bool,
+        /// Validate the workflow specification without creating it (dry-run mode)
         #[arg(long)]
         dry_run: bool,
     },
@@ -307,12 +349,13 @@ fn show_execution_plan_from_spec(file_path: &str, format: &str) {
     match crate::client::execution_plan::ExecutionPlan::from_spec(&spec) {
         Ok(plan) => {
             if format == "json" {
-                // For JSON output, create a structured representation
-                let stages_json: Vec<serde_json::Value> = plan.stages.iter().map(|stage| {
+                // For JSON output, use the new DAG-based event structure
+                let events_json: Vec<serde_json::Value> = plan.events.values().map(|event| {
                     serde_json::json!({
-                        "stage_number": stage.stage_number + 1,  // Display as 1-based
-                        "trigger": stage.trigger_description,
-                        "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
+                        "id": event.id,
+                        "trigger": event.trigger,
+                        "trigger_description": event.trigger_description,
+                        "scheduler_allocations": event.scheduler_allocations.iter().map(|alloc| {
                             serde_json::json!({
                                 "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
@@ -320,7 +363,9 @@ fn show_execution_plan_from_spec(file_path: &str, format: &str) {
                                 "job_names": alloc.jobs,
                             })
                         }).collect::<Vec<_>>(),
-                        "jobs_becoming_ready": stage.jobs_becoming_ready,
+                        "jobs_becoming_ready": event.jobs_becoming_ready,
+                        "depends_on_events": event.depends_on_events,
+                        "unlocks_events": event.unlocks_events,
                     })
                 }).collect();
 
@@ -328,9 +373,11 @@ fn show_execution_plan_from_spec(file_path: &str, format: &str) {
                     "status": "success",
                     "source": "spec_file",
                     "workflow_name": spec.name,
-                    "total_stages": plan.stages.len(),
+                    "total_events": plan.events.len(),
                     "total_jobs": spec.jobs.len(),
-                    "stages": stages_json,
+                    "root_events": plan.root_events,
+                    "leaf_events": plan.leaf_events,
+                    "events": events_json,
                 });
 
                 match serde_json::to_string_pretty(&output) {
@@ -398,17 +445,50 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
         }
     };
 
+    // Fetch slurm schedulers for this workflow
+    let slurm_schedulers = match default_api::list_slurm_schedulers(
+        config,
+        workflow_id,
+        None, // offset
+        None, // limit
+        None, // sort_by
+        None, // reverse_sort
+        None, // name
+        None, // account
+        None, // gres
+        None, // mem
+        None, // nodes
+        None, // partition
+        None, // qos
+        None, // tmp
+        None, // walltime
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            eprintln!(
+                "Warning: Could not fetch slurm schedulers for workflow {}: {}",
+                workflow_id, e
+            );
+            vec![]
+        }
+    };
+
     // Build execution plan from database models
     match crate::client::execution_plan::ExecutionPlan::from_database_models(
-        &workflow, &jobs, &actions,
+        &workflow,
+        &jobs,
+        &actions,
+        &slurm_schedulers,
     ) {
         Ok(plan) => {
             if format == "json" {
-                let stages_json: Vec<serde_json::Value> = plan.stages.iter().map(|stage| {
+                // For JSON output, use the new DAG-based event structure
+                let events_json: Vec<serde_json::Value> = plan.events.values().map(|event| {
                     serde_json::json!({
-                        "stage_number": stage.stage_number + 1,
-                        "trigger": stage.trigger_description,
-                        "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
+                        "id": event.id,
+                        "trigger": event.trigger,
+                        "trigger_description": event.trigger_description,
+                        "scheduler_allocations": event.scheduler_allocations.iter().map(|alloc| {
                             serde_json::json!({
                                 "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
@@ -416,7 +496,9 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
                                 "job_names": alloc.jobs,
                             })
                         }).collect::<Vec<_>>(),
-                        "jobs_becoming_ready": stage.jobs_becoming_ready,
+                        "jobs_becoming_ready": event.jobs_becoming_ready,
+                        "depends_on_events": event.depends_on_events,
+                        "unlocks_events": event.unlocks_events,
                     })
                 }).collect();
 
@@ -425,9 +507,11 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
                     "source": "database",
                     "workflow_id": workflow_id,
                     "workflow_name": workflow.name,
-                    "total_stages": plan.stages.len(),
+                    "total_events": plan.events.len(),
                     "total_jobs": jobs.len(),
-                    "stages": stages_json,
+                    "root_events": plan.root_events,
+                    "leaf_events": plan.leaf_events,
+                    "events": events_json,
                 });
 
                 match serde_json::to_string_pretty(&output) {
@@ -724,8 +808,6 @@ fn handle_reset_status(
             eprintln!("Force mode is enabled (will ignore running/pending jobs check).");
         }
         print!("\nDo you want to continue? (y/N): ");
-
-        use std::io::{self, Write};
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -1164,8 +1246,6 @@ fn handle_initialize(
                                 println!("\nWarning: This workflow has already been initialized.");
                                 println!("Some jobs already have initialized status.");
                                 print!("\nDo you want to continue? (y/N): ");
-
-                                use std::io::{self, Write};
                                 io::stdout().flush().unwrap();
 
                                 let mut input = String::new();
@@ -1522,8 +1602,6 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
             println!("  - All job dependencies and relationships");
             println!("\nThis action cannot be undone.");
             print!("\nAre you sure you want to delete this workflow? (y/N): ");
-
-            use std::io::{self, Write};
             io::stdout().flush().unwrap();
 
             let mut input = String::new();
@@ -2046,6 +2124,170 @@ fn handle_create(
     }
 }
 
+fn handle_create_slurm(
+    config: &Configuration,
+    file: &str,
+    account: &str,
+    hpc_profile: Option<&str>,
+    single_allocation: bool,
+    user: &str,
+    no_resource_monitoring: bool,
+    skip_checks: bool,
+    dry_run: bool,
+    format: &str,
+) {
+    // Handle dry-run mode first
+    if dry_run {
+        let result = WorkflowSpec::validate_spec(file);
+        if format == "json" {
+            match serde_json::to_string_pretty(&result) {
+                Ok(json) => println!("{}", json),
+                Err(e) => {
+                    eprintln!("Error serializing validation result: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        } else {
+            println!("Workflow Validation Results (with Slurm scheduler generation)");
+            println!("==============================================================");
+            println!();
+            println!("Note: Dry-run validates the spec before scheduler generation.");
+            println!("Use 'torc slurm generate' to preview generated schedulers.");
+            println!();
+
+            let summary = &result.summary;
+            println!("Workflow: {}", summary.workflow_name);
+            println!("Jobs: {}", summary.job_count);
+            println!(
+                "Resource requirements: {}",
+                summary.resource_requirements_count
+            );
+            println!();
+
+            if !result.errors.is_empty() {
+                eprintln!("Errors ({}):", result.errors.len());
+                for error in &result.errors {
+                    eprintln!("  - {}", error);
+                }
+            }
+
+            if result.valid {
+                println!("Validation: PASSED");
+            } else {
+                eprintln!("Validation: FAILED");
+            }
+        }
+
+        if !result.valid {
+            std::process::exit(1);
+        }
+        return;
+    }
+
+    // Load HPC config and registry
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let registry = create_registry_with_config_public(&torc_config.client.hpc);
+
+    // Get the HPC profile
+    let profile = if let Some(name) = hpc_profile {
+        registry.get(name)
+    } else {
+        registry.detect()
+    };
+
+    let profile = match profile {
+        Some(p) => p,
+        None => {
+            if hpc_profile.is_some() {
+                eprintln!("Unknown HPC profile: {}", hpc_profile.unwrap());
+            } else {
+                eprintln!("No HPC profile specified and no system detected.");
+                eprintln!("Use --hpc-profile <name> to specify a profile.");
+            }
+            std::process::exit(1);
+        }
+    };
+
+    // Parse the workflow spec
+    let mut spec = match WorkflowSpec::from_spec_file(file) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Failed to parse workflow file: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Generate schedulers
+    // Don't allow force=true - if schedulers already exist, user should use the _no_slurm variant
+    match generate_schedulers_for_workflow(
+        &mut spec,
+        profile,
+        account,
+        single_allocation,
+        true,
+        false,
+    ) {
+        Ok(result) => {
+            if format != "json" {
+                eprintln!(
+                    "Auto-generated {} scheduler(s) and {} action(s) using {} profile",
+                    result.scheduler_count, result.action_count, profile.name
+                );
+                for warning in &result.warnings {
+                    eprintln!("  Warning: {}", warning);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error generating schedulers: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    // Write modified spec to temp file
+    let temp_dir = std::env::temp_dir();
+    let temp_file = temp_dir.join(format!("torc_workflow_{}.yaml", std::process::id()));
+    match std::fs::write(&temp_file, serde_yaml::to_string(&spec).unwrap()) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("Failed to write temporary workflow file: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    // Create workflow from modified spec
+    match WorkflowSpec::create_workflow_from_spec(
+        config,
+        &temp_file,
+        user,
+        !no_resource_monitoring,
+        skip_checks,
+    ) {
+        Ok(workflow_id) => {
+            if format == "json" {
+                let json_output = serde_json::json!({
+                    "workflow_id": workflow_id,
+                    "status": "success",
+                    "message": format!("Workflow created successfully with ID: {}", workflow_id)
+                });
+                match serde_json::to_string_pretty(&json_output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                println!("Created workflow {}", workflow_id);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error creating workflow from spec: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowCommands, format: &str) {
     match command {
         WorkflowCommands::Create {
@@ -2058,6 +2300,29 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             handle_create(
                 config,
                 file,
+                user,
+                *no_resource_monitoring,
+                *skip_checks,
+                *dry_run,
+                format,
+            );
+        }
+        WorkflowCommands::CreateSlurm {
+            file,
+            account,
+            hpc_profile,
+            single_allocation,
+            user,
+            no_resource_monitoring,
+            skip_checks,
+            dry_run,
+        } => {
+            handle_create_slurm(
+                config,
+                file,
+                account,
+                hpc_profile.as_deref(),
+                *single_allocation,
                 user,
                 *no_resource_monitoring,
                 *skip_checks,

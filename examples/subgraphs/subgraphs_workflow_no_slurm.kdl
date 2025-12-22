@@ -1,0 +1,132 @@
+// Two Sub-graph Pipeline (without Slurm schedulers/actions)
+// Run `torc slurm generate --account <account> subgraphs_workflow_no_slurm.kdl` to auto-generate
+
+name "two_subgraph_pipeline"
+description "Demonstrates 2 independent sub-graphs with 4 stages, implicit file dependencies"
+
+// Stage 1 inputs
+file "input_a" path="input_a.txt" must_exist=#true
+file "input_b" path="input_b.txt" must_exist=#true
+
+// Stage 1 outputs
+file "prep_a_out" path="output/prep_a.txt"
+file "prep_b_out" path="output/prep_b.txt"
+
+// Stage 2 outputs (parameterized)
+file "work_a_{i}_out" path="output/work_a_{i}.txt" {
+    parameters {
+        i "1:5"
+    }
+}
+file "work_b_{i}_out" path="output/work_b_{i}.txt" {
+    parameters {
+        i "1:5"
+    }
+}
+
+// Stage 3 outputs
+file "post_a_out" path="output/post_a.txt"
+file "post_b_out" path="output/post_b.txt"
+
+// Stage 4 output
+file "final_out" path="output/final.txt"
+
+// Resource requirements
+resource_requirements "small" {
+    num_cpus 1
+    memory "2g"
+    runtime "PT30M"
+}
+
+resource_requirements "work_large" {
+    num_cpus 8
+    memory "32g"
+    runtime "PT2H"
+}
+
+resource_requirements "work_gpu" {
+    num_cpus 4
+    memory "16g"
+    num_gpus 1
+    runtime "PT4H"
+}
+
+resource_requirements "medium" {
+    num_cpus 2
+    memory "8g"
+    runtime "PT1H"
+}
+
+resource_requirements "large" {
+    num_cpus 4
+    memory "16g"
+    runtime "PT2H"
+}
+
+// Stage 1: Preprocessing
+job "prep_a" {
+    command "./scripts/prep.sh a"
+    input_file "input_a"
+    output_file "prep_a_out"
+    resource_requirements "small"
+}
+
+job "prep_b" {
+    command "./scripts/prep.sh b"
+    input_file "input_b"
+    output_file "prep_b_out"
+    resource_requirements "small"
+}
+
+// Stage 2: Work (two independent sub-graphs)
+job "work_a_{i}" {
+    command "./scripts/work.sh a {i}"
+    input_file "prep_a_out"
+    output_file "work_a_{i}_out"
+    resource_requirements "work_large"
+    parameters {
+        i "1:5"
+    }
+}
+
+job "work_b_{i}" {
+    command "./scripts/work.sh b {i}"
+    input_file "prep_b_out"
+    output_file "work_b_{i}_out"
+    resource_requirements "work_gpu"
+    parameters {
+        i "1:5"
+    }
+}
+
+// Stage 3: Post-processing
+job "post_a" {
+    command "./scripts/post.sh a"
+    input_file "work_a_1_out"
+    input_file "work_a_2_out"
+    input_file "work_a_3_out"
+    input_file "work_a_4_out"
+    input_file "work_a_5_out"
+    output_file "post_a_out"
+    resource_requirements "medium"
+}
+
+job "post_b" {
+    command "./scripts/post.sh b"
+    input_file "work_b_1_out"
+    input_file "work_b_2_out"
+    input_file "work_b_3_out"
+    input_file "work_b_4_out"
+    input_file "work_b_5_out"
+    output_file "post_b_out"
+    resource_requirements "medium"
+}
+
+// Stage 4: Final aggregation
+job "final" {
+    command "./scripts/aggregate.sh"
+    input_file "post_a_out"
+    input_file "post_b_out"
+    output_file "final_out"
+    resource_requirements "large"
+}

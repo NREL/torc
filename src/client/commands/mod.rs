@@ -2,6 +2,7 @@ pub mod compute_nodes;
 pub mod config;
 pub mod events;
 pub mod files;
+pub mod hpc;
 pub mod job_dependencies;
 pub mod jobs;
 pub mod pagination;
@@ -14,9 +15,11 @@ pub mod table_format;
 pub mod user_data;
 pub mod workflows;
 
+use std::env;
+use std::io::{self, Write};
+
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
-use std::env;
 
 /// Helper function to prompt user to select a workflow when workflow_id is not provided
 pub fn select_workflow_interactively(
@@ -65,7 +68,6 @@ pub fn select_workflow_interactively(
             }
 
             println!("\nEnter workflow ID: ");
-            use std::io::{self, Write};
             io::stdout().flush().unwrap();
             let mut input = String::new();
             match io::stdin().read_line(&mut input) {

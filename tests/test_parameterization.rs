@@ -127,17 +127,19 @@ fn test_kdl_example_file_hundred_jobs() {
     let mut spec = WorkflowSpec::from_spec_file(&path).expect("Failed to parse KDL example file");
 
     assert_eq!(spec.name, "hundred_jobs_parameterized");
-    assert_eq!(spec.jobs.len(), 1);
+    // 2 jobs before expansion: parameterized job template + postprocess
+    assert_eq!(spec.jobs.len(), 2);
     assert!(spec.jobs[0].parameters.is_some());
 
     // Expand parameters
     spec.expand_parameters()
         .expect("Failed to expand parameters");
 
-    // Should have 100 jobs after expansion
-    assert_eq!(spec.jobs.len(), 100);
+    // Should have 101 jobs after expansion: 100 parameterized + 1 postprocess
+    assert_eq!(spec.jobs.len(), 101);
     assert_eq!(spec.jobs[0].name, "job_001");
     assert_eq!(spec.jobs[99].name, "job_100");
+    assert_eq!(spec.jobs[100].name, "postprocess");
 }
 
 #[rstest]

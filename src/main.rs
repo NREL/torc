@@ -9,6 +9,7 @@ use torc::client::commands::compute_nodes::handle_compute_node_commands;
 use torc::client::commands::config::handle_config_commands;
 use torc::client::commands::events::handle_event_commands;
 use torc::client::commands::files::handle_file_commands;
+use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
 use torc::client::commands::reports::handle_report_commands;
@@ -202,13 +203,20 @@ fn main() {
                     eprintln!(
                         "The spec does not define an on_workflow_start action with schedule_nodes."
                     );
-                    eprintln!("To submit to a scheduler, add a workflow action like:");
+                    eprintln!("To submit to Slurm, either:");
                     eprintln!();
-                    eprintln!("  actions:");
-                    eprintln!("    - trigger_type: on_workflow_start");
-                    eprintln!("      action_type: schedule_nodes");
-                    eprintln!("      scheduler_type: slurm");
-                    eprintln!("      scheduler: \"my-cluster\"");
+                    eprintln!("  1. Use 'torc submit-slurm' to auto-generate schedulers:");
+                    eprintln!(
+                        "     torc submit-slurm --account <account> {}",
+                        workflow_spec_or_id
+                    );
+                    eprintln!();
+                    eprintln!("  2. Add a workflow action manually:");
+                    eprintln!("     actions:");
+                    eprintln!("       - trigger_type: on_workflow_start");
+                    eprintln!("         action_type: schedule_nodes");
+                    eprintln!("         scheduler_type: slurm");
+                    eprintln!("         scheduler: \"my-scheduler\"");
                     eprintln!();
                     eprintln!("Or run locally instead:");
                     eprintln!("  torc run {}", workflow_spec_or_id);
@@ -219,6 +227,7 @@ fn main() {
                 let user = std::env::var("USER")
                     .or_else(|_| std::env::var("USERNAME"))
                     .unwrap_or_else(|_| "unknown".to_string());
+
                 match WorkflowSpec::create_workflow_from_spec(
                     &config,
                     workflow_spec_or_id,
@@ -302,6 +311,136 @@ fn main() {
                 }
             }
         }
+        Commands::SubmitSlurm {
+            workflow_spec,
+            account,
+            hpc_profile,
+            single_allocation,
+            ignore_missing_data,
+            skip_checks,
+        } => {
+            use torc::client::commands::slurm::generate_schedulers_for_workflow;
+
+            // Load the workflow spec
+            let mut spec = match WorkflowSpec::from_spec_file(workflow_spec) {
+                Ok(spec) => spec,
+                Err(e) => {
+                    eprintln!("Error loading workflow spec: {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            // Get HPC profile
+            let torc_config = TorcConfig::load().unwrap_or_default();
+            let registry = torc::client::commands::hpc::create_registry_with_config_public(
+                &torc_config.client.hpc,
+            );
+
+            let profile = if let Some(name) = hpc_profile {
+                registry.get(name)
+            } else {
+                registry.detect()
+            };
+
+            let profile = match profile {
+                Some(p) => p,
+                None => {
+                    if hpc_profile.is_some() {
+                        eprintln!("Unknown HPC profile: {}", hpc_profile.as_ref().unwrap());
+                    } else {
+                        eprintln!("No HPC profile specified and no system detected.");
+                        eprintln!("Use --hpc-profile <name> to specify a profile.");
+                    }
+                    std::process::exit(1);
+                }
+            };
+
+            // Generate schedulers
+            match generate_schedulers_for_workflow(
+                &mut spec,
+                profile,
+                account,
+                *single_allocation,
+                true,
+                true,
+            ) {
+                Ok(result) => {
+                    eprintln!(
+                        "Auto-generated {} scheduler(s) and {} action(s) using {} profile",
+                        result.scheduler_count, result.action_count, profile.name
+                    );
+                    for warning in &result.warnings {
+                        eprintln!("  Warning: {}", warning);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error generating schedulers: {}", e);
+                    std::process::exit(1);
+                }
+            }
+
+            // Print warning about auto-generated configuration
+            eprintln!();
+            eprintln!("WARNING: Schedulers and actions were auto-generated using heuristics.");
+            eprintln!("         For complex workflows, this may not be optimal.");
+            eprintln!();
+            eprintln!("TIP: To preview and validate the configuration before submitting, use:");
+            eprintln!(
+                "     torc slurm generate --account {} {}",
+                account, workflow_spec
+            );
+            eprintln!();
+
+            // Write modified spec to temp file
+            let temp_dir = std::env::temp_dir();
+            let temp_file =
+                temp_dir.join(format!("torc_submit_workflow_{}.yaml", std::process::id()));
+            std::fs::write(&temp_file, serde_yaml::to_string(&spec).unwrap())
+                .expect("Failed to write temporary workflow file");
+
+            // Create workflow from spec
+            let user = std::env::var("USER")
+                .or_else(|_| std::env::var("USERNAME"))
+                .unwrap_or_else(|_| "unknown".to_string());
+
+            let workflow_id = match WorkflowSpec::create_workflow_from_spec(
+                &config,
+                &temp_file,
+                &user,
+                true,
+                *skip_checks,
+            ) {
+                Ok(id) => {
+                    println!("Created workflow {}", id);
+                    id
+                }
+                Err(e) => {
+                    eprintln!("Error creating workflow from spec: {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            // Submit the workflow
+            match default_api::get_workflow(&config, workflow_id) {
+                Ok(workflow) => {
+                    let workflow_manager =
+                        WorkflowManager::new(config.clone(), torc_config, workflow);
+                    match workflow_manager.start(*ignore_missing_data) {
+                        Ok(()) => {
+                            println!("Successfully submitted workflow {}", workflow_id);
+                        }
+                        Err(e) => {
+                            eprintln!("Error submitting workflow {}: {}", workflow_id, e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error getting workflow {}: {}", workflow_id, e);
+                    std::process::exit(1);
+                }
+            }
+        }
         Commands::Workflows { command } => {
             handle_workflow_commands(&config, command, &format);
         }
@@ -334,6 +473,9 @@ fn main() {
         }
         Commands::ScheduledComputeNodes { command } => {
             handle_scheduled_compute_node_commands(&config, command, &format);
+        }
+        Commands::Hpc { command } => {
+            handle_hpc_commands(command, &format);
         }
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &format);

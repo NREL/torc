@@ -6,20 +6,34 @@ name "hundred_jobs_parameterized"
 user "testuser"
 description "A workflow with 100 independent jobs using parameterization"
 
-// Resource requirements - minimal resources for simple echo commands
-resource_requirements "minimal" {
+resource_requirements "work" {
+    num_cpus 50
+    num_gpus 0
+    num_nodes 1
+    memory "20g"
+    runtime "P0DT1H"
+}
+
+resource_requirements "small" {
     num_cpus 1
     num_gpus 0
     num_nodes 1
     memory "1g"
-    runtime "P0DT1M"
+    runtime "P0DT1H"
 }
+
 
 // Job definitions - ONE job specification expands to 100 jobs
 job "job_{i:03d}" {
     command "echo hello {i}"
-    resource_requirements "minimal"
+    resource_requirements "work"
     parameters {
         i "1:100"
     }
+}
+
+job "postprocess" {
+    command "echo postprocess"
+    resource_requirements "small"
+    depends_on_regexes "job_\\d+"
 }

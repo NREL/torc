@@ -1,3 +1,8 @@
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::io::{self, Write};
+use std::path::Path;
+
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
@@ -598,7 +603,6 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                             job_count, selected_workflow_id
                         );
                         print!("Are you sure? (y/N): ");
-                        use std::io::{self, Write};
                         io::stdout().flush().unwrap();
 
                         let mut input = String::new();
@@ -697,8 +701,6 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             workflow_id,
             job_id,
         } => {
-            use std::collections::HashMap;
-
             // Get jobs - either a single job or all jobs for a workflow
             let jobs: Vec<models::JobModel> = if let Some(jid) = job_id {
                 // Get single job
@@ -842,9 +844,6 @@ pub fn create_jobs_from_file(
     runtime_per_job: &str,
     _format: &str,
 ) -> Result<usize, Box<dyn std::error::Error>> {
-    use std::fs;
-    use std::path::Path;
-
     // Read the file
     let file_path = Path::new(file_path);
     if !file_path.exists() {
@@ -937,9 +936,7 @@ pub fn get_current_job_count(
 pub fn get_existing_job_names(
     config: &Configuration,
     workflow_id: i64,
-) -> Result<std::collections::HashSet<String>, Box<dyn std::error::Error>> {
-    use std::collections::HashSet;
-
+) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
     let mut names = HashSet::new();
     let mut offset = 0;
     const PAGE_SIZE: i64 = 1000;

@@ -1,0 +1,240 @@
+# Two Sub-graph Pipeline
+# Demonstrates 2 independent sub-graphs with 4 stages, implicit file dependencies
+#
+# Structure:
+#   Stage 1: prep_a, prep_b (run on 1 shared node)
+#   Stage 2: work_a_1..5, work_b_1..5 (2 independent sub-graphs, different schedulers)
+#   Stage 3: post_a, post_b (each on its own node)
+#   Stage 4: final (aggregates both sub-graphs)
+
+name: two_subgraph_pipeline
+description: Demonstrates 2 independent sub-graphs with 4 stages, implicit file dependencies
+
+# ==============================================================================
+# FILES - All dependencies are implicit based on input_files/output_files
+# ==============================================================================
+files:
+  # Stage 1 inputs (must exist before workflow starts)
+  - name: input_a
+    path: input_a.txt
+    must_exist: true
+
+  - name: input_b
+    path: input_b.txt
+    must_exist: true
+
+  # Stage 1 outputs -> Stage 2 inputs
+  - name: prep_a_out
+    path: output/prep_a.txt
+
+  - name: prep_b_out
+    path: output/prep_b.txt
+
+  # Stage 2 outputs -> Stage 3 inputs (parameterized)
+  - name: "work_a_{i}_out"
+    path: "output/work_a_{i}.txt"
+    parameters:
+      i: "1:5"
+
+  - name: "work_b_{i}_out"
+    path: "output/work_b_{i}.txt"
+    parameters:
+      i: "1:5"
+
+  # Stage 3 outputs -> Stage 4 inputs
+  - name: post_a_out
+    path: output/post_a.txt
+
+  - name: post_b_out
+    path: output/post_b.txt
+
+  # Stage 4 output (final result)
+  - name: final_out
+    path: output/final.txt
+
+# ==============================================================================
+# JOBS - Organized by stage
+# ==============================================================================
+jobs:
+  # --- Stage 1: Preprocessing ---
+  - name: prep_a
+    command: ./scripts/prep.sh a
+    input_files: [input_a]
+    output_files: [prep_a_out]
+    resource_requirements: small
+
+  - name: prep_b
+    command: ./scripts/prep.sh b
+    input_files: [input_b]
+    output_files: [prep_b_out]
+    resource_requirements: small
+
+  # --- Stage 2: Work (two independent sub-graphs) ---
+  # Sub-graph A: CPU-intensive work
+  - name: "work_a_{i}"
+    command: "./scripts/work.sh a {i}"
+    input_files: [prep_a_out]
+    output_files: ["work_a_{i}_out"]
+    resource_requirements: work_large
+    parameters:
+      i: "1:5"
+
+  # Sub-graph B: GPU-accelerated work
+  - name: "work_b_{i}"
+    command: "./scripts/work.sh b {i}"
+    input_files: [prep_b_out]
+    output_files: ["work_b_{i}_out"]
+    resource_requirements: work_gpu
+    parameters:
+      i: "1:5"
+
+  # --- Stage 3: Post-processing ---
+  - name: post_a
+    command: ./scripts/post.sh a
+    input_files:
+      - work_a_1_out
+      - work_a_2_out
+      - work_a_3_out
+      - work_a_4_out
+      - work_a_5_out
+    output_files: [post_a_out]
+    resource_requirements: medium
+
+  - name: post_b
+    command: ./scripts/post.sh b
+    input_files:
+      - work_b_1_out
+      - work_b_2_out
+      - work_b_3_out
+      - work_b_4_out
+      - work_b_5_out
+    output_files: [post_b_out]
+    resource_requirements: medium
+
+  # --- Stage 4: Final aggregation ---
+  - name: final
+    command: ./scripts/aggregate.sh
+    input_files: [post_a_out, post_b_out]
+    output_files: [final_out]
+    resource_requirements: large
+
+# ==============================================================================
+# RESOURCE REQUIREMENTS
+# ==============================================================================
+resource_requirements:
+  - name: small
+    num_cpus: 1
+    memory: 2g
+    runtime: PT30M
+
+  - name: work_large
+    num_cpus: 8
+    memory: 32g
+    runtime: PT2H
+
+  - name: work_gpu
+    num_cpus: 4
+    memory: 16g
+    num_gpus: 1
+    runtime: PT4H
+
+  - name: medium
+    num_cpus: 2
+    memory: 8g
+    runtime: PT1H
+
+  - name: large
+    num_cpus: 4
+    memory: 16g
+    runtime: PT2H
+
+# ==============================================================================
+# SLURM SCHEDULERS - Each stage/sub-graph gets its own scheduler
+# ==============================================================================
+slurm_schedulers:
+  # Stage 1: Both prep jobs share one node
+  - name: prep_sched
+    account: myproject
+    partition: standard
+    num_nodes: 1
+    walltime: "01:00:00"
+
+  # Stage 2: Sub-graph A gets 3 CPU nodes
+  - name: work_a_sched
+    account: myproject
+    partition: standard
+    num_nodes: 3
+    walltime: "04:00:00"
+
+  # Stage 2: Sub-graph B gets 2 GPU nodes
+  - name: work_b_sched
+    account: myproject
+    partition: gpu
+    num_nodes: 2
+    walltime: "06:00:00"
+    extra_args: "--gres=gpu:1"
+
+  # Stage 3: Each post job gets its own node
+  - name: post_a_sched
+    account: myproject
+    partition: standard
+    num_nodes: 1
+    walltime: "02:00:00"
+
+  - name: post_b_sched
+    account: myproject
+    partition: standard
+    num_nodes: 1
+    walltime: "02:00:00"
+
+  # Stage 4: Final job gets its own node
+  - name: final_sched
+    account: myproject
+    partition: standard
+    num_nodes: 1
+    walltime: "03:00:00"
+
+# ==============================================================================
+# ACTIONS - Schedule compute nodes when jobs become ready
+# ==============================================================================
+actions:
+  # Stage 1: Triggered at workflow start
+  - trigger_type: on_workflow_start
+    action_type: schedule_nodes
+    scheduler: prep_sched
+    scheduler_type: slurm
+    jobs: [prep_a, prep_b]
+
+  # Stage 2: Triggered when work jobs become ready
+  # These trigger simultaneously since sub-graphs are independent
+  - trigger_type: on_jobs_ready
+    action_type: schedule_nodes
+    scheduler: work_a_sched
+    scheduler_type: slurm
+    job_name_regexes: ["^work_a_\\d+$"]
+
+  - trigger_type: on_jobs_ready
+    action_type: schedule_nodes
+    scheduler: work_b_sched
+    scheduler_type: slurm
+    job_name_regexes: ["^work_b_\\d+$"]
+
+  # Stage 3: Triggered when post jobs become ready
+  - trigger_type: on_jobs_ready
+    action_type: schedule_nodes
+    scheduler: post_a_sched
+    scheduler_type: slurm
+    jobs: [post_a]
+
+  - trigger_type: on_jobs_ready
+    action_type: schedule_nodes
+    scheduler: post_b_sched
+    scheduler_type: slurm
+    jobs: [post_b]
+
+  # Stage 4: Triggered when final job becomes ready
+  - trigger_type: on_jobs_ready
+    action_type: schedule_nodes
+    scheduler: final_sched
+    scheduler_type: slurm
+    jobs: [final]

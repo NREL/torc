@@ -90,7 +90,7 @@ action {
 action {
     trigger_type "on_jobs_ready"
     action_type "schedule_nodes"
-    job_name_regex "train_model_.*"
+    job_name_regexes "train_model_.*"
     scheduler "gpu_cluster"
     scheduler_type "slurm"
     num_allocations 2
@@ -102,7 +102,7 @@ action {
 action {
     trigger_type "on_jobs_complete"
     action_type "run_commands"
-    job_name_regex "train_model_.*"
+    job_name_regexes "train_model_.*"
     command "echo 'All training jobs completed. Archiving models...'"
     command "tar -czf results/trained_models.tar.gz models/"
     command "echo 'Generating training summary...'"
