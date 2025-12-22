@@ -16,3 +16,4 @@ This section provides understanding-oriented discussions of Torc's key concepts 
 - Ready queue optimization for large workflows
 - Parallelization strategies and job allocation approaches
 - Workflow actions for automation and dynamic resource allocation
+- AI-assisted recovery for diagnosing and fixing job failures

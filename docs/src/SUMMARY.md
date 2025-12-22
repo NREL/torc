@@ -24,6 +24,7 @@
   - [Parallelization Strategies](./explanation/parallelization.md)
   - [Workflow Actions](./explanation/workflow-actions.md)
   - [Slurm Workflows](./explanation/slurm-workflows.md)
+  - [Automatic Failure Recovery](./explanation/automatic-recovery.md)
   - [Design](./explanation/design/README.md)
     - [Server API Handler](./explanation/design/server.md)
     - [Central Database](./explanation/design/database.md)
@@ -75,6 +76,8 @@
   - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
   - [Filtering CLI Output with Nushell](./tutorials/filtering-with-nushell.md)
   - [Custom HPC Profile](./tutorials/custom-hpc-profile.md)
+  - [MCP Server with Claude Code](./tutorials/mcp-server.md)
+  - [Automatic Failure Recovery](./tutorials/automatic-recovery.md)
 
 ---
 

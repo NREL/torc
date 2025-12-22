@@ -16,6 +16,8 @@ This section contains learning-oriented lessons to help you get started with Tor
 10. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
 11. [Filtering CLI Output with Nushell](./filtering-with-nushell.md) - Filter jobs, results, and user data with readable queries
 12. [Custom HPC Profile](./custom-hpc-profile.md) - Create an HPC profile for unsupported clusters
+13. [MCP Server with Claude Code](./mcp-server.md) - Enable Claude to interact with your workflows
+14. [Automatic Failure Recovery](./automatic-recovery.md) - Autonomous workflow monitoring with `torc watch`
 
 Start with the Configuration Files tutorial to set up your environment, then try the Dashboard Deployment tutorial if you want to use the web interface.
 

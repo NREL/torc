@@ -18,6 +18,7 @@ use torc::client::commands::results::handle_result_commands;
 use torc::client::commands::scheduled_compute_nodes::handle_scheduled_compute_node_commands;
 use torc::client::commands::slurm::handle_slurm_commands;
 use torc::client::commands::user_data::handle_user_data_commands;
+use torc::client::commands::watch::{WatchArgs, run_watch};
 use torc::client::commands::workflows::handle_workflow_commands;
 use torc::client::config::TorcConfig;
 use torc::client::workflow_manager::WorkflowManager;
@@ -440,6 +441,28 @@ fn main() {
                     std::process::exit(1);
                 }
             }
+        }
+        Commands::Watch {
+            workflow_id,
+            poll_interval,
+            auto_recover,
+            max_retries,
+            memory_multiplier,
+            runtime_multiplier,
+            output_dir,
+            show_job_counts,
+        } => {
+            let args = WatchArgs {
+                workflow_id: *workflow_id,
+                poll_interval: *poll_interval,
+                auto_recover: *auto_recover,
+                max_retries: *max_retries,
+                memory_multiplier: *memory_multiplier,
+                runtime_multiplier: *runtime_multiplier,
+                output_dir: output_dir.clone(),
+                show_job_counts: *show_job_counts,
+            };
+            run_watch(&config, &args);
         }
         Commands::Workflows { command } => {
             handle_workflow_commands(&config, command, &format);

@@ -4,6 +4,7 @@ members = [
     "torc-server",
     "torc-slurm-job-runner",
     "torc-dash",
+    "torc-mcp-server",
 ]
 resolver = "2"
 
@@ -96,6 +97,10 @@ hyper-tls = "0.5"
 hyper-openssl = "0.9"
 openssl = "0.10"
 
+# MCP server
+rmcp = { version = "0.1", features = ["server", "macros", "transport-io"] }
+schemars = "1.0"
+
 [package]
 name = "torc"
 version.workspace = true
@@ -159,6 +164,7 @@ client = [
     "dep:signal-hook",
     "dep:libc",
     "dep:nvml-wrapper",
+    "dep:sha2",
     "config",
 ]
 tui = [

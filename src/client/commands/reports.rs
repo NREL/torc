@@ -68,6 +68,9 @@ pub enum ReportCommands {
         /// Show all jobs (default: only show jobs that exceeded requirements)
         #[arg(short, long)]
         all: bool,
+        /// Include failed jobs in the analysis (for recovery diagnostics)
+        #[arg(long)]
+        include_failed: bool,
     },
     /// Generate a comprehensive JSON report of job results including all log file paths
     Results {
@@ -89,8 +92,16 @@ pub fn handle_report_commands(config: &Configuration, command: &ReportCommands, 
             workflow_id,
             run_id,
             all,
+            include_failed,
         } => {
-            check_resource_utilization(config, *workflow_id, *run_id, *all, format);
+            check_resource_utilization(
+                config,
+                *workflow_id,
+                *run_id,
+                *all,
+                *include_failed,
+                format,
+            );
         }
         ReportCommands::Results {
             workflow_id,
@@ -107,6 +118,7 @@ fn check_resource_utilization(
     workflow_id: Option<i64>,
     run_id: Option<i64>,
     show_all: bool,
+    include_failed: bool,
     format: &str,
 ) {
     // Get or select workflow ID
@@ -122,21 +134,51 @@ fn check_resource_utilization(
         },
     };
 
-    // Fetch results for the workflow using pagination
+    // Fetch completed results for the workflow using pagination
     let mut params = pagination::ResultListParams::new().with_status(models::JobStatus::Completed);
     if let Some(rid) = run_id {
         params = params.with_run_id(rid);
     }
-    let results = match pagination::paginate_results(config, wf_id, params) {
+    let completed_results = match pagination::paginate_results(config, wf_id, params) {
         Ok(results) => results,
         Err(e) => {
-            print_error("fetching results", &e);
+            print_error("fetching completed results", &e);
             std::process::exit(1);
         }
     };
 
+    // Fetch failed results if requested
+    let failed_results = if include_failed {
+        let mut failed_params =
+            pagination::ResultListParams::new().with_status(models::JobStatus::Failed);
+        if let Some(rid) = run_id {
+            failed_params = failed_params.with_run_id(rid);
+        }
+        match pagination::paginate_results(config, wf_id, failed_params) {
+            Ok(results) => results,
+            Err(e) => {
+                print_error("fetching failed results", &e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        Vec::new()
+    };
+
+    // Combine results
+    let mut results = completed_results;
+    results.extend(failed_results);
+
     if results.is_empty() {
-        println!("No completed job results found for workflow {}", wf_id);
+        let msg = if include_failed {
+            format!(
+                "No completed or failed job results found for workflow {}",
+                wf_id
+            )
+        } else {
+            format!("No completed job results found for workflow {}", wf_id)
+        };
+        println!("{}", msg);
         std::process::exit(0);
     }
 
@@ -175,9 +217,11 @@ fn check_resource_utilization(
     // Analyze each result
     let mut rows = Vec::new();
     let mut over_util_count = 0;
+    let mut failed_jobs_info: Vec<serde_json::Value> = Vec::new();
 
     for result in &results {
         let job_id = result.job_id;
+        let is_failed = result.status == models::JobStatus::Failed;
 
         // Get job and its resource requirements
         let job = match job_map.get(&job_id) {
@@ -208,6 +252,52 @@ fn check_resource_utilization(
         };
 
         let job_name = job.name.clone();
+
+        // Track failed jobs separately with their resource info
+        if is_failed {
+            let mut failed_info = serde_json::json!({
+                "job_id": job_id,
+                "job_name": job_name.clone(),
+                "return_code": result.return_code,
+                "exec_time_minutes": result.exec_time_minutes,
+                "configured_memory": resource_req.memory.clone(),
+                "configured_runtime": resource_req.runtime.clone(),
+                "configured_cpus": resource_req.num_cpus,
+            });
+
+            // Add resource usage if available
+            if let Some(peak_mem) = result.peak_memory_bytes {
+                failed_info["peak_memory_bytes"] = serde_json::json!(peak_mem);
+                failed_info["peak_memory_formatted"] =
+                    serde_json::json!(format_memory_bytes(peak_mem));
+
+                // Check if it's an OOM issue
+                let specified_memory_bytes = parse_memory_string(&resource_req.memory);
+                if peak_mem > specified_memory_bytes {
+                    failed_info["likely_oom"] = serde_json::json!(true);
+                    let over_pct =
+                        ((peak_mem as f64 / specified_memory_bytes as f64) - 1.0) * 100.0;
+                    failed_info["memory_over_utilization"] =
+                        serde_json::json!(format!("+{:.1}%", over_pct));
+                }
+            }
+
+            // Check if runtime exceeded
+            let exec_time_seconds = result.exec_time_minutes * 60.0;
+            if let Ok(specified_runtime_seconds) = duration_string_to_seconds(&resource_req.runtime)
+            {
+                let specified_runtime_seconds = specified_runtime_seconds as f64;
+                if exec_time_seconds > specified_runtime_seconds * 0.9 {
+                    // If job ran for > 90% of its runtime, it might be a timeout
+                    failed_info["likely_timeout"] = serde_json::json!(true);
+                    let pct_of_runtime = (exec_time_seconds / specified_runtime_seconds) * 100.0;
+                    failed_info["runtime_utilization"] =
+                        serde_json::json!(format!("{:.1}%", pct_of_runtime));
+                }
+            }
+
+            failed_jobs_info.push(failed_info);
+        }
 
         // Check memory over-utilization
         if let Some(peak_memory_bytes) = result.peak_memory_bytes {
@@ -305,7 +395,7 @@ fn check_resource_utilization(
     // Output results
     match format {
         "json" => {
-            let json_output = serde_json::json!({
+            let mut json_output = serde_json::json!({
                 "workflow_id": wf_id,
                 "run_id": run_id,
                 "total_results": results.len(),
@@ -321,6 +411,13 @@ fn check_resource_utilization(
                     })
                 }).collect::<Vec<_>>(),
             });
+
+            // Add failed jobs section if there are any
+            if !failed_jobs_info.is_empty() {
+                json_output["failed_jobs_count"] = serde_json::json!(failed_jobs_info.len());
+                json_output["failed_jobs"] = serde_json::json!(failed_jobs_info);
+            }
+
             println!("{}", serde_json::to_string_pretty(&json_output).unwrap());
         }
         "table" | _ => {
