@@ -1,14 +1,17 @@
 [package]
 name = "torc-slurm-job-runner"
-version = "0.7.0"
-edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Torc Slurm job runner for HPC environments"
 
 [dependencies]
 torc = { path = ".." }
-clap = { version = "4.5.4", features = ["derive", "color"] }
-env_logger = "0.11.1"
-log = "0.4"
-chrono = "0.4.38"
-hostname = "0.4.0"
+clap.workspace = true
+env_logger.workspace = true
+log.workspace = true
+chrono.workspace = true
+hostname.workspace = true
 serde_json.workspace = true
 signal-hook.workspace = true

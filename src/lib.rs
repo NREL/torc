@@ -37,8 +37,22 @@ pub mod plot_resources_cmd;
 #[cfg(all(feature = "client", feature = "tui", feature = "plot_resources"))]
 pub mod cli;
 
-// Re-export commonly used types
-pub use models::*;
+// Re-export model types explicitly
+pub use models::{
+    ClaimJobsBasedOnResources, ClaimJobsSortMethod, ClaimNextJobsResponse, ComputeNodeModel,
+    ComputeNodeSchedule, ComputeNodesResources, CreateJobsResponse, ErrorResponse, EventModel,
+    FileModel, GetDotGraphResponse, GetReadyJobRequirementsResponse, IsCompleteResponse,
+    JobDependencyModel, JobFileRelationshipModel, JobModel, JobStatus, JobStatusMap,
+    JobUserDataRelationshipModel, JobsModel, ListComputeNodesResponse, ListEventsResponse,
+    ListFilesResponse, ListJobDependenciesResponse, ListJobFileRelationshipsResponse,
+    ListJobUserDataRelationshipsResponse, ListJobsResponse, ListLocalSchedulersResponse,
+    ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
+    ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
+    ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse, LocalSchedulerModel,
+    ProcessChangedJobInputsResponse, ResourceRequirementsModel, ResultModel,
+    ScheduledComputeNodesModel, SlurmSchedulerModel, UserDataModel, WorkflowActionModel,
+    WorkflowModel, WorkflowStatusModel,
+};
 
 // Re-export client types when client feature is enabled
 #[cfg(feature = "client")]
