@@ -319,7 +319,7 @@ fn main() {
             ignore_missing_data,
             skip_checks,
         } => {
-            use torc::client::commands::hpc::generate_schedulers_for_workflow;
+            use torc::client::commands::slurm::generate_schedulers_for_workflow;
 
             // Load the workflow spec
             let mut spec = match WorkflowSpec::from_spec_file(workflow_spec) {

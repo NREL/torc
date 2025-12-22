@@ -4,9 +4,8 @@ use clap::Subcommand;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
-use crate::client::commands::hpc::{
-    create_registry_with_config_public, generate_schedulers_for_workflow,
-};
+use crate::client::commands::hpc::create_registry_with_config_public;
+use crate::client::commands::slurm::generate_schedulers_for_workflow;
 use crate::client::commands::{
     get_env_user_name, get_user_name, pagination, print_error, select_workflow_interactively,
     table_format::display_table_with_count,

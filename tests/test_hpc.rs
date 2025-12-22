@@ -2,7 +2,7 @@
 
 use rstest::rstest;
 use std::collections::HashMap;
-use torc::client::commands::hpc::{
+use torc::client::commands::slurm::{
     generate_schedulers_for_workflow, parse_memory_mb, parse_walltime_secs, secs_to_walltime,
 };
 use torc::client::hpc::kestrel::kestrel_profile;

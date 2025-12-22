@@ -3595,7 +3595,7 @@ fn test_create_subgraph_workflows_from_examples(start_server: &ServerProcess) {
 /// Jobs without dependencies get on_workflow_start, jobs with dependencies get on_jobs_ready
 #[test]
 fn test_subgraph_workflow_generated_actions_have_correct_triggers() {
-    use torc::client::commands::hpc::generate_schedulers_for_workflow;
+    use torc::client::commands::slurm::generate_schedulers_for_workflow;
     use torc::client::hpc::kestrel::kestrel_profile;
 
     let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
