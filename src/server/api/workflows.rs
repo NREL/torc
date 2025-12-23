@@ -1337,7 +1337,7 @@ where
         );
 
         let offset_val = offset.unwrap_or(0);
-        let limit_val = limit.unwrap_or(100000).min(100000);
+        let limit_val = limit.unwrap_or(10000).min(10000);
 
         // Query job_depends_on table with JOIN to get job names
         let dependencies = match sqlx::query_as!(
@@ -1397,7 +1397,7 @@ where
             models::ListJobDependenciesResponse {
                 items: Some(dependencies),
                 offset: offset_val,
-                max_limit: 100000,
+                max_limit: 10000,
                 count: current_count,
                 total_count,
                 has_more,
@@ -1422,7 +1422,7 @@ where
         );
 
         let offset_val = offset.unwrap_or(0);
-        let limit_val = limit.unwrap_or(100000).min(100000);
+        let limit_val = limit.unwrap_or(10000).min(10000);
 
         // Query job_input_file and job_output_file tables with JOINs
         // UNION the input and output relationships
@@ -1499,7 +1499,7 @@ where
             models::ListJobFileRelationshipsResponse {
                 items: Some(relationships),
                 offset: offset_val,
-                max_limit: 100000,
+                max_limit: 10000,
                 count: current_count,
                 total_count,
                 has_more,
@@ -1524,7 +1524,7 @@ where
         );
 
         let offset_val = offset.unwrap_or(0);
-        let limit_val = limit.unwrap_or(100000).min(100000);
+        let limit_val = limit.unwrap_or(10000).min(10000);
 
         // Query job_input_user_data and job_output_user_data tables with JOINs
         let relationships = match sqlx::query_as!(
@@ -1599,7 +1599,7 @@ where
             models::ListJobUserDataRelationshipsResponse {
                 items: Some(relationships),
                 offset: offset_val,
-                max_limit: 100000,
+                max_limit: 10000,
                 count: current_count,
                 total_count,
                 has_more,

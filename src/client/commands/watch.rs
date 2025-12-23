@@ -83,7 +83,7 @@ fn get_job_counts(
         None,         // needs_file_id
         None,         // upstream_job_id
         None,         // offset
-        Some(100000), // limit
+        Some(10000),  // limit
         None,         // sort_by
         None,         // reverse_sort
         None,         // include_relationships
