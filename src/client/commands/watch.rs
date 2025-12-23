@@ -350,6 +350,139 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
     Ok(total_failed)
 }
 
+/// Check for pending Slurm jobs that no longer exist and mark them as complete.
+///
+/// This handles the case where a Slurm job was submitted but cancelled or failed
+/// before it ever started running. In this scenario:
+/// - The ScheduledComputeNode remains in "pending" status
+/// - The Slurm job no longer exists in the queue
+///
+/// This function:
+/// 1. Gets all scheduled compute nodes with status="pending" and scheduler_type="slurm"
+/// 2. Checks if the Slurm job still exists
+/// 3. If the Slurm job doesn't exist, marks the ScheduledComputeNode as "complete"
+///
+/// Returns the number of pending nodes that were cleaned up.
+fn cleanup_dead_pending_slurm_jobs(
+    config: &Configuration,
+    workflow_id: i64,
+) -> Result<usize, String> {
+    // Get all scheduled compute nodes with status="pending"
+    let scheduled_nodes_response = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,            // offset
+        Some(1000),      // limit
+        None,            // sort_by
+        None,            // reverse_sort
+        None,            // scheduler_id
+        None,            // scheduler_config_id
+        Some("pending"), // status
+    )
+    .map_err(|e| format!("Failed to list pending scheduled compute nodes: {}", e))?;
+
+    let scheduled_nodes = scheduled_nodes_response.items.unwrap_or_default();
+
+    // Filter for Slurm scheduler type
+    let slurm_nodes: Vec<_> = scheduled_nodes
+        .iter()
+        .filter(|node| node.scheduler_type.to_lowercase() == "slurm")
+        .collect();
+
+    if slurm_nodes.is_empty() {
+        return Ok(0);
+    }
+
+    // Create SlurmInterface to check job status
+    let slurm = match SlurmInterface::new() {
+        Ok(s) => s,
+        Err(e) => {
+            debug!(
+                "Could not create SlurmInterface for pending job check: {}",
+                e
+            );
+            return Ok(0);
+        }
+    };
+
+    let mut total_cleaned = 0;
+
+    for scheduled_node in slurm_nodes {
+        let slurm_job_id = scheduled_node.scheduler_id.to_string();
+        let scheduled_compute_node_id = match scheduled_node.id {
+            Some(id) => id,
+            None => continue,
+        };
+
+        // Check Slurm status
+        let slurm_status = match slurm.get_status(&slurm_job_id) {
+            Ok(info) => info.status,
+            Err(e) => {
+                debug!(
+                    "Error checking Slurm status for pending job {}: {}",
+                    slurm_job_id, e
+                );
+                continue;
+            }
+        };
+
+        // If Slurm job is still queued or running, skip it (it's still valid)
+        if slurm_status == HpcJobStatus::Queued || slurm_status == HpcJobStatus::Running {
+            continue;
+        }
+
+        // If the job completed normally, it will transition through the normal path
+        // We only care about jobs that no longer exist (None/Unknown)
+        if slurm_status == HpcJobStatus::Complete {
+            // Job completed but never started running in our system - this is unusual
+            // but we should mark it as complete so it doesn't block
+            info!(
+                "Slurm job {} completed but was still pending in our system, marking as complete",
+                slurm_job_id
+            );
+        } else {
+            // Job no longer exists (None/Unknown) - was cancelled or failed before starting
+            info!(
+                "Pending Slurm job {} no longer exists (status: {:?}), marking as complete",
+                slurm_job_id, slurm_status
+            );
+        }
+
+        // Update the scheduled compute node status to "complete"
+        match default_api::update_scheduled_compute_node(
+            config,
+            scheduled_compute_node_id,
+            models::ScheduledComputeNodesModel::new(
+                workflow_id,
+                scheduled_node.scheduler_id,
+                scheduled_node.scheduler_config_id,
+                scheduled_node.scheduler_type.clone(),
+                "complete".to_string(),
+            ),
+        ) {
+            Ok(_) => {
+                info!(
+                    "Updated pending scheduled compute node {} (Slurm job {}) status to 'complete'",
+                    scheduled_compute_node_id, slurm_job_id
+                );
+                total_cleaned += 1;
+            }
+            Err(e) => {
+                warn!(
+                    "Failed to update scheduled compute node {} status: {}",
+                    scheduled_compute_node_id, e
+                );
+            }
+        }
+    }
+
+    if total_cleaned > 0 {
+        info!("Cleaned up {} dead pending Slurm job(s)", total_cleaned);
+    }
+
+    Ok(total_cleaned)
+}
+
 /// Detect and fail orphaned running jobs.
 ///
 /// This handles the case where a job runner (e.g., torc-slurm-job-runner) was killed
@@ -565,6 +698,19 @@ fn poll_until_complete(
             }
             Err(e) => {
                 warn!("Error checking for orphaned Slurm jobs: {}", e);
+            }
+        }
+
+        // Check for pending Slurm jobs that no longer exist (cancelled/failed before starting)
+        match cleanup_dead_pending_slurm_jobs(config, workflow_id) {
+            Ok(count) if count > 0 => {
+                info!("Dead pending Slurm jobs cleaned up, continuing...");
+            }
+            Ok(_) => {
+                // No dead pending Slurm jobs
+            }
+            Err(e) => {
+                warn!("Error checking for dead pending Slurm jobs: {}", e);
             }
         }
 
