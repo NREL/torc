@@ -1131,7 +1131,7 @@ fn apply_recovery_heuristics(
 
 /// Reset specific failed jobs for retry
 fn reset_failed_jobs(
-    config: &Configuration,
+    _config: &Configuration,
     workflow_id: i64,
     job_ids: &[i64],
 ) -> Result<usize, String> {
@@ -1139,33 +1139,27 @@ fn reset_failed_jobs(
         return Ok(0);
     }
 
-    let mut reset_count = 0;
-    for &job_id in job_ids {
-        match default_api::reset_job_status(config, job_id, None, None) {
-            Ok(_) => {
-                debug!("  Reset job {} status to blocked", job_id);
-                reset_count += 1;
-            }
-            Err(e) => {
-                warn!("  Warning: failed to reset job {}: {}", job_id, e);
-            }
-        }
+    let job_count = job_ids.len();
+
+    // Use reset-status --failed-only --restart to reset failed jobs and trigger unblocking
+    let output = Command::new("torc")
+        .args([
+            "workflows",
+            "reset-status",
+            &workflow_id.to_string(),
+            "--failed-only",
+            "--restart",
+            "--no-prompts",
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run workflow reset-status: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("workflow reset-status failed: {}", stderr));
     }
 
-    // Restart the workflow to trigger unblocking
-    if reset_count > 0 {
-        let output = Command::new("torc")
-            .args(["workflows", "restart", &workflow_id.to_string()])
-            .output()
-            .map_err(|e| format!("Failed to run workflow restart: {}", e))?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("workflow restart failed: {}", stderr));
-        }
-    }
-
-    Ok(reset_count)
+    Ok(job_count)
 }
 
 /// Regenerate Slurm schedulers and submit allocations
