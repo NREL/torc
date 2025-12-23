@@ -507,6 +507,95 @@ fn cleanup_dead_pending_slurm_jobs(
     Ok(total_cleaned)
 }
 
+/// Check if there is at least one valid Slurm allocation (pending or running in Slurm).
+///
+/// This is used to optimize the poll loop: if we have valid allocations, we can skip
+/// the expensive per-allocation orphan detection and just sleep.
+///
+/// Returns true if at least one Slurm allocation is still valid (queued or running).
+fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool {
+    // Get scheduled compute nodes with status="pending" or "active"
+    // We'll sample one from each category to check
+
+    // First check for active allocations
+    let active_nodes = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,           // offset
+        Some(1),        // limit - just need one
+        None,           // sort_by
+        None,           // reverse_sort
+        None,           // scheduler_id
+        None,           // scheduler_config_id
+        Some("active"), // status
+    );
+
+    if let Ok(response) = active_nodes {
+        if let Some(nodes) = response.items {
+            for node in nodes {
+                if node.scheduler_type.to_lowercase() == "slurm" {
+                    // Check if this Slurm job is still running
+                    if let Ok(slurm) = SlurmInterface::new() {
+                        let slurm_job_id = node.scheduler_id.to_string();
+                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
+                            if info.status == HpcJobStatus::Running
+                                || info.status == HpcJobStatus::Queued
+                            {
+                                debug!(
+                                    "Found valid active Slurm allocation {} (status: {:?})",
+                                    slurm_job_id, info.status
+                                );
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Check for pending allocations
+    let pending_nodes = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,            // offset
+        Some(1),         // limit - just need one
+        None,            // sort_by
+        None,            // reverse_sort
+        None,            // scheduler_id
+        None,            // scheduler_config_id
+        Some("pending"), // status
+    );
+
+    if let Ok(response) = pending_nodes {
+        if let Some(nodes) = response.items {
+            for node in nodes {
+                if node.scheduler_type.to_lowercase() == "slurm" {
+                    // Check if this Slurm job is still queued
+                    if let Ok(slurm) = SlurmInterface::new() {
+                        let slurm_job_id = node.scheduler_id.to_string();
+                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
+                            if info.status == HpcJobStatus::Running
+                                || info.status == HpcJobStatus::Queued
+                            {
+                                debug!(
+                                    "Found valid pending Slurm allocation {} (status: {:?})",
+                                    slurm_job_id, info.status
+                                );
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // No valid Slurm allocations found
+    debug!("No valid Slurm allocations found");
+    false
+}
+
 /// Detect and fail orphaned running jobs.
 ///
 /// This handles the case where a job runner (e.g., torc-slurm-job-runner) was killed
@@ -709,6 +798,17 @@ fn poll_until_complete(
                 }
             }
         }
+
+        // Optimization: If there's at least one valid Slurm allocation (pending or running),
+        // skip the expensive per-allocation orphan detection. This reduces N squeue calls
+        // to just 1-2 calls when jobs are queued or running normally.
+        if has_valid_slurm_allocation(config, workflow_id) {
+            std::thread::sleep(Duration::from_secs(poll_interval));
+            continue;
+        }
+
+        // No valid Slurm allocations found - check for orphaned jobs
+        debug!("No valid Slurm allocations, checking for orphaned jobs...");
 
         // Check for orphaned Slurm jobs using Slurm as the source of truth.
         // This uses the active_compute_node_id to precisely identify which jobs were
