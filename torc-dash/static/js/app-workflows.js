@@ -99,6 +99,7 @@ Object.assign(TorcDashboard.prototype, {
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-success" onclick="app.runWorkflow('${workflow.id}')" title="Run Locally">Run</button>
                         <button class="btn btn-sm btn-primary" onclick="app.submitWorkflow('${workflow.id}')" title="Submit to Scheduler">Submit</button>
+                        <button class="btn btn-sm btn-warning" onclick="app.watchWorkflow('${workflow.id}')" title="Watch with Auto-Recovery">Watch</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewDAG('${workflow.id}')" title="View DAG">DAG</button>
                         <button class="btn btn-sm btn-danger" onclick="app.deleteWorkflow('${workflow.id}')" title="Delete">Del</button>
@@ -250,6 +251,67 @@ Object.assign(TorcDashboard.prototype, {
             } else {
                 this.appendExecutionOutput(`\n✗ Workflow ${status}\n`, 'error');
                 this.showToast(`Workflow ${status}`, 'error');
+            }
+            eventSource.close();
+            this.currentEventSource = null;
+            this.hideExecutionCancelButton();
+            // Refresh workflow details
+            this.loadWorkflows();
+            this.loadWorkflowDetails(workflowId);
+        });
+
+        eventSource.onerror = (e) => {
+            if (eventSource.readyState === EventSource.CLOSED) {
+                // Normal close
+                return;
+            }
+            this.appendExecutionOutput(`\nConnection error\n`, 'error');
+            eventSource.close();
+            this.currentEventSource = null;
+            this.hideExecutionCancelButton();
+        };
+    },
+
+    async watchWorkflow(workflowId) {
+        // Show the execution output panel
+        this.showExecutionPanel();
+        this.appendExecutionOutput(`Starting watch for workflow ${workflowId} (with auto-recovery)...\n`, 'info');
+
+        // Create EventSource for streaming
+        const eventSource = new EventSource(`/api/cli/watch-stream?workflow_id=${workflowId}`);
+        this.currentEventSource = eventSource;
+
+        eventSource.addEventListener('start', (e) => {
+            this.appendExecutionOutput(`${e.data}\n`, 'info');
+        });
+
+        eventSource.addEventListener('stdout', (e) => {
+            this.appendExecutionOutput(`${e.data}\n`, 'stdout');
+        });
+
+        eventSource.addEventListener('stderr', (e) => {
+            this.appendExecutionOutput(`${e.data}\n`, 'stderr');
+        });
+
+        eventSource.addEventListener('status', (e) => {
+            // Status updates from periodic API polling - shown in a different color
+            this.appendExecutionOutput(`[Status] ${e.data}\n`, 'info');
+        });
+
+        eventSource.addEventListener('error', (e) => {
+            if (e.data) {
+                this.appendExecutionOutput(`Error: ${e.data}\n`, 'error');
+            }
+        });
+
+        eventSource.addEventListener('end', (e) => {
+            const status = e.data;
+            if (status === 'success') {
+                this.appendExecutionOutput(`\n✓ Watch completed - workflow finished successfully\n`, 'success');
+                this.showToast('Workflow watch completed', 'success');
+            } else {
+                this.appendExecutionOutput(`\n✗ Watch ${status}\n`, 'error');
+                this.showToast(`Watch ${status}`, 'error');
             }
             eventSource.close();
             this.currentEventSource = null;

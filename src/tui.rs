@@ -614,6 +614,9 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                             KeyCode::Char('C') => {
                                 app.request_workflow_action(WorkflowAction::Cancel);
                             }
+                            KeyCode::Char('W') => {
+                                app.request_workflow_action(WorkflowAction::Watch);
+                            }
                             // Server management
                             KeyCode::Char('S') => {
                                 app.start_server();
