@@ -133,6 +133,9 @@ pub enum ResultCommands {
         /// Show all historical results (default: false, only shows current results)
         #[arg(long)]
         all_runs: bool,
+        /// Filter by compute node ID
+        #[arg(long)]
+        compute_node: Option<i64>,
     },
     /// Get a specific result by ID
     Get {
@@ -162,6 +165,7 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
             sort_by,
             reverse_sort,
             all_runs,
+            compute_node,
         } => {
             let user_name = get_env_user_name();
             let selected_workflow_id = match workflow_id {
@@ -216,6 +220,10 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
 
             params = params.with_reverse_sort(*reverse_sort);
             params = params.with_all_runs(*all_runs);
+
+            if let Some(compute_node_id) = compute_node {
+                params = params.with_compute_node_id(*compute_node_id);
+            }
 
             match pagination::paginate_results(config, selected_workflow_id as i64, params) {
                 Ok(mut results) => {

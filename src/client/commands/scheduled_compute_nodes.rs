@@ -36,6 +36,12 @@ impl From<&models::ScheduledComputeNodesModel> for ScheduledComputeNodeTableRow 
 
 #[derive(clap::Subcommand)]
 pub enum ScheduledComputeNodeCommands {
+    /// Get a scheduled compute node by ID
+    Get {
+        /// ID of the scheduled compute node
+        #[arg()]
+        id: i64,
+    },
     /// List scheduled compute nodes for a workflow
     List {
         /// List scheduled compute nodes for this workflow (optional - will prompt if not provided)
@@ -63,6 +69,12 @@ pub enum ScheduledComputeNodeCommands {
         #[arg(long)]
         status: Option<String>,
     },
+    /// List jobs that ran under a scheduled compute node
+    ListJobs {
+        /// ID of the scheduled compute node
+        #[arg()]
+        id: i64,
+    },
 }
 
 pub fn handle_scheduled_compute_node_commands(
@@ -71,6 +83,35 @@ pub fn handle_scheduled_compute_node_commands(
     format: &str,
 ) {
     match command {
+        ScheduledComputeNodeCommands::Get { id } => {
+            match default_api::get_scheduled_compute_node(config, *id) {
+                Ok(node) => {
+                    if format == "json" {
+                        match serde_json::to_string_pretty(&node) {
+                            Ok(json) => println!("{}", json),
+                            Err(e) => {
+                                eprintln!(
+                                    "Error serializing scheduled compute node to JSON: {}",
+                                    e
+                                );
+                                std::process::exit(1);
+                            }
+                        }
+                    } else {
+                        println!("Scheduled Compute Node ID {}:", id);
+                        println!("  Workflow ID: {}", node.workflow_id);
+                        println!("  Scheduler ID: {}", node.scheduler_id);
+                        println!("  Scheduler Config ID: {}", node.scheduler_config_id);
+                        println!("  Scheduler Type: {}", node.scheduler_type);
+                        println!("  Status: {}", node.status);
+                    }
+                }
+                Err(e) => {
+                    print_error("getting scheduled compute node", &e);
+                    std::process::exit(1);
+                }
+            }
+        }
         ScheduledComputeNodeCommands::List {
             workflow_id,
             limit,
@@ -145,6 +186,111 @@ pub fn handle_scheduled_compute_node_commands(
                 Err(e) => {
                     print_error("listing scheduled compute nodes", &e);
                     std::process::exit(1);
+                }
+            }
+        }
+        ScheduledComputeNodeCommands::ListJobs { id } => {
+            // Step 1: Get the scheduled compute node to find the workflow_id
+            let scheduled_node = match default_api::get_scheduled_compute_node(config, *id) {
+                Ok(node) => node,
+                Err(e) => {
+                    print_error("getting scheduled compute node", &e);
+                    std::process::exit(1);
+                }
+            };
+
+            let workflow_id = scheduled_node.workflow_id;
+
+            // Step 2: Get all compute nodes created by this scheduled compute node
+            let compute_nodes = match default_api::list_compute_nodes(
+                config,
+                workflow_id,
+                None,      // offset
+                None,      // limit
+                None,      // sort_by
+                None,      // reverse_sort
+                None,      // hostname
+                None,      // is_active
+                Some(*id), // scheduled_compute_node_id
+            ) {
+                Ok(response) => response.items.unwrap_or_default(),
+                Err(e) => {
+                    print_error("listing compute nodes", &e);
+                    std::process::exit(1);
+                }
+            };
+
+            if compute_nodes.is_empty() {
+                if format == "json" {
+                    println!("{{\"job_ids\": []}}");
+                } else {
+                    println!("No compute nodes found for scheduled compute node {}", id);
+                }
+                return;
+            }
+
+            // Step 3: For each compute node, get results and collect job IDs
+            let mut job_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+
+            for compute_node in &compute_nodes {
+                if let Some(compute_node_id) = compute_node.id {
+                    match default_api::list_results(
+                        config,
+                        workflow_id,
+                        None,                  // job_id
+                        None,                  // run_id
+                        None,                  // offset
+                        None,                  // limit
+                        None,                  // sort_by
+                        None,                  // reverse_sort
+                        None,                  // return_code
+                        None,                  // status
+                        Some(true),            // all_runs - include all historical results
+                        Some(compute_node_id), // compute_node_id filter
+                    ) {
+                        Ok(response) => {
+                            if let Some(items) = response.items {
+                                for result in items {
+                                    job_ids.insert(result.job_id);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "Warning: Could not fetch results for compute node {}: {}",
+                                compute_node_id, e
+                            );
+                        }
+                    }
+                }
+            }
+
+            let mut job_ids_vec: Vec<i64> = job_ids.into_iter().collect();
+            job_ids_vec.sort();
+
+            if format == "json" {
+                let json_output = serde_json::json!({
+                    "scheduled_compute_node_id": id,
+                    "workflow_id": workflow_id,
+                    "compute_node_count": compute_nodes.len(),
+                    "job_ids": job_ids_vec,
+                });
+                match serde_json::to_string_pretty(&json_output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing to JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                println!(
+                    "Jobs that ran under scheduled compute node {} (workflow {}):",
+                    id, workflow_id
+                );
+                println!("  Compute nodes: {}", compute_nodes.len());
+                println!("  Total jobs: {}", job_ids_vec.len());
+                if !job_ids_vec.is_empty() {
+                    println!("  Job IDs: {:?}", job_ids_vec);
                 }
             }
         }

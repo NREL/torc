@@ -16761,6 +16761,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         hostname: Optional[StrictStr] = None,
         is_active: Optional[StrictBool] = None,
+        scheduled_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by scheduled compute node ID (filters compute nodes created by this scheduler)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -16792,6 +16793,8 @@ class DefaultApi:
         :type hostname: str
         :param is_active:
         :type is_active: bool
+        :param scheduled_compute_node_id: Filter by scheduled compute node ID (filters compute nodes created by this scheduler)
+        :type scheduled_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -16822,6 +16825,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             hostname=hostname,
             is_active=is_active,
+            scheduled_compute_node_id=scheduled_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -16853,6 +16857,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         hostname: Optional[StrictStr] = None,
         is_active: Optional[StrictBool] = None,
+        scheduled_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by scheduled compute node ID (filters compute nodes created by this scheduler)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -16884,6 +16889,8 @@ class DefaultApi:
         :type hostname: str
         :param is_active:
         :type is_active: bool
+        :param scheduled_compute_node_id: Filter by scheduled compute node ID (filters compute nodes created by this scheduler)
+        :type scheduled_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -16914,6 +16921,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             hostname=hostname,
             is_active=is_active,
+            scheduled_compute_node_id=scheduled_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -16945,6 +16953,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         hostname: Optional[StrictStr] = None,
         is_active: Optional[StrictBool] = None,
+        scheduled_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by scheduled compute node ID (filters compute nodes created by this scheduler)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -16976,6 +16985,8 @@ class DefaultApi:
         :type hostname: str
         :param is_active:
         :type is_active: bool
+        :param scheduled_compute_node_id: Filter by scheduled compute node ID (filters compute nodes created by this scheduler)
+        :type scheduled_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17006,6 +17017,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             hostname=hostname,
             is_active=is_active,
+            scheduled_compute_node_id=scheduled_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -17032,6 +17044,7 @@ class DefaultApi:
         reverse_sort,
         hostname,
         is_active,
+        scheduled_compute_node_id,
         _request_auth,
         _content_type,
         _headers,
@@ -17081,6 +17094,10 @@ class DefaultApi:
         if is_active is not None:
             
             _query_params.append(('is_active', is_active))
+            
+        if scheduled_compute_node_id is not None:
+            
+            _query_params.append(('scheduled_compute_node_id', scheduled_compute_node_id))
             
         # process the header parameters
         # process the form parameters
@@ -20799,6 +20816,7 @@ class DefaultApi:
         return_code: Optional[StrictInt] = None,
         status: Optional[JobStatus] = None,
         all_runs: Annotated[Optional[StrictBool], Field(description="If false (default), only return results in the workflow_result table (current results). If true, return all historical results.")] = None,
+        compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by compute node ID")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -20836,6 +20854,8 @@ class DefaultApi:
         :type status: JobStatus
         :param all_runs: If false (default), only return results in the workflow_result table (current results). If true, return all historical results.
         :type all_runs: bool
+        :param compute_node_id: Filter by compute node ID
+        :type compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -20869,6 +20889,7 @@ class DefaultApi:
             return_code=return_code,
             status=status,
             all_runs=all_runs,
+            compute_node_id=compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -20903,6 +20924,7 @@ class DefaultApi:
         return_code: Optional[StrictInt] = None,
         status: Optional[JobStatus] = None,
         all_runs: Annotated[Optional[StrictBool], Field(description="If false (default), only return results in the workflow_result table (current results). If true, return all historical results.")] = None,
+        compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by compute node ID")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -20940,6 +20962,8 @@ class DefaultApi:
         :type status: JobStatus
         :param all_runs: If false (default), only return results in the workflow_result table (current results). If true, return all historical results.
         :type all_runs: bool
+        :param compute_node_id: Filter by compute node ID
+        :type compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -20973,6 +20997,7 @@ class DefaultApi:
             return_code=return_code,
             status=status,
             all_runs=all_runs,
+            compute_node_id=compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -21007,6 +21032,7 @@ class DefaultApi:
         return_code: Optional[StrictInt] = None,
         status: Optional[JobStatus] = None,
         all_runs: Annotated[Optional[StrictBool], Field(description="If false (default), only return results in the workflow_result table (current results). If true, return all historical results.")] = None,
+        compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter by compute node ID")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -21044,6 +21070,8 @@ class DefaultApi:
         :type status: JobStatus
         :param all_runs: If false (default), only return results in the workflow_result table (current results). If true, return all historical results.
         :type all_runs: bool
+        :param compute_node_id: Filter by compute node ID
+        :type compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -21077,6 +21105,7 @@ class DefaultApi:
             return_code=return_code,
             status=status,
             all_runs=all_runs,
+            compute_node_id=compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -21106,6 +21135,7 @@ class DefaultApi:
         return_code,
         status,
         all_runs,
+        compute_node_id,
         _request_auth,
         _content_type,
         _headers,
@@ -21167,6 +21197,10 @@ class DefaultApi:
         if all_runs is not None:
             
             _query_params.append(('all_runs', all_runs))
+            
+        if compute_node_id is not None:
+            
+            _query_params.append(('compute_node_id', compute_node_id))
             
         # process the header parameters
         # process the form parameters

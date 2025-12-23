@@ -123,6 +123,7 @@ pub fn get_job_details(config: &Configuration, job_id: i64) -> Result<CallToolRe
         None,    // return_code
         None,    // status
         None,    // all_runs
+        None,    // compute_node_id
     )
     .ok()
     .and_then(|r| r.items)

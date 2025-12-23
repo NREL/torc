@@ -2270,6 +2270,7 @@ where
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
@@ -2280,6 +2281,7 @@ where
                 processed_limit,
                 sort_by,
                 reverse_sort,
+                scheduled_compute_node_id,
                 context,
             )
             .await
@@ -2473,6 +2475,7 @@ where
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2481,12 +2484,13 @@ where
         context: &C,
     ) -> Result<ListResultsResponse, ApiError> {
         debug!(
-            "list_results({}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, all_runs={:?}) - X-Span-ID: {:?}",
+            "list_results({}, {:?}, {:?}, {:?}, {:?}, compute_node_id={:?}, {:?}, {:?}, {:?}, {:?}, all_runs={:?}) - X-Span-ID: {:?}",
             workflow_id,
             job_id,
             run_id,
             return_code,
             status,
+            compute_node_id,
             offset,
             limit,
             sort_by,
@@ -2503,6 +2507,7 @@ where
                 run_id,
                 return_code,
                 status,
+                compute_node_id,
                 processed_offset,
                 processed_limit,
                 sort_by,

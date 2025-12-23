@@ -1632,6 +1632,7 @@ fn build_slurm_to_jobs_map(
         None,
         None,
         None,
+        None, // scheduled_compute_node_id
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1682,6 +1683,7 @@ fn build_slurm_to_jobs_map(
         None,
         None,
         Some(true), // all_runs
+        None,       // compute_node_id
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {

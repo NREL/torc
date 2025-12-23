@@ -43,6 +43,7 @@ pub trait ResultsApi<C> {
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: i64,
         limit: i64,
         sort_by: Option<String>,
@@ -256,6 +257,7 @@ where
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: i64,
         limit: i64,
         sort_by: Option<String>,
@@ -267,12 +269,13 @@ where
         let show_all_results = all_runs.unwrap_or(false);
 
         debug!(
-            "list_results({}, {:?}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}, all_runs={}) - X-Span-ID: {:?}",
+            "list_results({}, {:?}, {:?}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}, all_runs={}) - X-Span-ID: {:?}",
             workflow_id,
             job_id,
             run_id,
             return_code,
             status,
+            compute_node_id,
             offset,
             limit,
             sort_by,
@@ -317,6 +320,11 @@ where
             bind_values.push(Box::new(result_status.to_int()));
         }
 
+        if let Some(cn_id) = compute_node_id {
+            where_conditions.push(format!("{}compute_node_id = ?", col_prefix));
+            bind_values.push(Box::new(cn_id));
+        }
+
         let where_clause = where_conditions.join(" AND ");
 
         // Build the complete query with pagination and sorting
@@ -345,6 +353,9 @@ where
         }
         if status.is_some() {
             sqlx_query = sqlx_query.bind(status.as_ref().unwrap().to_int());
+        }
+        if let Some(cn_id) = compute_node_id {
+            sqlx_query = sqlx_query.bind(cn_id);
         }
 
         let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
@@ -405,6 +416,9 @@ where
         }
         if status.is_some() {
             count_sqlx_query = count_sqlx_query.bind(status.as_ref().unwrap().to_int());
+        }
+        if let Some(cn_id) = compute_node_id {
+            count_sqlx_query = count_sqlx_query.bind(cn_id);
         }
 
         let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {

@@ -1,5 +1,6 @@
 //! Watch command for monitoring workflows with automatic failure recovery
 
+use log::{error, info, warn};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
@@ -79,14 +80,14 @@ fn get_job_counts(
     let jobs_response = default_api::list_jobs(
         config,
         workflow_id,
-        None,         // status filter
-        None,         // needs_file_id
-        None,         // upstream_job_id
-        None,         // offset
-        Some(10000),  // limit
-        None,         // sort_by
-        None,         // reverse_sort
-        None,         // include_relationships
+        None,        // status filter
+        None,        // needs_file_id
+        None,        // upstream_job_id
+        None,        // offset
+        Some(10000), // limit
+        None,        // sort_by
+        None,        // reverse_sort
+        None,        // include_relationships
     )
     .map_err(|e| format!("Failed to list jobs: {}", e))?;
 
@@ -115,7 +116,7 @@ fn poll_until_complete(
         match default_api::is_workflow_complete(config, workflow_id) {
             Ok(response) => {
                 if response.is_complete {
-                    eprintln!("Workflow {} is complete", workflow_id);
+                    info!("Workflow {} is complete", workflow_id);
                     break;
                 }
             }
@@ -133,13 +134,13 @@ fn poll_until_complete(
                     let pending = counts.get("Pending").unwrap_or(&0);
                     let failed = counts.get("Failed").unwrap_or(&0);
                     let blocked = counts.get("Blocked").unwrap_or(&0);
-                    eprintln!(
+                    info!(
                         "  completed={}, running={}, pending={}, failed={}, blocked={}",
                         completed, running, pending, failed, blocked
                     );
                 }
                 Err(e) => {
-                    eprintln!("Error getting job counts: {}", e);
+                    error!("Error getting job counts: {}", e);
                 }
             }
         }
@@ -282,7 +283,7 @@ fn apply_recovery_heuristics(
         Ok(slurm_info) => {
             let log_map = correlate_slurm_logs(diagnosis, &slurm_info);
             if !log_map.is_empty() {
-                eprintln!("  Found Slurm logs for {} failed job(s)", log_map.len());
+                info!("  Found Slurm logs for {} failed job(s)", log_map.len());
             }
             log_map
         }
@@ -325,7 +326,7 @@ fn apply_recovery_heuristics(
         let job = match default_api::get_job(config, job_id) {
             Ok(j) => j,
             Err(e) => {
-                eprintln!("  Warning: couldn't get job {}: {}", job_id, e);
+                warn!("  Warning: couldn't get job {}: {}", job_id, e);
                 continue;
             }
         };
@@ -333,7 +334,7 @@ fn apply_recovery_heuristics(
         let rr_id = match job.resource_requirements_id {
             Some(id) => id,
             None => {
-                eprintln!("  Warning: job {} has no resource requirements", job_id);
+                warn!("  Warning: job {} has no resource requirements", job_id);
                 other_failures += 1;
                 continue;
             }
@@ -343,7 +344,7 @@ fn apply_recovery_heuristics(
         let rr = match default_api::get_resource_requirements(config, rr_id) {
             Ok(r) => r,
             Err(e) => {
-                eprintln!(
+                warn!(
                     "  Warning: couldn't get resource requirements {}: {}",
                     rr_id, e
                 );
@@ -359,7 +360,7 @@ fn apply_recovery_heuristics(
             if let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
                 let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
                 let new_memory = format_memory_bytes_short(new_bytes);
-                eprintln!(
+                info!(
                     "  Job {} ({}): OOM detected, increasing memory {} -> {}",
                     job_id, job.name, rr.memory, new_memory
                 );
@@ -375,7 +376,7 @@ fn apply_recovery_heuristics(
             if let Ok(current_secs) = duration_string_to_seconds(&rr.runtime) {
                 let new_secs = (current_secs as f64 * runtime_multiplier) as u64;
                 let new_runtime = format_duration_iso8601(new_secs);
-                eprintln!(
+                info!(
                     "  Job {} ({}): Timeout detected, increasing runtime {} -> {}",
                     job_id, job.name, rr.runtime, new_runtime
                 );
@@ -388,7 +389,7 @@ fn apply_recovery_heuristics(
         // Update resource requirements if changed
         if updated {
             if let Err(e) = default_api::update_resource_requirements(config, rr_id, new_rr) {
-                eprintln!(
+                warn!(
                     "  Warning: failed to update resource requirements for job {}: {}",
                     job_id, e
                 );
@@ -450,7 +451,7 @@ fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), S
 pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     let mut retry_count = 0u32;
 
-    eprintln!(
+    info!(
         "Watching workflow {} (poll interval: {}s{}{})",
         args.workflow_id,
         args.poll_interval,
@@ -467,7 +468,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     );
 
     if !args.show_job_counts {
-        eprintln!("  (use --show-job-counts to display per-status counts during polling)");
+        info!("  (use --show-job-counts to display per-status counts during polling)");
     }
 
     loop {
@@ -480,7 +481,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         ) {
             Ok(c) => c,
             Err(e) => {
-                eprintln!("Error: {}", e);
+                error!("Error: {}", e);
                 std::process::exit(1);
             }
         };
@@ -493,51 +494,51 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         let needs_recovery = failed > 0 || canceled > 0 || terminated > 0;
 
         if !needs_recovery {
-            eprintln!("\n✓ Workflow completed successfully ({} jobs)", completed);
+            error!("\n✓ Workflow completed successfully ({} jobs)", completed);
             break;
         }
 
-        eprintln!("\nWorkflow completed with failures:");
-        eprintln!("  - Failed: {}", failed);
-        eprintln!("  - Canceled: {}", canceled);
-        eprintln!("  - Terminated: {}", terminated);
-        eprintln!("  - Completed: {}", completed);
+        error!("\nWorkflow completed with failures:");
+        error!("  - Failed: {}", failed);
+        error!("  - Canceled: {}", canceled);
+        error!("  - Terminated: {}", terminated);
+        error!("  - Completed: {}", completed);
 
         // Check if we should attempt recovery
         if !args.auto_recover {
-            eprintln!("\nAuto-recovery disabled. To enable, use --auto-recover flag.");
-            eprintln!("Or use the Torc MCP server with your AI assistant for manual recovery.");
+            info!("\nAuto-recovery disabled. To enable, use --auto-recover flag.");
+            info!("Or use the Torc MCP server with your AI assistant for manual recovery.");
             std::process::exit(1);
         }
 
         if retry_count >= args.max_retries {
-            eprintln!(
+            error!(
                 "\nMax retries ({}) exceeded. Manual intervention required.",
                 args.max_retries
             );
-            eprintln!("Use the Torc MCP server with your AI assistant to investigate.");
+            info!("Use the Torc MCP server with your AI assistant to investigate.");
             std::process::exit(1);
         }
 
         retry_count += 1;
-        eprintln!(
+        info!(
             "\nAttempting automatic recovery (attempt {}/{})",
             retry_count, args.max_retries
         );
 
         // Step 1: Diagnose failures
-        eprintln!("\nDiagnosing failures...");
+        info!("\nDiagnosing failures...");
         let diagnosis = match diagnose_failures(args.workflow_id, &args.output_dir) {
             Ok(d) => d,
             Err(e) => {
-                eprintln!("Warning: Could not diagnose failures: {}", e);
-                eprintln!("Attempting retry without resource adjustments...");
+                warn!("Warning: Could not diagnose failures: {}", e);
+                warn!("Attempting retry without resource adjustments...");
                 serde_json::json!({"failed_jobs": []})
             }
         };
 
         // Step 2: Apply heuristics to adjust resources
-        eprintln!("\nApplying recovery heuristics...");
+        info!("\nApplying recovery heuristics...");
         match apply_recovery_heuristics(
             config,
             args.workflow_id,
@@ -548,32 +549,32 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         ) {
             Ok((oom, timeout, other)) => {
                 if oom > 0 || timeout > 0 {
-                    eprintln!("  Applied fixes: {} OOM, {} timeout", oom, timeout);
+                    info!("  Applied fixes: {} OOM, {} timeout", oom, timeout);
                 }
                 if other > 0 {
-                    eprintln!("  {} job(s) with unknown failure cause (will retry)", other);
+                    info!("  {} job(s) with unknown failure cause (will retry)", other);
                 }
             }
             Err(e) => {
-                eprintln!("Warning: Error applying heuristics: {}", e);
+                warn!("Warning: Error applying heuristics: {}", e);
             }
         }
 
         // Step 3: Reset failed jobs
-        eprintln!("\nResetting failed jobs...");
+        info!("\nResetting failed jobs...");
         if let Err(e) = reset_failed_jobs(args.workflow_id) {
-            eprintln!("Error resetting jobs: {}", e);
+            error!("Error resetting jobs: {}", e);
             std::process::exit(1);
         }
 
         // Step 4: Regenerate Slurm schedulers and submit
-        eprintln!("Regenerating Slurm schedulers and submitting...");
+        info!("Regenerating Slurm schedulers and submitting...");
         if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
-            eprintln!("Error regenerating schedulers: {}", e);
+            error!("Error regenerating schedulers: {}", e);
             std::process::exit(1);
         }
 
-        eprintln!("\nRecovery initiated. Resuming monitoring...\n");
+        info!("\nRecovery initiated. Resuming monitoring...\n");
     }
 }
 

@@ -1361,6 +1361,7 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
         None, // return_code filter
         None, // status filter
         None, // all_runs
+        None, // compute_node_id
     )
     .expect("Failed to list results");
 

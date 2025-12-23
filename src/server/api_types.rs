@@ -1247,6 +1247,7 @@ pub trait Api<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError>;
 
@@ -1353,6 +1354,7 @@ pub trait Api<C: Send + Sync> {
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -1978,6 +1980,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError>;
 
     /// Retrieve all events for one workflow.
@@ -2075,6 +2078,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2733,10 +2737,19 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         let context = self.context().clone();
         self.api()
-            .list_compute_nodes(workflow_id, offset, limit, sort_by, reverse_sort, &context)
+            .list_compute_nodes(
+                workflow_id,
+                offset,
+                limit,
+                sort_by,
+                reverse_sort,
+                scheduled_compute_node_id,
+                &context,
+            )
             .await
     }
 
@@ -2923,6 +2936,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         run_id: Option<i64>,
         return_code: Option<i64>,
         status: Option<models::JobStatus>,
+        compute_node_id: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2937,6 +2951,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 run_id,
                 return_code,
                 status,
+                compute_node_id,
                 offset,
                 limit,
                 sort_by,

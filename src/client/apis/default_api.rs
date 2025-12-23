@@ -3177,6 +3177,7 @@ pub fn list_compute_nodes(
     reverse_sort: Option<bool>,
     hostname: Option<&str>,
     is_active: Option<bool>,
+    scheduled_compute_node_id: Option<i64>,
 ) -> Result<models::ListComputeNodesResponse, Error<ListComputeNodesError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_workflow_id = workflow_id;
@@ -3186,6 +3187,7 @@ pub fn list_compute_nodes(
     let p_reverse_sort = reverse_sort;
     let p_hostname = hostname;
     let p_is_active = is_active;
+    let p_scheduled_compute_node_id = scheduled_compute_node_id;
 
     let uri_str = format!("{}/compute_nodes", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -3208,6 +3210,9 @@ pub fn list_compute_nodes(
     }
     if let Some(ref param_value) = p_is_active {
         req_builder = req_builder.query(&[("is_active", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_scheduled_compute_node_id {
+        req_builder = req_builder.query(&[("scheduled_compute_node_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -4123,6 +4128,7 @@ pub fn list_results(
     return_code: Option<i64>,
     status: Option<models::JobStatus>,
     all_runs: Option<bool>,
+    compute_node_id: Option<i64>,
 ) -> Result<models::ListResultsResponse, Error<ListResultsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_workflow_id = workflow_id;
@@ -4135,6 +4141,7 @@ pub fn list_results(
     let p_return_code = return_code;
     let p_status = status;
     let p_all_runs = all_runs;
+    let p_compute_node_id = compute_node_id;
 
     let uri_str = format!("{}/results", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -4166,6 +4173,9 @@ pub fn list_results(
     }
     if let Some(ref param_value) = p_all_runs {
         req_builder = req_builder.query(&[("all_runs", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_compute_node_id {
+        req_builder = req_builder.query(&[("compute_node_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

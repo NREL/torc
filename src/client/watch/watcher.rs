@@ -339,6 +339,7 @@ impl Watcher {
             None,    // return_code
             None,    // status
             None,    // all_runs
+            None,    // compute_node_id
         )
         .map_err(|e| format!("Failed to get job results: {}", e))?;
 

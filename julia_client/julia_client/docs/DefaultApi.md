@@ -2047,8 +2047,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_compute_nodes**
-> list_compute_nodes(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> ListComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> Channel{ ListComputeNodesResponse }, OpenAPI.Clients.ApiResponse
+> list_compute_nodes(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, scheduled_compute_node_id=nothing, _mediaType=nothing) -> ListComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, scheduled_compute_node_id=nothing, _mediaType=nothing) -> Channel{ ListComputeNodesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all compute node records for one workflow.
 
@@ -2071,6 +2071,7 @@ Name | Type | Description  | Notes
  **reverse_sort** | **Bool** |  | [default to false]
  **hostname** | **String** |  | [default to nothing]
  **is_active** | **Bool** |  | [default to nothing]
+ **scheduled_compute_node_id** | **Int64** | Filter by scheduled compute node ID (filters compute nodes created by this scheduler) | [default to nothing]
 
 ### Return type
 
@@ -2503,8 +2504,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_results**
-> list_results(_api::DefaultApi, workflow_id::Int64; job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, run_id=nothing, return_code=nothing, status=nothing, all_runs=nothing, _mediaType=nothing) -> ListResultsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_results(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, run_id=nothing, return_code=nothing, status=nothing, all_runs=nothing, _mediaType=nothing) -> Channel{ ListResultsResponse }, OpenAPI.Clients.ApiResponse
+> list_results(_api::DefaultApi, workflow_id::Int64; job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, run_id=nothing, return_code=nothing, status=nothing, all_runs=nothing, compute_node_id=nothing, _mediaType=nothing) -> ListResultsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_results(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, run_id=nothing, return_code=nothing, status=nothing, all_runs=nothing, compute_node_id=nothing, _mediaType=nothing) -> Channel{ ListResultsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all job results for one workflow.
 
@@ -2530,6 +2531,7 @@ Name | Type | Description  | Notes
  **return_code** | **Int64** |  | [default to nothing]
  **status** | [**JobStatus**](.md) |  | [default to nothing]
  **all_runs** | **Bool** | If false (default), only return results in the workflow_result table (current results). If true, return all historical results. | [default to false]
+ **compute_node_id** | **Int64** | Filter by compute node ID | [default to nothing]
 
 ### Return type
 
