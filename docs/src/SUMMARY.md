@@ -56,6 +56,7 @@
   - [Job Parameterization](./reference/parameterization.md)
   - [Resource Requirements](./reference/resources.md)
   - [HPC Profiles](./reference/hpc-profiles.md)
+  - [HPC Deployment](./reference/hpc-deployment.md)
   - [Resource Monitoring](./reference/resource-monitoring.md)
   - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
