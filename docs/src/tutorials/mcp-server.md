@@ -128,45 +128,85 @@ claude mcp get torc
 
 Start a new Claude Code session in your project directory. Claude will automatically have access to the Torc tools.
 
-### Example Conversation
+### Example Conversations
+
+#### Create a workflow
 
 ```
-You: What's the status of workflow 15?
+You: Using the mcp server, create a workflow with 3 stages: a preprocess script, 10 work jobs, each taking an index, and a postprocess job.
 
-Claude: I'll check the workflow status for you.
+Claude:
+● Created workflow ID 6 (three_stage_pipeline) with:
 
-Workflow 15 "hyperparameter_sweep" has 18 jobs:
-- Completed: 12
-- Running: 3
-- Failed: 2
-- Blocked: 1
+  | Stage          | Jobs                              | Dependencies                |
+  |----------------|-----------------------------------|-----------------------------|
+  | 1. Preprocess  | preprocess                        | None                        |
+  | 2. Work        | work_00 through work_09 (10 jobs) | Each depends on preprocess  |
+  | 3. Postprocess | postprocess                       | Depends on all 10 work jobs |
 
-Would you like me to investigate the failed jobs?
+● torc - get_workflow_status (MCP)(workflow_id: 6)
+  ⎿  {
+       "description": "Pipeline with preprocess, 10 parallel work jobs, and postprocess",
+       "job_counts_by_status": {
+     … +7 lines (ctrl+o to expand)
 
-You: Yes, show me what went wrong
+● Workflow is ready with 12 jobs total (1 preprocess + 10 work + 1 postprocess). All jobs are currently Uninitialized.
 
-Claude: Looking at the failed jobs...
+  Would you like me to run or submit it?
+```
 
-Job 7 "train_lr0.01_batch32" failed with:
-- Return code: 137 (killed by OOM)
-- Peak memory: 15.8 GB
-- Requested memory: 8 GB
+#### Debug a workflow
+```
+You: Why did a job in workflow 5 fail?
 
-Job 12 "train_lr0.001_batch64" failed with:
-- Return code: 1
-- Error: FileNotFoundError: checkpoint.pt not found
+Claude:
+● torc - get_workflow_status (MCP)(workflow_id: 5)
+  ⎿  {
+       "description": null,
+       "job_counts_by_status": {
+     … +7 lines (ctrl+o to expand)
 
-Recommendations:
-1. Job 7 needs more memory - I can restart it with 20 GB
-2. Job 12 has a missing dependency - check if upstream jobs completed
+● torc - list_failed_jobs (MCP)(workflow_id: 5)
+  ⎿  {
+       "failed_job_count": 1,
+       "failed_jobs": [
+     … +8 lines (ctrl+o to expand)
 
-You: Restart job 7 with 20GB memory
+● Let me get more details about this job and check its logs:
 
-Claude: Done. I've:
-1. Updated job 7's memory requirement from 8g to 20g
-2. Reset failed jobs and restarted the workflow
+● torc - get_job_details (MCP)(job_id: 5)
+  ⎿  {
+       "cancel_on_blocking_job_failure": true,
+       "command": "bash tests/scripts/oom_test.sh 20 10",
+     … +23 lines (ctrl+o to expand)
 
-Job 7 is now ready to run again.
+● torc - get_job_logs (MCP)(workflow_id: 5, job_id: 5, run_id: 1, log_type: "stderr")
+  ⎿  tests/scripts/oom_test.sh: line 74: 649452 Killed                  python3  <<EOF
+     import sys
+     import time
+     … +32 lines (ctrl+o to expand)
+
+● torc - get_job_logs (MCP)(workflow_id: 5, job_id: 5, run_id: 1, log_type: "stdout")
+  ⎿  OOM Test Script Starting
+     ========================
+     Hostname: x1003c1s1b1n0                                                                                                                               … +39 lines (ctrl+o to expand)
+
+● The job failed due to an Out of Memory (OOM) kill. Here's what happened:
+
+  Job Details:
+  - Name: work_job
+  - Command: python work.py
+  - Return code: 137 (128 + SIGKILL from OOM killer)
+
+  What occurred:
+  1. The job ran the user's work script.
+  2. The node had ~250GB total memory available
+  3. The script successfully allocated 230GB before being killed
+  4. The job was configured with a 200GB memory limit but exceeded it
+  5. The Linux OOM killer terminated the process with SIGKILL (exit code 137)
+
+  From stderr:
+  tests/scripts/oom_test.sh: line 74: 649452 Killed  python3 ...
 ```
 
 ### Troubleshooting Claude Code

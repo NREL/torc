@@ -265,16 +265,19 @@ fn check_resource_utilization(
                 "configured_cpus": resource_req.num_cpus,
             });
 
+            let mut likely_oom = false;
+
             // Add resource usage if available
             if let Some(peak_mem) = result.peak_memory_bytes {
                 failed_info["peak_memory_bytes"] = serde_json::json!(peak_mem);
                 failed_info["peak_memory_formatted"] =
                     serde_json::json!(format_memory_bytes(peak_mem));
 
-                // Check if it's an OOM issue
+                // Check if it's an OOM issue based on memory usage
                 let specified_memory_bytes = parse_memory_string(&resource_req.memory);
                 if peak_mem > specified_memory_bytes {
-                    failed_info["likely_oom"] = serde_json::json!(true);
+                    likely_oom = true;
+                    failed_info["oom_reason"] = serde_json::json!("memory_exceeded");
                     let over_pct =
                         ((peak_mem as f64 / specified_memory_bytes as f64) - 1.0) * 100.0;
                     failed_info["memory_over_utilization"] =
@@ -282,18 +285,60 @@ fn check_resource_utilization(
                 }
             }
 
-            // Check if runtime exceeded
+            // Check if runtime exceeded (do this before OOM detection to distinguish)
             let exec_time_seconds = result.exec_time_minutes * 60.0;
+            let mut likely_timeout = false;
             if let Ok(specified_runtime_seconds) = duration_string_to_seconds(&resource_req.runtime)
             {
                 let specified_runtime_seconds = specified_runtime_seconds as f64;
+                let pct_of_runtime = (exec_time_seconds / specified_runtime_seconds) * 100.0;
+                failed_info["runtime_utilization"] =
+                    serde_json::json!(format!("{:.1}%", pct_of_runtime));
+
                 if exec_time_seconds > specified_runtime_seconds * 0.9 {
                     // If job ran for > 90% of its runtime, it might be a timeout
-                    failed_info["likely_timeout"] = serde_json::json!(true);
-                    let pct_of_runtime = (exec_time_seconds / specified_runtime_seconds) * 100.0;
-                    failed_info["runtime_utilization"] =
-                        serde_json::json!(format!("{:.1}%", pct_of_runtime));
+                    likely_timeout = true;
                 }
+
+                // Check for explicit timeout signals
+                // Return code 152 (128 + SIGXCPU) indicates CPU time limit exceeded
+                if result.return_code == 152 {
+                    likely_timeout = true;
+                    failed_info["timeout_reason"] = serde_json::json!("sigxcpu_152");
+                }
+            }
+
+            if likely_timeout {
+                failed_info["likely_timeout"] = serde_json::json!(true);
+            }
+
+            // Check for OOM via return code 137 (128 + SIGKILL)
+            // When Slurm OOM-kills a job, resource metrics may not be recorded
+            // but return code 137 is a strong indicator - unless it's a timeout
+            //
+            // Heuristic: If job ran for < 80% of its runtime and got SIGKILL, likely OOM
+            // If job ran for > 90% of its runtime and got SIGKILL, likely timeout
+            if !likely_oom && result.return_code == 137 {
+                if let Ok(specified_runtime_seconds) =
+                    duration_string_to_seconds(&resource_req.runtime)
+                {
+                    let specified_runtime_seconds = specified_runtime_seconds as f64;
+                    let pct_of_runtime = (exec_time_seconds / specified_runtime_seconds) * 100.0;
+
+                    // If job ran for less than 80% of its runtime, likely OOM not timeout
+                    if pct_of_runtime < 80.0 {
+                        likely_oom = true;
+                        failed_info["oom_reason"] = serde_json::json!("sigkill_137");
+                    }
+                } else {
+                    // Can't determine runtime percentage, assume OOM if SIGKILL
+                    likely_oom = true;
+                    failed_info["oom_reason"] = serde_json::json!("sigkill_137");
+                }
+            }
+
+            if likely_oom {
+                failed_info["likely_oom"] = serde_json::json!(true);
             }
 
             failed_jobs_info.push(failed_info);
