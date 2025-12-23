@@ -913,6 +913,14 @@ paths:
           type: boolean
         style: form
         description: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+      - description: Filter jobs by the compute node currently running them.
+        explode: false
+        in: query
+        name: active_compute_node_id
+        required: false
+        schema:
+          type: integer
+        style: simple
       responses:
         "200":
           content:

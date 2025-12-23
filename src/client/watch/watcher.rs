@@ -162,6 +162,7 @@ impl Watcher {
             None,        // sort_by
             None,        // reverse_sort
             None,        // include_relationships
+            None,        // active_compute_node_id
         )
         .map_err(|e| format!("Failed to list failed jobs: {}", e))?;
 

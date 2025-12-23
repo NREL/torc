@@ -62,6 +62,7 @@ pub fn get_workflow_status(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 
@@ -208,6 +209,7 @@ pub fn list_failed_jobs(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 
@@ -262,6 +264,7 @@ pub fn list_jobs_by_status(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 

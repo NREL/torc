@@ -2357,6 +2357,7 @@ where
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError> {
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
@@ -2371,6 +2372,7 @@ where
                 sort_by,
                 reverse_sort,
                 include_relationships,
+                active_compute_node_id,
                 context,
             )
             .await
@@ -3930,8 +3932,30 @@ where
                 )));
             }
         }
-        // TODO: compute_node_id...when do we connect it to the job and how?
-        // Are events sufficient?
+
+        // Set active_compute_node_id to track which compute node is running this job
+        match sqlx::query!(
+            "UPDATE job_internal SET active_compute_node_id = ? WHERE job_id = ?",
+            compute_node_id,
+            id
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(_) => {
+                debug!(
+                    "Set active_compute_node_id={} for job_id={}",
+                    compute_node_id, id
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Failed to set active_compute_node_id for job_id={}: {}",
+                    id, e
+                );
+                // Continue anyway - this is not critical for job execution
+            }
+        }
 
         if let Err(e) = self.manage_job_status_change(&job, run_id).await {
             // Check if this is a run_id mismatch error
@@ -4027,6 +4051,26 @@ where
         }
 
         job.status = Some(status);
+
+        // Clear active_compute_node_id since the job is no longer running
+        match sqlx::query!(
+            "UPDATE job_internal SET active_compute_node_id = NULL WHERE job_id = ?",
+            id
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(_) => {
+                debug!("Cleared active_compute_node_id for job_id={}", id);
+            }
+            Err(e) => {
+                error!(
+                    "Failed to clear active_compute_node_id for job_id={}: {}",
+                    id, e
+                );
+                // Continue anyway - this is not critical
+            }
+        }
 
         // 2. Add the result to the database
         let result_response = self.results_api.create_result(result, context).await?;

@@ -1,6 +1,7 @@
 //! Watch command for monitoring workflows with automatic failure recovery
 
-use log::{error, info, warn};
+use chrono::Utc;
+use log::{debug, error, info, warn};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
@@ -8,7 +9,18 @@ use std::time::Duration;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::hpc::common::HpcJobStatus;
+use crate::client::hpc::hpc_interface::HpcInterface;
+use crate::client::hpc::slurm_interface::SlurmInterface;
+use crate::models;
 use crate::time_utils::duration_string_to_seconds;
+
+/// Return code used when failing jobs orphaned by an ungraceful job runner termination.
+/// This value (-128) is chosen to be:
+/// - Negative, clearly distinguishing it from normal exit codes
+/// - Related to signal convention (128 is the base for signal exits)
+/// - Easy to identify in logs and results
+pub const ORPHANED_JOB_RETURN_CODE: i64 = -128;
 
 /// Arguments for the watch command
 pub struct WatchArgs {
@@ -88,6 +100,7 @@ fn get_job_counts(
         None,        // sort_by
         None,        // reverse_sort
         None,        // include_relationships
+        None,        // active_compute_node_id
     )
     .map_err(|e| format!("Failed to list jobs: {}", e))?;
 
@@ -102,6 +115,401 @@ fn get_job_counts(
     }
 
     Ok(counts)
+}
+
+/// Detect and fail orphaned Slurm jobs by checking Slurm as the source of truth.
+///
+/// This function:
+/// 1. Gets scheduled compute nodes with status="active" and scheduler_type="slurm"
+/// 2. For each, uses SlurmInterface to check if the Slurm job is still running
+/// 3. If not running, finds all compute nodes associated with that scheduled compute node
+/// 4. Finds all jobs with active_compute_node_id matching those compute nodes
+/// 5. Fails those jobs with the orphaned return code
+///
+/// This is more accurate than the old fail_orphaned_running_jobs because it uses Slurm
+/// as the authoritative source for whether jobs are still running.
+///
+/// Returns the number of jobs that were failed.
+fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<usize, String> {
+    // Get workflow status to retrieve run_id
+    let workflow_status = default_api::get_workflow_status(config, workflow_id)
+        .map_err(|e| format!("Failed to get workflow status: {}", e))?;
+    let run_id = workflow_status.run_id;
+
+    // Get all scheduled compute nodes with status="active" and scheduler_type="slurm"
+    let scheduled_nodes_response = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,           // offset
+        Some(1000),     // limit
+        None,           // sort_by
+        None,           // reverse_sort
+        None,           // scheduler_id
+        None,           // scheduler_config_id
+        Some("active"), // status
+    )
+    .map_err(|e| format!("Failed to list scheduled compute nodes: {}", e))?;
+
+    let scheduled_nodes = scheduled_nodes_response.items.unwrap_or_default();
+
+    // Filter for Slurm scheduler type
+    let slurm_nodes: Vec<_> = scheduled_nodes
+        .iter()
+        .filter(|node| node.scheduler_type.to_lowercase() == "slurm")
+        .collect();
+
+    if slurm_nodes.is_empty() {
+        return Ok(0);
+    }
+
+    // Create SlurmInterface to check job status
+    let slurm = match SlurmInterface::new() {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("Could not create SlurmInterface: {}", e);
+            return Ok(0);
+        }
+    };
+
+    let mut total_failed = 0;
+
+    for scheduled_node in slurm_nodes {
+        let slurm_job_id = scheduled_node.scheduler_id.to_string();
+        let scheduled_compute_node_id = match scheduled_node.id {
+            Some(id) => id,
+            None => continue,
+        };
+
+        // Check Slurm status
+        let slurm_status = match slurm.get_status(&slurm_job_id) {
+            Ok(info) => info.status,
+            Err(e) => {
+                warn!(
+                    "Error checking Slurm status for job {}: {}",
+                    slurm_job_id, e
+                );
+                continue;
+            }
+        };
+
+        // If Slurm job is still running or queued, skip it
+        if slurm_status == HpcJobStatus::Running || slurm_status == HpcJobStatus::Queued {
+            continue;
+        }
+
+        // Slurm job is not running (Complete, Unknown, or None means it's gone)
+        info!(
+            "Slurm job {} is no longer running (status: {:?}), checking for orphaned jobs",
+            slurm_job_id, slurm_status
+        );
+
+        // Find all compute nodes associated with this scheduled compute node
+        let compute_nodes_response = default_api::list_compute_nodes(
+            config,
+            workflow_id,
+            None,                            // offset
+            Some(1000),                      // limit
+            None,                            // sort_by
+            None,                            // reverse_sort
+            None,                            // hostname
+            None,                            // is_active - any status
+            Some(scheduled_compute_node_id), // scheduled_compute_node_id
+        )
+        .map_err(|e| format!("Failed to list compute nodes: {}", e))?;
+
+        let compute_nodes = compute_nodes_response.items.unwrap_or_default();
+
+        for compute_node in &compute_nodes {
+            let compute_node_id = match compute_node.id {
+                Some(id) => id,
+                None => continue,
+            };
+
+            // Find all jobs with this active_compute_node_id
+            let jobs_response = default_api::list_jobs(
+                config,
+                workflow_id,
+                None,                  // status - we want any status (should be Running)
+                None,                  // needs_file_id
+                None,                  // upstream_job_id
+                None,                  // offset
+                Some(10000),           // limit
+                None,                  // sort_by
+                None,                  // reverse_sort
+                None,                  // include_relationships
+                Some(compute_node_id), // active_compute_node_id
+            )
+            .map_err(|e| format!("Failed to list jobs for compute node: {}", e))?;
+
+            let orphaned_jobs = jobs_response.items.unwrap_or_default();
+
+            if orphaned_jobs.is_empty() {
+                continue;
+            }
+
+            info!(
+                "Found {} orphaned job(s) from Slurm job {} (compute node {})",
+                orphaned_jobs.len(),
+                slurm_job_id,
+                compute_node_id
+            );
+
+            // Fail each orphaned job
+            for job in &orphaned_jobs {
+                let job_id = match job.id {
+                    Some(id) => id,
+                    None => continue,
+                };
+
+                // Create a result for the orphaned job
+                let result = models::ResultModel::new(
+                    job_id,
+                    workflow_id,
+                    run_id,
+                    compute_node_id,
+                    ORPHANED_JOB_RETURN_CODE,
+                    0.0,
+                    Utc::now().to_rfc3339(),
+                    models::JobStatus::Failed,
+                );
+
+                // Mark the job as failed
+                match default_api::complete_job(
+                    config,
+                    job_id,
+                    models::JobStatus::Failed,
+                    run_id,
+                    result,
+                ) {
+                    Ok(_) => {
+                        info!(
+                            "  Marked orphaned job {} ({}) as failed (Slurm job {} no longer running)",
+                            job_id, job.name, slurm_job_id
+                        );
+                        total_failed += 1;
+                    }
+                    Err(e) => {
+                        warn!("  Failed to mark job {} as failed: {}", job_id, e);
+                    }
+                }
+            }
+
+            // Mark this compute node as inactive since its Slurm job is gone
+            let mut updated_node = compute_node.clone();
+            updated_node.is_active = Some(false);
+            match default_api::update_compute_node(config, compute_node_id, updated_node) {
+                Ok(_) => {
+                    debug!(
+                        "Marked compute node {} as inactive (Slurm job {} no longer running)",
+                        compute_node_id, slurm_job_id
+                    );
+                }
+                Err(e) => {
+                    warn!(
+                        "Failed to mark compute node {} as inactive: {}",
+                        compute_node_id, e
+                    );
+                }
+            }
+        }
+
+        // Update the scheduled compute node status to "complete" since the Slurm job is done
+        match default_api::update_scheduled_compute_node(
+            config,
+            scheduled_compute_node_id,
+            models::ScheduledComputeNodesModel::new(
+                workflow_id,
+                scheduled_node.scheduler_id,
+                scheduled_node.scheduler_config_id,
+                scheduled_node.scheduler_type.clone(),
+                "complete".to_string(),
+            ),
+        ) {
+            Ok(_) => {
+                info!(
+                    "Updated scheduled compute node {} status to 'complete'",
+                    scheduled_compute_node_id
+                );
+            }
+            Err(e) => {
+                warn!(
+                    "Failed to update scheduled compute node {} status: {}",
+                    scheduled_compute_node_id, e
+                );
+            }
+        }
+    }
+
+    if total_failed > 0 {
+        info!(
+            "Marked {} orphaned Slurm job(s) as failed (return code {})",
+            total_failed, ORPHANED_JOB_RETURN_CODE
+        );
+    }
+
+    Ok(total_failed)
+}
+
+/// Detect and fail orphaned running jobs.
+///
+/// This handles the case where a job runner (e.g., torc-slurm-job-runner) was killed
+/// ungracefully by the scheduler (e.g., Slurm). In this scenario:
+/// - Jobs claimed by the runner remain in "running" status
+/// - The ScheduledComputeNode remains in "active" status
+/// - No active compute nodes exist to process the jobs
+///
+/// Returns the number of jobs that were failed.
+fn fail_orphaned_running_jobs(config: &Configuration, workflow_id: i64) -> Result<usize, String> {
+    // Get workflow status to retrieve run_id
+    let workflow_status = default_api::get_workflow_status(config, workflow_id)
+        .map_err(|e| format!("Failed to get workflow status: {}", e))?;
+    let run_id = workflow_status.run_id;
+
+    // Check for active compute nodes
+    let active_nodes_response = default_api::list_compute_nodes(
+        config,
+        workflow_id,
+        None,       // offset
+        Some(1),    // limit - we only need to know if any exist
+        None,       // sort_by
+        None,       // reverse_sort
+        None,       // hostname
+        Some(true), // is_active = true
+        None,       // scheduled_compute_node_id
+    )
+    .map_err(|e| format!("Failed to list active compute nodes: {}", e))?;
+
+    let active_node_count = active_nodes_response.total_count;
+
+    // If there are active compute nodes, jobs are being processed normally
+    if active_node_count > 0 {
+        return Ok(0);
+    }
+
+    // Get all jobs with status=Running
+    let running_jobs_response = default_api::list_jobs(
+        config,
+        workflow_id,
+        Some(models::JobStatus::Running),
+        None,        // needs_file_id
+        None,        // upstream_job_id
+        None,        // offset
+        Some(10000), // limit
+        None,        // sort_by
+        None,        // reverse_sort
+        None,        // include_relationships
+        None,        // active_compute_node_id
+    )
+    .map_err(|e| format!("Failed to list running jobs: {}", e))?;
+
+    let running_jobs = running_jobs_response.items.unwrap_or_default();
+
+    if running_jobs.is_empty() {
+        return Ok(0);
+    }
+
+    info!(
+        "Detected {} orphaned running job(s) with no active compute nodes",
+        running_jobs.len()
+    );
+
+    // Get or create a compute node for recording the failure
+    // First, try to find any existing compute node for this workflow
+    let compute_node_id = match default_api::list_compute_nodes(
+        config,
+        workflow_id,
+        None,    // offset
+        Some(1), // limit
+        None,    // sort_by
+        None,    // reverse_sort
+        None,    // hostname
+        None,    // is_active - any status
+        None,    // scheduled_compute_node_id
+    ) {
+        Ok(response) => {
+            if let Some(nodes) = response.items {
+                if let Some(node) = nodes.first() {
+                    node.id.unwrap_or(0)
+                } else {
+                    0
+                }
+            } else {
+                0
+            }
+        }
+        Err(_) => 0,
+    };
+
+    // If no compute node exists, create a recovery node
+    let compute_node_id = if compute_node_id == 0 {
+        match default_api::create_compute_node(
+            config,
+            models::ComputeNodeModel::new(
+                workflow_id,
+                "orphan-recovery".to_string(),
+                0, // pid
+                Utc::now().to_rfc3339(),
+                1,   // num_cpus
+                1.0, // memory_gb
+                0,   // num_gpus
+                1,   // num_nodes
+                "local".to_string(),
+                None, // scheduler
+            ),
+        ) {
+            Ok(node) => node.id.unwrap_or(0),
+            Err(e) => {
+                warn!("Could not create recovery compute node: {}", e);
+                0
+            }
+        }
+    } else {
+        compute_node_id
+    };
+
+    let mut failed_count = 0;
+
+    for job in &running_jobs {
+        let job_id = match job.id {
+            Some(id) => id,
+            None => continue,
+        };
+
+        // Create a result for the orphaned job
+        let result = models::ResultModel::new(
+            job_id,
+            workflow_id,
+            run_id,
+            compute_node_id,
+            ORPHANED_JOB_RETURN_CODE, // Unique return code for orphaned jobs
+            0.0,                      // exec_time_minutes - unknown
+            Utc::now().to_rfc3339(),  // completion_time
+            models::JobStatus::Failed, // status
+        );
+
+        // Mark the job as failed
+        match default_api::complete_job(config, job_id, models::JobStatus::Failed, run_id, result) {
+            Ok(_) => {
+                info!(
+                    "  Marked orphaned job {} ({}) as failed with return code {}",
+                    job_id, job.name, ORPHANED_JOB_RETURN_CODE
+                );
+                failed_count += 1;
+            }
+            Err(e) => {
+                warn!("  Failed to mark job {} as failed: {}", job_id, e);
+            }
+        }
+    }
+
+    if failed_count > 0 {
+        info!(
+            "Marked {} orphaned job(s) as failed (return code {})",
+            failed_count, ORPHANED_JOB_RETURN_CODE
+        );
+    }
+
+    Ok(failed_count)
 }
 
 /// Poll until workflow is complete, optionally printing status updates
@@ -145,6 +553,35 @@ fn poll_until_complete(
             }
         }
 
+        // Check for orphaned Slurm jobs using Slurm as the source of truth.
+        // This uses the active_compute_node_id to precisely identify which jobs were
+        // being run by each Slurm job, avoiding race conditions.
+        match fail_orphaned_slurm_jobs(config, workflow_id) {
+            Ok(count) if count > 0 => {
+                info!("Orphaned Slurm jobs detected and marked as failed, continuing...");
+            }
+            Ok(_) => {
+                // No orphaned Slurm jobs
+            }
+            Err(e) => {
+                warn!("Error checking for orphaned Slurm jobs: {}", e);
+            }
+        }
+
+        // Check for orphaned running jobs (jobs stuck in "running" with no active compute nodes)
+        // This is a fallback for non-Slurm schedulers (local scheduler, etc.)
+        match fail_orphaned_running_jobs(config, workflow_id) {
+            Ok(count) if count > 0 => {
+                info!("Orphaned jobs detected and marked as failed, continuing...");
+            }
+            Ok(_) => {
+                // No orphaned jobs
+            }
+            Err(e) => {
+                warn!("Error checking for orphaned jobs: {}", e);
+            }
+        }
+
         std::thread::sleep(Duration::from_secs(poll_interval));
     }
 
@@ -152,8 +589,9 @@ fn poll_until_complete(
 }
 
 /// Diagnose failures and return job IDs that need resource adjustments
-fn diagnose_failures(workflow_id: i64, output_dir: &PathBuf) -> Result<serde_json::Value, String> {
+fn diagnose_failures(workflow_id: i64, _output_dir: &PathBuf) -> Result<serde_json::Value, String> {
     // Run check-resource-utilization command
+    // Note: This command doesn't take an output_dir argument - it reads from the database
     let output = Command::new("torc")
         .args([
             "-f",
@@ -162,8 +600,6 @@ fn diagnose_failures(workflow_id: i64, output_dir: &PathBuf) -> Result<serde_jso
             "check-resource-utilization",
             &workflow_id.to_string(),
             "--include-failed",
-            "-o",
-            output_dir.to_str().unwrap_or("output"),
         ])
         .output()
         .map_err(|e| format!("Failed to run check-resource-utilization: {}", e))?;

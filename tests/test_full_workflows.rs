@@ -91,6 +91,7 @@ fn verify_diamond_workflow_completion(
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -401,6 +402,7 @@ fn verify_many_jobs_completion(
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -589,6 +591,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -699,6 +702,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after reset");
 
@@ -771,6 +775,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after second run");
 
@@ -966,6 +971,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -1034,6 +1040,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after reinitialize");
 
@@ -1102,6 +1109,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after second run");
 

@@ -1014,6 +1014,7 @@ fn test_jobs_delete_all(start_server: &ServerProcess) {
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs before deletion");
     assert_eq!(
@@ -1044,6 +1045,7 @@ fn test_jobs_delete_all(start_server: &ServerProcess) {
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after deletion");
     assert_eq!(

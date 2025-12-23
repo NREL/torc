@@ -4371,6 +4371,25 @@ where
                         }
                         None => None,
                     };
+                    let param_active_compute_node_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "active_compute_node_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_active_compute_node_id = match param_active_compute_node_id {
+                        Some(param_active_compute_node_id) => {
+                            let param_active_compute_node_id =
+                                <i64 as std::str::FromStr>::from_str(&param_active_compute_node_id);
+                            match param_active_compute_node_id {
+                            Ok(param_active_compute_node_id) => Some(param_active_compute_node_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter active_compute_node_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter active_compute_node_id")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     let result = api_impl
                         .list_jobs(
@@ -4383,6 +4402,7 @@ where
                             param_sort_by,
                             param_reverse_sort,
                             param_include_relationships,
+                            param_active_compute_node_id,
                             &context,
                         )
                         .await;

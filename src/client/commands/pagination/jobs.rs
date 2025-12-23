@@ -24,6 +24,7 @@ pub struct JobListParams {
     pub sort_by: Option<String>,
     pub reverse_sort: Option<bool>,
     pub include_relationships: Option<bool>,
+    pub active_compute_node_id: Option<i64>,
 }
 
 impl Default for JobListParams {
@@ -37,6 +38,7 @@ impl Default for JobListParams {
             sort_by: None,
             reverse_sort: None,
             include_relationships: None,
+            active_compute_node_id: None,
         }
     }
 }
@@ -135,6 +137,7 @@ impl JobsIterator {
             self.params.sort_by.as_deref(),
             self.params.reverse_sort,
             self.params.include_relationships,
+            self.params.active_compute_node_id,
         )?;
 
         if let Some(items) = response.items {

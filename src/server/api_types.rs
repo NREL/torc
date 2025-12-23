@@ -1291,6 +1291,7 @@ pub trait Api<C: Send + Sync> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError>;
 
@@ -2021,6 +2022,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
     ) -> Result<ListJobsResponse, ApiError>;
 
     /// Retrieve all job dependencies for one workflow.
@@ -2821,6 +2823,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
     ) -> Result<ListJobsResponse, ApiError> {
         let context = self.context().clone();
         self.api()
@@ -2834,6 +2837,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 sort_by,
                 reverse_sort,
                 include_relationships,
+                active_compute_node_id,
                 &context,
             )
             .await
