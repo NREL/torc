@@ -1,8 +1,11 @@
 //! Watch command for monitoring workflows with automatic failure recovery
 
 use chrono::Utc;
-use log::{debug, error, info, warn};
+use env_logger::Builder;
+use log::{LevelFilter, debug, error, info, warn};
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
@@ -12,8 +15,27 @@ use crate::client::apis::default_api;
 use crate::client::hpc::common::HpcJobStatus;
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::hpc::slurm_interface::SlurmInterface;
+use crate::client::log_paths::get_watch_log_file;
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
+
+/// A writer that writes to both stdout and a file
+struct MultiWriter {
+    stdout: std::io::Stdout,
+    file: File,
+}
+
+impl Write for MultiWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.stdout.write_all(buf)?;
+        self.file.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.stdout.flush()?;
+        self.file.flush()
+    }
+}
 
 /// Return code used when failing jobs orphaned by an ungraceful job runner termination.
 /// This value (-128) is chosen to be:
@@ -30,8 +52,10 @@ pub struct WatchArgs {
     pub max_retries: u32,
     pub memory_multiplier: f64,
     pub runtime_multiplier: f64,
+    pub retry_unknown: bool,
     pub output_dir: PathBuf,
     pub show_job_counts: bool,
+    pub log_level: String,
 }
 
 /// Parse memory string (e.g., "8g", "512m", "1024k") to bytes
@@ -847,6 +871,14 @@ pub struct SlurmLogInfo {
     pub slurm_stderr: Option<String>,
 }
 
+/// Result of applying recovery heuristics
+pub struct RecoveryResult {
+    pub oom_fixed: usize,
+    pub timeout_fixed: usize,
+    pub other_failures: usize,
+    pub jobs_to_retry: Vec<i64>,
+}
+
 /// Apply recovery heuristics and update job resources
 fn apply_recovery_heuristics(
     config: &Configuration,
@@ -854,11 +886,13 @@ fn apply_recovery_heuristics(
     diagnosis: &serde_json::Value,
     memory_multiplier: f64,
     runtime_multiplier: f64,
+    retry_unknown: bool,
     output_dir: &PathBuf,
-) -> Result<(usize, usize, usize), String> {
+) -> Result<RecoveryResult, String> {
     let mut oom_fixed = 0;
     let mut timeout_fixed = 0;
     let mut other_failures = 0;
+    let mut jobs_to_retry = Vec::new();
 
     // Try to get Slurm log info for correlation
     let slurm_log_map = match get_slurm_log_info(workflow_id, output_dir) {
@@ -976,35 +1010,62 @@ fn apply_recovery_heuristics(
                     job_id, e
                 );
             }
+            // Job had OOM or timeout - always retry
+            jobs_to_retry.push(job_id);
         } else if !likely_oom && !likely_timeout {
-            // Unknown failure - will retry without changes
+            // Unknown failure - only retry if retry_unknown is enabled
             other_failures += 1;
+            if retry_unknown {
+                jobs_to_retry.push(job_id);
+            }
         }
     }
 
-    Ok((oom_fixed, timeout_fixed, other_failures))
+    Ok(RecoveryResult {
+        oom_fixed,
+        timeout_fixed,
+        other_failures,
+        jobs_to_retry,
+    })
 }
 
-/// Reset failed jobs and restart workflow
-fn reset_failed_jobs(workflow_id: i64) -> Result<(), String> {
-    let output = Command::new("torc")
-        .args([
-            "workflows",
-            "reset-status",
-            &workflow_id.to_string(),
-            "--failed-only",
-            "--restart",
-            "--no-prompts",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to run reset-status: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("reset-status failed: {}", stderr));
+/// Reset specific failed jobs for retry
+fn reset_failed_jobs(
+    config: &Configuration,
+    workflow_id: i64,
+    job_ids: &[i64],
+) -> Result<usize, String> {
+    if job_ids.is_empty() {
+        return Ok(0);
     }
 
-    Ok(())
+    let mut reset_count = 0;
+    for &job_id in job_ids {
+        match default_api::reset_job_status(config, job_id, None, None) {
+            Ok(_) => {
+                debug!("  Reset job {} status to blocked", job_id);
+                reset_count += 1;
+            }
+            Err(e) => {
+                warn!("  Warning: failed to reset job {}: {}", job_id, e);
+            }
+        }
+    }
+
+    // Restart the workflow to trigger unblocking
+    if reset_count > 0 {
+        let output = Command::new("torc")
+            .args(["workflows", "restart", &workflow_id.to_string()])
+            .output()
+            .map_err(|e| format!("Failed to run workflow restart: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("workflow restart failed: {}", stderr));
+        }
+    }
+
+    Ok(reset_count)
 }
 
 /// Regenerate Slurm schedulers and submit allocations
@@ -1031,6 +1092,63 @@ fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), S
 
 /// Run the watch command
 pub fn run_watch(config: &Configuration, args: &WatchArgs) {
+    let hostname = hostname::get()
+        .expect("Failed to get hostname")
+        .into_string()
+        .expect("Hostname is not valid UTF-8");
+
+    // Create output directory if it doesn't exist
+    if let Err(e) = std::fs::create_dir_all(&args.output_dir) {
+        eprintln!(
+            "Error creating output directory {}: {}",
+            args.output_dir.display(),
+            e
+        );
+        std::process::exit(1);
+    }
+
+    let log_file_path = get_watch_log_file(args.output_dir.clone(), &hostname, args.workflow_id);
+    let log_file = match File::create(&log_file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error creating log file {}: {}", log_file_path, e);
+            std::process::exit(1);
+        }
+    };
+
+    let multi_writer = MultiWriter {
+        stdout: std::io::stdout(),
+        file: log_file,
+    };
+
+    // Parse log level string to LevelFilter
+    let log_level_filter = match args.log_level.to_lowercase().as_str() {
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
+        _ => {
+            eprintln!(
+                "Invalid log level '{}', defaulting to 'info'",
+                args.log_level
+            );
+            LevelFilter::Info
+        }
+    };
+
+    let mut builder = Builder::from_default_env();
+    builder
+        .target(env_logger::Target::Pipe(Box::new(multi_writer)))
+        .filter_level(log_level_filter)
+        .try_init()
+        .ok(); // Ignore error if logger is already initialized
+
+    info!("Starting watch command");
+    info!("Hostname: {}", hostname);
+    info!("Output directory: {}", args.output_dir.display());
+    info!("Log file: {}", log_file_path);
+
     let mut retry_count = 0u32;
 
     info!(
@@ -1121,32 +1239,72 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
 
         // Step 2: Apply heuristics to adjust resources
         info!("\nApplying recovery heuristics...");
-        match apply_recovery_heuristics(
+        let recovery_result = match apply_recovery_heuristics(
             config,
             args.workflow_id,
             &diagnosis,
             args.memory_multiplier,
             args.runtime_multiplier,
+            args.retry_unknown,
             &args.output_dir,
         ) {
-            Ok((oom, timeout, other)) => {
-                if oom > 0 || timeout > 0 {
-                    info!("  Applied fixes: {} OOM, {} timeout", oom, timeout);
+            Ok(result) => {
+                if result.oom_fixed > 0 || result.timeout_fixed > 0 {
+                    info!(
+                        "  Applied fixes: {} OOM, {} timeout",
+                        result.oom_fixed, result.timeout_fixed
+                    );
                 }
-                if other > 0 {
-                    info!("  {} job(s) with unknown failure cause (will retry)", other);
+                if result.other_failures > 0 {
+                    if args.retry_unknown {
+                        info!(
+                            "  {} job(s) with unknown failure cause (will retry)",
+                            result.other_failures
+                        );
+                    } else {
+                        info!(
+                            "  {} job(s) with unknown failure cause (skipped, use --retry-unknown to include)",
+                            result.other_failures
+                        );
+                    }
                 }
+                result
             }
             Err(e) => {
                 warn!("Warning: Error applying heuristics: {}", e);
+                RecoveryResult {
+                    oom_fixed: 0,
+                    timeout_fixed: 0,
+                    other_failures: 0,
+                    jobs_to_retry: Vec::new(),
+                }
             }
+        };
+
+        // Check if there are any jobs to retry
+        if recovery_result.jobs_to_retry.is_empty() {
+            error!(
+                "\nNo recoverable jobs found. {} job(s) failed with unknown causes.",
+                recovery_result.other_failures
+            );
+            error!("Use --retry-unknown to retry jobs with unknown failure causes.");
+            error!("Or use the Torc MCP server with your AI assistant to investigate.");
+            std::process::exit(1);
         }
 
         // Step 3: Reset failed jobs
-        info!("\nResetting failed jobs...");
-        if let Err(e) = reset_failed_jobs(args.workflow_id) {
-            error!("Error resetting jobs: {}", e);
-            std::process::exit(1);
+        info!(
+            "\nResetting {} job(s) for retry...",
+            recovery_result.jobs_to_retry.len()
+        );
+        match reset_failed_jobs(config, args.workflow_id, &recovery_result.jobs_to_retry) {
+            Ok(count) => {
+                info!("  Reset {} job(s)", count);
+            }
+            Err(e) => {
+                error!("Error resetting jobs: {}", e);
+                std::process::exit(1);
+            }
         }
 
         // Step 4: Regenerate Slurm schedulers and submit

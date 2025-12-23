@@ -179,6 +179,17 @@ pub enum Commands {
         #[arg(long, default_value = "1.5")]
         runtime_multiplier: f64,
 
+        /// Retry jobs with unknown failure causes (not OOM or timeout)
+        ///
+        /// By default, only jobs that failed due to OOM or timeout are retried
+        /// (with increased resources). Jobs with unknown failure causes are skipped
+        /// since they likely have script or data bugs that won't be fixed by retrying.
+        ///
+        /// Enable this flag to also retry jobs with unknown failures (e.g., to handle
+        /// transient errors like network issues or filesystem glitches).
+        #[arg(long)]
+        retry_unknown: bool,
+
         /// Output directory for job files
         #[arg(short, long, default_value = "output")]
         output_dir: PathBuf,

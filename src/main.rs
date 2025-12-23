@@ -52,11 +52,14 @@ fn main() {
         .unwrap_or_else(|| file_config.client.log_level.clone());
 
     // Initialize logger with CLI argument or RUST_LOG env var
-    // Skip initialization for commands that set up their own logging (e.g., Run, Tui)
+    // Skip initialization for commands that set up their own logging (e.g., Run, Watch, Tui)
     // or output to stdout (e.g., Completions)
     let skip_logger_init = matches!(
         cli.command,
-        Commands::Run { .. } | Commands::Tui(..) | Commands::Completions { .. }
+        Commands::Run { .. }
+            | Commands::Watch { .. }
+            | Commands::Tui(..)
+            | Commands::Completions { .. }
     );
 
     if !skip_logger_init {
@@ -449,6 +452,7 @@ fn main() {
             max_retries,
             memory_multiplier,
             runtime_multiplier,
+            retry_unknown,
             output_dir,
             show_job_counts,
         } => {
@@ -459,8 +463,10 @@ fn main() {
                 max_retries: *max_retries,
                 memory_multiplier: *memory_multiplier,
                 runtime_multiplier: *runtime_multiplier,
+                retry_unknown: *retry_unknown,
                 output_dir: output_dir.clone(),
                 show_job_counts: *show_job_counts,
+                log_level: log_level.clone(),
             };
             run_watch(&config, &args);
         }
