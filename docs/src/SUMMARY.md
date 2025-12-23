@@ -77,7 +77,7 @@
   - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
   - [Filtering CLI Output with Nushell](./tutorials/filtering-with-nushell.md)
   - [Custom HPC Profile](./tutorials/custom-hpc-profile.md)
-  - [MCP Server with Claude Code](./tutorials/mcp-server.md)
+  - [AI-Assisted Workflow Management](./tutorials/ai-assistant.md)
   - [Automatic Failure Recovery](./tutorials/automatic-recovery.md)
 
 ---

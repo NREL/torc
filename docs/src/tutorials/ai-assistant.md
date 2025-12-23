@@ -1,14 +1,14 @@
-# Tutorial: Using the MCP Server
+# Tutorial: AI-Assisted Workflow Management
 
-This tutorial shows how to use the Torc MCP (Model Context Protocol) server to enable AI assistants to interact with your Torc workflows directly.
+This tutorial shows how to use AI assistants like Claude Code and GitHub Copilot to interact with your Torc workflows using natural language.
 
 ## Learning Objectives
 
 By the end of this tutorial, you will:
 
-- Understand what the MCP server provides
-- Know how to configure your AI assistant to use the Torc MCP server
-- Be able to inspect and manage your workflows using natural language
+- Use an AI assistant to inspect and debug workflows
+- Create and manage workflows through conversation
+- Configure AI tools to work with Torc
 
 ## Prerequisites
 
@@ -18,25 +18,26 @@ By the end of this tutorial, you will:
   - [Claude Code](https://claude.ai/code) (terminal)
   - [VS Code](https://code.visualstudio.com/) with GitHub Copilot (IDE)
 
-## What is the MCP Server?
+## What Can AI Assistants Do?
 
-The Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. The `torc-mcp-server` binary exposes Torc's workflow management capabilities as MCP tools.
+With Torc's AI integration, you can manage workflows using natural language:
 
-**Available Tools:**
+**Check status:**
+> "What's the status of workflow 42?"
 
-| Tool | Description |
-|------|-------------|
-| `get_workflow_status` | Get workflow info with job counts by status |
-| `get_job_details` | Get detailed job info including resource requirements |
-| `get_job_logs` | Read stdout/stderr from job log files |
-| `list_failed_jobs` | List all failed jobs in a workflow |
-| `list_jobs_by_status` | Filter jobs by status |
-| `check_resource_utilization` | Analyze resource usage and detect OOM/timeout issues |
-| `update_job_resources` | Modify job resource requirements |
-| `restart_jobs` | Reset and restart failed jobs |
-| `resubmit_workflow` | Regenerate Slurm schedulers and submit new allocations |
-| `cancel_jobs` | Cancel specific jobs |
-| `create_workflow_from_spec` | Create a workflow from JSON specification |
+**Debug failures:**
+> "Why did a job in workflow 5 fail? Show me the logs."
+
+**Create workflows:**
+> "Create a workflow with 10 parallel jobs that each run `python process.py --index N`"
+
+**Fix problems:**
+> "Restart the failed jobs with doubled memory"
+
+**Investigate resources:**
+> "Check if any jobs exceeded their memory limits"
+
+The AI assistant translates your requests into Torc API calls and presents results in a readable format.
 
 ## Configuration
 
@@ -50,24 +51,20 @@ Choose the setup that matches your environment:
 
 ## Claude Code
 
-Claude Code supports MCP configuration at three scopes:
+Claude Code connects to Torc through an MCP (Model Context Protocol) server, a lightweight bridge that translates AI requests into Torc API calls.
 
-| Scope | File | Use Case |
-|-------|------|----------|
-| **Project** | `.mcp.json` in project root | Team-shared configuration (commit to git) |
-| **Local** | `.mcp.json` with `--scope local` | Personal project settings (gitignored) |
-| **User** | `~/.claude.json` | Cross-project personal tools |
-
-### Using the CLI (Recommended)
+### Quick Setup
 
 ```bash
-# Add the Torc MCP server to your project
+# Add Torc AI tools to your project
 claude mcp add torc \
   --scope project \
   -e TORC_API_URL=http://localhost:8080/torc-service/v1 \
   -e TORC_OUTPUT_DIR=/path/to/your/output \
   -- /path/to/torc-mcp-server
 ```
+
+Replace `/path/to/torc-mcp-server` with the path to your built binary.
 
 ### Manual Configuration
 
@@ -87,7 +84,13 @@ Create or edit `.mcp.json` in your project root:
 }
 ```
 
-Replace `/path/to/torc-mcp-server` with the actual path to your built binary.
+### Configuration Scopes
+
+| Scope | File | Use Case |
+|-------|------|----------|
+| **Project** | `.mcp.json` in project root | Team-shared configuration (commit to git) |
+| **Local** | `.mcp.json` with `--scope local` | Personal project settings (gitignored) |
+| **User** | `~/.claude.json` | Cross-project personal tools |
 
 ### Environment Variables
 
@@ -98,25 +101,7 @@ Replace `/path/to/torc-mcp-server` with the actual path to your built binary.
 | `TORC_USERNAME` | Username for authentication (optional) | — |
 | `TORC_PASSWORD` | Password for authentication (optional) | — |
 
-You can also use environment variable expansion in `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "torc": {
-      "command": "/path/to/torc-mcp-server",
-      "env": {
-        "TORC_API_URL": "${TORC_API_URL:-http://localhost:8080/torc-service/v1}",
-        "TORC_OUTPUT_DIR": "${TORC_OUTPUT_DIR:-./output}"
-      }
-    }
-  }
-}
-```
-
 ### Verify Configuration
-
-Check that the MCP server is configured correctly:
 
 ```bash
 # List configured MCP servers
@@ -128,12 +113,10 @@ claude mcp get torc
 
 Start a new Claude Code session in your project directory. Claude will automatically have access to the Torc tools.
 
-### Example Conversations
-
-#### Create a workflow
+### Example: Creating a Workflow
 
 ```
-You: Using the mcp server, create a workflow with 3 stages: a preprocess script, 10 work jobs, each taking an index, and a postprocess job.
+You: Create a workflow with 3 stages: a preprocess script, 10 work jobs, each taking an index, and a postprocess job.
 
 Claude:
 ● Created workflow ID 6 (three_stage_pipeline) with:
@@ -144,53 +127,17 @@ Claude:
   | 2. Work        | work_00 through work_09 (10 jobs) | Each depends on preprocess  |
   | 3. Postprocess | postprocess                       | Depends on all 10 work jobs |
 
-● torc - get_workflow_status (MCP)(workflow_id: 6)
-  ⎿  {
-       "description": "Pipeline with preprocess, 10 parallel work jobs, and postprocess",
-       "job_counts_by_status": {
-     … +7 lines (ctrl+o to expand)
-
-● Workflow is ready with 12 jobs total (1 preprocess + 10 work + 1 postprocess). All jobs are currently Uninitialized.
+● Workflow is ready with 12 jobs total. All jobs are currently Uninitialized.
 
   Would you like me to run or submit it?
 ```
 
-#### Debug a workflow
+### Example: Debugging a Failure
+
 ```
 You: Why did a job in workflow 5 fail?
 
 Claude:
-● torc - get_workflow_status (MCP)(workflow_id: 5)
-  ⎿  {
-       "description": null,
-       "job_counts_by_status": {
-     … +7 lines (ctrl+o to expand)
-
-● torc - list_failed_jobs (MCP)(workflow_id: 5)
-  ⎿  {
-       "failed_job_count": 1,
-       "failed_jobs": [
-     … +8 lines (ctrl+o to expand)
-
-● Let me get more details about this job and check its logs:
-
-● torc - get_job_details (MCP)(job_id: 5)
-  ⎿  {
-       "cancel_on_blocking_job_failure": true,
-       "command": "bash tests/scripts/oom_test.sh 20 10",
-     … +23 lines (ctrl+o to expand)
-
-● torc - get_job_logs (MCP)(workflow_id: 5, job_id: 5, run_id: 1, log_type: "stderr")
-  ⎿  tests/scripts/oom_test.sh: line 74: 649452 Killed                  python3  <<EOF
-     import sys
-     import time
-     … +32 lines (ctrl+o to expand)
-
-● torc - get_job_logs (MCP)(workflow_id: 5, job_id: 5, run_id: 1, log_type: "stdout")
-  ⎿  OOM Test Script Starting
-     ========================
-     Hostname: x1003c1s1b1n0                                                                                                                               … +39 lines (ctrl+o to expand)
-
 ● The job failed due to an Out of Memory (OOM) kill. Here's what happened:
 
   Job Details:
@@ -330,27 +277,27 @@ Create `.vscode/mcp.json` in your project directory **on the HPC**:
 
 ---
 
-## Interact with Workflows
+## Available AI Tools
 
-Once configured, you can ask your AI assistant to help manage workflows using natural language:
+The AI assistant has access to these Torc operations:
 
-**Check workflow status:**
-> "What's the status of workflow 42?"
-
-**Investigate failures:**
-> "List all failed jobs in workflow 42 and show me the error logs"
-
-**Take action:**
-> "Restart the failed jobs in workflow 42 with doubled memory"
-
-**Create workflows:**
-> "Create a workflow with 10 parallel jobs that each run `python process.py index`"
-
----
+| Tool | Description |
+|------|-------------|
+| `get_workflow_status` | Get workflow info with job counts by status |
+| `get_job_details` | Get detailed job info including resource requirements |
+| `get_job_logs` | Read stdout/stderr from job log files |
+| `list_failed_jobs` | List all failed jobs in a workflow |
+| `list_jobs_by_status` | Filter jobs by status |
+| `check_resource_utilization` | Analyze resource usage and detect OOM/timeout issues |
+| `update_job_resources` | Modify job resource requirements |
+| `restart_jobs` | Reset and restart failed jobs |
+| `resubmit_workflow` | Regenerate Slurm schedulers and submit new allocations |
+| `cancel_jobs` | Cancel specific jobs |
+| `create_workflow_from_spec` | Create a workflow from JSON specification |
 
 ## How It Works
 
-The MCP server:
+Torc uses the Model Context Protocol (MCP), an open standard for connecting AI assistants to external tools. The `torc-mcp-server` binary:
 
 1. **Receives tool calls** from the AI assistant via stdio
 2. **Translates them** to Torc REST API calls
@@ -384,12 +331,11 @@ The server is stateless—it simply proxies requests to your running Torc server
 
 In this tutorial, you learned:
 
-- ✅ What the Torc MCP server provides
-- ✅ How to configure Claude Code to use it
-- ✅ How to configure VS Code + GitHub Copilot to use it
-- ✅ How to set up MCP on HPC clusters via Remote SSH
-- ✅ How to interact with workflows using natural language
-- ✅ Security considerations for production use
+- How to interact with workflows using natural language
+- How to configure Claude Code with Torc
+- How to configure VS Code + GitHub Copilot with Torc
+- How to set up AI tools on HPC clusters via Remote SSH
+- Security considerations for production use
 
 ## Next Steps
 
