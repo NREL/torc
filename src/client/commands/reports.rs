@@ -68,7 +68,7 @@ pub enum ReportCommands {
         /// Show all jobs (default: only show jobs that exceeded requirements)
         #[arg(short, long)]
         all: bool,
-        /// Include failed jobs in the analysis (for recovery diagnostics)
+        /// Include failed and terminated jobs in the analysis (for recovery diagnostics)
         #[arg(long)]
         include_failed: bool,
     },
@@ -156,7 +156,8 @@ fn check_resource_utilization(
         }
     };
 
-    // Fetch failed results if requested
+    // Fetch failed and terminated results if requested
+    // (terminated jobs are typically killed due to walltime/OOM, so they need recovery too)
     let failed_results = if include_failed {
         let mut failed_params =
             pagination::ResultListParams::new().with_status(models::JobStatus::Failed);
@@ -174,14 +175,32 @@ fn check_resource_utilization(
         Vec::new()
     };
 
+    let terminated_results = if include_failed {
+        let mut terminated_params =
+            pagination::ResultListParams::new().with_status(models::JobStatus::Terminated);
+        if let Some(rid) = run_id {
+            terminated_params = terminated_params.with_run_id(rid);
+        }
+        match pagination::paginate_results(config, wf_id, terminated_params) {
+            Ok(results) => results,
+            Err(e) => {
+                print_error("fetching terminated results", &e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        Vec::new()
+    };
+
     // Combine results
     let mut results = completed_results;
     results.extend(failed_results);
+    results.extend(terminated_results);
 
     if results.is_empty() {
         let msg = if include_failed {
             format!(
-                "No completed or failed job results found for workflow {}",
+                "No completed, failed, or terminated job results found for workflow {}",
                 wf_id
             )
         } else {
