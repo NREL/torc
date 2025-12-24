@@ -1139,6 +1139,14 @@ fn reset_failed_jobs(
         .output()
         .map_err(|e| format!("Failed to run workflow reset-status: {}", e))?;
 
+    // Print stdout so user sees what was reset
+    if !output.stdout.is_empty() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        for line in stdout.lines() {
+            info!("  {}", line);
+        }
+    }
+
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(format!("workflow reset-status failed: {}", stderr));
@@ -1219,6 +1227,14 @@ fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), S
         ])
         .output()
         .map_err(|e| format!("Failed to run slurm regenerate: {}", e))?;
+
+    // Print stdout so user sees what schedulers were created and submitted
+    if !output.stdout.is_empty() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        for line in stdout.lines() {
+            info!("  {}", line);
+        }
+    }
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
