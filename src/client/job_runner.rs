@@ -74,6 +74,7 @@ use std::time::{Duration, Instant};
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::async_cli_command::AsyncCliCommand;
+use crate::client::commands::watch::format_duration_iso8601;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
 use crate::config::TorcConfig;
@@ -747,7 +748,32 @@ impl JobRunner {
         assert!(self.resources.num_gpus <= self.orig_resources.num_gpus);
     }
 
+    /// Update the time_limit in resources based on remaining time until end_time.
+    /// This ensures the server only returns jobs whose runtime fits within the remaining allocation time.
+    fn update_remaining_time_limit(&mut self) {
+        if let Some(end_time) = self.end_time {
+            let now = Utc::now();
+            if end_time > now {
+                let remaining_seconds = (end_time - now).num_seconds() as u64;
+                let time_limit = format_duration_iso8601(remaining_seconds);
+                debug!(
+                    "Updating time_limit to {} ({} seconds remaining)",
+                    time_limit, remaining_seconds
+                );
+                self.resources.time_limit = Some(time_limit);
+            } else {
+                // End time has passed - set to minimum
+                debug!("End time has passed, setting time_limit to PT1M");
+                self.resources.time_limit = Some("PT1M".to_string());
+            }
+        }
+        // If end_time is None, leave time_limit as-is (unlimited)
+    }
+
     fn run_ready_jobs_based_on_resources(&mut self) {
+        // Update time_limit based on remaining allocation time before claiming jobs
+        self.update_remaining_time_limit();
+
         let limit = self.resources.num_cpus;
         match utils::send_with_retries(
             &self.config,
@@ -877,6 +903,7 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
+        // TODO: account for time limit
         let limit = self
             .max_parallel_jobs
             .expect("max_parallel_jobs must be set")
