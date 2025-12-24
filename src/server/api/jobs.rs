@@ -1511,18 +1511,29 @@ where
 
         // Determine if we're only updating fields that are allowed at any time
         // (scheduler_id and resource_requirements_id can be updated regardless of status)
-        // Required fields (name, command) are checked by comparing to existing values
+        // All fields are checked by comparing to existing values, since the client may
+        // send the full job object with only scheduler_id/resource_requirements_id changed
         let only_updating_always_allowed_fields = {
             let name_changed = body.name != existing_job.name;
             let command_changed = body.command != existing_job.command;
+            let status_changed = body.status != existing_job.status;
+            let input_file_ids_changed = body.input_file_ids != existing_job.input_file_ids;
+            let output_file_ids_changed = body.output_file_ids != existing_job.output_file_ids;
+            let input_user_data_ids_changed =
+                body.input_user_data_ids != existing_job.input_user_data_ids;
+            let output_user_data_ids_changed =
+                body.output_user_data_ids != existing_job.output_user_data_ids;
+            let depends_on_job_ids_changed =
+                body.depends_on_job_ids != existing_job.depends_on_job_ids;
+
             let has_restricted_updates = name_changed
                 || command_changed
-                || body.input_file_ids.is_some()
-                || body.output_file_ids.is_some()
-                || body.input_user_data_ids.is_some()
-                || body.output_user_data_ids.is_some()
-                || body.depends_on_job_ids.is_some()
-                || body.status.is_some();
+                || status_changed
+                || input_file_ids_changed
+                || output_file_ids_changed
+                || input_user_data_ids_changed
+                || output_user_data_ids_changed
+                || depends_on_job_ids_changed;
             !has_restricted_updates
         };
 
