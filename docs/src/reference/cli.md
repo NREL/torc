@@ -16,8 +16,11 @@ This document contains the help content for the `torc` command-line program.
 * [`torc`↴](#torc)
 * [`torc run`↴](#torc-run)
 * [`torc submit`↴](#torc-submit)
+* [`torc submit-slurm`↴](#torc-submit-slurm)
+* [`torc watch`↴](#torc-watch)
 * [`torc workflows`↴](#torc-workflows)
 * [`torc workflows create`↴](#torc-workflows-create)
+* [`torc workflows create-slurm`↴](#torc-workflows-create-slurm)
 * [`torc workflows new`↴](#torc-workflows-new)
 * [`torc workflows list`↴](#torc-workflows-list)
 * [`torc workflows get`↴](#torc-workflows-get)
@@ -32,6 +35,8 @@ This document contains the help content for the `torc` command-line program.
 * [`torc workflows status`↴](#torc-workflows-status)
 * [`torc workflows reset-status`↴](#torc-workflows-reset-status)
 * [`torc workflows execution-plan`↴](#torc-workflows-execution-plan)
+* [`torc workflows list-actions`↴](#torc-workflows-list-actions)
+* [`torc workflows is-complete`↴](#torc-workflows-is-complete)
 * [`torc compute-nodes`↴](#torc-compute-nodes)
 * [`torc compute-nodes get`↴](#torc-compute-nodes-get)
 * [`torc compute-nodes list`↴](#torc-compute-nodes-list)
@@ -86,9 +91,29 @@ This document contains the help content for the `torc` command-line program.
 * [`torc slurm get`↴](#torc-slurm-get)
 * [`torc slurm delete`↴](#torc-slurm-delete)
 * [`torc slurm schedule-nodes`↴](#torc-slurm-schedule-nodes)
+* [`torc slurm parse-logs`↴](#torc-slurm-parse-logs)
+* [`torc slurm sacct`↴](#torc-slurm-sacct)
+* [`torc slurm generate`↴](#torc-slurm-generate)
+* [`torc slurm regenerate`↴](#torc-slurm-regenerate)
+* [`torc scheduled-compute-nodes`↴](#torc-scheduled-compute-nodes)
+* [`torc scheduled-compute-nodes get`↴](#torc-scheduled-compute-nodes-get)
+* [`torc scheduled-compute-nodes list`↴](#torc-scheduled-compute-nodes-list)
+* [`torc scheduled-compute-nodes list-jobs`↴](#torc-scheduled-compute-nodes-list-jobs)
+* [`torc hpc`↴](#torc-hpc)
+* [`torc hpc list`↴](#torc-hpc-list)
+* [`torc hpc detect`↴](#torc-hpc-detect)
+* [`torc hpc show`↴](#torc-hpc-show)
+* [`torc hpc partitions`↴](#torc-hpc-partitions)
+* [`torc hpc match`↴](#torc-hpc-match)
 * [`torc reports`↴](#torc-reports)
 * [`torc reports check-resource-utilization`↴](#torc-reports-check-resource-utilization)
 * [`torc reports results`↴](#torc-reports-results)
+* [`torc reports summary`↴](#torc-reports-summary)
+* [`torc config`↴](#torc-config)
+* [`torc config show`↴](#torc-config-show)
+* [`torc config paths`↴](#torc-config-paths)
+* [`torc config init`↴](#torc-config-init)
+* [`torc config validate`↴](#torc-config-validate)
 * [`torc tui`↴](#torc-tui)
 * [`torc plot-resources`↴](#torc-plot-resources)
 * [`torc completions`↴](#torc-completions)
@@ -103,6 +128,8 @@ Torc workflow orchestration system
 
 * `run` — Run a workflow locally (create from spec file or run existing workflow by ID)
 * `submit` — Submit a workflow to scheduler (create from spec file or submit existing workflow by ID)
+* `submit-slurm` — Submit a workflow to Slurm with auto-generated schedulers
+* `watch` — Watch a workflow and automatically recover from failures
 * `workflows` — Workflow management commands
 * `compute-nodes` — Compute node management commands
 * `files` — File management commands
@@ -113,7 +140,10 @@ Torc workflow orchestration system
 * `results` — Result management commands
 * `user-data` — User data management commands
 * `slurm` — Slurm scheduler commands
+* `scheduled-compute-nodes` — Scheduled compute node management commands
+* `hpc` — HPC system profiles and partition information
 * `reports` — Generate reports and analytics
+* `config` — Manage configuration files and settings
 * `tui` — Interactive terminal UI for managing workflows
 * `plot-resources` — Generate interactive HTML plots from resource monitoring data
 * `completions` — Generate shell completions
@@ -148,6 +178,9 @@ Run a workflow locally (create from spec file or run existing workflow by ID)
 * `--num-gpus <NUM_GPUS>` — Number of GPUs available
 * `-p`, `--poll-interval <POLL_INTERVAL>` — Job completion poll interval in seconds
 * `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for jobs
+* `--skip-checks` — Skip validation checks (e.g., scheduler node requirements). Use with caution
+
+  Default value: `false`
 
 
 
@@ -155,7 +188,7 @@ Run a workflow locally (create from spec file or run existing workflow by ID)
 
 Submit a workflow to scheduler (create from spec file or submit existing workflow by ID)
 
-Requires workflow to have an on_workflow_start action with schedule_nodes
+Requires workflow to have an on_workflow_start action with schedule_nodes. For Slurm workflows without pre-configured schedulers, use `submit-slurm` instead.
 
 **Usage:** `torc submit [OPTIONS] <WORKFLOW_SPEC_OR_ID>`
 
@@ -168,6 +201,94 @@ Requires workflow to have an on_workflow_start action with schedule_nodes
 * `-i`, `--ignore-missing-data` — Ignore missing data (defaults to false)
 
   Default value: `false`
+* `--skip-checks` — Skip validation checks (e.g., scheduler node requirements). Use with caution
+
+  Default value: `false`
+
+
+
+## `torc submit-slurm`
+
+Submit a workflow to Slurm with auto-generated schedulers
+
+Automatically generates Slurm schedulers based on job resource requirements and HPC profile.
+
+WARNING: This command uses heuristics to generate schedulers and workflow actions. For complex workflows with unusual dependency patterns, the generated configuration may not be optimal and could waste allocation time.
+
+RECOMMENDED: Preview the generated configuration first with:
+
+torc slurm generate --account <account> workflow.yaml
+
+Review the schedulers and actions to ensure they are appropriate for your workflow before submitting. You can save the output and submit manually:
+
+torc slurm generate --account <account> -o workflow_with_schedulers.yaml workflow.yaml torc submit workflow_with_schedulers.yaml
+
+**Usage:** `torc submit-slurm [OPTIONS] --account <ACCOUNT> <WORKFLOW_SPEC>`
+
+###### **Arguments:**
+
+* `<WORKFLOW_SPEC>` — Path to workflow spec file (JSON/JSON5/YAML/KDL)
+
+###### **Options:**
+
+* `--account <ACCOUNT>` — Slurm account to use for allocations
+* `--hpc-profile <HPC_PROFILE>` — HPC profile to use (auto-detected if not specified)
+* `--single-allocation` — Bundle all nodes into a single Slurm allocation per scheduler
+
+   By default, creates one Slurm allocation per node (N×1 mode), which allows jobs to start as nodes become available and provides better fault tolerance.
+
+   With this flag, creates one large allocation with all nodes (1×N mode), which requires all nodes to be available simultaneously but uses a single sbatch.
+* `-i`, `--ignore-missing-data` — Ignore missing data (defaults to false)
+
+  Default value: `false`
+* `--skip-checks` — Skip validation checks (e.g., scheduler node requirements). Use with caution
+
+  Default value: `false`
+
+
+
+## `torc watch`
+
+Watch a workflow and automatically recover from failures
+
+Monitors a workflow until completion. With --auto-recover, automatically diagnoses failures, adjusts resource requirements, and resubmits jobs.
+
+Recovery heuristics: - OOM (out of memory): Increase memory by --memory-multiplier (default 1.5x) - Timeout: Increase runtime by --runtime-multiplier (default 1.5x) - Other failures: Retry without changes (transient errors)
+
+Without --auto-recover, reports failures and exits for manual intervention or AI-assisted recovery via the MCP server.
+
+**Usage:** `torc watch [OPTIONS] <WORKFLOW_ID>`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — Workflow ID to watch
+
+###### **Options:**
+
+* `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds
+
+  Default value: `60`
+* `--auto-recover` — Enable automatic failure recovery
+* `--max-retries <MAX_RETRIES>` — Maximum number of recovery attempts
+
+  Default value: `3`
+* `--memory-multiplier <MEMORY_MULTIPLIER>` — Memory multiplier for OOM failures (default: 1.5 = 50% increase)
+
+  Default value: `1.5`
+* `--runtime-multiplier <RUNTIME_MULTIPLIER>` — Runtime multiplier for timeout failures (default: 1.5 = 50% increase)
+
+  Default value: `1.5`
+* `--retry-unknown` — Retry jobs with unknown failure causes (not OOM or timeout)
+
+   By default, only jobs that failed due to OOM or timeout are retried (with increased resources). Jobs with unknown failure causes are skipped since they likely have script or data bugs that won't be fixed by retrying.
+
+   Enable this flag to also retry jobs with unknown failures (e.g., to handle transient errors like network issues or filesystem glitches).
+* `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for job files
+
+  Default value: `output`
+* `--show-job-counts` — Show job counts by status during polling
+
+   WARNING: This option queries all jobs on each poll, which can cause high server load for large workflows. Only use for debugging or small workflows.
 
 
 
@@ -179,7 +300,8 @@ Workflow management commands
 
 ###### **Subcommands:**
 
-* `create` — Create a workflow from a specification file (supports JSON, JSON5, and YAML formats)
+* `create` — Create a workflow from a specification file (supports JSON, JSON5, YAML, and KDL formats)
+* `create-slurm` — Create a workflow with auto-generated Slurm schedulers
 * `new` — Create a new empty workflow
 * `list` — List workflows
 * `get` — Get a specific workflow by ID
@@ -194,12 +316,14 @@ Workflow management commands
 * `status` — Get workflow status
 * `reset-status` — Reset workflow and job status
 * `execution-plan` — Show the execution plan for a workflow specification or existing workflow
+* `list-actions` — List workflow actions and their statuses (useful for debugging action triggers)
+* `is-complete` — Check if a workflow is complete
 
 
 
 ## `torc workflows create`
 
-Create a workflow from a specification file (supports JSON, JSON5, and YAML formats)
+Create a workflow from a specification file (supports JSON, JSON5, YAML, and KDL formats)
 
 **Usage:** `torc workflows create [OPTIONS] --user <USER> <FILE>`
 
@@ -207,7 +331,7 @@ Create a workflow from a specification file (supports JSON, JSON5, and YAML form
 
 * `<FILE>` — Path to specification file containing WorkflowSpec
 
-   Supported formats: - JSON (.json): Standard JSON format - JSON5 (.json5): JSON with comments and trailing commas - YAML (.yaml, .yml): Human-readable YAML format
+   Supported formats: - JSON (.json): Standard JSON format - JSON5 (.json5): JSON with comments and trailing commas - YAML (.yaml, .yml): Human-readable YAML format - KDL (.kdl): KDL document format
 
    Format is auto-detected from file extension, with fallback parsing attempted
 
@@ -217,6 +341,42 @@ Create a workflow from a specification file (supports JSON, JSON5, and YAML form
 * `--no-resource-monitoring` — Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
 
   Default value: `false`
+* `--skip-checks` — Skip validation checks (e.g., scheduler node requirements). Use with caution
+
+  Default value: `false`
+* `--dry-run` — Validate the workflow specification without creating it (dry-run mode) Returns a summary of what would be created including job count after parameter expansion
+
+
+
+## `torc workflows create-slurm`
+
+Create a workflow with auto-generated Slurm schedulers
+
+Automatically generates Slurm schedulers based on job resource requirements and HPC profile. For Slurm workflows without pre-configured schedulers.
+
+**Usage:** `torc workflows create-slurm [OPTIONS] --account <ACCOUNT> --user <USER> <FILE>`
+
+###### **Arguments:**
+
+* `<FILE>` — Path to specification file containing WorkflowSpec
+
+###### **Options:**
+
+* `--account <ACCOUNT>` — Slurm account to use for allocations
+* `--hpc-profile <HPC_PROFILE>` — HPC profile to use (auto-detected if not specified)
+* `--single-allocation` — Bundle all nodes into a single Slurm allocation per scheduler
+
+   By default, creates one Slurm allocation per node (N×1 mode), which allows jobs to start as nodes become available and provides better fault tolerance.
+
+   With this flag, creates one large allocation with all nodes (1×N mode), which requires all nodes to be available simultaneously but uses a single sbatch.
+* `-u`, `--user <USER>` — User that owns the workflow (defaults to USER environment variable)
+* `--no-resource-monitoring` — Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
+
+  Default value: `false`
+* `--skip-checks` — Skip validation checks (e.g., scheduler node requirements). Use with caution
+
+  Default value: `false`
+* `--dry-run` — Validate the workflow specification without creating it (dry-run mode)
 
 
 
@@ -469,6 +629,34 @@ Show the execution plan for a workflow specification or existing workflow
 
 
 
+## `torc workflows list-actions`
+
+List workflow actions and their statuses (useful for debugging action triggers)
+
+**Usage:** `torc workflows list-actions [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — ID of the workflow to show actions for (optional - will prompt if not provided)
+
+###### **Options:**
+
+* `-u`, `--user <USER>` — User to filter by when selecting workflow interactively (defaults to USER environment variable)
+
+
+
+## `torc workflows is-complete`
+
+Check if a workflow is complete
+
+**Usage:** `torc workflows is-complete [ID]`
+
+###### **Arguments:**
+
+* `<ID>` — ID of the workflow to check (optional - will prompt if not provided)
+
+
+
 ## `torc compute-nodes`
 
 Compute node management commands
@@ -516,6 +704,7 @@ List compute nodes for a workflow
 * `-r`, `--reverse-sort` — Reverse sort order
 
   Default value: `false`
+* `--scheduled-compute-node <SCHEDULED_COMPUTE_NODE>` — Filter by scheduled compute node ID
 
 
 
@@ -1138,6 +1327,7 @@ List results
 * `--sort-by <SORT_BY>` — Field to sort by
 * `--reverse-sort` — Reverse sort order
 * `--all-runs` — Show all historical results (default: false, only shows current results)
+* `--compute-node <COMPUTE_NODE>` — Filter by compute node ID
 
 
 
@@ -1316,6 +1506,10 @@ Slurm scheduler commands
 * `get` — Get a specific Slurm config by ID
 * `delete` — Delete a Slurm config by ID
 * `schedule-nodes` — Schedule compute nodes using Slurm
+* `parse-logs` — Parse Slurm log files for known error messages
+* `sacct` — Call sacct for scheduled compute nodes and display summary
+* `generate` — Generate Slurm schedulers for a workflow based on job resource requirements
+* `regenerate` — Regenerate Slurm schedulers for an existing workflow based on pending jobs
 
 
 
@@ -1455,6 +1649,252 @@ Schedule compute nodes using Slurm
 
 
 
+## `torc slurm parse-logs`
+
+Parse Slurm log files for known error messages
+
+**Usage:** `torc slurm parse-logs [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — Workflow ID
+
+###### **Options:**
+
+* `-o`, `--output-dir <OUTPUT_DIR>` — Output directory containing Slurm log files
+
+  Default value: `output`
+* `--errors-only` — Only show errors (skip warnings)
+
+  Default value: `false`
+
+
+
+## `torc slurm sacct`
+
+Call sacct for scheduled compute nodes and display summary
+
+**Usage:** `torc slurm sacct [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — Workflow ID
+
+###### **Options:**
+
+* `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for sacct JSON files (only used with --save-json)
+
+  Default value: `output`
+* `--save-json` — Save full JSON output to files in addition to displaying summary
+
+  Default value: `false`
+
+
+
+## `torc slurm generate`
+
+Generate Slurm schedulers for a workflow based on job resource requirements
+
+**Usage:** `torc slurm generate [OPTIONS] --account <ACCOUNT> <WORKFLOW_FILE>`
+
+###### **Arguments:**
+
+* `<WORKFLOW_FILE>` — Path to workflow specification file (YAML, JSON, JSON5, or KDL)
+
+###### **Options:**
+
+* `--account <ACCOUNT>` — Slurm account to use
+* `--profile <PROFILE>` — HPC profile to use (if not specified, tries to detect current system)
+* `-o`, `--output <OUTPUT>` — Output file path (if not specified, prints to stdout)
+* `--single-allocation` — Bundle all nodes into a single Slurm allocation per scheduler
+
+   By default, creates one Slurm allocation per node (N×1 mode), which allows jobs to start as nodes become available and provides better fault tolerance.
+
+   With this flag, creates one large allocation with all nodes (1×N mode), which requires all nodes to be available simultaneously but uses a single sbatch.
+* `--no-actions` — Don't add workflow actions for scheduling nodes
+* `--force` — Force overwrite of existing schedulers in the workflow
+
+
+
+## `torc slurm regenerate`
+
+Regenerate Slurm schedulers for an existing workflow based on pending jobs
+
+Analyzes jobs that are uninitialized, ready, or blocked and generates new Slurm schedulers to run them. Uses existing scheduler configurations as defaults for account, partition, and other settings.
+
+This is useful for recovery after job failures: update job resources, reset failed jobs, then regenerate schedulers to submit new allocations.
+
+**Usage:** `torc slurm regenerate [OPTIONS] <WORKFLOW_ID>`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — Workflow ID
+
+###### **Options:**
+
+* `--account <ACCOUNT>` — Slurm account to use (defaults to account from existing schedulers)
+* `--profile <PROFILE>` — HPC profile to use (if not specified, tries to detect current system)
+* `--single-allocation` — Bundle all nodes into a single Slurm allocation per scheduler
+* `--submit` — Submit the generated allocations immediately
+* `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for job output files (used when submitting)
+
+  Default value: `output`
+* `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds (used when submitting)
+
+  Default value: `60`
+
+
+
+## `torc scheduled-compute-nodes`
+
+Scheduled compute node management commands
+
+**Usage:** `torc scheduled-compute-nodes <COMMAND>`
+
+###### **Subcommands:**
+
+* `get` — Get a scheduled compute node by ID
+* `list` — List scheduled compute nodes for a workflow
+* `list-jobs` — List jobs that ran under a scheduled compute node
+
+
+
+## `torc scheduled-compute-nodes get`
+
+Get a scheduled compute node by ID
+
+**Usage:** `torc scheduled-compute-nodes get <ID>`
+
+###### **Arguments:**
+
+* `<ID>` — ID of the scheduled compute node
+
+
+
+## `torc scheduled-compute-nodes list`
+
+List scheduled compute nodes for a workflow
+
+**Usage:** `torc scheduled-compute-nodes list [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — List scheduled compute nodes for this workflow (optional - will prompt if not provided)
+
+###### **Options:**
+
+* `-l`, `--limit <LIMIT>` — Maximum number of scheduled compute nodes to return
+
+  Default value: `10000`
+* `-o`, `--offset <OFFSET>` — Offset for pagination (0-based)
+
+  Default value: `0`
+* `-s`, `--sort-by <SORT_BY>` — Field to sort by
+* `-r`, `--reverse-sort` — Reverse sort order
+
+  Default value: `false`
+* `--scheduler-id <SCHEDULER_ID>` — Filter by scheduler ID
+* `--scheduler-config-id <SCHEDULER_CONFIG_ID>` — Filter by scheduler config ID
+* `--status <STATUS>` — Filter by status
+
+
+
+## `torc scheduled-compute-nodes list-jobs`
+
+List jobs that ran under a scheduled compute node
+
+**Usage:** `torc scheduled-compute-nodes list-jobs <ID>`
+
+###### **Arguments:**
+
+* `<ID>` — ID of the scheduled compute node
+
+
+
+## `torc hpc`
+
+HPC system profiles and partition information
+
+**Usage:** `torc hpc <COMMAND>`
+
+###### **Subcommands:**
+
+* `list` — List known HPC system profiles
+* `detect` — Detect the current HPC system
+* `show` — Show details of an HPC profile
+* `partitions` — Show partitions for an HPC profile
+* `match` — Find partitions matching resource requirements
+
+
+
+## `torc hpc list`
+
+List known HPC system profiles
+
+**Usage:** `torc hpc list`
+
+
+
+## `torc hpc detect`
+
+Detect the current HPC system
+
+**Usage:** `torc hpc detect`
+
+
+
+## `torc hpc show`
+
+Show details of an HPC profile
+
+**Usage:** `torc hpc show <NAME>`
+
+###### **Arguments:**
+
+* `<NAME>` — Profile name (e.g., "kestrel")
+
+
+
+## `torc hpc partitions`
+
+Show partitions for an HPC profile
+
+**Usage:** `torc hpc partitions [OPTIONS] [NAME]`
+
+###### **Arguments:**
+
+* `<NAME>` — Profile name (e.g., "kestrel"). If not specified, tries to detect current system
+
+###### **Options:**
+
+* `--gpu` — Filter to GPU partitions only
+* `--cpu` — Filter to CPU-only partitions
+* `--shared` — Filter to shared partitions
+
+
+
+## `torc hpc match`
+
+Find partitions matching resource requirements
+
+**Usage:** `torc hpc match [OPTIONS]`
+
+###### **Options:**
+
+* `--cpus <CPUS>` — Number of CPUs required
+
+  Default value: `1`
+* `--memory <MEMORY>` — Memory required (e.g., "100g", "512m", or MB as number)
+
+  Default value: `1g`
+* `--walltime <WALLTIME>` — Wall time required (e.g., "4:00:00", "2-00:00:00")
+
+  Default value: `1:00:00`
+* `--gpus <GPUS>` — Number of GPUs required
+* `--profile <PROFILE>` — Profile name (if not specified, tries to detect current system)
+
+
+
 ## `torc reports`
 
 Generate reports and analytics
@@ -1465,6 +1905,7 @@ Generate reports and analytics
 
 * `check-resource-utilization` — Check resource utilization and report jobs that exceeded their specified requirements
 * `results` — Generate a comprehensive JSON report of job results including all log file paths
+* `summary` — Generate a summary of workflow results (requires workflow to be complete)
 
 
 
@@ -1482,6 +1923,7 @@ Check resource utilization and report jobs that exceeded their specified require
 
 * `-r`, `--run-id <RUN_ID>` — Run ID to analyze (optional - analyzes latest run if not provided)
 * `-a`, `--all` — Show all jobs (default: only show jobs that exceeded requirements)
+* `--include-failed` — Include failed jobs in the analysis (for recovery diagnostics)
 
 
 
@@ -1504,11 +1946,91 @@ Generate a comprehensive JSON report of job results including all log file paths
 
 
 
+## `torc reports summary`
+
+Generate a summary of workflow results (requires workflow to be complete)
+
+**Usage:** `torc reports summary [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+* `<WORKFLOW_ID>` — Workflow ID to summarize (optional - will prompt if not provided)
+
+
+
+## `torc config`
+
+Manage configuration files and settings
+
+**Usage:** `torc config <COMMAND>`
+
+###### **Subcommands:**
+
+* `show` — Show the effective configuration (merged from all sources)
+* `paths` — Show configuration file paths
+* `init` — Initialize a configuration file with defaults
+* `validate` — Validate the current configuration
+
+
+
+## `torc config show`
+
+Show the effective configuration (merged from all sources)
+
+**Usage:** `torc config show [OPTIONS]`
+
+###### **Options:**
+
+* `-f`, `--format <FORMAT>` — Output format (toml or json)
+
+  Default value: `toml`
+
+
+
+## `torc config paths`
+
+Show configuration file paths
+
+**Usage:** `torc config paths`
+
+
+
+## `torc config init`
+
+Initialize a configuration file with defaults
+
+**Usage:** `torc config init [OPTIONS]`
+
+###### **Options:**
+
+* `--system` — Create system-wide config (/etc/torc/config.toml)
+* `--user` — Create user config (~/.config/torc/config.toml)
+* `--local` — Create project-local config (./torc.toml)
+* `-f`, `--force` — Force overwrite if file exists
+
+
+
+## `torc config validate`
+
+Validate the current configuration
+
+**Usage:** `torc config validate`
+
+
+
 ## `torc tui`
 
 Interactive terminal UI for managing workflows
 
-**Usage:** `torc tui`
+**Usage:** `torc tui [OPTIONS]`
+
+###### **Options:**
+
+* `--standalone` — Start in standalone mode: automatically start a torc-server
+* `--port <PORT>` — Port for the server in standalone mode (default: 8080)
+
+  Default value: `8080`
+* `--database <DATABASE>` — Database path for standalone mode
 
 
 
@@ -1558,4 +2080,3 @@ Generate shell completions
     This document was generated automatically by
     <a href="https://crates.io/crates/clap-markdown"><code>clap-markdown</code></a>.
 </i></small>
-

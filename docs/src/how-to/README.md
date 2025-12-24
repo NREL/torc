@@ -11,6 +11,7 @@ This section provides task-oriented guides for accomplishing specific goals with
 - [Resource Monitoring](./resource-monitoring.md) - Tracking CPU and memory usage
 - [Web Dashboard](./dashboard.md) - Using the web-based monitoring interface
 - [Debugging Workflows](./debugging.md) - Troubleshooting workflow failures
+- [Workflow Reports](./workflow-reports.md) - Generating completion summaries and reports
 - [Authentication](./authentication.md) - Setting up user authentication
 - [Shell Completions](./shell-completions.md) - Enabling tab completion
 - [Server Deployment](./server-deployment.md) - Running the server in production

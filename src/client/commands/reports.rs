@@ -84,6 +84,12 @@ pub enum ReportCommands {
         #[arg(long)]
         all_runs: bool,
     },
+    /// Generate a summary of workflow results (requires workflow to be complete)
+    Summary {
+        /// Workflow ID to summarize (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+    },
 }
 
 pub fn handle_report_commands(config: &Configuration, command: &ReportCommands, format: &str) {
@@ -109,6 +115,9 @@ pub fn handle_report_commands(config: &Configuration, command: &ReportCommands, 
             all_runs,
         } => {
             generate_results_report(config, *workflow_id, output_dir, *all_runs);
+        }
+        ReportCommands::Summary { workflow_id } => {
+            generate_summary(config, *workflow_id, format);
         }
     }
 }
@@ -730,6 +739,161 @@ fn generate_results_report(
         Err(e) => {
             eprintln!("Error serializing report to JSON: {}", e);
             std::process::exit(1);
+        }
+    }
+}
+
+/// Generate a summary of workflow results
+fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &str) {
+    // Get or select workflow ID
+    let user = get_env_user_name();
+    let workflow_id = match workflow_id {
+        Some(id) => id,
+        None => match select_workflow_interactively(config, &user) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!("Error selecting workflow: {}", e);
+                std::process::exit(1);
+            }
+        },
+    };
+
+    // Check if workflow is complete
+    let completion_status = match default_api::is_workflow_complete(config, workflow_id) {
+        Ok(status) => status,
+        Err(e) => {
+            print_error("checking workflow completion", &e);
+            std::process::exit(1);
+        }
+    };
+
+    if !completion_status.is_complete {
+        if format == "json" {
+            let error_response = serde_json::json!({
+                "status": "error",
+                "message": "Workflow is not complete",
+                "workflow_id": workflow_id,
+                "is_complete": false,
+                "is_canceled": completion_status.is_canceled,
+            });
+            println!("{}", serde_json::to_string_pretty(&error_response).unwrap());
+        } else {
+            eprintln!("Error: Workflow {} is not complete.", workflow_id);
+            if completion_status.is_canceled {
+                eprintln!("The workflow was canceled.");
+            } else {
+                eprintln!("Wait for the workflow to finish before generating a summary.");
+            }
+        }
+        std::process::exit(1);
+    }
+
+    // Fetch workflow info
+    let workflow = match default_api::get_workflow(config, workflow_id) {
+        Ok(wf) => wf,
+        Err(e) => {
+            print_error("fetching workflow", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Fetch all jobs to get total count
+    let jobs =
+        match pagination::paginate_jobs(config, workflow_id, pagination::JobListParams::new()) {
+            Ok(jobs) => jobs,
+            Err(e) => {
+                print_error("fetching jobs", &e);
+                std::process::exit(1);
+            }
+        };
+
+    let total_jobs = jobs.len();
+
+    // Count jobs by status
+    let mut completed_count = 0;
+    let mut failed_count = 0;
+    let mut canceled_count = 0;
+    let mut other_count = 0;
+
+    for job in &jobs {
+        match job.status {
+            Some(models::JobStatus::Completed) => completed_count += 1,
+            Some(models::JobStatus::Failed) => failed_count += 1,
+            Some(models::JobStatus::Canceled) => canceled_count += 1,
+            _ => other_count += 1,
+        }
+    }
+
+    // Fetch results to get execution time stats
+    let results = match pagination::paginate_results(
+        config,
+        workflow_id,
+        pagination::ResultListParams::new(),
+    ) {
+        Ok(results) => results,
+        Err(e) => {
+            print_error("fetching results", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Calculate total execution time
+    let total_exec_time_minutes: f64 = results.iter().map(|r| r.exec_time_minutes).sum();
+
+    // Output results
+    if format == "json" {
+        let report = serde_json::json!({
+            "workflow_id": workflow_id,
+            "workflow_name": workflow.name,
+            "workflow_user": workflow.user,
+            "is_complete": true,
+            "total_jobs": total_jobs,
+            "completed_jobs": completed_count,
+            "failed_jobs": failed_count,
+            "canceled_jobs": canceled_count,
+            "other_jobs": other_count,
+            "total_exec_time_minutes": total_exec_time_minutes,
+            "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
+        });
+
+        match serde_json::to_string_pretty(&report) {
+            Ok(json) => println!("{}", json),
+            Err(e) => {
+                eprintln!("Error serializing report to JSON: {}", e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        println!("Workflow Summary");
+        println!("================");
+        println!();
+        println!("Workflow ID: {}", workflow_id);
+        println!("Name: {}", workflow.name);
+        println!("User: {}", workflow.user);
+        println!();
+        println!("Job Status:");
+        println!("  Total Jobs: {}", total_jobs);
+        println!("  Completed:  {} ✓", completed_count);
+        if failed_count > 0 {
+            println!("  Failed:     {} ✗", failed_count);
+        } else {
+            println!("  Failed:     {}", failed_count);
+        }
+        if canceled_count > 0 {
+            println!("  Canceled:   {}", canceled_count);
+        }
+        if other_count > 0 {
+            println!("  Other:      {}", other_count);
+        }
+        println!();
+        println!(
+            "Total Execution Time: {}",
+            format_duration(total_exec_time_minutes * 60.0)
+        );
+
+        if failed_count == 0 && canceled_count == 0 {
+            println!();
+            println!("✓ All jobs completed successfully!");
         }
     }
 }
