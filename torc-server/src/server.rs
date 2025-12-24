@@ -281,6 +281,48 @@ async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> R
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
+    // Retry logic for database lock contention
+    const MAX_RETRIES: u32 = 3;
+    const RETRY_DELAY_MS: u64 = 1000;
+
+    for attempt in 0..MAX_RETRIES {
+        match process_workflow_unblocks_inner(server, workflow_id).await {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                let error_str = format!("{:?}", e);
+                // Check if this is a database lock error (codes 5 or 517)
+                if error_str.contains("database is locked")
+                    || error_str.contains("code: 5")
+                    || error_str.contains("code: 517")
+                {
+                    if attempt < MAX_RETRIES - 1 {
+                        debug!(
+                            "Database locked for workflow {}, retrying in {}ms (attempt {}/{})",
+                            workflow_id,
+                            RETRY_DELAY_MS,
+                            attempt + 1,
+                            MAX_RETRIES
+                        );
+                        tokio::time::sleep(tokio::time::Duration::from_millis(RETRY_DELAY_MS))
+                            .await;
+                        continue;
+                    }
+                }
+                return Err(e);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Inner implementation of process_workflow_unblocks (for retry logic)
+async fn process_workflow_unblocks_inner<C>(
+    server: &Server<C>,
+    workflow_id: i64,
+) -> Result<(), ApiError>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
     let completed_status = models::JobStatus::Completed.to_int();
     let failed_status = models::JobStatus::Failed.to_int();
     let canceled_status = models::JobStatus::Canceled.to_int();
