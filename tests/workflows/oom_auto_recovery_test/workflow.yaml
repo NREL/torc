@@ -3,7 +3,7 @@
 # This workflow tests the automatic OOM recovery feature of `torc watch --auto-recover`.
 #
 # Setup:
-# - 5 work jobs that each request 10GB memory and 10 CPUs
+# - 10 work jobs that each request 10GB memory and 10 CPUs
 # - Each job runs a script that attempts to allocate 30GB of memory
 # - This will cause OOM failures since the jobs only request 10GB
 #

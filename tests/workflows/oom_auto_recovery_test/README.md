@@ -57,7 +57,7 @@ You should see output similar to:
 Watching workflow <id> (poll interval: 60s, auto-recover enabled, max retries: 5)
 ...
 Workflow completed with failures:
-  - Failed: 5
+  - Failed: 10
 
 Attempting automatic recovery (attempt 1/5)
 
@@ -66,7 +66,7 @@ Applying recovery heuristics...
   Job 1 (work_1): OOM detected, increasing memory 10g -> 15g
   Job 2 (work_2): OOM detected, increasing memory 10g -> 15g
   ...
-  Applied fixes: 5 OOM, 0 timeout
+  Applied fixes: 10 OOM, 0 timeout
 
 Resetting failed jobs...
 Regenerating Slurm schedulers and submitting...

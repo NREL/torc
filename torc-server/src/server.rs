@@ -276,6 +276,14 @@ where
     Ok(())
 }
 
+/// Check if an error is a SQLite database lock error
+fn is_database_lock_error(error: &ApiError) -> bool {
+    let error_str = error.0.to_lowercase();
+    error_str.contains("database is locked")
+        || error_str.contains("database is busy")
+        || error_str.contains("sqlite_busy")
+}
+
 /// Process all pending unblocks for a specific workflow
 async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> Result<(), ApiError>
 where
@@ -285,34 +293,32 @@ where
     const MAX_RETRIES: u32 = 3;
     const RETRY_DELAY_MS: u64 = 1000;
 
+    let mut last_error: Option<ApiError> = None;
+
     for attempt in 0..MAX_RETRIES {
         match process_workflow_unblocks_inner(server, workflow_id).await {
             Ok(()) => return Ok(()),
             Err(e) => {
-                let error_str = format!("{:?}", e);
-                // Check if this is a database lock error (codes 5 or 517)
-                if error_str.contains("database is locked")
-                    || error_str.contains("code: 5")
-                    || error_str.contains("code: 517")
-                {
-                    if attempt < MAX_RETRIES - 1 {
-                        debug!(
-                            "Database locked for workflow {}, retrying in {}ms (attempt {}/{})",
-                            workflow_id,
-                            RETRY_DELAY_MS,
-                            attempt + 1,
-                            MAX_RETRIES
-                        );
-                        tokio::time::sleep(tokio::time::Duration::from_millis(RETRY_DELAY_MS))
-                            .await;
-                        continue;
-                    }
+                if is_database_lock_error(&e) && attempt < MAX_RETRIES - 1 {
+                    debug!(
+                        "Database locked for workflow {}, retrying in {}ms (attempt {}/{})",
+                        workflow_id,
+                        RETRY_DELAY_MS,
+                        attempt + 1,
+                        MAX_RETRIES
+                    );
+                    last_error = Some(e);
+                    tokio::time::sleep(tokio::time::Duration::from_millis(RETRY_DELAY_MS)).await;
+                    continue;
                 }
+                // Non-retryable error or final attempt
                 return Err(e);
             }
         }
     }
-    Ok(())
+
+    // If we exhausted all retries, return the last error
+    Err(last_error.unwrap_or_else(|| ApiError("Unknown error in retry loop".to_string())))
 }
 
 /// Inner implementation of process_workflow_unblocks (for retry logic)

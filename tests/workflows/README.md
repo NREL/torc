@@ -75,7 +75,7 @@ See `recovery_hook_test/README.md` for detailed instructions.
 Tests automatic OOM recovery in `torc watch --auto-recover`.
 
 **Scenario:**
-- 5 work jobs that request 10GB memory but try to allocate 30GB
+- 10 work jobs that request 10GB memory but try to allocate 30GB
 - Jobs fail with OOM
 - Watcher detects OOM and increases memory (10GB → 15GB → 22GB → 33GB)
 - Eventually jobs get enough memory and succeed

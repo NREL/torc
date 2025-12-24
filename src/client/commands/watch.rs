@@ -1214,15 +1214,16 @@ fn reset_failed_jobs(
 fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String> {
     info!("Running recovery hook: {}", hook_command);
 
-    // Split the command into program and arguments
-    let parts: Vec<&str> = hook_command.split_whitespace().collect();
+    // Parse the command using shell-like quoting rules (handles "quoted arguments")
+    let parts = shlex::split(hook_command)
+        .ok_or_else(|| format!("Invalid quoting in recovery hook command: {}", hook_command))?;
     if parts.is_empty() {
         return Err("Recovery hook command is empty".to_string());
     }
 
     // If the program doesn't contain a path separator and exists in the current directory,
     // prepend "./" so it's found (Command::new searches PATH, not CWD)
-    let program = parts[0];
+    let program = &parts[0];
     let program_path = if !program.contains('/') && std::path::Path::new(program).exists() {
         format!("./{}", program)
     } else {
