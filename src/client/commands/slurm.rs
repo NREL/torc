@@ -2470,12 +2470,19 @@ fn handle_generate(
         }
     };
 
-    // Output the result in the same format as the input
-    let output_content = match workflow_file.extension().and_then(|e| e.to_str()) {
+    // Determine output format: use output file extension if provided, otherwise match input format
+    let format_ext = if let Some(out_path) = output {
+        out_path.extension().and_then(|e| e.to_str())
+    } else {
+        workflow_file.extension().and_then(|e| e.to_str())
+    };
+
+    let output_content = match format_ext {
         Some("json") => serde_json::to_string_pretty(&spec).unwrap(),
         Some("json5") => serde_json::to_string_pretty(&spec).unwrap(), // Output as JSON
         Some("kdl") => spec.to_kdl_str(),
-        _ => serde_yaml::to_string(&spec).unwrap(), // YAML, YML, or unknown
+        Some("yaml") | Some("yml") => serde_yaml::to_string(&spec).unwrap(),
+        _ => serde_json::to_string_pretty(&spec).unwrap(), // Default to JSON
     };
 
     if let Some(output_path) = output {

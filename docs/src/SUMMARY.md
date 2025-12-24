@@ -44,6 +44,7 @@
   - [Visualizing Workflow Structure](./how-to/visualizing-workflows.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Debugging Slurm Workflows](./how-to/debugging-slurm.md)
+  - [Workflow Reports](./how-to/workflow-reports.md)
   - [Authentication](./how-to/authentication.md)
   - [Shell Completions](./how-to/shell-completions.md)
   - [Server Deployment](./how-to/server-deployment.md)

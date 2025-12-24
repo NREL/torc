@@ -167,7 +167,7 @@ pub enum Commands {
         #[arg(long)]
         auto_recover: bool,
 
-        /// Maximum number of recovery attempts (default: 3)
+        /// Maximum number of recovery attempts
         #[arg(long, default_value = "3")]
         max_retries: u32,
 

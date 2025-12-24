@@ -315,6 +315,12 @@ pub enum WorkflowCommands {
         #[arg(short, long)]
         user: Option<String>,
     },
+    /// Check if a workflow is complete
+    IsComplete {
+        /// ID of the workflow to check (optional - will prompt if not provided)
+        #[arg()]
+        id: Option<i64>,
+    },
 }
 
 fn show_execution_plan_from_spec(file_path: &str, format: &str) {
@@ -2290,6 +2296,43 @@ fn handle_create_slurm(
     }
 }
 
+fn handle_is_complete(config: &Configuration, id: Option<i64>, format: &str) {
+    // Get or select workflow ID
+    let user = get_env_user_name();
+    let id = match id {
+        Some(id) => id,
+        None => match select_workflow_interactively(config, &user) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!("Error selecting workflow: {}", e);
+                std::process::exit(1);
+            }
+        },
+    };
+
+    match default_api::is_workflow_complete(config, id) {
+        Ok(response) => {
+            if format == "json" {
+                match serde_json::to_string_pretty(&response) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing response to JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                println!("Workflow {} completion status:", id);
+                println!("  Is Complete: {}", response.is_complete);
+                println!("  Is Canceled: {}", response.is_canceled);
+            }
+        }
+        Err(e) => {
+            print_error("checking workflow completion", &e);
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowCommands, format: &str) {
     match command {
         WorkflowCommands::Create {
@@ -2446,6 +2489,9 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         }
         WorkflowCommands::ListActions { workflow_id, user } => {
             handle_list_actions(config, workflow_id, user, format);
+        }
+        WorkflowCommands::IsComplete { id } => {
+            handle_is_complete(config, *id, format);
         }
     }
 }
