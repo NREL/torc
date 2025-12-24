@@ -84,37 +84,17 @@ jobs:
       - work_4
       - work_5
 
-schedulers:
-  - name: work_scheduler
-    scheduler_type: slurm
+slurm_schedulers:
+  - name: job_scheduler
     account: PLACEHOLDER_ACCOUNT
     partition: debug
     walltime: "01:00:00"
-    mem: 12g
+    mem: 240g
     num_nodes: 1
-    job_filter:
-      resource_requirements:
-        - work_resources
-
-  - name: postprocess_scheduler
-    scheduler_type: slurm
-    account: PLACEHOLDER_ACCOUNT
-    partition: debug
-    walltime: "00:30:00"
-    mem: 2g
-    num_nodes: 1
-    job_filter:
-      resource_requirements:
-        - postprocess_resources
 
 actions:
-  - trigger_type: on_workflow_start
-    action_type: schedule_nodes
-    parameters:
-      scheduler: work_scheduler
-      num_nodes: 5
-  - trigger_type: on_workflow_start
-    action_type: schedule_nodes
-    parameters:
-      scheduler: postprocess_scheduler
-      num_nodes: 1
+  - trigger_type: "on_workflow_start"
+    action_type: "schedule_nodes"
+    scheduler: "job_scheduler"
+    scheduler_type: "slurm"
+    num_allocations: 1

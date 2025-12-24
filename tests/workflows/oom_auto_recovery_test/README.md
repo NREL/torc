@@ -5,7 +5,7 @@ failures and automatically increases memory allocations for retry.
 
 ## Workflow Description
 
-- **5 work jobs** (`work_1` through `work_5`): Each requests 10GB memory and 10 CPUs
+- **10 work jobs** (`work_1` through `work_10`): Each requests 10GB memory and 10 CPUs
 - Each job runs `allocate_memory.sh 30` which attempts to allocate 30GB of memory
 - Jobs will fail with OOM since they only have 10GB allocated
 - The watcher should detect OOM and increase memory by 1.5x on each retry

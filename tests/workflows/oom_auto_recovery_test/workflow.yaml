@@ -25,41 +25,23 @@ resource_requirements:
     runtime: PT30M
 
 jobs:
-  - name: work_1
+  - name: work_{i}
     command: bash allocate_memory.sh 30
     resource_requirements: work_resources
+    parameters:
+      i: 1:10
 
-  - name: work_2
-    command: bash allocate_memory.sh 30
-    resource_requirements: work_resources
-
-  - name: work_3
-    command: bash allocate_memory.sh 30
-    resource_requirements: work_resources
-
-  - name: work_4
-    command: bash allocate_memory.sh 30
-    resource_requirements: work_resources
-
-  - name: work_5
-    command: bash allocate_memory.sh 30
-    resource_requirements: work_resources
-
-schedulers:
-  - name: work_scheduler
-    scheduler_type: slurm
-    account: PLACEHOLDER_ACCOUNT
+slurm_schedulers:
+  - name: debug
     partition: debug
+    account: PLACEHOLDER_ACCOUNT
+    mem: 240G
+    nodes: 1
     walltime: "01:00:00"
-    mem: 12g
-    num_nodes: 1
-    job_filter:
-      resource_requirements:
-        - work_resources
 
 actions:
-  - trigger_type: on_workflow_start
-    action_type: schedule_nodes
-    parameters:
-      scheduler: work_scheduler
-      num_nodes: 5
+  - trigger_type: "on_workflow_start"
+    action_type: "schedule_nodes"
+    scheduler: "debug"
+    scheduler_type: "slurm"
+    num_allocations: 1

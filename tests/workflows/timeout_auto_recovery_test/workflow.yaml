@@ -46,21 +46,17 @@ jobs:
       echo "Slow job completed at $(date)"
     resource_requirements: job_resources
 
-schedulers:
+slurm_schedulers:
   - name: job_scheduler
-    scheduler_type: slurm
     account: PLACEHOLDER_ACCOUNT
     partition: debug
     walltime: "00:08:00"  # 8 minutes - job_slow will exceed this
-    mem: 2g
+    mem: 240g
     num_nodes: 1
-    job_filter:
-      resource_requirements:
-        - job_resources
 
 actions:
-  - trigger_type: on_workflow_start
-    action_type: schedule_nodes
-    parameters:
-      scheduler: job_scheduler
-      num_nodes: 2
+  - trigger_type: "on_workflow_start"
+    action_type: "schedule_nodes"
+    scheduler: "job_scheduler"
+    scheduler_type: "slurm"
+    num_allocations: 1
