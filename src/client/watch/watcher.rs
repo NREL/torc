@@ -149,9 +149,11 @@ impl Watcher {
         Ok(response.is_complete)
     }
 
-    /// Get all failed jobs in the workflow.
+    /// Get all failed and terminated jobs in the workflow.
+    /// Terminated jobs are typically killed by Slurm due to walltime/OOM and need recovery too.
     fn get_failed_jobs(&self) -> Result<Vec<crate::models::JobModel>, String> {
-        let response = default_api::list_jobs(
+        // Get failed jobs
+        let failed_response = default_api::list_jobs(
             &self.config,
             self.workflow_id,
             Some(JobStatus::Failed),
@@ -166,7 +168,26 @@ impl Watcher {
         )
         .map_err(|e| format!("Failed to list failed jobs: {}", e))?;
 
-        Ok(response.items.unwrap_or_default())
+        // Get terminated jobs
+        let terminated_response = default_api::list_jobs(
+            &self.config,
+            self.workflow_id,
+            Some(JobStatus::Terminated),
+            None,        // needs_file_id
+            None,        // upstream_job_id
+            None,        // offset
+            Some(10000), // limit
+            None,        // sort_by
+            None,        // reverse_sort
+            None,        // include_relationships
+            None,        // active_compute_node_id
+        )
+        .map_err(|e| format!("Failed to list terminated jobs: {}", e))?;
+
+        // Combine results
+        let mut jobs = failed_response.items.unwrap_or_default();
+        jobs.extend(terminated_response.items.unwrap_or_default());
+        Ok(jobs)
     }
 
     /// Handle a single failed job.

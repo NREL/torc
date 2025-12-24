@@ -249,7 +249,10 @@ fn check_resource_utilization(
 
     for result in &results {
         let job_id = result.job_id;
-        let is_failed = result.status == models::JobStatus::Failed;
+        // Consider both Failed and Terminated as "failed" for recovery purposes
+        // Terminated typically means killed by Slurm due to walltime/OOM
+        let is_failed = result.status == models::JobStatus::Failed
+            || result.status == models::JobStatus::Terminated;
 
         // Get job and its resource requirements
         let job = match job_map.get(&job_id) {
@@ -832,6 +835,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     let mut completed_count = 0;
     let mut failed_count = 0;
     let mut canceled_count = 0;
+    let mut terminated_count = 0;
     let mut other_count = 0;
 
     for job in &jobs {
@@ -839,6 +843,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             Some(models::JobStatus::Completed) => completed_count += 1,
             Some(models::JobStatus::Failed) => failed_count += 1,
             Some(models::JobStatus::Canceled) => canceled_count += 1,
+            Some(models::JobStatus::Terminated) => terminated_count += 1,
             _ => other_count += 1,
         }
     }
@@ -870,6 +875,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             "completed_jobs": completed_count,
             "failed_jobs": failed_count,
             "canceled_jobs": canceled_count,
+            "terminated_jobs": terminated_count,
             "other_jobs": other_count,
             "total_exec_time_minutes": total_exec_time_minutes,
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
@@ -900,6 +906,9 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         }
         if canceled_count > 0 {
             println!("  Canceled:   {}", canceled_count);
+        }
+        if terminated_count > 0 {
+            println!("  Terminated: {} ✗", terminated_count);
         }
         if other_count > 0 {
             println!("  Other:      {}", other_count);
