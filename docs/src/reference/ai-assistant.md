@@ -1,28 +1,14 @@
-# Tutorial: Using the MCP Server
+# AI Assistant Reference
 
-This tutorial shows how to use the Torc MCP (Model Context Protocol) server to enable AI assistants to interact with your Torc workflows directly.
+Complete reference for configuring AI assistants (Claude Code, GitHub Copilot) to work with Torc.
 
-## Learning Objectives
+## Overview
 
-By the end of this tutorial, you will:
+Torc provides an MCP (Model Context Protocol) server that enables AI assistants to interact with workflows. The `torc-mcp-server` binary acts as a bridge between AI assistants and the Torc REST API.
 
-- Understand what the MCP server provides
-- Know how to configure your AI assistant to use the Torc MCP server
-- Be able to inspect and manage your workflows using natural language
+## Available Tools
 
-## Prerequisites
-
-- Torc installed
-- Torc server running
-- One of the following AI assistants:
-  - [Claude Code](https://claude.ai/code) (terminal)
-  - [VS Code](https://code.visualstudio.com/) with GitHub Copilot (IDE)
-
-## What is the MCP Server?
-
-The Model Context Protocol (MCP) is an open standard for connecting AI assistants to external tools and data sources. The `torc-mcp-server` binary exposes Torc's workflow management capabilities as MCP tools.
-
-**Available Tools:**
+The AI assistant has access to these Torc operations:
 
 | Tool | Description |
 |------|-------------|
@@ -38,17 +24,20 @@ The Model Context Protocol (MCP) is an open standard for connecting AI assistant
 | `cancel_jobs` | Cancel specific jobs |
 | `create_workflow_from_spec` | Create a workflow from JSON specification |
 
-## Configuration
+## Environment Variables
 
-Choose the setup that matches your environment:
-
-- **[Claude Code](#claude-code)** - Terminal-based AI assistant
-- **[VS Code + Copilot](#vs-code--github-copilot)** - IDE with GitHub Copilot Chat
-- **[VS Code + Copilot on HPC](#vs-code-remote-ssh-for-hpc)** - Remote development on HPC clusters
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TORC_API_URL` | Torc server URL | `http://localhost:8080/torc-service/v1` |
+| `TORC_OUTPUT_DIR` | Directory containing job logs | `output` |
+| `TORC_USERNAME` | Username for authentication (optional) | — |
+| `TORC_PASSWORD` | Password for authentication (optional) | — |
 
 ---
 
-## Claude Code
+## Claude Code Configuration
+
+### Configuration Scopes
 
 Claude Code supports MCP configuration at three scopes:
 
@@ -58,15 +47,24 @@ Claude Code supports MCP configuration at three scopes:
 | **Local** | `.mcp.json` with `--scope local` | Personal project settings (gitignored) |
 | **User** | `~/.claude.json` | Cross-project personal tools |
 
-### Using the CLI (Recommended)
+### CLI Commands
 
 ```bash
-# Add the Torc MCP server to your project
+# Add the Torc MCP server
 claude mcp add torc \
   --scope project \
   -e TORC_API_URL=http://localhost:8080/torc-service/v1 \
   -e TORC_OUTPUT_DIR=/path/to/your/output \
   -- /path/to/torc-mcp-server
+
+# List configured MCP servers
+claude mcp list
+
+# Get details about the torc server
+claude mcp get torc
+
+# Remove the MCP server
+claude mcp remove torc
 ```
 
 ### Manual Configuration
@@ -87,18 +85,9 @@ Create or edit `.mcp.json` in your project root:
 }
 ```
 
-Replace `/path/to/torc-mcp-server` with the actual path to your built binary.
+### Environment Variable Expansion
 
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TORC_API_URL` | Torc server URL | `http://localhost:8080/torc-service/v1` |
-| `TORC_OUTPUT_DIR` | Directory containing job logs | `output` |
-| `TORC_USERNAME` | Username for authentication (optional) | — |
-| `TORC_PASSWORD` | Password for authentication (optional) | — |
-
-You can also use environment variable expansion in `.mcp.json`:
+You can use environment variable expansion in `.mcp.json`:
 
 ```json
 {
@@ -114,79 +103,9 @@ You can also use environment variable expansion in `.mcp.json`:
 }
 ```
 
-### Verify Configuration
-
-Check that the MCP server is configured correctly:
-
-```bash
-# List configured MCP servers
-claude mcp list
-
-# Get details about the torc server
-claude mcp get torc
-```
-
-Start a new Claude Code session in your project directory. Claude will automatically have access to the Torc tools.
-
-### Example Conversation
-
-```
-You: What's the status of workflow 15?
-
-Claude: I'll check the workflow status for you.
-
-Workflow 15 "hyperparameter_sweep" has 18 jobs:
-- Completed: 12
-- Running: 3
-- Failed: 2
-- Blocked: 1
-
-Would you like me to investigate the failed jobs?
-
-You: Yes, show me what went wrong
-
-Claude: Looking at the failed jobs...
-
-Job 7 "train_lr0.01_batch32" failed with:
-- Return code: 137 (killed by OOM)
-- Peak memory: 15.8 GB
-- Requested memory: 8 GB
-
-Job 12 "train_lr0.001_batch64" failed with:
-- Return code: 1
-- Error: FileNotFoundError: checkpoint.pt not found
-
-Recommendations:
-1. Job 7 needs more memory - I can restart it with 20 GB
-2. Job 12 has a missing dependency - check if upstream jobs completed
-
-You: Restart job 7 with 20GB memory
-
-Claude: Done. I've:
-1. Updated job 7's memory requirement from 8g to 20g
-2. Reset failed jobs and restarted the workflow
-
-Job 7 is now ready to run again.
-```
-
-### Troubleshooting Claude Code
-
-**Claude doesn't see the tools:**
-- Verify the MCP server is configured: `claude mcp list`
-- Check the config file is valid JSON: `cat .mcp.json | jq .`
-- Check that the path to `torc-mcp-server` is correct and the binary exists
-- Start a new Claude Code session (MCP servers are loaded at startup)
-
-**Remove the MCP server:**
-```bash
-claude mcp remove torc
-```
-
 ---
 
-## VS Code + GitHub Copilot
-
-VS Code with GitHub Copilot Chat supports MCP servers for enhanced AI-assisted workflow management.
+## VS Code + GitHub Copilot Configuration
 
 ### Prerequisites
 
@@ -220,11 +139,7 @@ Create `.vscode/mcp.json` in your project root:
 
 ### Usage
 
-In Copilot Chat, use **Agent Mode** (`@workspace` or the agent icon) to access MCP tools:
-
-> "What's the status of workflow 42?"
-
-> "Show me the failed jobs and their error logs"
+In Copilot Chat, use **Agent Mode** (`@workspace` or the agent icon) to access MCP tools.
 
 ---
 
@@ -290,33 +205,17 @@ Create `.vscode/mcp.json` in your project directory **on the HPC**:
 
 ---
 
-## Interact with Workflows
-
-Once configured, you can ask your AI assistant to help manage workflows using natural language:
-
-**Check workflow status:**
-> "What's the status of workflow 42?"
-
-**Investigate failures:**
-> "List all failed jobs in workflow 42 and show me the error logs"
-
-**Take action:**
-> "Restart the failed jobs in workflow 42 with doubled memory"
-
-**Create workflows:**
-> "Create a workflow with 10 parallel jobs that each run `python process.py index`"
-
----
-
 ## How It Works
 
-The MCP server:
+Torc uses the Model Context Protocol (MCP), an open standard for connecting AI assistants to external tools. The `torc-mcp-server` binary:
 
 1. **Receives tool calls** from the AI assistant via stdio
 2. **Translates them** to Torc REST API calls
 3. **Returns results** in a format the assistant can understand
 
 The server is stateless—it simply proxies requests to your running Torc server. All workflow state remains in Torc's database.
+
+---
 
 ## Security Considerations
 
@@ -325,34 +224,37 @@ The server is stateless—it simply proxies requests to your running Torc server
 - The server can modify workflows (restart, cancel, update resources)
 - Review proposed actions before they execute
 
+---
+
 ## Troubleshooting
 
+### Claude doesn't see the tools
+
+- Verify the MCP server is configured: `claude mcp list`
+- Check the config file is valid JSON: `cat .mcp.json | jq .`
+- Check that the path to `torc-mcp-server` is correct and the binary exists
+- Start a new Claude Code session (MCP servers are loaded at startup)
+
 ### "Failed to connect to server"
+
 - Ensure your Torc server is running
 - Check that `TORC_API_URL` is correct
 - Verify network connectivity
 
 ### "Permission denied" or "Authentication failed"
+
 - Set `TORC_USERNAME` and `TORC_PASSWORD` if your server requires auth
 - Check that the credentials are correct
 
 ### Logs not found
+
 - Ensure `TORC_OUTPUT_DIR` points to your job output directory
 - Check that jobs have actually run (logs are created at runtime)
 
-## What You Learned
+---
 
-In this tutorial, you learned:
+## See Also
 
-- ✅ What the Torc MCP server provides
-- ✅ How to configure Claude Code to use it
-- ✅ How to configure VS Code + GitHub Copilot to use it
-- ✅ How to set up MCP on HPC clusters via Remote SSH
-- ✅ How to interact with workflows using natural language
-- ✅ Security considerations for production use
-
-## Next Steps
-
-- [Automatic Failure Recovery](./automatic-recovery.md) - Use `torc watch` for automatic failure recovery
-- [Automatic Recovery Explained](../explanation/automatic-recovery.md) - Understand the recovery architecture
-- [Configuration Files](./configuration.md) - Set up Torc configuration
+- [AI-Assisted Workflow Management Tutorial](../tutorials/ai-assistant.md)
+- [Configuration Reference](./configuration.md)
+- [HPC Deployment](./hpc-deployment.md)

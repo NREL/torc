@@ -317,6 +317,7 @@ impl HelpPopup {
             Self::key_line("R", "Reset workflow status"),
             Self::key_line("x", "Run workflow locally"),
             Self::key_line("s", "Submit workflow to scheduler"),
+            Self::key_line("W", "Watch workflow (auto-recovery)"),
             Self::key_line("d", "Delete workflow"),
             Line::from(""),
             Line::from(vec![Span::styled(

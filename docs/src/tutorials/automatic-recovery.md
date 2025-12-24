@@ -38,7 +38,11 @@ This will:
 |--------------|-----------|----------------|
 | Out of Memory | Peak memory > limit, exit code 137 | Increase memory by 1.5x |
 | Timeout | Execution time near limit | Increase runtime by 1.5x |
-| Unknown | Other exit codes | Retry without changes |
+| Unknown | Other exit codes | **Skip** (likely script/data bug) |
+
+> **Note:** By default, jobs with unknown failure causes are **not** retried, since they
+> likely have script or data bugs that won't be fixed by retrying. Use `--retry-unknown`
+> to also retry these jobs (e.g., to handle transient errors like network issues).
 
 ### Configuration Options
 
@@ -47,10 +51,24 @@ torc watch 42 --auto-recover \
   --max-retries 5 \           # Maximum recovery attempts (default: 3)
   --memory-multiplier 2.0 \   # Memory increase factor (default: 1.5)
   --runtime-multiplier 2.0 \  # Runtime increase factor (default: 1.5)
+  --retry-unknown \           # Also retry jobs with unknown failures (default: skip)
   --poll-interval 120 \       # Seconds between status checks (default: 60)
   --output-dir /scratch/output \
-  --show-job-counts           # Display per-status job counts (optional, adds server load)
+  --show-job-counts \         # Display per-status job counts (optional, adds server load)
+  --log-level info            # Log level: error, warn, info, debug, trace (default: info)
 ```
+
+### Log Files
+
+All output is logged to both the terminal and a log file:
+
+```
+<output-dir>/watch_<hostname>_<workflow_id>.log
+```
+
+For example: `output/watch_myhost_42.log`
+
+This ensures you have a complete record of the watch session even if your terminal disconnects.
 
 ## Example: Complete Workflow
 
@@ -114,7 +132,22 @@ Workflow 42 is complete
 ✓ Workflow completed successfully (100 jobs)
 ```
 
-### 3. If Max Retries Exceeded
+### 3. If No Recoverable Jobs Found
+
+If all failures are from unknown causes (not OOM or timeout):
+
+```
+Applying recovery heuristics...
+  2 job(s) with unknown failure cause (skipped, use --retry-unknown to include)
+
+No recoverable jobs found. 2 job(s) failed with unknown causes.
+Use --retry-unknown to retry jobs with unknown failure causes.
+Or use the Torc MCP server with your AI assistant to investigate.
+```
+
+This prevents wasting allocation time on jobs that likely have script or data bugs.
+
+### 4. If Max Retries Exceeded
 
 If failures persist after max retries:
 
@@ -148,15 +181,20 @@ Or use the Torc MCP server with your AI assistant for manual recovery.
 
 ### Use Automatic Recovery (`--auto-recover`) when:
 - Running standard compute jobs with predictable failure modes
-- You want hands-off operation
-- OOM and timeout are the main failure types
+- You want hands-off operation for OOM and timeout failures
 - You have HPC allocation budget for retries
+
+### Use `--retry-unknown` when:
+- Jobs may fail due to transient errors (network, filesystem)
+- You're running jobs that are known to have intermittent failures
+- You want to retry all failures, not just resource-related ones
 
 ### Use Manual/AI-Assisted Recovery when:
 - Failures have complex or unknown causes
 - You need to investigate before retrying
 - Resource increases aren't solving the problem
 - You want to understand why jobs are failing
+- Jobs keep failing after automatic recovery attempts
 
 ## Best Practices
 
@@ -216,6 +254,8 @@ torc watch 42 --auto-recover --poll-interval 300 --show-job-counts
 # Reattach: screen -r torc-watch
 ```
 
+**Note:** All output is also logged to `output/watch_<hostname>_<workflow_id>.log`, so you can review what happened if the process is interrupted.
+
 For very large workflows, omit `--show-job-counts` to reduce server load.
 
 ### 5. Check Resource Utilization Afterward
@@ -257,8 +297,11 @@ The `torc watch --auto-recover` command provides:
 
 - **Automatic OOM handling**: Detects memory issues and increases allocations
 - **Automatic timeout handling**: Detects slow jobs and increases runtime
+- **Smart retry filtering**: Only retries jobs with diagnosable resource issues (by default)
+- **Optional transient retry**: Use `--retry-unknown` to also retry jobs with unknown failures
 - **Configurable heuristics**: Adjust multipliers for your workload
 - **Retry limits**: Prevent infinite retry loops
 - **Graceful degradation**: Falls back to manual recovery when needed
+- **Persistent logging**: All output logged to file for later review
 
-For most HPC workflows, automatic recovery handles 80-90% of transient failures without human intervention.
+By default, jobs with unknown failure causes (likely script or data bugs) are skipped to avoid wasting HPC allocation time on jobs that will keep failing.

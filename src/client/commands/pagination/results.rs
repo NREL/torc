@@ -25,6 +25,7 @@ pub struct ResultListParams {
     pub return_code: Option<i64>,
     pub status: Option<JobStatus>,
     pub all_runs: Option<bool>,
+    pub compute_node_id: Option<i64>,
 }
 
 impl Default for ResultListParams {
@@ -39,6 +40,7 @@ impl Default for ResultListParams {
             return_code: None,
             status: None,
             all_runs: None,
+            compute_node_id: None,
         }
     }
 }
@@ -93,6 +95,11 @@ impl ResultListParams {
         self.all_runs = Some(all_runs);
         self
     }
+
+    pub fn with_compute_node_id(mut self, compute_node_id: i64) -> Self {
+        self.compute_node_id = Some(compute_node_id);
+        self
+    }
 }
 
 /// Iterator for results with lazy pagination
@@ -145,6 +152,7 @@ impl ResultsIterator {
             self.params.return_code,
             self.params.status,
             self.params.all_runs,
+            self.params.compute_node_id,
         )?;
 
         if let Some(items) = response.items {

@@ -67,6 +67,7 @@ pub trait JobsApi<C> {
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError>;
 
@@ -452,6 +453,21 @@ impl JobsApiImpl {
                 Ok(result) => {
                     if result.rows_affected() > 0 {
                         total_reset_count += 1;
+
+                        // Clear active_compute_node_id for the reset job
+                        if let Err(e) = sqlx::query!(
+                            "UPDATE job_internal SET active_compute_node_id = NULL WHERE job_id = ?",
+                            job_id
+                        )
+                        .execute(self.context.pool.as_ref())
+                        .await
+                        {
+                            error!(
+                                "Failed to clear active_compute_node_id for job {}: {}",
+                                job_id, e
+                            );
+                            // Continue anyway
+                        }
 
                         // If the job was previously complete, trigger completion reversal for downstream jobs
                         if current_status.is_complete() {
@@ -1249,10 +1265,11 @@ where
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
         include_relationships: Option<bool>,
+        active_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError> {
         debug!(
-            "list_jobs({}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_jobs({}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
             status,
             needs_file_id,
@@ -1262,6 +1279,7 @@ where
             sort_by,
             reverse_sort,
             include_relationships,
+            active_compute_node_id,
             context.get().0.clone()
         );
 
@@ -1291,6 +1309,13 @@ where
             bind_values.push(Box::new(upstream_id));
         }
 
+        if active_compute_node_id.is_some() {
+            where_conditions.push(
+                "id IN (SELECT job_id FROM job_internal WHERE active_compute_node_id = ?)"
+                    .to_string(),
+            );
+        }
+
         let where_clause = where_conditions.join(" AND ");
 
         // Build the complete query with pagination and sorting
@@ -1316,6 +1341,9 @@ where
         }
         if let Some(upstream_id) = upstream_job_id {
             sqlx_query = sqlx_query.bind(upstream_id);
+        }
+        if let Some(cn_id) = active_compute_node_id {
+            sqlx_query = sqlx_query.bind(cn_id);
         }
 
         let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
@@ -1393,6 +1421,9 @@ where
         }
         if let Some(upstream_id) = upstream_job_id {
             count_sqlx_query = count_sqlx_query.bind(upstream_id);
+        }
+        if let Some(cn_id) = active_compute_node_id {
+            count_sqlx_query = count_sqlx_query.bind(cn_id);
         }
 
         let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {
@@ -2009,6 +2040,21 @@ where
         };
 
         let updated_count = result.rows_affected();
+
+        // Clear active_compute_node_id for all jobs in the workflow
+        if let Err(e) = sqlx::query!(
+            "UPDATE job_internal SET active_compute_node_id = NULL WHERE job_id IN (SELECT id FROM job WHERE workflow_id = ?)",
+            id
+        )
+        .execute(self.context.pool.as_ref())
+        .await
+        {
+            error!(
+                "Failed to clear active_compute_node_id for workflow {}: {}",
+                id, e
+            );
+            // Continue anyway - the job status reset succeeded
+        }
 
         info!(
             "Reset {} job statuses to uninitialized for workflow {}",

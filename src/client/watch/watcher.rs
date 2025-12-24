@@ -162,6 +162,7 @@ impl Watcher {
             None,        // sort_by
             None,        // reverse_sort
             None,        // include_relationships
+            None,        // active_compute_node_id
         )
         .map_err(|e| format!("Failed to list failed jobs: {}", e))?;
 
@@ -339,6 +340,7 @@ impl Watcher {
             None,    // return_code
             None,    // status
             None,    // all_runs
+            None,    // compute_node_id
         )
         .map_err(|e| format!("Failed to get job results: {}", e))?;
 

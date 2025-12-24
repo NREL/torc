@@ -62,6 +62,7 @@ pub fn get_workflow_status(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 
@@ -123,6 +124,7 @@ pub fn get_job_details(config: &Configuration, job_id: i64) -> Result<CallToolRe
         None,    // return_code
         None,    // status
         None,    // all_runs
+        None,    // compute_node_id
     )
     .ok()
     .and_then(|r| r.items)
@@ -207,6 +209,7 @@ pub fn list_failed_jobs(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 
@@ -261,6 +264,7 @@ pub fn list_jobs_by_status(
         None,                 // sort_by
         None,                 // reverse_sort
         None,                 // include_relationships
+        None,                 // active_compute_node_id
     )
     .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
 

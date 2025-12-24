@@ -39,6 +39,8 @@ pub enum WorkflowAction {
     Reset,
     Run,
     Submit,
+    Watch,       // Watch workflow with auto-recovery
+    WatchNoAuto, // Watch workflow without auto-recovery
     Delete,
     Cancel,
 }
@@ -63,6 +65,14 @@ impl WorkflowAction {
             ),
             Self::Run => format!("Run workflow '{}' locally?", workflow_name),
             Self::Submit => format!("Submit workflow '{}' to scheduler?", workflow_name),
+            Self::Watch => format!(
+                "Watch workflow '{}' with auto-recovery?\nThis will monitor and automatically retry failed jobs.",
+                workflow_name
+            ),
+            Self::WatchNoAuto => format!(
+                "Watch workflow '{}'?\nThis will monitor without automatic recovery.",
+                workflow_name
+            ),
             Self::Delete => format!(
                 "DELETE workflow '{}'?\nThis action cannot be undone!",
                 workflow_name
@@ -91,6 +101,8 @@ impl WorkflowAction {
             Self::Reset => "Reset Workflow",
             Self::Run => "Run Workflow",
             Self::Submit => "Submit Workflow",
+            Self::Watch => "Watch Workflow (Auto-Recovery)",
+            Self::WatchNoAuto => "Watch Workflow",
             Self::Delete => "Delete Workflow",
             Self::Cancel => "Cancel Workflow",
         }
@@ -960,6 +972,14 @@ impl App {
             return self.run_workflow_with_viewer(workflow_id, workflow_name);
         }
 
+        // Handle Watch - spawn torc watch with output viewer
+        if action == WorkflowAction::Watch {
+            return self.watch_workflow_with_viewer(workflow_id, workflow_name, true);
+        }
+        if action == WorkflowAction::WatchNoAuto {
+            return self.watch_workflow_with_viewer(workflow_id, workflow_name, false);
+        }
+
         // Handle Initialize, Reinitialize and Reset via CLI commands (like torc-dash does)
         if action == WorkflowAction::Initialize {
             return self.initialize_workflow_cli(workflow_id, workflow_name);
@@ -984,6 +1004,8 @@ impl App {
             WorkflowAction::ReinitializeForce => unreachable!(), // Handled above
             WorkflowAction::Reset => unreachable!(),      // Handled above
             WorkflowAction::Run => unreachable!(),        // Handled above
+            WorkflowAction::Watch => unreachable!(),      // Handled above
+            WorkflowAction::WatchNoAuto => unreachable!(), // Handled above
             WorkflowAction::Submit => self.client.submit_workflow(workflow_id),
             WorkflowAction::Delete => self.client.delete_workflow(workflow_id),
             WorkflowAction::Cancel => self.client.cancel_workflow(workflow_id),
@@ -998,6 +1020,8 @@ impl App {
                     WorkflowAction::ReinitializeForce => unreachable!(),
                     WorkflowAction::Reset => unreachable!(),
                     WorkflowAction::Run => unreachable!(),
+                    WorkflowAction::Watch => unreachable!(),
+                    WorkflowAction::WatchNoAuto => unreachable!(),
                     WorkflowAction::Submit => {
                         format!("Workflow '{}' submitted to scheduler", workflow_name)
                     }
@@ -1437,6 +1461,70 @@ impl App {
             Err(e) => {
                 self.set_status(StatusMessage::error(&format!(
                     "Failed to start workflow runner: {}",
+                    e
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn watch_workflow_with_viewer(
+        &mut self,
+        workflow_id: i64,
+        workflow_name: &str,
+        auto_recover: bool,
+    ) -> Result<()> {
+        let title = if auto_recover {
+            format!("Watching (auto-recovery): {}", workflow_name)
+        } else {
+            format!("Watching: {}", workflow_name)
+        };
+        let mut viewer = ProcessViewer::new(title);
+
+        let exe_path = self.get_torc_exe_path();
+
+        // Build arguments - note: --url is a global option, must come before subcommand
+        let workflow_id_str = workflow_id.to_string();
+        let url = self.client.get_base_url();
+
+        let args: Vec<&str> = if auto_recover {
+            vec![
+                "--url",
+                &url,
+                "watch",
+                &workflow_id_str,
+                "--auto-recover",
+                "--show-job-counts",
+            ]
+        } else {
+            vec![
+                "--url",
+                &url,
+                "watch",
+                &workflow_id_str,
+                "--show-job-counts",
+            ]
+        };
+
+        match viewer.start(&exe_path, &args) {
+            Ok(()) => {
+                self.previous_focus = self.focus;
+                self.focus = Focus::Popup;
+                self.popup = Some(PopupType::ProcessViewer(viewer));
+                let msg = if auto_recover {
+                    format!(
+                        "Watching workflow '{}' with auto-recovery...",
+                        workflow_name
+                    )
+                } else {
+                    format!("Watching workflow '{}'...", workflow_name)
+                };
+                self.set_status(StatusMessage::info(&msg));
+            }
+            Err(e) => {
+                self.set_status(StatusMessage::error(&format!(
+                    "Failed to start watcher: {}",
                     e
                 )));
             }

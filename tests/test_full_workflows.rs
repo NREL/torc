@@ -91,6 +91,7 @@ fn verify_diamond_workflow_completion(
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -117,6 +118,7 @@ fn verify_diamond_workflow_completion(
         None, // return_code filter
         None, // status filter
         None, // all_runs
+        None, // compute_node_id
     )
     .expect("Failed to list results");
 
@@ -400,6 +402,7 @@ fn verify_many_jobs_completion(
         None,
         None,
         None, // include_relationships
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -435,6 +438,7 @@ fn verify_many_jobs_completion(
         None, // return_code filter
         None, // status filter
         None, // all_runs
+        None, // compute_node_id
     )
     .expect("Failed to list results");
 
@@ -587,6 +591,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -640,6 +645,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // compute_node_id
     )
     .expect("Failed to list results");
 
@@ -696,6 +702,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after reset");
 
@@ -768,6 +775,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after second run");
 
@@ -796,6 +804,7 @@ resource_requirements:
         None,
         None,
         Some(true), // all_runs=true
+        None,       // compute_node_id
     )
     .expect("Failed to list all results");
 
@@ -962,6 +971,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs");
 
@@ -1030,6 +1040,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after reinitialize");
 
@@ -1098,6 +1109,7 @@ resource_requirements:
         None,
         None,
         None,
+        None, // active_compute_node_id
     )
     .expect("Failed to list jobs after second run");
 
@@ -1126,6 +1138,7 @@ resource_requirements:
         None,
         None,
         Some(true), // all_runs=true
+        None,       // compute_node_id
     )
     .expect("Failed to list all results");
 

@@ -426,6 +426,7 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
         None,        // sort_by
         None,        // reverse_sort
         Some(true),  // include_relationships
+        None,        // active_compute_node_id
     ) {
         Ok(response) => response,
         Err(e) => {
@@ -1579,6 +1580,7 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
             None,    // sort_by
             None,    // reverse_sort
             None,    // include_relationships
+            None,    // active_compute_node_id
         ) {
             Ok(response) => response.total_count,
             Err(e) => {

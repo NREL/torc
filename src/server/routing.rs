@@ -3645,6 +3645,27 @@ where
                         }
                         None => None,
                     };
+                    let param_scheduled_compute_node_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "scheduled_compute_node_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_scheduled_compute_node_id = match param_scheduled_compute_node_id {
+                        Some(param_scheduled_compute_node_id) => {
+                            let param_scheduled_compute_node_id =
+                                <i64 as std::str::FromStr>::from_str(
+                                    &param_scheduled_compute_node_id,
+                                );
+                            match param_scheduled_compute_node_id {
+                            Ok(param_scheduled_compute_node_id) => Some(param_scheduled_compute_node_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter scheduled_compute_node_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter scheduled_compute_node_id")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     let result = api_impl
                         .list_compute_nodes(
@@ -3653,6 +3674,7 @@ where
                             param_limit,
                             param_sort_by,
                             param_reverse_sort,
+                            param_scheduled_compute_node_id,
                             &context,
                         )
                         .await;
@@ -4349,6 +4371,25 @@ where
                         }
                         None => None,
                     };
+                    let param_active_compute_node_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "active_compute_node_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_active_compute_node_id = match param_active_compute_node_id {
+                        Some(param_active_compute_node_id) => {
+                            let param_active_compute_node_id =
+                                <i64 as std::str::FromStr>::from_str(&param_active_compute_node_id);
+                            match param_active_compute_node_id {
+                            Ok(param_active_compute_node_id) => Some(param_active_compute_node_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter active_compute_node_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter active_compute_node_id")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     let result = api_impl
                         .list_jobs(
@@ -4361,6 +4402,7 @@ where
                             param_sort_by,
                             param_reverse_sort,
                             param_include_relationships,
+                            param_active_compute_node_id,
                             &context,
                         )
                         .await;
@@ -5109,6 +5151,25 @@ where
                         }
                         None => None,
                     };
+                    let param_compute_node_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "compute_node_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_compute_node_id = match param_compute_node_id {
+                        Some(param_compute_node_id) => {
+                            let param_compute_node_id =
+                                <i64 as std::str::FromStr>::from_str(&param_compute_node_id);
+                            match param_compute_node_id {
+                            Ok(param_compute_node_id) => Some(param_compute_node_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter compute_node_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter compute_node_id")),
+                        }
+                        }
+                        None => None,
+                    };
                     let param_all_runs = query_params
                         .iter()
                         .filter(|e| e.0 == "all_runs")
@@ -5136,6 +5197,7 @@ where
                             param_run_id,
                             param_return_code,
                             param_status,
+                            param_compute_node_id,
                             param_skip,
                             param_limit,
                             param_sort_by,

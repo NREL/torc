@@ -118,6 +118,7 @@ Select a workflow and use these keys:
 | `R` | Reset | Reset all job statuses |
 | `x` | Run | Run workflow locally |
 | `s` | Submit | Submit to HPC scheduler (Slurm) |
+| `W` | Watch | Watch workflow with auto-recovery |
 | `C` | Cancel | Cancel running workflow |
 | `d` | Delete | Delete workflow (destructive!) |
 
@@ -327,6 +328,7 @@ Switch to the DAG tab to see job dependencies:
 | `R` | Reset workflow status |
 | `x` | Run workflow locally |
 | `s` | Submit workflow to scheduler |
+| `W` | Watch workflow (auto-recovery) |
 | `C` | Cancel workflow |
 | `d` | Delete workflow |
 

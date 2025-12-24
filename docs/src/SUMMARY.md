@@ -56,9 +56,11 @@
   - [Job Parameterization](./reference/parameterization.md)
   - [Resource Requirements](./reference/resources.md)
   - [HPC Profiles](./reference/hpc-profiles.md)
+  - [HPC Deployment](./reference/hpc-deployment.md)
   - [Resource Monitoring](./reference/resource-monitoring.md)
   - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
+  - [AI Assistant](./reference/ai-assistant.md)
   - [Security](./reference/security.md)
 
 # Tutorials
@@ -76,7 +78,7 @@
   - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
   - [Filtering CLI Output with Nushell](./tutorials/filtering-with-nushell.md)
   - [Custom HPC Profile](./tutorials/custom-hpc-profile.md)
-  - [MCP Server with Claude Code](./tutorials/mcp-server.md)
+  - [AI-Assisted Workflow Management](./tutorials/ai-assistant.md)
   - [Automatic Failure Recovery](./tutorials/automatic-recovery.md)
 
 ---

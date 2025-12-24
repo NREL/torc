@@ -130,6 +130,14 @@ paths:
         schema:
           type: boolean
         style: form
+      - description: Filter by scheduled compute node ID (filters compute nodes created by this scheduler)
+        explode: true
+        in: query
+        name: scheduled_compute_node_id
+        required: false
+        schema:
+          type: integer
+        style: form
       responses:
         "200":
           content:
@@ -905,6 +913,14 @@ paths:
           type: boolean
         style: form
         description: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+      - description: Filter jobs by the compute node currently running them.
+        explode: false
+        in: query
+        name: active_compute_node_id
+        required: false
+        schema:
+          type: integer
+        style: simple
       responses:
         "200":
           content:
@@ -1838,6 +1854,14 @@ paths:
           type: boolean
         style: form
         description: If false (default), only return results in the workflow_result table (current results). If true, return all historical results.
+      - description: Filter by compute node ID
+        explode: true
+        in: query
+        name: compute_node_id
+        required: false
+        schema:
+          type: integer
+        style: form
       responses:
         "200":
           content:

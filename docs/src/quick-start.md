@@ -1,6 +1,15 @@
 # Quick Start
 
-Choose the guide that matches your environment:
+Choose the approach that matches your environment and preference:
+
+## [Quick Start (AI-Assisted)](./tutorials/ai-assistant.md)
+
+**For conversational workflow management** — Use Claude Code or GitHub Copilot.
+
+- Natural language: *"Create a workflow with 10 parallel jobs"*
+- Debug failures: *"Why did job 5 fail? Show me the logs"*
+- Works with both local and HPC execution
+- Ideal for interactive exploration and debugging
 
 ## [Quick Start (HPC)](./quick-start-hpc.md)
 
@@ -19,3 +28,10 @@ Choose the guide that matches your environment:
 - Start server locally
 - Run with `torc run workflow.yaml`
 - Jobs run on the current machine
+
+---
+
+**Not sure which to choose?**
+- New to Torc? Start with **AI-Assisted** for guided exploration
+- On an HPC cluster? Use **HPC** for production workloads
+- Testing locally? Use **Local** for quick iteration

@@ -47,6 +47,7 @@ pub trait ComputeNodesApi<C> {
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError>;
 
@@ -277,15 +278,17 @@ where
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         debug!(
-            "list_compute_nodes({}, {}, {}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_compute_nodes({}, {}, {}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
             offset,
             limit,
             sort_by,
             reverse_sort,
+            scheduled_compute_node_id,
             context.get().0.clone()
         );
 
@@ -310,7 +313,13 @@ where
             FROM compute_node"
             .to_string();
 
-        let where_clause = "workflow_id = ?".to_string();
+        // Build WHERE clause conditions
+        let mut where_conditions = vec!["workflow_id = ?".to_string()];
+        if scheduled_compute_node_id.is_some() {
+            // Filter by scheduler.scheduler_id in the JSON field
+            where_conditions.push("json_extract(scheduler, '$.scheduler_id') = ?".to_string());
+        }
+        let where_clause = where_conditions.join(" AND ");
 
         let query = SqlQueryBuilder::new(base_query)
             .with_where(where_clause.clone())
@@ -320,11 +329,12 @@ where
         debug!("Executing query: {}", query);
 
         // Execute the query
-        let records = match sqlx::query(&query)
-            .bind(workflow_id)
-            .fetch_all(self.context.pool.as_ref())
-            .await
-        {
+        let mut sqlx_query = sqlx::query(&query).bind(workflow_id);
+        if let Some(scn_id) = scheduled_compute_node_id {
+            sqlx_query = sqlx_query.bind(scn_id);
+        }
+
+        let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
             Ok(recs) => recs,
             Err(e) => {
                 error!("Database error: {}", e);
@@ -371,11 +381,12 @@ where
                 .with_where(where_clause)
                 .build();
 
-        let total_count = match sqlx::query(&count_query)
-            .bind(workflow_id)
-            .fetch_one(self.context.pool.as_ref())
-            .await
-        {
+        let mut count_sqlx_query = sqlx::query(&count_query).bind(workflow_id);
+        if let Some(scn_id) = scheduled_compute_node_id {
+            count_sqlx_query = count_sqlx_query.bind(scn_id);
+        }
+
+        let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {
             Ok(row) => row.get::<i64, _>("total"),
             Err(e) => {
                 error!("Database error getting count: {}", e);

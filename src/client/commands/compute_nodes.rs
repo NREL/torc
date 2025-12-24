@@ -82,6 +82,9 @@ pub enum ComputeNodeCommands {
         /// Reverse sort order
         #[arg(short, long, default_value = "false")]
         reverse_sort: bool,
+        /// Filter by scheduled compute node ID
+        #[arg(long)]
+        scheduled_compute_node: Option<i64>,
     },
 }
 
@@ -135,6 +138,7 @@ pub fn handle_compute_node_commands(
             offset,
             sort_by,
             reverse_sort,
+            scheduled_compute_node,
         } => {
             let user_name = get_env_user_name();
             let selected_workflow_id = match workflow_id {
@@ -157,6 +161,7 @@ pub fn handle_compute_node_commands(
                 Some(*reverse_sort),
                 None, // hostname filter
                 None, // is_active filter
+                *scheduled_compute_node,
             ) {
                 Ok(response) => {
                     let nodes = response.items.unwrap_or_default();

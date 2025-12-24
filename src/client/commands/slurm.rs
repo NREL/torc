@@ -1613,16 +1613,50 @@ fn extract_slurm_job_id_from_filename(filename: &str) -> Option<String> {
 
 /// Build a map of Slurm job ID -> affected Torc jobs
 /// This queries the API to correlate:
-/// 1. ComputeNode.scheduler.slurm_job_id -> compute_node_id
-/// 2. Result.compute_node_id -> job_id
-/// 3. Job.id -> job_name
+/// 1. ScheduledComputeNode.scheduler_id (Slurm job ID) -> ScheduledComputeNode.id
+/// 2. ComputeNode.scheduler.scheduler_id -> ScheduledComputeNode.id -> Slurm job ID
+/// 3. Result.compute_node_id -> job_id
+/// 4. Job.id -> job_name
 fn build_slurm_to_jobs_map(
     config: &Configuration,
     workflow_id: i64,
 ) -> HashMap<String, Vec<AffectedJob>> {
     let mut slurm_to_jobs: HashMap<String, Vec<AffectedJob>> = HashMap::new();
 
-    // Step 1: Get all compute nodes and build slurm_job_id -> compute_node_ids map
+    // Step 1: Get all scheduled compute nodes (they have scheduler_id = Slurm job ID)
+    let scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        Some(0),
+        Some(10000),
+        None,
+        None,
+        None, // scheduler_id filter
+        None, // scheduler_config_id filter
+        None, // status filter
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            warn!(
+                "Could not fetch scheduled compute nodes for job correlation: {}",
+                e
+            );
+            return slurm_to_jobs;
+        }
+    };
+
+    // Build scn_id -> slurm_job_id map
+    let scn_to_slurm: HashMap<i64, String> = scheduled_nodes
+        .iter()
+        .filter(|scn| scn.scheduler_type == "slurm")
+        .filter_map(|scn| scn.id.map(|id| (id, scn.scheduler_id.to_string())))
+        .collect();
+
+    if scn_to_slurm.is_empty() {
+        return slurm_to_jobs;
+    }
+
+    // Step 2: Get all compute nodes and build slurm_job_id -> compute_node_ids map
     let compute_nodes = match default_api::list_compute_nodes(
         config,
         workflow_id,
@@ -1632,6 +1666,7 @@ fn build_slurm_to_jobs_map(
         None,
         None,
         None,
+        None, // scheduled_compute_node_id
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1640,23 +1675,20 @@ fn build_slurm_to_jobs_map(
         }
     };
 
-    // Build slurm_job_id -> Vec<compute_node_id> map
+    // Build slurm_job_id -> Vec<compute_node_id> map using SCN relationship
     let mut slurm_to_compute_nodes: HashMap<String, Vec<i64>> = HashMap::new();
     for node in &compute_nodes {
         if node.compute_node_type != "slurm" {
             continue;
         }
         if let Some(scheduler) = &node.scheduler {
-            if let Some(slurm_job_id) = scheduler.get("slurm_job_id") {
-                let slurm_id_str = slurm_job_id
-                    .as_str()
-                    .map(|s| s.to_string())
-                    .or_else(|| slurm_job_id.as_i64().map(|i| i.to_string()))
-                    .unwrap_or_default();
-                if !slurm_id_str.is_empty() {
+            // Get the SCN ID from the scheduler JSON
+            if let Some(scn_id) = scheduler.get("scheduler_id").and_then(|v| v.as_i64()) {
+                // Look up the Slurm job ID from our SCN map
+                if let Some(slurm_job_id) = scn_to_slurm.get(&scn_id) {
                     if let Some(node_id) = node.id {
                         slurm_to_compute_nodes
-                            .entry(slurm_id_str)
+                            .entry(slurm_job_id.clone())
                             .or_default()
                             .push(node_id);
                     }
@@ -1669,7 +1701,7 @@ fn build_slurm_to_jobs_map(
         return slurm_to_jobs;
     }
 
-    // Step 2: Get all results and build compute_node_id -> Vec<job_id> map
+    // Step 3: Get all results and build compute_node_id -> Vec<job_id> map
     let results = match default_api::list_results(
         config,
         workflow_id,
@@ -1682,6 +1714,7 @@ fn build_slurm_to_jobs_map(
         None,
         None,
         Some(true), // all_runs
+        None,       // compute_node_id
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1698,7 +1731,7 @@ fn build_slurm_to_jobs_map(
             .push(result.job_id);
     }
 
-    // Step 3: Get all jobs and build job_id -> job_name map
+    // Step 4: Get all jobs and build job_id -> job_name map
     let jobs = match default_api::list_jobs(
         config,
         workflow_id,
@@ -1710,6 +1743,7 @@ fn build_slurm_to_jobs_map(
         None,
         None,
         None,
+        None, // active_compute_node_id
     ) {
         Ok(response) => response.items.unwrap_or_default(),
         Err(e) => {
@@ -1723,7 +1757,7 @@ fn build_slurm_to_jobs_map(
         .filter_map(|j| j.id.map(|id| (id, j.name.clone())))
         .collect();
 
-    // Step 4: Build the final slurm_job_id -> Vec<AffectedJob> map
+    // Step 5: Build the final slurm_job_id -> Vec<AffectedJob> map
     for (slurm_id, compute_node_ids) in &slurm_to_compute_nodes {
         let mut affected_jobs: Vec<AffectedJob> = Vec::new();
         let mut seen_job_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
@@ -2581,6 +2615,7 @@ fn handle_regenerate(
             None,
             None,
             None,
+            None, // active_compute_node_id
         ) {
             Ok(response) => {
                 pending_jobs.extend(response.items.unwrap_or_default());

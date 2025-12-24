@@ -107,3 +107,13 @@ pub fn get_slurm_env_log_file(
         task_pid
     )
 }
+
+/// Return the name of the watch log file.
+pub fn get_watch_log_file(output_dir: PathBuf, hostname: &str, workflow_id: i64) -> String {
+    format!(
+        "{}/watch_{}_{}.log",
+        output_dir.display(),
+        hostname,
+        workflow_id
+    )
+}

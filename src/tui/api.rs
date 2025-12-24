@@ -96,6 +96,7 @@ impl TorcClient {
             None, // sort_by
             None, // reverse_sort
             None, // include_relationships
+            None, // active_compute_node_id
         )
         .context("Failed to list jobs")?;
 
@@ -142,13 +143,14 @@ impl TorcClient {
             workflow_id,
             None, // job_id
             None, // run_id
-            None, // return_code
-            None, // status
             None, // offset
             None, // limit
             None, // sort_by
             None, // reverse_sort
+            None, // return_code
+            None, // status
             None, // all_runs
+            None, // compute_node_id
         )
         .context("Failed to list results")?;
 

@@ -190,14 +190,18 @@ mod unix_main {
             }
         }
 
+        let scheduler_id = scheduled_compute_node.as_ref().map(|node| node.id);
         let scheduler_config_id = scheduled_compute_node
             .as_ref()
             .map(|node| node.scheduler_config_id);
 
         let resources =
             create_node_resources(&slurm_interface, scheduler_config_id, args.is_subtask);
+        let job_id_int: i64 = job_id.parse().unwrap_or(0);
         let scheduler = serde_json::json!({
-            "slurm_job_id": job_id,
+            "scheduler_id": scheduler_id,
+            "type": "slurm",
+            "slurm_job_id": job_id_int,
         });
         let compute_node =
             create_compute_node(&config, args.workflow_id, &resources, &hostname, scheduler);

@@ -350,6 +350,7 @@ async fn main() -> Result<()> {
         .route("/api/cli/reset-status", post(cli_reset_status_handler))
         .route("/api/cli/execution-plan", post(cli_execution_plan_handler))
         .route("/api/cli/run-stream", get(cli_run_stream_handler))
+        .route("/api/cli/watch-stream", get(cli_watch_stream_handler))
         .route("/api/cli/read-file", post(cli_read_file_handler))
         .route("/api/cli/plot-resources", post(cli_plot_resources_handler))
         .route(
@@ -895,6 +896,245 @@ async fn cli_run_stream_handler(
 
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(std::time::Duration::from_secs(3));
+            loop {
+                interval.tick().await;
+
+                // Fetch jobs from API and count statuses
+                let url = format!("{}/jobs?workflow_id={}&limit=10000", api_url_status, workflow_id_status);
+                match http_client_status.get(&url).send().await {
+                    Ok(resp) if resp.status().is_success() => {
+                        if let Ok(json) = resp.json::<serde_json::Value>().await {
+                            // Count jobs by status
+                            let items = json.get("items").and_then(|v| v.as_array());
+                            if let Some(jobs) = items {
+                                let mut uninitialized = 0i64;
+                                let mut blocked = 0i64;
+                                let mut ready = 0i64;
+                                let mut pending = 0i64;
+                                let mut running = 0i64;
+                                let mut completed = 0i64;
+                                let mut failed = 0i64;
+                                let mut canceled = 0i64;
+                                let mut terminated = 0i64;
+                                let mut disabled = 0i64;
+
+                                for job in jobs {
+                                    let status = job.get("status").and_then(|v| v.as_i64()).unwrap_or(-1);
+                                    match status {
+                                        0 => uninitialized += 1,
+                                        1 => blocked += 1,
+                                        2 => ready += 1,
+                                        3 => pending += 1,
+                                        4 => running += 1,
+                                        5 => completed += 1,
+                                        6 => failed += 1,
+                                        7 => canceled += 1,
+                                        8 => terminated += 1,
+                                        9 => disabled += 1,
+                                        _ => {} // Unknown status, ignore
+                                    }
+                                }
+
+                                let total = jobs.len() as i64;
+
+                                // Build status message with only non-zero counts
+                                let mut parts = Vec::new();
+                                if completed > 0 { parts.push(format!("{} completed", completed)); }
+                                if running > 0 { parts.push(format!("{} running", running)); }
+                                if ready > 0 { parts.push(format!("{} ready", ready)); }
+                                if pending > 0 { parts.push(format!("{} pending", pending)); }
+                                if blocked > 0 { parts.push(format!("{} blocked", blocked)); }
+                                if failed > 0 { parts.push(format!("{} failed", failed)); }
+                                if uninitialized > 0 { parts.push(format!("{} uninitialized", uninitialized)); }
+                                if canceled > 0 { parts.push(format!("{} canceled", canceled)); }
+                                if terminated > 0 { parts.push(format!("{} terminated", terminated)); }
+                                if disabled > 0 { parts.push(format!("{} disabled", disabled)); }
+
+                                let status_msg = format!(
+                                    "Jobs: {} (total: {})",
+                                    if parts.is_empty() { "none".to_string() } else { parts.join(", ") },
+                                    total
+                                );
+
+                                if status_tx.send(status_msg).await.is_err() {
+                                    break; // Receiver dropped, exit
+                                }
+
+                                // If no jobs are in an active/waiting state, exit polling
+                                // Active states: running, pending, ready, blocked, uninitialized
+                                if running == 0 && ready == 0 && pending == 0 && blocked == 0 && uninitialized == 0 {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    _ => {} // Ignore errors, continue polling
+                }
+            }
+        });
+
+        // Main loop: receive from both channels
+        loop {
+            tokio::select! {
+                // Process output lines
+                msg = rx.recv() => {
+                    match msg {
+                        Some((event_type, line)) => {
+                            yield Ok(Event::default()
+                                .event(&event_type)
+                                .data(line));
+                        }
+                        None => {
+                            // Channel closed, output streams are done
+                            break;
+                        }
+                    }
+                }
+                // Process status updates
+                status = status_rx.recv() => {
+                    if let Some(status_msg) = status {
+                        yield Ok(Event::default()
+                            .event("status")
+                            .data(status_msg));
+                    }
+                }
+            }
+        }
+
+        // Wait for the process to exit
+        match child.wait().await {
+            Ok(status) => {
+                let exit_code = status.code().unwrap_or(-1);
+                yield Ok(Event::default()
+                    .event("end")
+                    .data(if status.success() { "success" } else { "failed" }));
+                yield Ok(Event::default()
+                    .event("exit_code")
+                    .data(exit_code.to_string()));
+            }
+            Err(e) => {
+                yield Ok(Event::default()
+                    .event("error")
+                    .data(format!("Failed to wait for command: {}", e)));
+                yield Ok(Event::default()
+                    .event("end")
+                    .data("error"));
+            }
+        }
+    };
+
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
+}
+
+/// Streaming workflow watch handler using Server-Sent Events
+/// Runs `torc watch --auto-recover` for the specified workflow
+async fn cli_watch_stream_handler(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> impl IntoResponse {
+    let workflow_id = match params.get("workflow_id") {
+        Some(id) => id.clone(),
+        None => {
+            return Err((StatusCode::BAD_REQUEST, "Missing workflow_id parameter"));
+        }
+    };
+
+    // Check if auto_recover is explicitly disabled
+    let auto_recover = params
+        .get("auto_recover")
+        .map(|v| v != "false")
+        .unwrap_or(true);
+
+    info!(
+        "Starting watch for workflow: {} (auto_recover={})",
+        workflow_id, auto_recover
+    );
+
+    let torc_bin = state.torc_bin.clone();
+    let api_url = state.api_url.clone();
+    let http_client = state.client.clone();
+
+    // Create the stream
+    let stream = async_stream::stream! {
+        // Send start event
+        let mode = if auto_recover { "with auto-recovery" } else { "monitoring only" };
+        yield Ok::<_, std::convert::Infallible>(Event::default()
+            .event("start")
+            .data(format!("Watching workflow {} ({})", workflow_id, mode)));
+
+        // Build command arguments
+        let mut args = vec!["watch".to_string(), workflow_id.clone()];
+        if auto_recover {
+            args.push("--auto-recover".to_string());
+        }
+        // Use 60 second poll interval as specified
+        args.push("--poll-interval".to_string());
+        args.push("60".to_string());
+
+        let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+
+        // Spawn the command with piped stdout/stderr
+        let mut child = match Command::new(&torc_bin)
+            .args(&args_refs)
+            .env("TORC_API_URL", &api_url)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+        {
+            Ok(child) => child,
+            Err(e) => {
+                yield Ok(Event::default()
+                    .event("error")
+                    .data(format!("Failed to start watch command: {}", e)));
+                yield Ok(Event::default()
+                    .event("end")
+                    .data("error"));
+                return;
+            }
+        };
+
+        // Read stdout and stderr
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+
+        // Create channels for stdout/stderr lines
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<(String, String)>(100);
+
+        // Spawn task to read stdout
+        if let Some(stdout) = stdout {
+            let tx_stdout = tx.clone();
+            tokio::spawn(async move {
+                let reader = BufReader::new(stdout);
+                let mut lines = reader.lines();
+                while let Ok(Some(line)) = lines.next_line().await {
+                    let _ = tx_stdout.send(("stdout".to_string(), line)).await;
+                }
+            });
+        }
+
+        // Spawn task to read stderr
+        if let Some(stderr) = stderr {
+            let tx_stderr = tx.clone();
+            tokio::spawn(async move {
+                let reader = BufReader::new(stderr);
+                let mut lines = reader.lines();
+                while let Ok(Some(line)) = lines.next_line().await {
+                    let _ = tx_stderr.send(("stderr".to_string(), line)).await;
+                }
+            });
+        }
+
+        // Drop the original sender so the channel closes when tasks finish
+        drop(tx);
+
+        // Spawn task to periodically poll job status
+        let api_url_status = api_url.clone();
+        let workflow_id_status = workflow_id.clone();
+        let http_client_status = http_client.clone();
+        let (status_tx, mut status_rx) = tokio::sync::mpsc::channel::<String>(10);
+
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
 

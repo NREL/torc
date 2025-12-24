@@ -20,11 +20,13 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 
 ## Features
 
+- **AI-Assisted Management** - Use Claude Code or GitHub Copilot to create, debug, and manage workflows through natural language
 - **Declarative Workflow Specifications** - Define workflows in YAML, JSON5, JSON, or KDL
 - **Automatic Dependency Resolution** - Dependencies inferred from file and data relationships
 - **Job Parameterization** - Create parameter sweeps and grid searches with simple syntax
 - **Distributed Execution** - Run jobs across multiple compute nodes with resource tracking
 - **Slurm Integration** - Native support for HPC cluster job submission
+- **Automatic Failure Recovery** - Detect OOM/timeout failures and retry with adjusted resources
 - **Workflow Resumption** - Restart workflows after failures without losing progress
 - **Change Detection** - Automatically detect input changes and re-run affected jobs
 - **Resource Management** - Track CPU, memory, and GPU usage across all jobs
@@ -83,32 +85,28 @@ For detailed documentation, see the [docs](docs/) directory.
 ## Architecture
 
 ```
-┌───────────────────────────────────────────────────────────┐
-│                        Torc Server                        │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │              REST API (Tokio 1-thread)              │  │
-│  │   /workflows  /jobs  /files  /user_data  /results   │  │
-│  └──────────────────────┬──────────────────────────────┘  │
-│                         │                                 │
-│  ┌──────────────────────▼──────────────────────────────┐  │
-│  │               SQLite Database (WAL)                 │  │
-│  │   • Workflow state    • Job dependencies            │  │
-│  │   • Resource tracking • Execution results           │  │
-│  └─────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────┘
-                            ▲
-                            │ HTTP/REST
-                            │
-        ┌───────────────────┼───────────────────┐
-        │                   │                   │
-┌───────▼───────┐  ┌────────▼────────┐  ┌───────▼───────┐
-│   Torc CLI    │  │  Job Runner 1   │  │ Job Runner N  │
-│               │  │   (compute-01)  │  │  (compute-nn) │
-│ • Create      │  │                 │  │               │
-│   workflows   │  │ • Poll for jobs │  │ • Poll for jobs│
-│ • Submit specs│  │ • Execute tasks │  │ • Execute tasks│
-│ • Monitor     │  │ • Report results│  │ • Report results│
-└───────────────┘  └─────────────────┘  └───────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                         Torc Server                         │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │               REST API (Tokio + Axum)                 │  │
+│  │    /workflows  /jobs  /files  /user_data  /results    │  │
+│  └───────────────────────────┬───────────────────────────┘  │
+│                              │                              │
+│  ┌───────────────────────────▼───────────────────────────┐  │
+│  │                SQLite Database (WAL)                  │  │
+│  │    • Workflow state    • Job dependencies             │  │
+│  │    • Resource tracking • Execution results            │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                               ▲
+                               │ HTTP/REST
+                               │
+     ┌────────────┬────────────┼────────────┬────────────┐
+     │            │            │            │            │
+┌────▼────┐ ┌─────▼─────┐ ┌────▼────┐ ┌─────▼─────┐ ┌────▼────┐
+│   CLI   │ │ Dashboard │ │   AI    │ │ Runner 1  │ │ Runner N│
+│  torc   │ │ torc-dash │ │Assistant│ │(compute-1)│ │(compute)│
+└─────────┘ └───────────┘ └─────────┘ └───────────┘ └─────────┘
 ```
 
 ## Command-Line Interface
