@@ -1168,8 +1168,15 @@ fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String>
         return Err("Recovery hook command is empty".to_string());
     }
 
+    // If the program doesn't contain a path separator and exists in the current directory,
+    // prepend "./" so it's found (Command::new searches PATH, not CWD)
     let program = parts[0];
-    let mut cmd = Command::new(program);
+    let program_path = if !program.contains('/') && std::path::Path::new(program).exists() {
+        format!("./{}", program)
+    } else {
+        program.to_string()
+    };
+    let mut cmd = Command::new(&program_path);
 
     // Add any arguments from the hook command
     if parts.len() > 1 {
