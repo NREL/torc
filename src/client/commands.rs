@@ -13,6 +13,7 @@ pub mod scheduled_compute_nodes;
 pub mod slurm;
 pub mod table_format;
 pub mod user_data;
+pub mod watch;
 pub mod workflows;
 
 use std::env;

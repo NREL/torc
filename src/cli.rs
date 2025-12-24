@@ -142,6 +142,54 @@ pub enum Commands {
         #[arg(long, default_value = "false")]
         skip_checks: bool,
     },
+    /// Watch a workflow and automatically recover from failures
+    ///
+    /// Monitors a workflow until completion. With --auto-recover, automatically
+    /// diagnoses failures, adjusts resource requirements, and resubmits jobs.
+    ///
+    /// Recovery heuristics:
+    /// - OOM (out of memory): Increase memory by --memory-multiplier (default 1.5x)
+    /// - Timeout: Increase runtime by --runtime-multiplier (default 1.5x)
+    /// - Other failures: Retry without changes (transient errors)
+    ///
+    /// Without --auto-recover, reports failures and exits for manual intervention
+    /// or AI-assisted recovery via the MCP server.
+    Watch {
+        /// Workflow ID to watch
+        #[arg()]
+        workflow_id: i64,
+
+        /// Poll interval in seconds
+        #[arg(short, long, default_value = "60")]
+        poll_interval: u64,
+
+        /// Enable automatic failure recovery
+        #[arg(long)]
+        auto_recover: bool,
+
+        /// Maximum number of recovery attempts (default: 3)
+        #[arg(long, default_value = "3")]
+        max_retries: u32,
+
+        /// Memory multiplier for OOM failures (default: 1.5 = 50% increase)
+        #[arg(long, default_value = "1.5")]
+        memory_multiplier: f64,
+
+        /// Runtime multiplier for timeout failures (default: 1.5 = 50% increase)
+        #[arg(long, default_value = "1.5")]
+        runtime_multiplier: f64,
+
+        /// Output directory for job files
+        #[arg(short, long, default_value = "output")]
+        output_dir: PathBuf,
+
+        /// Show job counts by status during polling
+        ///
+        /// WARNING: This option queries all jobs on each poll, which can cause high
+        /// server load for large workflows. Only use for debugging or small workflows.
+        #[arg(long)]
+        show_job_counts: bool,
+    },
     /// Workflow management commands
     Workflows {
         #[command(subcommand)]

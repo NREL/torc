@@ -28,6 +28,9 @@ pub struct ClientConfig {
 
     /// HPC profile configuration
     pub hpc: ClientHpcConfig,
+
+    /// Watch command configuration
+    pub watch: ClientWatchConfig,
 }
 
 impl Default for ClientConfig {
@@ -40,6 +43,7 @@ impl Default for ClientConfig {
             run: ClientRunConfig::default(),
             slurm: ClientSlurmConfig::default(),
             hpc: ClientHpcConfig::default(),
+            watch: ClientWatchConfig::default(),
         }
     }
 }
@@ -100,6 +104,50 @@ impl Default for ClientSlurmConfig {
         Self {
             poll_interval: 60,
             keep_submission_scripts: false,
+        }
+    }
+}
+
+/// Configuration for the `torc watch` command
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ClientWatchConfig {
+    /// Poll interval in seconds for checking workflow status
+    pub poll_interval: u64,
+
+    /// Maximum recovery attempts per job
+    pub max_retries: u32,
+
+    /// Cooldown period between retries in seconds
+    pub retry_cooldown: u64,
+
+    /// Claude model to use for diagnosis
+    pub model: String,
+
+    /// Path to failure pattern cache database
+    pub cache_path: Option<PathBuf>,
+
+    /// Rate limit: max API calls per minute
+    pub rate_limit_per_minute: u32,
+
+    /// Path to audit log file
+    pub audit_log_path: Option<PathBuf>,
+
+    /// Anthropic API key (fallback if ANTHROPIC_API_KEY env var not set)
+    pub api_key: Option<String>,
+}
+
+impl Default for ClientWatchConfig {
+    fn default() -> Self {
+        Self {
+            poll_interval: 30,
+            max_retries: 3,
+            retry_cooldown: 60,
+            model: "claude-sonnet-4-20250514".to_string(),
+            cache_path: None,
+            rate_limit_per_minute: 10,
+            audit_log_path: None,
+            api_key: None,
         }
     }
 }

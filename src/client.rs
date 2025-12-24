@@ -18,6 +18,7 @@ pub mod log_paths;
 pub mod parameter_expansion;
 pub mod resource_monitor;
 pub mod utils;
+pub mod watch;
 pub mod workflow_graph;
 pub mod workflow_manager;
 pub mod workflow_spec;
