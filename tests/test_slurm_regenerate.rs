@@ -621,25 +621,34 @@ fn test_regenerate_uses_existing_account(start_server: &ServerProcess) {
 
 // ============== Edge Case Tests ==============
 
-/// Test regenerate with jobs missing resource requirements
+/// Test regenerate with jobs that use default resource requirements
+/// When a job is created without specifying resource requirements, the server
+/// automatically assigns the workflow's default resource requirements.
 #[rstest]
-fn test_regenerate_missing_resource_requirements(start_server: &ServerProcess) {
+fn test_regenerate_with_default_resource_requirements(start_server: &ServerProcess) {
     let config = &start_server.config;
 
-    // Create workflow
+    // Create workflow (this also creates a "default" resource requirement automatically)
     let user = "test_user".to_string();
-    let workflow = models::WorkflowModel::new("test_missing_rr".to_string(), user);
+    let workflow = models::WorkflowModel::new("test_default_rr".to_string(), user);
     let created_workflow =
         default_api::create_workflow(config, workflow).expect("Failed to create workflow");
     let workflow_id = created_workflow.id.unwrap();
 
-    // Create job WITHOUT resource requirements
+    // Create job WITHOUT explicit resource requirements
+    // The server will automatically assign the default resource requirements
     let job = models::JobModel::new(
         workflow_id,
-        "job_no_rr".to_string(),
+        "job_with_default_rr".to_string(),
         "echo test".to_string(),
     );
-    default_api::create_job(config, job).expect("Failed to create job");
+    let created_job = default_api::create_job(config, job).expect("Failed to create job");
+
+    // Verify that the server assigned a resource_requirements_id
+    assert!(
+        created_job.resource_requirements_id.is_some(),
+        "Server should have assigned default resource requirements"
+    );
 
     // Initialize
     default_api::initialize_jobs(config, workflow_id, None, None, None)
@@ -660,11 +669,23 @@ fn test_regenerate_missing_resource_requirements(start_server: &ServerProcess) {
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
-    // Should have a warning about missing resource requirements
+
+    // Should have 1 pending job (the one we created)
+    assert_eq!(
+        json.get("pending_jobs").unwrap().as_i64().unwrap(),
+        1,
+        "Should have 1 pending job"
+    );
+
+    // Should create a scheduler for the default resource requirements
+    let schedulers = json.get("schedulers_created").unwrap().as_array().unwrap();
+    assert_eq!(schedulers.len(), 1, "Should create 1 scheduler");
+
+    // No warnings expected since job has resource requirements (the default)
     let warnings = json.get("warnings").unwrap().as_array().unwrap();
     assert!(
-        !warnings.is_empty(),
-        "Expected warnings about missing resource requirements"
+        warnings.is_empty(),
+        "Should have no warnings when jobs have default resource requirements"
     );
 }
 
