@@ -373,8 +373,9 @@ pub fn create_workflow(
         .unwrap_or("unnamed")
         .to_string();
 
-    // For Slurm workflows, validate resource_requirements exist
-    if workflow_type == "slurm" {
+    // For Slurm workflows being created, validate resource_requirements exist
+    // Skip validation for save_spec_file to allow saving work-in-progress specs
+    if workflow_type == "slurm" && action == "create_workflow" {
         // Check if resource_requirements section exists and has entries
         let has_resource_reqs = spec
             .get("resource_requirements")
@@ -469,7 +470,10 @@ pub fn create_workflow(
             // Create slurm workflow using CLI: torc workflows create-slurm
             let mut cmd = Command::new("torc");
             cmd.args(["-f", "json", "workflows", "create-slurm"]);
-            cmd.args(["--account", account.unwrap()]);
+            cmd.args([
+                "--account",
+                account.expect("account validated for slurm workflows"),
+            ]);
             cmd.args(["--user", user]);
 
             if let Some(profile) = hpc_profile {
@@ -509,7 +513,7 @@ pub fn create_workflow(
         }
         ("save_spec_file", "local") => {
             // Save the spec as JSON to the output path
-            let output_path = output_path.unwrap();
+            let output_path = output_path.expect("output_path validated for save_spec_file");
             let content = serde_json::to_string_pretty(&spec)
                 .map_err(|e| internal_error(format!("Failed to serialize spec: {}", e)))?;
             std::fs::write(output_path, &content)
@@ -527,11 +531,14 @@ pub fn create_workflow(
         }
         ("save_spec_file", "slurm") => {
             // Generate slurm schedulers and save as JSON
-            let output_path = output_path.unwrap();
+            let output_path = output_path.expect("output_path validated for save_spec_file");
 
             let mut cmd = Command::new("torc");
             cmd.args(["slurm", "generate"]);
-            cmd.args(["--account", account.unwrap()]);
+            cmd.args([
+                "--account",
+                account.expect("account validated for slurm workflows"),
+            ]);
             cmd.args(["--output", output_path]);
 
             if let Some(profile) = hpc_profile {
