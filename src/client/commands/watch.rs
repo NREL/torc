@@ -492,6 +492,50 @@ fn cleanup_dead_pending_slurm_jobs(
     Ok(total_cleaned)
 }
 
+/// Check if there are any scheduled compute nodes with status pending or active.
+/// If there are none, the workflow cannot make progress.
+fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> bool {
+    // Check for pending allocations
+    if let Ok(response) = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,            // offset
+        Some(1),         // limit - just need one
+        None,            // sort_by
+        None,            // reverse_sort
+        None,            // scheduler_id
+        None,            // scheduler_config_id
+        Some("pending"), // status
+    ) {
+        if let Some(nodes) = response.items {
+            if !nodes.is_empty() {
+                return true;
+            }
+        }
+    }
+
+    // Check for active allocations
+    if let Ok(response) = default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,           // offset
+        Some(1),        // limit - just need one
+        None,           // sort_by
+        None,           // reverse_sort
+        None,           // scheduler_id
+        None,           // scheduler_config_id
+        Some("active"), // status
+    ) {
+        if let Some(nodes) = response.items {
+            if !nodes.is_empty() {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
 /// Check if there is at least one valid Slurm allocation (pending or running in Slurm).
 ///
 /// This is used to optimize the poll loop: if we have valid allocations, we can skip
@@ -835,6 +879,14 @@ fn poll_until_complete(
             Err(e) => {
                 warn!("Error checking for orphaned jobs: {}", e);
             }
+        }
+
+        // Check if there are any pending or active scheduled compute nodes
+        // If not, nothing can make progress and we should exit
+        if !has_any_scheduled_compute_nodes(config, workflow_id) {
+            warn!("No pending or active scheduled compute nodes found");
+            warn!("Workflow cannot make progress without active allocations");
+            break;
         }
 
         std::thread::sleep(Duration::from_secs(poll_interval));
