@@ -137,7 +137,6 @@ The Torc MCP server provides tools for AI-assisted investigation:
 | `get_job_logs` | Read stdout/stderr logs |
 | `check_resource_utilization` | Detailed resource analysis |
 | `update_job_resources` | Manually adjust resources |
-| `restart_jobs` | Reset and restart jobs |
 | `resubmit_workflow` | Regenerate Slurm schedulers |
 
 ## Comparison

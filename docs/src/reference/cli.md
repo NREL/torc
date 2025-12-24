@@ -283,6 +283,13 @@ Without --auto-recover, reports failures and exits for manual intervention or AI
    By default, only jobs that failed due to OOM or timeout are retried (with increased resources). Jobs with unknown failure causes are skipped since they likely have script or data bugs that won't be fixed by retrying.
 
    Enable this flag to also retry jobs with unknown failures (e.g., to handle transient errors like network issues or filesystem glitches).
+* `--recovery-hook <RECOVERY_HOOK>` — Custom recovery hook command for unknown failures
+
+   When jobs fail with unknown causes (not OOM or timeout), this command is executed before resetting jobs for retry. Use this to run custom recovery logic, such as adjusting Spark cluster sizes or fixing configuration issues.
+
+   The workflow ID is passed as both an argument and environment variable: - Argument: `<command> <workflow_id>` - Environment: `TORC_WORKFLOW_ID=<workflow_id>`
+
+   Example: --recovery-hook "bash fix-spark-cluster.sh"
 * `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for job files
 
   Default value: `output`
@@ -2080,3 +2087,4 @@ Generate shell completions
     This document was generated automatically by
     <a href="https://crates.io/crates/clap-markdown"><code>clap-markdown</code></a>.
 </i></small>
+

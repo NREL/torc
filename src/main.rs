@@ -453,6 +453,7 @@ fn main() {
             memory_multiplier,
             runtime_multiplier,
             retry_unknown,
+            recovery_hook,
             output_dir,
             show_job_counts,
         } => {
@@ -464,6 +465,7 @@ fn main() {
                 memory_multiplier: *memory_multiplier,
                 runtime_multiplier: *runtime_multiplier,
                 retry_unknown: *retry_unknown,
+                recovery_hook: recovery_hook.clone(),
                 output_dir: output_dir.clone(),
                 show_job_counts: *show_job_counts,
                 log_level: log_level.clone(),

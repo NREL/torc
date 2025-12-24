@@ -56,6 +56,7 @@ pub struct WatchArgs {
     pub memory_multiplier: f64,
     pub runtime_multiplier: f64,
     pub retry_unknown: bool,
+    pub recovery_hook: Option<String>,
     pub output_dir: PathBuf,
     pub show_job_counts: bool,
     pub log_level: String,
@@ -1146,6 +1147,65 @@ fn reset_failed_jobs(
     Ok(job_count)
 }
 
+/// Run the user's custom recovery hook command
+///
+/// The hook receives the workflow ID as both an argument and environment variable,
+/// allowing users to run custom recovery logic (e.g., adjusting Spark cluster sizes).
+fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String> {
+    info!("Running recovery hook: {}", hook_command);
+
+    // Split the command into program and arguments
+    let parts: Vec<&str> = hook_command.split_whitespace().collect();
+    if parts.is_empty() {
+        return Err("Recovery hook command is empty".to_string());
+    }
+
+    let program = parts[0];
+    let mut cmd = Command::new(program);
+
+    // Add any arguments from the hook command
+    if parts.len() > 1 {
+        cmd.args(&parts[1..]);
+    }
+
+    // Add workflow ID as final argument
+    cmd.arg(workflow_id.to_string());
+
+    // Also set as environment variable for convenience
+    cmd.env("TORC_WORKFLOW_ID", workflow_id.to_string());
+
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute recovery hook '{}': {}", hook_command, e))?;
+
+    // Log stdout if present
+    if !output.stdout.is_empty() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        for line in stdout.lines() {
+            info!("  [hook] {}", line);
+        }
+    }
+
+    // Log stderr if present
+    if !output.stderr.is_empty() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        for line in stderr.lines() {
+            warn!("  [hook] {}", line);
+        }
+    }
+
+    if !output.status.success() {
+        let exit_code = output.status.code().unwrap_or(-1);
+        return Err(format!(
+            "Recovery hook '{}' failed with exit code {}",
+            hook_command, exit_code
+        ));
+    }
+
+    info!("Recovery hook completed successfully");
+    Ok(())
+}
+
 /// Regenerate Slurm schedulers and submit allocations
 fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), String> {
     let output = Command::new("torc")
@@ -1317,13 +1377,16 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
 
         // Step 2: Apply heuristics to adjust resources
         info!("\nApplying recovery heuristics...");
+        // If a recovery hook is provided, treat unknown failures as retryable
+        // (the user is explicitly saying they'll handle them with their script)
+        let retry_unknown = args.retry_unknown || args.recovery_hook.is_some();
         let recovery_result = match apply_recovery_heuristics(
             config,
             args.workflow_id,
             &diagnosis,
             args.memory_multiplier,
             args.runtime_multiplier,
-            args.retry_unknown,
+            retry_unknown,
             &args.output_dir,
         ) {
             Ok(result) => {
@@ -1334,11 +1397,18 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
                     );
                 }
                 if result.other_failures > 0 {
-                    if args.retry_unknown {
-                        info!(
-                            "  {} job(s) with unknown failure cause (will retry)",
-                            result.other_failures
-                        );
+                    if retry_unknown {
+                        if args.recovery_hook.is_some() {
+                            info!(
+                                "  {} job(s) with unknown failure cause (will run recovery hook)",
+                                result.other_failures
+                            );
+                        } else {
+                            info!(
+                                "  {} job(s) with unknown failure cause (will retry)",
+                                result.other_failures
+                            );
+                        }
                     } else {
                         info!(
                             "  {} job(s) with unknown failure cause (skipped, use --retry-unknown to include)",
@@ -1358,6 +1428,20 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
                 }
             }
         };
+
+        // Step 2.5: Run recovery hook if there are unknown failures
+        if recovery_result.other_failures > 0 {
+            if let Some(ref hook_cmd) = args.recovery_hook {
+                info!(
+                    "\n{} job(s) with unknown failure cause - running recovery hook...",
+                    recovery_result.other_failures
+                );
+                if let Err(e) = run_recovery_hook(args.workflow_id, hook_cmd) {
+                    error!("Recovery hook failed: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
 
         // Check if there are any jobs to retry
         if recovery_result.jobs_to_retry.is_empty() {

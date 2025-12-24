@@ -52,11 +52,58 @@ torc watch 42 --auto-recover \
   --memory-multiplier 2.0 \   # Memory increase factor (default: 1.5)
   --runtime-multiplier 2.0 \  # Runtime increase factor (default: 1.5)
   --retry-unknown \           # Also retry jobs with unknown failures (default: skip)
+  --recovery-hook "bash fix.sh" \  # Custom recovery script for unknown failures
   --poll-interval 120 \       # Seconds between status checks (default: 60)
   --output-dir /scratch/output \
   --show-job-counts \         # Display per-status job counts (optional, adds server load)
   --log-level info            # Log level: error, warn, info, debug, trace (default: info)
 ```
+
+### Custom Recovery Hooks
+
+For failures that torc can't handle automatically (not OOM or timeout), you can provide
+a custom recovery script using `--recovery-hook`. This is useful for domain-specific
+recovery logic, such as adjusting Apache Spark cluster sizes or fixing configuration issues.
+
+```bash
+torc watch 42 --auto-recover --recovery-hook "bash fix-spark-cluster.sh"
+```
+
+The hook receives the workflow ID in two ways:
+- **As an argument**: `bash fix-spark-cluster.sh 42`
+- **As an environment variable**: `TORC_WORKFLOW_ID=42`
+
+Your script can use torc CLI commands to query and modify the workflow:
+
+```bash
+#!/bin/bash
+# fix-spark-cluster.sh - Example recovery hook for Spark jobs
+
+WORKFLOW_ID=$1  # or use $TORC_WORKFLOW_ID
+
+# Find failed jobs
+FAILED_JOBS=$(torc jobs list $WORKFLOW_ID --status failed -f json | jq -r '.[].id')
+
+for JOB_ID in $FAILED_JOBS; do
+    # Get current resource requirements
+    JOB_INFO=$(torc jobs get $JOB_ID -f json)
+    RR_ID=$(echo "$JOB_INFO" | jq -r '.resource_requirements_id')
+
+    # Check if this is a Spark job that needs more nodes
+    # (your logic here - parse logs, check error messages, etc.)
+
+    # Update resource requirements
+    torc resource-requirements update $RR_ID --num-nodes 16
+
+    echo "Updated job $JOB_ID to use 16 nodes"
+done
+```
+
+When a recovery hook is provided:
+1. Jobs with unknown failures are automatically included for retry
+2. The hook runs **before** `reset-status` is called
+3. If the hook fails (non-zero exit), auto-recovery stops with an error
+4. After the hook succeeds, failed jobs are reset and retried
 
 ### Log Files
 
@@ -189,6 +236,11 @@ Or use the Torc MCP server with your AI assistant for manual recovery.
 - You're running jobs that are known to have intermittent failures
 - You want to retry all failures, not just resource-related ones
 
+### Use `--recovery-hook` when:
+- You need custom recovery logic that torc can't handle automatically
+- Jobs require domain-specific fixes (e.g., adjusting Spark cluster sizes)
+- You want to run a script to investigate/fix failures before retry
+
 ### Use Manual/AI-Assisted Recovery when:
 - Failures have complex or unknown causes
 - You need to investigate before retrying
@@ -299,6 +351,7 @@ The `torc watch --auto-recover` command provides:
 - **Automatic timeout handling**: Detects slow jobs and increases runtime
 - **Smart retry filtering**: Only retries jobs with diagnosable resource issues (by default)
 - **Optional transient retry**: Use `--retry-unknown` to also retry jobs with unknown failures
+- **Custom recovery hooks**: Use `--recovery-hook` to run your own recovery script for unknown failures
 - **Configurable heuristics**: Adjust multipliers for your workload
 - **Retry limits**: Prevent infinite retry loops
 - **Graceful degradation**: Falls back to manual recovery when needed
