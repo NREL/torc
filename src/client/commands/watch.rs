@@ -1165,12 +1165,6 @@ fn apply_recovery_heuristics(
         other_failures,
         jobs_to_retry,
     })
-    Ok(RecoveryResult {
-        oom_fixed,
-        timeout_fixed,
-        other_failures,
-        jobs_to_retry,
-    })
 }
 
 /// Reset specific failed jobs for retry
@@ -1317,66 +1311,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         .expect("Failed to get hostname")
         .into_string()
         .expect("Hostname is not valid UTF-8");
-    let hostname = hostname::get()
-        .expect("Failed to get hostname")
-        .into_string()
-        .expect("Hostname is not valid UTF-8");
 
-    // Create output directory if it doesn't exist
-    if let Err(e) = std::fs::create_dir_all(&args.output_dir) {
-        eprintln!(
-            "Error creating output directory {}: {}",
-            args.output_dir.display(),
-            e
-        );
-        std::process::exit(1);
-    }
-
-    let log_file_path = get_watch_log_file(args.output_dir.clone(), &hostname, args.workflow_id);
-    let log_file = match File::create(&log_file_path) {
-        Ok(file) => file,
-        Err(e) => {
-            eprintln!("Error creating log file {}: {}", log_file_path, e);
-            std::process::exit(1);
-        }
-    };
-
-    let multi_writer = MultiWriter {
-        stdout: std::io::stdout(),
-        file: log_file,
-    };
-
-    // Parse log level string to LevelFilter
-    let log_level_filter = match args.log_level.to_lowercase().as_str() {
-        "error" => LevelFilter::Error,
-        "warn" => LevelFilter::Warn,
-        "info" => LevelFilter::Info,
-        "debug" => LevelFilter::Debug,
-        "trace" => LevelFilter::Trace,
-        _ => {
-            eprintln!(
-                "Invalid log level '{}', defaulting to 'info'",
-                args.log_level
-            );
-            LevelFilter::Info
-        }
-    };
-
-    let mut builder = Builder::from_default_env();
-    builder
-        .target(env_logger::Target::Pipe(Box::new(multi_writer)))
-        .filter_level(log_level_filter)
-        .try_init()
-        .ok(); // Ignore error if logger is already initialized
-
-    info!("Starting watch command");
-    info!("Hostname: {}", hostname);
-    info!("Output directory: {}", args.output_dir.display());
-    info!("Log file: {}", log_file_path);
-
-    let mut retry_count = 0u32;
-
-    info!(
     // Create output directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all(&args.output_dir) {
         eprintln!(
