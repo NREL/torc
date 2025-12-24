@@ -39,7 +39,7 @@ pub enum WorkflowAction {
     Reset,
     Run,
     Submit,
-    Watch,      // Watch workflow with auto-recovery
+    Watch,       // Watch workflow with auto-recovery
     WatchNoAuto, // Watch workflow without auto-recovery
     Delete,
     Cancel,
@@ -1498,7 +1498,13 @@ impl App {
                 "--show-job-counts",
             ]
         } else {
-            vec!["--url", &url, "watch", &workflow_id_str, "--show-job-counts"]
+            vec![
+                "--url",
+                &url,
+                "watch",
+                &workflow_id_str,
+                "--show-job-counts",
+            ]
         };
 
         match viewer.start(&exe_path, &args) {

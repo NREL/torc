@@ -8,9 +8,10 @@ Torc uses a client-server architecture where a central server manages workflow s
 
 Choose the interface that fits your workflow:
 
-- **AI Assistants** — Use [Claude Code](https://claude.ai/code) or GitHub Copilot to manage workflows through natural language. *"Create a workflow with 10 parallel jobs"* or *"Why did job 5 fail?"*
-- **CLI** — The `torc` command for scripting and automation
 - **Dashboard** — Web UI ([torc-dash](./how-to/dashboard.md)) for visual monitoring
+- **AI Assistants** — Use [Claude Code](https://claude.ai/code) or GitHub Copilot to manage workflows through natural language. *"Create a workflow with 10 parallel jobs"* or *"Why did job 5 fail?"*
+- **TUI** — Terminal User Interface (`torc tui`) for visual monitoring in a terminal
+- **CLI** — The `torc` command for scripting and automation
 - **Spec Files** — YAML, KDL, or JSON5 files for version-controlled workflow definitions
 - **Python/Julia APIs** — Libraries for programmatic workflow generation
 

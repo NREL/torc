@@ -12,6 +12,9 @@ use std::time::Duration;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::pagination::{
+    ScheduledComputeNodeListParams, paginate_scheduled_compute_nodes,
+};
 use crate::client::hpc::common::HpcJobStatus;
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::hpc::slurm_interface::SlurmInterface;
@@ -150,9 +153,6 @@ fn get_job_counts(
 /// 4. Finds all jobs with active_compute_node_id matching those compute nodes
 /// 5. Fails those jobs with the orphaned return code
 ///
-/// This is more accurate than the old fail_orphaned_running_jobs because it uses Slurm
-/// as the authoritative source for whether jobs are still running.
-///
 /// Returns the number of jobs that were failed.
 fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<usize, String> {
     // Get workflow status to retrieve run_id
@@ -161,20 +161,12 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
     let run_id = workflow_status.run_id;
 
     // Get all scheduled compute nodes with status="active" and scheduler_type="slurm"
-    let scheduled_nodes_response = default_api::list_scheduled_compute_nodes(
+    let scheduled_nodes = paginate_scheduled_compute_nodes(
         config,
         workflow_id,
-        None,           // offset
-        Some(1000),     // limit
-        None,           // sort_by
-        None,           // reverse_sort
-        None,           // scheduler_id
-        None,           // scheduler_config_id
-        Some("active"), // status
+        ScheduledComputeNodeListParams::new().with_status("active".to_string()),
     )
     .map_err(|e| format!("Failed to list scheduled compute nodes: {}", e))?;
-
-    let scheduled_nodes = scheduled_nodes_response.items.unwrap_or_default();
 
     // Filter for Slurm scheduler type
     let slurm_nodes: Vec<_> = scheduled_nodes
@@ -392,20 +384,12 @@ fn cleanup_dead_pending_slurm_jobs(
     workflow_id: i64,
 ) -> Result<usize, String> {
     // Get all scheduled compute nodes with status="pending"
-    let scheduled_nodes_response = default_api::list_scheduled_compute_nodes(
+    let scheduled_nodes = paginate_scheduled_compute_nodes(
         config,
         workflow_id,
-        None,            // offset
-        Some(1000),      // limit
-        None,            // sort_by
-        None,            // reverse_sort
-        None,            // scheduler_id
-        None,            // scheduler_config_id
-        Some("pending"), // status
+        ScheduledComputeNodeListParams::new().with_status("pending".to_string()),
     )
     .map_err(|e| format!("Failed to list pending scheduled compute nodes: {}", e))?;
-
-    let scheduled_nodes = scheduled_nodes_response.items.unwrap_or_default();
 
     // Filter for Slurm scheduler type
     let slurm_nodes: Vec<_> = scheduled_nodes
@@ -1288,15 +1272,15 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         let needs_recovery = failed > 0 || canceled > 0 || terminated > 0;
 
         if !needs_recovery {
-            error!("\n✓ Workflow completed successfully ({} jobs)", completed);
+            info!("\n✓ Workflow completed successfully ({} jobs)", completed);
             break;
         }
 
-        error!("\nWorkflow completed with failures:");
-        error!("  - Failed: {}", failed);
-        error!("  - Canceled: {}", canceled);
-        error!("  - Terminated: {}", terminated);
-        error!("  - Completed: {}", completed);
+        warn!("\nWorkflow completed with failures:");
+        warn!("  - Failed: {}", failed);
+        warn!("  - Canceled: {}", canceled);
+        warn!("  - Terminated: {}", terminated);
+        warn!("  - Completed: {}", completed);
 
         // Check if we should attempt recovery
         if !args.auto_recover {
@@ -1306,11 +1290,11 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         }
 
         if retry_count >= args.max_retries {
-            error!(
+            warn!(
                 "\nMax retries ({}) exceeded. Manual intervention required.",
                 args.max_retries
             );
-            info!("Use the Torc MCP server with your AI assistant to investigate.");
+            warn!("Use the Torc MCP server with your AI assistant to investigate.");
             std::process::exit(1);
         }
 
@@ -1377,12 +1361,12 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
 
         // Check if there are any jobs to retry
         if recovery_result.jobs_to_retry.is_empty() {
-            error!(
+            warn!(
                 "\nNo recoverable jobs found. {} job(s) failed with unknown causes.",
                 recovery_result.other_failures
             );
-            error!("Use --retry-unknown to retry jobs with unknown failure causes.");
-            error!("Or use the Torc MCP server with your AI assistant to investigate.");
+            warn!("Use --retry-unknown to retry jobs with unknown failure causes.");
+            warn!("Or use the Torc MCP server with your AI assistant to investigate.");
             std::process::exit(1);
         }
 
@@ -1404,7 +1388,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         // Step 4: Regenerate Slurm schedulers and submit
         info!("Regenerating Slurm schedulers and submitting...");
         if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
-            error!("Error regenerating schedulers: {}", e);
+            warn!("Error regenerating schedulers: {}", e);
             std::process::exit(1);
         }
 

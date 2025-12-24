@@ -60,6 +60,7 @@
   - [Resource Monitoring](./reference/resource-monitoring.md)
   - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
+  - [AI Assistant](./reference/ai-assistant.md)
   - [Security](./reference/security.md)
 
 # Tutorials
