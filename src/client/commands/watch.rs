@@ -1178,14 +1178,14 @@ fn reset_failed_jobs(
 
     let job_count = job_ids.len();
 
-    // Use reset-status --failed-only --restart to reset failed jobs and trigger unblocking
+    // Use reset-status --failed-only --reinitialize to reset failed jobs and trigger unblocking
     let output = Command::new("torc")
         .args([
             "workflows",
             "reset-status",
             &workflow_id.to_string(),
             "--failed-only",
-            "--restart",
+            "--reinitialize",
             "--no-prompts",
         ])
         .output()

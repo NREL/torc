@@ -614,7 +614,7 @@ Reset workflow and job status
 * `--failed-only` — Only reset failed jobs
 
   Default value: `false`
-* `-r`, `--restart` — Restart the workflow after resetting status
+* `-r`, `--reinitialize` — Reinitialize the workflow after resetting status
 
   Default value: `false`
 * `--force` — Force reset even if there are active jobs (ignores running/pending jobs check)
@@ -2087,4 +2087,3 @@ Generate shell completions
     This document was generated automatically by
     <a href="https://crates.io/crates/clap-markdown"><code>clap-markdown</code></a>.
 </i></small>
-

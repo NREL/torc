@@ -284,12 +284,12 @@ impl TorcMcpServer {
     #[tool(
         description = "Reset all failed jobs in a workflow and restart it. This resets job statuses to uninitialized and re-initializes the workflow. Use after updating resource requirements for failed jobs."
     )]
-    async fn reset_and_restart_workflow(
+    async fn reset_and_reinitialize_workflow(
         &self,
         #[tool(aggr)] params: ResetAndRestartWorkflowParams,
     ) -> Result<CallToolResult, McpError> {
         let workflow_id = params.workflow_id;
-        tokio::task::spawn_blocking(move || tools::reset_and_restart_workflow(workflow_id))
+        tokio::task::spawn_blocking(move || tools::reset_and_reinitialize_workflow(workflow_id))
             .await
             .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }

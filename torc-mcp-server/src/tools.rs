@@ -566,8 +566,8 @@ pub fn create_workflow(
     }
 }
 
-/// Reset failed jobs and restart a workflow by running the CLI command.
-pub fn reset_and_restart_workflow(workflow_id: i64) -> Result<CallToolResult, McpError> {
+/// Reset failed jobs and reinitialize a workflow by running the CLI command.
+pub fn reset_and_reinitialize_workflow(workflow_id: i64) -> Result<CallToolResult, McpError> {
     let output = Command::new("torc")
         .args([
             "-f",
@@ -576,7 +576,7 @@ pub fn reset_and_restart_workflow(workflow_id: i64) -> Result<CallToolResult, Mc
             "reset-status",
             &workflow_id.to_string(),
             "--failed-only",
-            "--restart",
+            "--reinitialize",
             "--no-prompts",
         ])
         .output()

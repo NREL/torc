@@ -290,9 +290,9 @@ pub enum WorkflowCommands {
         /// Only reset failed jobs
         #[arg(long, default_value = "false")]
         failed_only: bool,
-        /// Restart the workflow after resetting status
+        /// Reinitialize the workflow after resetting status
         #[arg(short, long, default_value = "false")]
-        restart: bool,
+        reinitialize: bool,
         /// Force reset even if there are active jobs (ignores running/pending jobs check)
         #[arg(long, default_value = "false")]
         force: bool,
@@ -785,7 +785,7 @@ fn handle_reset_status(
     config: &Configuration,
     workflow_id: &Option<i64>,
     failed_only: bool,
-    restart: bool,
+    reinitialize: bool,
     force: bool,
     no_prompts: bool,
     format: &str,
@@ -808,8 +808,8 @@ fn handle_reset_status(
         } else {
             eprintln!("This will reset the status of all jobs.");
         }
-        if restart {
-            eprintln!("The workflow will be restarted after reset.");
+        if reinitialize {
+            eprintln!("The workflow will be reinitialized after reset.");
         }
         if force {
             eprintln!("Force mode is enabled (will ignore running/pending jobs check).");
@@ -836,7 +836,7 @@ fn handle_reset_status(
     // Track the results of each operation for JSON output
     let mut workflow_reset_success = false;
     let mut job_reset_success = false;
-    let mut restart_success = false;
+    let mut reinitialize_success = false;
     let mut errors = Vec::<String>::new();
 
     // Pass force as query parameter
@@ -887,31 +887,37 @@ fn handle_reset_status(
         }
     }
 
-    // If restart is true, restart the workflow
-    if restart {
+    // If reinitialize is true, reinitialize the workflow
+    if reinitialize {
         match default_api::get_workflow(config, selected_workflow_id) {
             Ok(workflow) => {
                 let torc_config = TorcConfig::load().unwrap_or_default();
                 let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow);
                 match workflow_manager.reinitialize(false, false) {
                     Ok(()) => {
-                        restart_success = true;
+                        reinitialize_success = true;
                         if format != "json" {
-                            eprintln!("Successfully restarted workflow {}", selected_workflow_id);
+                            eprintln!(
+                                "Successfully reinitialized workflow {}",
+                                selected_workflow_id
+                            );
                         }
                     }
                     Err(e) => {
-                        errors.push(format!("restarting workflow: {}", e));
+                        errors.push(format!("reinitializing workflow: {}", e));
                         if format != "json" {
-                            eprintln!("Error restarting workflow {}: {}", selected_workflow_id, e);
+                            eprintln!(
+                                "Error reinitializing workflow {}: {}",
+                                selected_workflow_id, e
+                            );
                         }
                     }
                 }
             }
             Err(e) => {
-                errors.push(format!("getting workflow for restart: {}", e));
+                errors.push(format!("getting workflow for reinitialize: {}", e));
                 if format != "json" {
-                    print_error("getting workflow for restart", &e);
+                    print_error("getting workflow for reinitialize", &e);
                 }
             }
         }
@@ -920,7 +926,7 @@ fn handle_reset_status(
     // Output combined JSON or exit with error if any operation failed
     if format == "json" {
         let overall_success =
-            workflow_reset_success && job_reset_success && (!restart || restart_success);
+            workflow_reset_success && job_reset_success && (!reinitialize || reinitialize_success);
 
         let mut messages = Vec::new();
         if workflow_reset_success {
@@ -942,9 +948,9 @@ fn handle_reset_status(
                 ));
             }
         }
-        if restart && restart_success {
+        if reinitialize && reinitialize_success {
             messages.push(format!(
-                "Successfully restarted workflow {}",
+                "Successfully reinitialized workflow {}",
                 selected_workflow_id
             ));
         }
@@ -956,7 +962,7 @@ fn handle_reset_status(
                 "operations": {
                     "workflow_reset": workflow_reset_success,
                     "job_reset": job_reset_success,
-                    "restart": if restart { Some(restart_success) } else { None }
+                    "reinitialize": if reinitialize { Some(reinitialize_success) } else { None }
                 },
                 "failed_only": failed_only,
                 "messages": messages
@@ -968,7 +974,7 @@ fn handle_reset_status(
                 "operations": {
                     "workflow_reset": workflow_reset_success,
                     "job_reset": job_reset_success,
-                    "restart": if restart { Some(restart_success) } else { None }
+                    "reinitialize": if reinitialize { Some(reinitialize_success) } else { None }
                 },
                 "failed_only": failed_only,
                 "messages": messages,
@@ -2467,7 +2473,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::ResetStatus {
             workflow_id,
             failed_only,
-            restart,
+            reinitialize,
             force,
             no_prompts,
         } => {
@@ -2475,7 +2481,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 config,
                 workflow_id,
                 *failed_only,
-                *restart,
+                *reinitialize,
                 *force,
                 *no_prompts,
                 format,

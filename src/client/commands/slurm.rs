@@ -2903,6 +2903,9 @@ fn handle_regenerate(
             if let Some(job_id) = job.id {
                 let mut updated_job = (*job).clone();
                 updated_job.scheduler_id = Some(scheduler_id);
+                // Clear status so server ignores it during comparison
+                // (avoids 422 errors if status changed since job was fetched)
+                updated_job.status = None;
                 if let Err(e) = default_api::update_job(config, job_id, updated_job) {
                     warnings.push(format!(
                         "Failed to update job {} with scheduler: {}",
