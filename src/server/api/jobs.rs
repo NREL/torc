@@ -1496,22 +1496,45 @@ where
             Err(e) => return Err(e),
         };
 
-        // Restriction 1: Updating is only allowed if the job status is Uninitialized
-        if let Some(ref status) = existing_job.status {
-            if *status != JobStatus::Uninitialized {
+        // Check if job has a status
+        let existing_status = match existing_job.status {
+            Some(ref status) => status.clone(),
+            None => {
                 let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": format!(
-                        "Cannot update job when status is '{}' - updates are only allowed when status is 'uninitialized'",
-                        status
-                    )
+                    "message": "Cannot update job - job has no status set"
                 }));
                 return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
                     error_response,
                 ));
             }
-        } else {
+        };
+
+        // Determine if we're only updating fields that are allowed at any time
+        // (scheduler_id and resource_requirements_id can be updated regardless of status)
+        // Required fields (name, command) are checked by comparing to existing values
+        let only_updating_always_allowed_fields = {
+            let name_changed = body.name != existing_job.name;
+            let command_changed = body.command != existing_job.command;
+            let has_restricted_updates = name_changed
+                || command_changed
+                || body.input_file_ids.is_some()
+                || body.output_file_ids.is_some()
+                || body.input_user_data_ids.is_some()
+                || body.output_user_data_ids.is_some()
+                || body.depends_on_job_ids.is_some()
+                || body.status.is_some();
+            !has_restricted_updates
+        };
+
+        // Restriction 1: Most updates are only allowed if the job status is Uninitialized
+        // Exception: scheduler_id and resource_requirements_id can be updated at any time
+        if existing_status != JobStatus::Uninitialized && !only_updating_always_allowed_fields {
             let error_response = models::ErrorResponse::new(serde_json::json!({
-                "message": "Cannot update job - job has no status set"
+                "message": format!(
+                    "Cannot update job when status is '{}' - most updates are only allowed when status is 'uninitialized'. \
+                     Only scheduler_id and resource_requirements_id can be updated at any time.",
+                    existing_status
+                )
             }));
             return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
                 error_response,
