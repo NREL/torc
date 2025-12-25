@@ -816,17 +816,17 @@ impl<C> Server<C> {
             .resource_requirements_api
             .list_resource_requirements(
                 workflow_id,
-                None,                             // job_id
-                Some("default".to_string()),     // name
-                None,                             // memory
-                None,                             // num_cpus
-                None,                             // num_gpus
-                None,                             // num_nodes
-                None,                             // runtime
-                0,                                // offset
-                1,                                // limit
-                None,                             // sort_by
-                None,                             // reverse_sort
+                None,                        // job_id
+                Some("default".to_string()), // name
+                None,                        // memory
+                None,                        // num_cpus
+                None,                        // num_gpus
+                None,                        // num_nodes
+                None,                        // runtime
+                0,                           // offset
+                1,                           // limit
+                None,                        // sort_by
+                None,                        // reverse_sort
                 context,
             )
             .await;
@@ -1138,31 +1138,24 @@ impl<C> Server<C> {
         Ok(())
     }
 
-    /// Unblock jobs using a provided transaction (for batch processing).
+    /// Fast path for unblocking jobs after a successful completion (return_code = 0).
     ///
-    /// This is the internal implementation that accepts a transaction parameter,
-    /// allowing the background task to process multiple completions in one transaction.
+    /// Uses bulk UPDATE statements instead of individual updates for better performance.
+    /// Handles cancellation of jobs with failed dependencies before marking remaining jobs as ready.
     ///
     /// # Arguments
     /// * `tx` - The database transaction to use
-    /// * `completed_job_id` - The ID of the job that just completed
     /// * `workflow_id` - The workflow ID containing the jobs
-    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    /// * `completed_job_id` - The ID of the job that just completed
     ///
     /// # Returns
-    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready
     /// * `Err(ApiError)` if there's a database error
-    async fn unblock_jobs_waiting_for_tx(
+    async fn unblock_jobs_fast_path_tx(
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         workflow_id: i64,
         completed_job_id: i64,
-        return_code: i64,
     ) -> Result<Vec<i64>, ApiError> {
-        debug!(
-            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={}",
-            completed_job_id, workflow_id, return_code
-        );
-
         let completed_status = models::JobStatus::Completed.to_int();
         let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
@@ -1170,8 +1163,141 @@ impl<C> Server<C> {
         let ready_status = models::JobStatus::Ready.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
 
-        // Use a recursive CTE to find all jobs that need status updates (including cascading cancellations)
-        // The CTE propagates return codes through the dependency chain to determine final status
+        // First, cancel jobs that have cancel_on_blocking_job_failure AND a failed dependency
+        let _canceled = sqlx::query!(
+            r#"
+            UPDATE job
+            SET status = ?
+            WHERE workflow_id = ?
+              AND status = ?
+              AND cancel_on_blocking_job_failure = 1
+              AND id IN (
+                  SELECT jbb.job_id
+                  FROM job_depends_on jbb
+                  WHERE jbb.depends_on_job_id = ?
+                    AND jbb.workflow_id = ?
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM job_depends_on jbb2
+                        JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                        WHERE jbb2.job_id = jbb.job_id
+                          AND jbb2.depends_on_job_id != ?
+                          AND j2.status NOT IN (?, ?, ?, ?)
+                    )
+              )
+              AND EXISTS (
+                  SELECT 1
+                  FROM job_depends_on jbb_fail
+                  JOIN job j_fail ON jbb_fail.depends_on_job_id = j_fail.id
+                  JOIN result r_fail ON j_fail.id = r_fail.job_id
+                  JOIN workflow_status ws ON j_fail.workflow_id = ws.id AND r_fail.run_id = ws.run_id
+                  WHERE jbb_fail.job_id = job.id
+                    AND jbb_fail.workflow_id = ?
+                    AND j_fail.status IN (?, ?, ?, ?)
+                    AND r_fail.return_code != 0
+              )
+            "#,
+            canceled_status,
+            workflow_id,
+            blocked_status,
+            completed_job_id,
+            workflow_id,
+            completed_job_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status,
+            workflow_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status
+        )
+        .execute(&mut **tx)
+        .await;
+
+        // Then, mark remaining unblocked jobs as ready (those without failed dependencies
+        // or without cancel_on_blocking_job_failure)
+        let updated_jobs = match sqlx::query!(
+            r#"
+            UPDATE job
+            SET status = ?
+            WHERE workflow_id = ?
+              AND status = ?
+              AND id IN (
+                  SELECT jbb.job_id
+                  FROM job_depends_on jbb
+                  WHERE jbb.depends_on_job_id = ?
+                    AND jbb.workflow_id = ?
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM job_depends_on jbb2
+                        JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                        WHERE jbb2.job_id = jbb.job_id
+                          AND jbb2.depends_on_job_id != ?
+                          AND j2.status NOT IN (?, ?, ?, ?)
+                    )
+              )
+            RETURNING id
+            "#,
+            ready_status,
+            workflow_id,
+            blocked_status,
+            completed_job_id,
+            workflow_id,
+            completed_job_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status
+        )
+        .fetch_all(&mut **tx)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                debug!("Fast path bulk update failed: {}", e);
+                return Err(ApiError(format!("Database error: {}", e)));
+            }
+        };
+
+        let ready_job_ids: Vec<i64> = updated_jobs.iter().map(|r| r.id).collect();
+        debug!(
+            "unblock_jobs_fast_path_tx: updated {} jobs to ready after completion of job_id={}",
+            ready_job_ids.len(),
+            completed_job_id
+        );
+        Ok(ready_job_ids)
+    }
+
+    /// Slow path for unblocking jobs after a failed completion (return_code != 0).
+    ///
+    /// Uses a recursive CTE to handle cascading cancellations when a job fails.
+    /// This is more expensive than the fast path but necessary for proper cancellation propagation.
+    ///
+    /// # Arguments
+    /// * `tx` - The database transaction to use
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `completed_job_id` - The ID of the job that just completed
+    ///
+    /// # Returns
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_slow_path_tx(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        workflow_id: i64,
+        completed_job_id: i64,
+    ) -> Result<Vec<i64>, ApiError> {
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+        let ready_status = models::JobStatus::Ready.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        // Use a recursive CTE to find all jobs that need status updates (including cascading
+        // cancellations). The CTE propagates return codes through the dependency chain to
+        // determine final status.
         let jobs_to_update = match sqlx::query(
             r#"
             WITH RECURSIVE jobs_to_process(job_id, should_cancel, level) AS (
@@ -1278,14 +1404,14 @@ impl<C> Server<C> {
 
         if jobs_to_update.is_empty() {
             debug!(
-                "unblock_jobs_waiting_for_tx: no jobs to unblock after completion of job_id={}",
+                "unblock_jobs_slow_path_tx: no jobs to unblock after completion of job_id={}",
                 completed_job_id
             );
-            return Ok(Vec::new()); // No jobs to unblock
+            return Ok(Vec::new());
         }
 
         debug!(
-            "unblock_jobs_waiting_for_tx: found {} jobs to update after completion of job_id={}",
+            "unblock_jobs_slow_path_tx: found {} jobs to update after completion of job_id={}",
             jobs_to_update.len(),
             completed_job_id
         );
@@ -1294,7 +1420,7 @@ impl<C> Server<C> {
         let mut updated_count = 0;
         let mut ready_count = 0;
         let mut canceled_count = 0;
-        let mut ready_job_ids = Vec::new(); // Track jobs that became ready
+        let mut ready_job_ids = Vec::new();
 
         for row in jobs_to_update {
             let job_id: i64 = row.get("job_id");
@@ -1321,13 +1447,13 @@ impl<C> Server<C> {
                         updated_count += 1;
                         if new_status == ready_status {
                             ready_count += 1;
-                            ready_job_ids.push(job_id); // Track this job for triggering actions
+                            ready_job_ids.push(job_id);
                         } else {
                             canceled_count += 1;
                         }
 
                         debug!(
-                            "unblock_jobs_waiting_for_tx: updated job_id={} to status={}",
+                            "unblock_jobs_slow_path_tx: updated job_id={} to status={}",
                             job_id,
                             if new_status == ready_status {
                                 "ready"
@@ -1345,11 +1471,103 @@ impl<C> Server<C> {
         }
 
         debug!(
-            "unblock_jobs_waiting_for_tx: successfully updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
+            "unblock_jobs_slow_path_tx: updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
             updated_count, ready_count, canceled_count, completed_job_id
         );
 
         Ok(ready_job_ids)
+    }
+
+    /// Unblock jobs using a provided transaction (for batch processing).
+    ///
+    /// This is the internal implementation that accepts a transaction parameter,
+    /// allowing the background task to process multiple completions in one transaction.
+    ///
+    /// # Arguments
+    /// * `tx` - The database transaction to use
+    /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    ///
+    /// # Returns
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_waiting_for_tx(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        workflow_id: i64,
+        completed_job_id: i64,
+        return_code: i64,
+    ) -> Result<Vec<i64>, ApiError> {
+        debug!(
+            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={}",
+            completed_job_id, workflow_id, return_code
+        );
+
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        // Quick pre-check: Are there ANY blocked jobs that depend on this completed job
+        // AND have no other incomplete dependencies? If not, skip the expensive CTE.
+        // This optimization is critical for barrier patterns where 1000 jobs complete
+        // but only the last one actually unblocks the barrier.
+        let has_unblockable_jobs = match sqlx::query!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jbb.depends_on_job_id = ?
+                  AND jbb.workflow_id = ?
+                  AND j.status = ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM job_depends_on jbb2
+                      JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                      WHERE jbb2.job_id = jbb.job_id
+                        AND jbb2.depends_on_job_id != ?
+                        AND j2.status NOT IN (?, ?, ?, ?)
+                  )
+            ) as has_jobs
+            "#,
+            completed_job_id,
+            workflow_id,
+            blocked_status,
+            completed_job_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status
+        )
+        .fetch_one(&mut **tx)
+        .await
+        {
+            Ok(row) => row.has_jobs != 0,
+            Err(e) => {
+                debug!("Pre-check query failed: {}", e);
+                // If pre-check fails, fall through to full query
+                true
+            }
+        };
+
+        if !has_unblockable_jobs {
+            debug!(
+                "unblock_jobs_waiting_for_tx: quick check found no unblockable jobs for job_id={}",
+                completed_job_id
+            );
+            return Ok(Vec::new());
+        }
+
+        // Dispatch to appropriate path based on return code
+        if return_code == 0 {
+            // Fast path for successful completions: uses bulk updates
+            Self::unblock_jobs_fast_path_tx(tx, workflow_id, completed_job_id).await
+        } else {
+            // Slow path for failed completions: uses recursive CTE for cascading cancellations
+            Self::unblock_jobs_slow_path_tx(tx, workflow_id, completed_job_id).await
+        }
     }
 
     /// Unblock jobs that were waiting for a completed job.
