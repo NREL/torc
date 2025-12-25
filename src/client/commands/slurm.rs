@@ -2334,6 +2334,10 @@ pub struct SchedulerInfo {
     pub nodes: i64,
     pub num_allocations: i64,
     pub job_count: usize,
+    /// Whether the jobs using this scheduler have dependencies on other pending jobs.
+    /// If true, allocations should not be submitted immediately - they will be
+    /// submitted when the on_jobs_ready action fires.
+    pub has_dependencies: bool,
 }
 
 /// Handle the regenerate command - regenerates Slurm schedulers for pending jobs
@@ -2614,6 +2618,7 @@ fn handle_regenerate(
             nodes: planned.nodes,
             num_allocations: planned.num_allocations,
             job_count: planned.job_count,
+            has_dependencies: planned.has_dependencies,
         });
 
         total_allocations += planned.num_allocations;
@@ -2708,6 +2713,9 @@ fn handle_regenerate(
     }
 
     // Submit allocations if requested
+    // Only submit allocations for schedulers without dependencies.
+    // Schedulers for jobs with dependencies will be submitted when the
+    // on_jobs_ready action fires (after their dependencies complete).
     let mut submitted = false;
     if submit && !schedulers_created.is_empty() {
         // Create output directory
@@ -2717,6 +2725,16 @@ fn handle_regenerate(
         }
 
         for scheduler_info in &schedulers_created {
+            // Skip schedulers for jobs with dependencies - they will be submitted
+            // when their on_jobs_ready action fires
+            if scheduler_info.has_dependencies {
+                info!(
+                    "Scheduler '{}' is for jobs with dependencies - will be submitted via on_jobs_ready action",
+                    scheduler_info.name
+                );
+                continue;
+            }
+
             let start_one_worker_per_node = scheduler_info.nodes > 1;
 
             match schedule_slurm_nodes(
