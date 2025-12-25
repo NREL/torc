@@ -10919,6 +10919,27 @@ where
                         }
                         None => None,
                     };
+                    let param_strict_scheduler_match = query_params
+                        .iter()
+                        .filter(|e| e.0 == "strict_scheduler_match")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_strict_scheduler_match = match param_strict_scheduler_match {
+                        Some(param_strict_scheduler_match) => {
+                            let param_strict_scheduler_match =
+                                <bool as std::str::FromStr>::from_str(
+                                    &param_strict_scheduler_match,
+                                );
+                            match param_strict_scheduler_match {
+                            Ok(param_strict_scheduler_match) => Some(param_strict_scheduler_match),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter strict_scheduler_match - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter strict_scheduler_match")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     // Handle body parameters (note that non-required body parameters will ignore garbage
                     // values, rather than causing a 400 response). Produce warning header and logs for
@@ -10959,6 +10980,7 @@ where
                                     param_body,
                                     param_limit,
                                     param_sort_method,
+                                    param_strict_scheduler_match,
                                     &context,
                                 )
                                 .await;

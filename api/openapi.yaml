@@ -3393,6 +3393,15 @@ paths:
         schema:
           $ref: "#/components/schemas/jobs_sort_method"
         style: form
+      - description: If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.
+        explode: true
+        in: query
+        name: strict_scheduler_match
+        required: false
+        schema:
+          type: boolean
+          default: false
+        style: form
       - explode: true
         in: path
         name: limit

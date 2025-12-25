@@ -5430,12 +5430,14 @@ pub fn claim_jobs_based_on_resources(
     body: &models::ComputeNodesResources,
     limit: i64,
     sort_method: Option<models::ClaimJobsSortMethod>,
+    strict_scheduler_match: Option<bool>,
 ) -> Result<models::ClaimJobsBasedOnResources, Error<ClaimJobsBasedOnResourcesError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_id = id;
     let p_limit = limit;
     let p_body = body;
     let p_sort_method = sort_method;
+    let p_strict_scheduler_match = strict_scheduler_match;
 
     let uri_str = format!(
         "{}/workflows/{id}/claim_jobs_based_on_resources/{limit}",
@@ -5449,6 +5451,9 @@ pub fn claim_jobs_based_on_resources(
 
     if let Some(ref param_value) = p_sort_method {
         req_builder = req_builder.query(&[("sort_method", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_strict_scheduler_match {
+        req_builder = req_builder.query(&[("strict_scheduler_match", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

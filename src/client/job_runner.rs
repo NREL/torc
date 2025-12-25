@@ -294,10 +294,20 @@ impl JobRunner {
             info!("Created output directory: {}", self.output_dir.display());
         }
 
-        info!("Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?}
-            job_completion_poll_interval={}s max_parallel_jobs={:?}",
-            version, self.workflow_id, hostname, self.output_dir.display(), self.resources,
-            self.rules, self.job_completion_poll_interval, self.max_parallel_jobs);
+        info!(
+            "Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?} \
+            job_completion_poll_interval={}s max_parallel_jobs={:?} end_time={:?} strict_scheduler_match={}",
+            version,
+            self.workflow_id,
+            hostname,
+            self.output_dir.display(),
+            self.resources,
+            self.rules,
+            self.job_completion_poll_interval,
+            self.max_parallel_jobs,
+            self.end_time,
+            self.torc_config.client.slurm.strict_scheduler_match
+        );
 
         // Check for and execute on_workflow_start and on_worker_start actions before entering main loop
         self.execute_workflow_start_actions();
@@ -775,6 +785,7 @@ impl JobRunner {
         self.update_remaining_time_limit();
 
         let limit = self.resources.num_cpus;
+        let strict_scheduler_match = self.torc_config.client.slurm.strict_scheduler_match;
         match utils::send_with_retries(
             &self.config,
             || {
@@ -784,6 +795,7 @@ impl JobRunner {
                     &self.resources,
                     limit,
                     Some(self.rules.jobs_sort_method),
+                    Some(strict_scheduler_match),
                 )
             },
             self.rules.compute_node_wait_for_healthy_database_minutes,
@@ -884,6 +896,7 @@ impl JobRunner {
                             &self.resources,
                             limit,
                             Some(self.rules.jobs_sort_method),
+                            Some(strict_scheduler_match),
                         )
                     },
                     self.rules.compute_node_wait_for_healthy_database_minutes,

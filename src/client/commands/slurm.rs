@@ -1210,7 +1210,7 @@ pub fn schedule_slurm_nodes(
     std::fs::create_dir_all(output)?;
 
     for job_num in 1..num_hpc_jobs + 1 {
-        let job_name = format!("{}_{}", job_prefix, job_num);
+        let job_name = format!("{}_{}_{}", job_prefix, scheduler_config_id, job_num);
         let script_path = format!("{}/{}.sh", output, job_name);
 
         if let Err(e) = slurm_interface.create_submission_script(

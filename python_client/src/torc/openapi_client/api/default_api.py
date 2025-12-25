@@ -687,6 +687,7 @@ class DefaultApi:
         limit: StrictInt,
         body: Annotated[ComputeNodesResources, Field(description="Available worker resources.")],
         sort_method: Optional[JobsSortMethod] = None,
+        strict_scheduler_match: Annotated[Optional[StrictBool], Field(description="If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -712,6 +713,8 @@ class DefaultApi:
         :type body: ComputeNodesResources
         :param sort_method:
         :type sort_method: JobsSortMethod
+        :param strict_scheduler_match: If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.
+        :type strict_scheduler_match: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -739,6 +742,7 @@ class DefaultApi:
             limit=limit,
             body=body,
             sort_method=sort_method,
+            strict_scheduler_match=strict_scheduler_match,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -767,6 +771,7 @@ class DefaultApi:
         limit: StrictInt,
         body: Annotated[ComputeNodesResources, Field(description="Available worker resources.")],
         sort_method: Optional[JobsSortMethod] = None,
+        strict_scheduler_match: Annotated[Optional[StrictBool], Field(description="If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -792,6 +797,8 @@ class DefaultApi:
         :type body: ComputeNodesResources
         :param sort_method:
         :type sort_method: JobsSortMethod
+        :param strict_scheduler_match: If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.
+        :type strict_scheduler_match: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -819,6 +826,7 @@ class DefaultApi:
             limit=limit,
             body=body,
             sort_method=sort_method,
+            strict_scheduler_match=strict_scheduler_match,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -847,6 +855,7 @@ class DefaultApi:
         limit: StrictInt,
         body: Annotated[ComputeNodesResources, Field(description="Available worker resources.")],
         sort_method: Optional[JobsSortMethod] = None,
+        strict_scheduler_match: Annotated[Optional[StrictBool], Field(description="If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -872,6 +881,8 @@ class DefaultApi:
         :type body: ComputeNodesResources
         :param sort_method:
         :type sort_method: JobsSortMethod
+        :param strict_scheduler_match: If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available.
+        :type strict_scheduler_match: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -899,6 +910,7 @@ class DefaultApi:
             limit=limit,
             body=body,
             sort_method=sort_method,
+            strict_scheduler_match=strict_scheduler_match,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -922,6 +934,7 @@ class DefaultApi:
         limit,
         body,
         sort_method,
+        strict_scheduler_match,
         _request_auth,
         _content_type,
         _headers,
@@ -951,6 +964,10 @@ class DefaultApi:
         if sort_method is not None:
             
             _query_params.append(('sort_method', sort_method.value))
+            
+        if strict_scheduler_match is not None:
+            
+            _query_params.append(('strict_scheduler_match', strict_scheduler_match))
             
         # process the header parameters
         # process the form parameters
@@ -19069,6 +19086,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        active_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter jobs by the compute node currently running them.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19104,6 +19122,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
+        :param active_compute_node_id: Filter jobs by the compute node currently running them.
+        :type active_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19136,6 +19156,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             include_relationships=include_relationships,
+            active_compute_node_id=active_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19169,6 +19190,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        active_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter jobs by the compute node currently running them.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19204,6 +19226,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
+        :param active_compute_node_id: Filter jobs by the compute node currently running them.
+        :type active_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19236,6 +19260,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             include_relationships=include_relationships,
+            active_compute_node_id=active_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19269,6 +19294,7 @@ class DefaultApi:
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
         include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        active_compute_node_id: Annotated[Optional[StrictInt], Field(description="Filter jobs by the compute node currently running them.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19304,6 +19330,8 @@ class DefaultApi:
         :type reverse_sort: bool
         :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
+        :param active_compute_node_id: Filter jobs by the compute node currently running them.
+        :type active_compute_node_id: int
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19336,6 +19364,7 @@ class DefaultApi:
             sort_by=sort_by,
             reverse_sort=reverse_sort,
             include_relationships=include_relationships,
+            active_compute_node_id=active_compute_node_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19364,6 +19393,7 @@ class DefaultApi:
         sort_by,
         reverse_sort,
         include_relationships,
+        active_compute_node_id,
         _request_auth,
         _content_type,
         _headers,
@@ -19421,6 +19451,10 @@ class DefaultApi:
         if include_relationships is not None:
             
             _query_params.append(('include_relationships', include_relationships))
+            
+        if active_compute_node_id is not None:
+            
+            _query_params.append(('active_compute_node_id', active_compute_node_id))
             
         # process the header parameters
         # process the form parameters

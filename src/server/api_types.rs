@@ -1650,6 +1650,7 @@ pub trait Api<C: Send + Sync> {
         body: models::ComputeNodesResources,
         limit: i64,
         sort_method: Option<models::ClaimJobsSortMethod>,
+        strict_scheduler_match: Option<bool>,
         context: &C,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
 
@@ -1822,6 +1823,7 @@ pub trait Api<C: Send + Sync> {
         resources: models::ComputeNodesResources,
         sort_method: Option<models::ClaimJobsSortMethod>,
         limit: i64,
+        strict_scheduler_match: Option<bool>,
         context: &C,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
 }
@@ -2330,6 +2332,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         body: models::ComputeNodesResources,
         limit: i64,
         sort_method: Option<models::ClaimJobsSortMethod>,
+        strict_scheduler_match: Option<bool>,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
 
     /// Return user-requested number of jobs that are ready for submission. Sets status to pending.
@@ -2478,6 +2481,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         resources: models::ComputeNodesResources,
         sort_method: Option<models::ClaimJobsSortMethod>,
         limit: i64,
+        strict_scheduler_match: Option<bool>,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
 }
 
@@ -3388,10 +3392,18 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         body: models::ComputeNodesResources,
         limit: i64,
         sort_method: Option<models::ClaimJobsSortMethod>,
+        strict_scheduler_match: Option<bool>,
     ) -> Result<ClaimJobsBasedOnResources, ApiError> {
         let context = self.context().clone();
         self.api()
-            .claim_jobs_based_on_resources(id, body, limit, sort_method, &context)
+            .claim_jobs_based_on_resources(
+                id,
+                body,
+                limit,
+                sort_method,
+                strict_scheduler_match,
+                &context,
+            )
             .await
     }
 
@@ -3614,10 +3626,18 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         resources: models::ComputeNodesResources,
         sort_method: Option<models::ClaimJobsSortMethod>,
         limit: i64,
+        strict_scheduler_match: Option<bool>,
     ) -> Result<ClaimJobsBasedOnResources, ApiError> {
         let context = self.context().clone();
         self.api()
-            .prepare_ready_jobs(workflow_id, resources, sort_method, limit, &context)
+            .prepare_ready_jobs(
+                workflow_id,
+                resources,
+                sort_method,
+                limit,
+                strict_scheduler_match,
+                &context,
+            )
             .await
     }
 }

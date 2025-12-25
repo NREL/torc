@@ -169,8 +169,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **claim_jobs_based_on_resources**
-> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse <br/>
-> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> Channel{ ClaimJobsBasedOnResourcesResponse }, OpenAPI.Clients.ApiResponse
+> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, strict_scheduler_match=nothing, _mediaType=nothing) -> ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse <br/>
+> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, strict_scheduler_match=nothing, _mediaType=nothing) -> Channel{ ClaimJobsBasedOnResourcesResponse }, OpenAPI.Clients.ApiResponse
 
 Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 
@@ -190,6 +190,7 @@ Name | Type | Description  | Notes
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **sort_method** | [**JobsSortMethod**](.md) |  | [default to nothing]
+ **strict_scheduler_match** | **Bool** | If true, only claim jobs that match the scheduler_id of the worker. If false (default), jobs with a scheduler_id mismatch will be claimed if no matching jobs are available. | [default to false]
 
 ### Return type
 
@@ -2314,8 +2315,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_jobs**
-> list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing) -> ListJobsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing) -> Channel{ ListJobsResponse }, OpenAPI.Clients.ApiResponse
+> list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, active_compute_node_id=nothing, _mediaType=nothing) -> ListJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, active_compute_node_id=nothing, _mediaType=nothing) -> Channel{ ListJobsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all jobs for one workflow.
 
@@ -2340,6 +2341,7 @@ Name | Type | Description  | Notes
  **sort_by** | **String** |  | [default to nothing]
  **reverse_sort** | **Bool** |  | [default to false]
  **include_relationships** | **Bool** | Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance. | [default to false]
+ **active_compute_node_id** | **Int64** | Filter jobs by the compute node currently running them. | [default to nothing]
 
 ### Return type
 

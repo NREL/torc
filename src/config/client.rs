@@ -97,6 +97,11 @@ pub struct ClientSlurmConfig {
 
     /// Keep submission scripts after job submission (useful for debugging)
     pub keep_submission_scripts: bool,
+
+    /// If true, only claim jobs that match the scheduler_id of the worker.
+    /// If false (default), jobs with a scheduler_id mismatch will be claimed
+    /// if no matching jobs are available.
+    pub strict_scheduler_match: bool,
 }
 
 impl Default for ClientSlurmConfig {
@@ -104,6 +109,7 @@ impl Default for ClientSlurmConfig {
         Self {
             poll_interval: 60,
             keep_submission_scripts: false,
+            strict_scheduler_match: false,
         }
     }
 }

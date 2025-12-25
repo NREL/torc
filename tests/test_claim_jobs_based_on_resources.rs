@@ -31,7 +31,7 @@ fn test_prepare_jobs_minimal_resources(start_server: &ServerProcess) {
     let resources = models::ComputeNodesResources::new(1, 1.0, 0, 1);
 
     let result =
-        default_api::claim_jobs_based_on_resources(config, workflow_id, &resources, 10, None)
+        default_api::claim_jobs_based_on_resources(config, workflow_id, &resources, 10, None, None)
             .expect("claim_jobs_based_on_resources should succeed");
 
     // Should return exactly 1 job (1 CPU available ÷ 1 CPU per job = 1 job must be returned)
@@ -71,6 +71,7 @@ fn test_prepare_jobs_high_cpu_resources(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -111,6 +112,7 @@ fn test_prepare_jobs_high_memory_resources(start_server: &ServerProcess) {
         &resources,
         5,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -151,6 +153,7 @@ fn test_prepare_jobs_gpu_resources(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -191,6 +194,7 @@ fn test_prepare_jobs_multi_node_resources(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -232,6 +236,7 @@ fn test_prepare_jobs_maximum_resources(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -270,6 +275,7 @@ fn test_prepare_jobs_with_time_limits(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -309,6 +315,7 @@ fn test_prepare_jobs_with_scheduler_config(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -350,6 +357,7 @@ fn test_prepare_jobs_different_limits(start_server: &ServerProcess, #[case] limi
         &resources,
         limit,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -398,6 +406,7 @@ fn test_prepare_jobs_all_sort_methods(
         &resources,
         10,
         Some(sort_method),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -439,6 +448,7 @@ fn test_prepare_jobs_fractional_memory(start_server: &ServerProcess, #[case] mem
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -477,6 +487,7 @@ fn test_prepare_jobs_zero_gpus(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -516,6 +527,7 @@ fn test_prepare_jobs_no_ready_jobs(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -553,6 +565,7 @@ fn test_prepare_jobs_invalid_workflow(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     );
 
     // Should return an error for invalid workflow ID
@@ -601,6 +614,7 @@ fn test_prepare_jobs_resource_combinations(
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -642,6 +656,7 @@ fn test_prepare_jobs_all_optional_fields(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -680,6 +695,7 @@ fn test_prepare_jobs_response_validation(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -753,6 +769,7 @@ fn test_prepare_jobs_integration_example(start_server: &ServerProcess) {
             &resources,
             10,
             Some(sort_method),
+            None,
         )
         .expect("claim_jobs_based_on_resources should succeed");
 
@@ -801,6 +818,7 @@ fn test_prepare_jobs_multiple_jobs_returned(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -844,6 +862,7 @@ fn test_prepare_jobs_resource_allocation_limits(start_server: &ServerProcess) {
         &resources,
         10, // Request up to 10 jobs
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -885,6 +904,7 @@ fn test_prepare_jobs_gpu_resource_limits(start_server: &ServerProcess) {
         &resources,
         10, // Request more jobs than resources can support
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -925,6 +945,7 @@ fn test_prepare_jobs_memory_resource_limits(start_server: &ServerProcess) {
         &resources,
         5,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -965,6 +986,7 @@ fn test_prepare_jobs_limit_parameter_restriction(start_server: &ServerProcess) {
         &resources,
         2, // Limit to 2 jobs even though resources could support more
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1006,6 +1028,7 @@ fn test_prepare_jobs_node_resource_limits(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1047,6 +1070,7 @@ fn test_prepare_jobs_mixed_resource_limits(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1087,6 +1111,7 @@ fn test_prepare_jobs_with_dependencies(start_server: &ServerProcess) {
         &resources,
         10, // Request more jobs than are ready
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1135,6 +1160,7 @@ fn test_prepare_jobs_limit_parameter_truncation(start_server: &ServerProcess) {
         &resources,
         32, // Limit to 32 jobs even though resources could support all 100
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1195,6 +1221,7 @@ fn test_prepare_jobs_limit_larger_than_available(start_server: &ServerProcess) {
         &resources,
         50, // Limit higher than the 20 jobs available
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1240,6 +1267,7 @@ fn test_prepare_jobs_limit_very_restrictive(start_server: &ServerProcess) {
         &resources,
         1, // Very restrictive limit - only 1 job
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1281,6 +1309,7 @@ fn test_prepare_jobs_sort_gpus_runtime_memory(start_server: &ServerProcess) {
         &resources,
         10, // Get multiple jobs to test sorting
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1380,6 +1409,7 @@ fn test_prepare_jobs_sort_gpus_memory_runtime(start_server: &ServerProcess) {
         &resources,
         10, // Get multiple jobs to test sorting
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1479,6 +1509,7 @@ fn test_prepare_jobs_sort_none(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::None),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1498,6 +1529,7 @@ fn test_prepare_jobs_sort_none(start_server: &ServerProcess) {
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1549,6 +1581,7 @@ fn test_prepare_jobs_different_sort_methods_different_orders(start_server: &Serv
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusRuntimeMemory),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1562,6 +1595,7 @@ fn test_prepare_jobs_different_sort_methods_different_orders(start_server: &Serv
         &resources,
         10,
         Some(models::ClaimJobsSortMethod::GpusMemoryRuntime),
+        None,
     )
     .expect("claim_jobs_based_on_resources should succeed");
 
@@ -1668,6 +1702,7 @@ fn test_prepare_jobs_concurrent_allocation(start_server: &ServerProcess) {
                     &resources_clone,
                     10,
                     Some(models::ClaimJobsSortMethod::None),
+                    None,
                 );
 
                 match result {
