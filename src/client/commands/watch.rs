@@ -1118,7 +1118,15 @@ fn apply_recovery_heuristics(
     })
 }
 
-/// Reset specific failed jobs for retry
+/// Reset specific failed jobs for retry (without reinitializing)
+///
+/// Note: We intentionally do NOT use --reinitialize here. The order matters:
+/// 1. Reset failed jobs (this function)
+/// 2. Regenerate schedulers (marks old on_workflow_start actions as executed)
+/// 3. Reinitialize workflow (fires actions - but old ones are already marked executed)
+///
+/// If we used --reinitialize here, the old on_workflow_start action would fire
+/// BEFORE regenerate has a chance to mark it as executed.
 fn reset_failed_jobs(
     _config: &Configuration,
     workflow_id: i64,
@@ -1130,14 +1138,13 @@ fn reset_failed_jobs(
 
     let job_count = job_ids.len();
 
-    // Use reset-status --failed-only --reinitialize to reset failed jobs and trigger unblocking
+    // Reset failed jobs WITHOUT --reinitialize (we'll reinitialize after regenerate)
     let output = Command::new("torc")
         .args([
             "workflows",
             "reset-status",
             &workflow_id.to_string(),
             "--failed-only",
-            "--reinitialize",
             "--no-prompts",
         ])
         .output()
@@ -1157,6 +1164,26 @@ fn reset_failed_jobs(
     }
 
     Ok(job_count)
+}
+
+/// Reinitialize the workflow (set up dependencies and fire on_workflow_start actions)
+///
+/// Uses `reinitialize` instead of `initialize` because:
+/// - We're re-initializing after jobs have been reset
+/// - It handles canceled/terminated jobs appropriately
+/// - It's designed for recovery scenarios
+fn reinitialize_workflow(workflow_id: i64) -> Result<(), String> {
+    let output = Command::new("torc")
+        .args(["workflows", "reinitialize", &workflow_id.to_string()])
+        .output()
+        .map_err(|e| format!("Failed to run workflow reinitialize: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("workflow reinitialize failed: {}", stderr));
+    }
+
+    Ok(())
 }
 
 /// Run the user's custom recovery hook command
@@ -1497,10 +1524,17 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             }
         }
 
-        // Step 4: Regenerate Slurm schedulers and submit
-        info!("Regenerating Slurm schedulers and submitting...");
+        // Step 4: Regenerate Slurm schedulers (this also marks old actions as executed)
+        info!("Regenerating Slurm schedulers...");
         if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
             warn!("Error regenerating schedulers: {}", e);
+            std::process::exit(1);
+        }
+
+        // Step 5: Reinitialize workflow (fires on_workflow_start actions - but old ones are now marked executed)
+        info!("Reinitializing workflow...");
+        if let Err(e) = reinitialize_workflow(args.workflow_id) {
+            warn!("Error reinitializing workflow: {}", e);
             std::process::exit(1);
         }
 

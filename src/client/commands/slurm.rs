@@ -2389,7 +2389,9 @@ fn handle_regenerate(
         match paginate_jobs(
             config,
             workflow_id,
-            JobListParams::new().with_status(*status),
+            JobListParams::new()
+                .with_status(*status)
+                .with_include_relationships(true),
         ) {
             Ok(jobs) => {
                 pending_jobs.extend(jobs);
@@ -2728,8 +2730,8 @@ fn handle_regenerate(
             // Skip schedulers for jobs with dependencies - they will be submitted
             // when their on_jobs_ready action fires
             if scheduler_info.has_dependencies {
-                info!(
-                    "Scheduler '{}' is for jobs with dependencies - will be submitted via on_jobs_ready action",
+                println!(
+                    "  Skipping scheduler '{}' (jobs have dependencies - will submit via on_jobs_ready action)",
                     scheduler_info.name
                 );
                 continue;
