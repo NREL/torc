@@ -476,7 +476,8 @@ fn has_active_workers(config: &Configuration, workflow_id: i64) -> bool {
         None,       // hostname
         Some(true), // is_active = true
         None,       // scheduled_compute_node_id
-    ) && response.total_count > 0
+    ) && let Some(nodes) = response.items
+        && !nodes.is_empty()
     {
         return true;
     }
@@ -784,7 +785,10 @@ fn poll_until_complete(
             match default_api::is_workflow_complete(config, workflow_id) {
                 Ok(response) => {
                     if response.is_complete {
-                        info!("Workflow {} is complete", workflow_id);
+                        info!(
+                            "Workflow {} is complete, waiting for workers to exit...",
+                            workflow_id
+                        );
                         workflow_complete = true;
                         // Don't break yet - wait for workers to exit
                     }
