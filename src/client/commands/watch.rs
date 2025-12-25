@@ -13,7 +13,8 @@ use std::time::Duration;
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::pagination::{
-    ScheduledComputeNodeListParams, paginate_scheduled_compute_nodes,
+    ComputeNodeListParams, JobListParams, ScheduledComputeNodeListParams, paginate_compute_nodes,
+    paginate_jobs, paginate_scheduled_compute_nodes,
 };
 use crate::client::hpc::common::HpcJobStatus;
 use crate::client::hpc::hpc_interface::HpcInterface;
@@ -117,22 +118,8 @@ fn get_job_counts(
     config: &Configuration,
     workflow_id: i64,
 ) -> Result<HashMap<String, i64>, String> {
-    let jobs_response = default_api::list_jobs(
-        config,
-        workflow_id,
-        None,        // status filter
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // include_relationships
-        None,        // active_compute_node_id
-    )
-    .map_err(|e| format!("Failed to list jobs: {}", e))?;
-
-    let jobs = jobs_response.items.unwrap_or_default();
+    let jobs = paginate_jobs(config, workflow_id, JobListParams::new())
+        .map_err(|e| format!("Failed to list jobs: {}", e))?;
     let mut counts = HashMap::new();
 
     for job in &jobs {
@@ -221,20 +208,12 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
         );
 
         // Find all compute nodes associated with this scheduled compute node
-        let compute_nodes_response = default_api::list_compute_nodes(
+        let compute_nodes = paginate_compute_nodes(
             config,
             workflow_id,
-            None,                            // offset
-            Some(1000),                      // limit
-            None,                            // sort_by
-            None,                            // reverse_sort
-            None,                            // hostname
-            None,                            // is_active - any status
-            Some(scheduled_compute_node_id), // scheduled_compute_node_id
+            ComputeNodeListParams::new().with_scheduled_compute_node_id(scheduled_compute_node_id),
         )
         .map_err(|e| format!("Failed to list compute nodes: {}", e))?;
-
-        let compute_nodes = compute_nodes_response.items.unwrap_or_default();
 
         for compute_node in &compute_nodes {
             let compute_node_id = match compute_node.id {
@@ -243,22 +222,12 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
             };
 
             // Find all jobs with this active_compute_node_id
-            let jobs_response = default_api::list_jobs(
+            let orphaned_jobs = paginate_jobs(
                 config,
                 workflow_id,
-                None,                  // status - we want any status (should be Running)
-                None,                  // needs_file_id
-                None,                  // upstream_job_id
-                None,                  // offset
-                Some(10000),           // limit
-                None,                  // sort_by
-                None,                  // reverse_sort
-                None,                  // include_relationships
-                Some(compute_node_id), // active_compute_node_id
+                JobListParams::new().with_active_compute_node_id(compute_node_id),
             )
             .map_err(|e| format!("Failed to list jobs for compute node: {}", e))?;
-
-            let orphaned_jobs = jobs_response.items.unwrap_or_default();
 
             if orphaned_jobs.is_empty() {
                 continue;
@@ -662,22 +631,12 @@ fn fail_orphaned_running_jobs(config: &Configuration, workflow_id: i64) -> Resul
     }
 
     // Get all jobs with status=Running
-    let running_jobs_response = default_api::list_jobs(
+    let running_jobs = paginate_jobs(
         config,
         workflow_id,
-        Some(models::JobStatus::Running),
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // include_relationships
-        None,        // active_compute_node_id
+        JobListParams::new().with_status(models::JobStatus::Running),
     )
     .map_err(|e| format!("Failed to list running jobs: {}", e))?;
-
-    let running_jobs = running_jobs_response.items.unwrap_or_default();
 
     if running_jobs.is_empty() {
         return Ok(0);

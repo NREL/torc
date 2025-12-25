@@ -88,6 +88,11 @@ impl JobListParams {
         self.include_relationships = Some(include);
         self
     }
+
+    pub fn with_active_compute_node_id(mut self, id: i64) -> Self {
+        self.active_compute_node_id = Some(id);
+        self
+    }
 }
 
 /// Iterator for jobs with lazy pagination

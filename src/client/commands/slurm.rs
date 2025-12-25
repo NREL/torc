@@ -14,6 +14,11 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
 use crate::client::commands::hpc::create_registry_with_config_public;
+use crate::client::commands::pagination::{
+    ComputeNodeListParams, JobListParams, ResourceRequirementsListParams, ResultListParams,
+    ScheduledComputeNodeListParams, paginate_compute_nodes, paginate_jobs,
+    paginate_resource_requirements, paginate_results, paginate_scheduled_compute_nodes,
+};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
@@ -1624,18 +1629,12 @@ fn build_slurm_to_jobs_map(
     let mut slurm_to_jobs: HashMap<String, Vec<AffectedJob>> = HashMap::new();
 
     // Step 1: Get all scheduled compute nodes (they have scheduler_id = Slurm job ID)
-    let scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+    let scheduled_nodes = match paginate_scheduled_compute_nodes(
         config,
         workflow_id,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None, // scheduler_id filter
-        None, // scheduler_config_id filter
-        None, // status filter
+        ScheduledComputeNodeListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(nodes) => nodes,
         Err(e) => {
             warn!(
                 "Could not fetch scheduled compute nodes for job correlation: {}",
@@ -1657,23 +1656,14 @@ fn build_slurm_to_jobs_map(
     }
 
     // Step 2: Get all compute nodes and build slurm_job_id -> compute_node_ids map
-    let compute_nodes = match default_api::list_compute_nodes(
-        config,
-        workflow_id,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None,
-        None,
-        None, // scheduled_compute_node_id
-    ) {
-        Ok(response) => response.items.unwrap_or_default(),
-        Err(e) => {
-            warn!("Could not fetch compute nodes for job correlation: {}", e);
-            return slurm_to_jobs;
-        }
-    };
+    let compute_nodes =
+        match paginate_compute_nodes(config, workflow_id, ComputeNodeListParams::new()) {
+            Ok(nodes) => nodes,
+            Err(e) => {
+                warn!("Could not fetch compute nodes for job correlation: {}", e);
+                return slurm_to_jobs;
+            }
+        };
 
     // Build slurm_job_id -> Vec<compute_node_id> map using SCN relationship
     let mut slurm_to_compute_nodes: HashMap<String, Vec<i64>> = HashMap::new();
@@ -1702,21 +1692,12 @@ fn build_slurm_to_jobs_map(
     }
 
     // Step 3: Get all results and build compute_node_id -> Vec<job_id> map
-    let results = match default_api::list_results(
+    let results = match paginate_results(
         config,
         workflow_id,
-        None,
-        None,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None,
-        None,
-        Some(true), // all_runs
-        None,       // compute_node_id
+        ResultListParams::new().with_all_runs(true),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(results) => results,
         Err(e) => {
             warn!("Could not fetch results for job correlation: {}", e);
             return slurm_to_jobs;
@@ -1732,20 +1713,8 @@ fn build_slurm_to_jobs_map(
     }
 
     // Step 4: Get all jobs and build job_id -> job_name map
-    let jobs = match default_api::list_jobs(
-        config,
-        workflow_id,
-        None,
-        None,
-        None,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None,
-        None, // active_compute_node_id
-    ) {
-        Ok(response) => response.items.unwrap_or_default(),
+    let jobs = match paginate_jobs(config, workflow_id, JobListParams::new()) {
+        Ok(jobs) => jobs,
         Err(e) => {
             warn!("Could not fetch jobs for job correlation: {}", e);
             return slurm_to_jobs;
@@ -1806,18 +1775,12 @@ pub fn parse_slurm_logs(
     }
 
     // Get scheduled compute nodes for this workflow to find valid Slurm job IDs
-    let all_scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+    let all_scheduled_nodes = match paginate_scheduled_compute_nodes(
         config,
         workflow_id,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None,
-        None,
-        None, // Don't filter by status
+        ScheduledComputeNodeListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(nodes) => nodes,
         Err(e) => {
             print_error("listing scheduled compute nodes", &e);
             std::process::exit(1);
@@ -2256,18 +2219,12 @@ pub fn run_sacct_for_workflow(
     format: &str,
 ) {
     // Get scheduled compute nodes for the workflow
-    let all_nodes = match default_api::list_scheduled_compute_nodes(
+    let all_nodes = match paginate_scheduled_compute_nodes(
         config,
         workflow_id,
-        Some(0),
-        Some(10000),
-        None,
-        None,
-        None,
-        None,
-        None, // Don't filter by status
+        ScheduledComputeNodeListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(nodes) => nodes,
         Err(e) => {
             print_error("listing scheduled compute nodes", &e);
             std::process::exit(1);
@@ -2611,21 +2568,13 @@ fn handle_regenerate(
     let mut pending_jobs: Vec<models::JobModel> = Vec::new();
 
     for status in &pending_statuses {
-        match default_api::list_jobs(
+        match paginate_jobs(
             config,
             workflow_id,
-            Some(status.clone()),
-            None, // needs_file_id
-            None, // upstream_job_id
-            Some(0),
-            Some(10000),
-            None,
-            None,
-            None,
-            None, // active_compute_node_id
+            JobListParams::new().with_status(status.clone()),
         ) {
-            Ok(response) => {
-                pending_jobs.extend(response.items.unwrap_or_default());
+            Ok(jobs) => {
+                pending_jobs.extend(jobs);
             }
             Err(e) => {
                 print_error(&format!("listing {:?} jobs", status), &e);
@@ -2658,22 +2607,12 @@ fn handle_regenerate(
     }
 
     // Fetch all resource requirements for the workflow
-    let resource_requirements = match default_api::list_resource_requirements(
+    let resource_requirements = match paginate_resource_requirements(
         config,
         workflow_id,
-        None, // job_id
-        Some(0),
-        Some(10000),
-        None, // sort_by
-        None, // reverse_sort
-        None, // name
-        None, // memory
-        None, // num_cpus
-        None, // num_gpus
-        None, // num_nodes
-        None, // runtime
+        ResourceRequirementsListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(rrs) => rrs,
         Err(e) => {
             print_error("listing resource requirements", &e);
             std::process::exit(1);

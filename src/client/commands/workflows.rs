@@ -5,9 +5,13 @@ use clap::Subcommand;
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::hpc::create_registry_with_config_public;
+use crate::client::commands::pagination::{
+    JobListParams, ScheduledComputeNodeListParams, WorkflowListParams, paginate_jobs,
+    paginate_scheduled_compute_nodes, paginate_workflows,
+};
 use crate::client::commands::slurm::generate_schedulers_for_workflow;
 use crate::client::commands::{
-    get_env_user_name, get_user_name, pagination, print_error, select_workflow_interactively,
+    get_env_user_name, get_user_name, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
 };
 use crate::client::hpc::hpc_interface::HpcInterface;
@@ -421,27 +425,17 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
     };
 
     // Fetch all jobs for this workflow
-    let jobs_response = match default_api::list_jobs(
+    let jobs = match paginate_jobs(
         config,
         workflow_id,
-        None,        // status
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit - get all jobs
-        None,        // sort_by
-        None,        // reverse_sort
-        Some(true),  // include_relationships
-        None,        // active_compute_node_id
+        JobListParams::new().with_include_relationships(true),
     ) {
-        Ok(response) => response,
+        Ok(jobs) => jobs,
         Err(e) => {
             eprintln!("Error fetching jobs for workflow {}: {}", workflow_id, e);
             std::process::exit(1);
         }
     };
-
-    let jobs = jobs_response.items.unwrap_or_default();
 
     // Fetch workflow actions
     let actions = match default_api::get_workflow_actions(config, workflow_id) {
@@ -699,72 +693,12 @@ fn handle_cancel(config: &Configuration, workflow_id: &Option<i64>, format: &str
     }
 
     // Get all scheduled compute nodes for this workflow
-    match default_api::list_scheduled_compute_nodes(
+    let nodes = match paginate_scheduled_compute_nodes(
         config,
         selected_workflow_id,
-        Some(0),     // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // scheduler_id filter
-        None,        // scheduler_config_id filter
-        None,        // status filter
+        ScheduledComputeNodeListParams::new(),
     ) {
-        Ok(response) => {
-            let nodes = response.items.unwrap_or_default();
-            let mut canceled_jobs = Vec::new();
-            let mut errors = Vec::new();
-
-            for node in nodes {
-                if node.scheduler_type == "slurm" {
-                    match crate::client::hpc::slurm_interface::SlurmInterface::new() {
-                        Ok(slurm_interface) => {
-                            let job_id_str = node.scheduler_id.to_string();
-                            match slurm_interface.cancel_job(&job_id_str) {
-                                Ok(_) => {
-                                    canceled_jobs.push(node.scheduler_id);
-                                    if format != "json" {
-                                        println!("  Canceled Slurm job: {}", node.scheduler_id);
-                                    }
-                                }
-                                Err(e) => {
-                                    let error_msg = format!(
-                                        "Failed to cancel Slurm job {}: {}",
-                                        node.scheduler_id, e
-                                    );
-                                    errors.push(error_msg.clone());
-                                    if format != "json" {
-                                        eprintln!("  {}", error_msg);
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            let error_msg = format!(
-                                "Failed to create SlurmInterface for job {}: {}",
-                                node.scheduler_id, e
-                            );
-                            errors.push(error_msg.clone());
-                            if format != "json" {
-                                eprintln!("  {}", error_msg);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if format == "json" {
-                let response = serde_json::json!({
-                    "status": if errors.is_empty() { "success" } else { "partial_success" },
-                    "workflow_id": selected_workflow_id,
-                    "canceled_slurm_jobs": canceled_jobs,
-                    "errors": if errors.is_empty() { None } else { Some(errors) }
-                });
-                println!("{}", serde_json::to_string_pretty(&response).unwrap());
-            } else if !canceled_jobs.is_empty() {
-                println!("Canceled {} Slurm job(s)", canceled_jobs.len());
-            }
-        }
+        Ok(nodes) => nodes,
         Err(e) => {
             if format == "json" {
                 let error_response = serde_json::json!({
@@ -778,6 +712,57 @@ fn handle_cancel(config: &Configuration, workflow_id: &Option<i64>, format: &str
             }
             std::process::exit(1);
         }
+    };
+
+    let mut canceled_jobs = Vec::new();
+    let mut errors = Vec::new();
+
+    for node in nodes {
+        if node.scheduler_type == "slurm" {
+            match crate::client::hpc::slurm_interface::SlurmInterface::new() {
+                Ok(slurm_interface) => {
+                    let job_id_str = node.scheduler_id.to_string();
+                    match slurm_interface.cancel_job(&job_id_str) {
+                        Ok(_) => {
+                            canceled_jobs.push(node.scheduler_id);
+                            if format != "json" {
+                                println!("  Canceled Slurm job: {}", node.scheduler_id);
+                            }
+                        }
+                        Err(e) => {
+                            let error_msg =
+                                format!("Failed to cancel Slurm job {}: {}", node.scheduler_id, e);
+                            errors.push(error_msg.clone());
+                            if format != "json" {
+                                eprintln!("  {}", error_msg);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    let error_msg = format!(
+                        "Failed to create SlurmInterface for job {}: {}",
+                        node.scheduler_id, e
+                    );
+                    errors.push(error_msg.clone());
+                    if format != "json" {
+                        eprintln!("  {}", error_msg);
+                    }
+                }
+            }
+        }
+    }
+
+    if format == "json" {
+        let response = serde_json::json!({
+            "status": if errors.is_empty() { "success" } else { "partial_success" },
+            "workflow_id": selected_workflow_id,
+            "canceled_slurm_jobs": canceled_jobs,
+            "errors": if errors.is_empty() { None } else { Some(errors) }
+        });
+        println!("{}", serde_json::to_string_pretty(&response).unwrap());
+    } else if !canceled_jobs.is_empty() {
+        println!("Canceled {} Slurm job(s)", canceled_jobs.len());
     }
 }
 
@@ -1833,7 +1818,7 @@ fn handle_list(
     format: &str,
 ) {
     // Use pagination utility to get all workflows
-    let mut params = pagination::WorkflowListParams::new()
+    let mut params = WorkflowListParams::new()
         .with_offset(offset)
         .with_limit(limit)
         .with_reverse_sort(reverse_sort);
@@ -1859,7 +1844,7 @@ fn handle_list(
         params = params.with_sort_by(sort_field.clone());
     }
 
-    match pagination::paginate_workflows(config, params) {
+    match paginate_workflows(config, params) {
         Ok(workflows) => {
             if format == "json" {
                 // Convert workflows to JSON values, parsing resource_monitor_config if present

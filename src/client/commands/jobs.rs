@@ -723,20 +723,9 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     }),
                 };
 
-                match default_api::list_jobs(
-                    config,
-                    selected_workflow_id,
-                    None,        // status
-                    None,        // needs_file_id
-                    None,        // upstream_job_id
-                    Some(0),     // offset
-                    Some(10000), // limit
-                    None,        // sort_by
-                    None,        // reverse_sort
-                    None,        // include_relationships
-                    None,        // active_compute_node_id
-                ) {
-                    Ok(response) => response.items.unwrap_or_default(),
+                match pagination::paginate_jobs(config, selected_workflow_id, JobListParams::new())
+                {
+                    Ok(jobs) => jobs,
                     Err(e) => {
                         print_error("listing jobs", &e);
                         std::process::exit(1);

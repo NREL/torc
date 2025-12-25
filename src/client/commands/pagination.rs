@@ -9,6 +9,7 @@
 //! The main APIs provide simple, clean interfaces for iterating over jobs, files, events, results, user data, resource requirements, and workflows:
 //!
 
+pub mod compute_nodes;
 pub mod events;
 pub mod files;
 pub mod jobs;
@@ -20,6 +21,7 @@ pub mod utils;
 pub mod workflows;
 
 // Re-export all parameter types and iterator types and functions
+pub use compute_nodes::*;
 pub use events::*;
 pub use files::*;
 pub use jobs::*;
