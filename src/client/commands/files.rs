@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use clap::Subcommand;
 use serde_json;
 
@@ -17,8 +17,7 @@ use tabled::Tabled;
 fn format_mtime(st_mtime: Option<f64>) -> String {
     match st_mtime {
         Some(timestamp) => {
-            let dt = DateTime::from_timestamp(timestamp as i64, 0)
-                .unwrap_or_else(|| DateTime::<Utc>::default());
+            let dt = DateTime::from_timestamp(timestamp as i64, 0).unwrap_or_default();
             dt.format("%Y-%m-%d %H:%M:%S UTC").to_string()
         }
         None => "N/A".to_string(),
@@ -179,22 +178,20 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
                                 std::process::exit(1);
                             }
                         }
+                    } else if files.is_empty() {
+                        println!("No files found for workflow ID: {}", selected_workflow_id);
                     } else {
-                        if files.is_empty() {
-                            println!("No files found for workflow ID: {}", selected_workflow_id);
-                        } else {
-                            println!("Files for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<FileTableRow> = files
-                                .iter()
-                                .map(|file| FileTableRow {
-                                    id: file.id.unwrap_or(-1),
-                                    name: file.name.clone(),
-                                    path: file.path.clone(),
-                                    st_mtime: format_mtime(file.st_mtime),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "files");
-                        }
+                        println!("Files for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<FileTableRow> = files
+                            .iter()
+                            .map(|file| FileTableRow {
+                                id: file.id.unwrap_or(-1),
+                                name: file.name.clone(),
+                                path: file.path.clone(),
+                                st_mtime: format_mtime(file.st_mtime),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "files");
                     }
                 }
                 Err(e) => {
@@ -309,31 +306,29 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
                                 std::process::exit(1);
                             }
                         }
+                    } else if response.files.is_empty() {
+                        println!(
+                            "No missing required files found for workflow ID: {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if response.files.is_empty() {
-                            println!(
-                                "No missing required files found for workflow ID: {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            println!(
-                                "Missing required files for workflow ID {}:",
-                                selected_workflow_id
-                            );
-                            println!("These files are needed by jobs but do not exist:");
-                            println!("{}", "-".repeat(50));
-                            for file_id in response.files.iter() {
-                                println!("File ID: {}", file_id);
-                            }
-                            println!("\nTotal missing files: {}", response.files.len());
-                            println!("\nNote: This includes:");
-                            println!(
-                                "- Files needed by jobs but not produced by any job (user-provided)"
-                            );
-                            println!(
-                                "- Files that should have been produced by completed jobs but are missing"
-                            );
+                        println!(
+                            "Missing required files for workflow ID {}:",
+                            selected_workflow_id
+                        );
+                        println!("These files are needed by jobs but do not exist:");
+                        println!("{}", "-".repeat(50));
+                        for file_id in response.files.iter() {
+                            println!("File ID: {}", file_id);
                         }
+                        println!("\nTotal missing files: {}", response.files.len());
+                        println!("\nNote: This includes:");
+                        println!(
+                            "- Files needed by jobs but not produced by any job (user-provided)"
+                        );
+                        println!(
+                            "- Files that should have been produced by completed jobs but are missing"
+                        );
                     }
                 }
                 Err(e) => {

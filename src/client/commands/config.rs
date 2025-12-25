@@ -178,14 +178,14 @@ fn write_config_file(path: &PathBuf, force: bool) {
     }
 
     // Create parent directories if needed
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            match fs::create_dir_all(parent) {
-                Ok(_) => println!("Created directory: {}", parent.display()),
-                Err(e) => {
-                    eprintln!("Error creating directory {}: {}", parent.display(), e);
-                    std::process::exit(1);
-                }
+    if let Some(parent) = path.parent()
+        && !parent.exists()
+    {
+        match fs::create_dir_all(parent) {
+            Ok(_) => println!("Created directory: {}", parent.display()),
+            Err(e) => {
+                eprintln!("Error creating directory {}: {}", parent.display(), e);
+                std::process::exit(1);
             }
         }
     }

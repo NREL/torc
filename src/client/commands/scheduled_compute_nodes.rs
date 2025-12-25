@@ -163,23 +163,21 @@ pub fn handle_scheduled_compute_node_commands(
                                 std::process::exit(1);
                             }
                         }
+                    } else if nodes.is_empty() {
+                        println!(
+                            "No scheduled compute nodes found for workflow {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if nodes.is_empty() {
+                        let rows: Vec<ScheduledComputeNodeTableRow> =
+                            nodes.iter().map(|n| n.into()).collect();
+                        display_table_with_count(&rows, "scheduled compute nodes");
+                        if response.total_count as usize > nodes.len() {
                             println!(
-                                "No scheduled compute nodes found for workflow {}",
-                                selected_workflow_id
+                                "\nShowing {} of {} total scheduled compute nodes",
+                                nodes.len(),
+                                response.total_count
                             );
-                        } else {
-                            let rows: Vec<ScheduledComputeNodeTableRow> =
-                                nodes.iter().map(|n| n.into()).collect();
-                            display_table_with_count(&rows, "scheduled compute nodes");
-                            if response.total_count as usize > nodes.len() {
-                                println!(
-                                    "\nShowing {} of {} total scheduled compute nodes",
-                                    nodes.len(),
-                                    response.total_count
-                                );
-                            }
                         }
                     }
                 }

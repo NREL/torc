@@ -14,25 +14,13 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EventListParams {
     pub offset: i64,
     pub limit: Option<i64>,
     pub sort_by: Option<String>,
     pub reverse_sort: Option<bool>,
     pub category: Option<String>,
-}
-
-impl Default for EventListParams {
-    fn default() -> Self {
-        Self {
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            category: None,
-        }
-    }
 }
 
 // Builder methods for EventListParams

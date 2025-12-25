@@ -4,6 +4,8 @@
 //! It includes data models, server implementation, and client utilities.
 
 // Shared modules (always available)
+// models.rs is generated from OpenAPI spec - suppress clippy warnings for generated code patterns
+#[allow(clippy::to_string_trait_impl, clippy::too_many_arguments)]
 pub mod models;
 pub mod time_utils;
 

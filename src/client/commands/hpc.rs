@@ -41,13 +41,13 @@ fn config_to_profile(name: &str, config: &HpcProfileConfig) -> HpcProfile {
     let mut detection = Vec::new();
 
     // Parse detect_env_var (format: "NAME=value")
-    if let Some(env_var) = &config.detect_env_var {
-        if let Some((var_name, var_value)) = env_var.split_once('=') {
-            detection.push(HpcDetection::EnvVar {
-                name: var_name.to_string(),
-                value: var_value.to_string(),
-            });
-        }
+    if let Some(env_var) = &config.detect_env_var
+        && let Some((var_name, var_value)) = env_var.split_once('=')
+    {
+        detection.push(HpcDetection::EnvVar {
+            name: var_name.to_string(),
+            value: var_value.to_string(),
+        });
     }
 
     // Parse hostname pattern
@@ -58,11 +58,7 @@ fn config_to_profile(name: &str, config: &HpcProfileConfig) -> HpcProfile {
     }
 
     // Convert partitions
-    let partitions: Vec<HpcPartition> = config
-        .partitions
-        .iter()
-        .map(|p| config_to_partition(p))
-        .collect();
+    let partitions: Vec<HpcPartition> = config.partitions.iter().map(config_to_partition).collect();
 
     HpcProfile {
         name: name.to_string(),
@@ -280,22 +276,20 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
                         }
                     }
                 }
+            } else if format == "json" {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "detected": false,
+                        "message": "No known HPC system detected",
+                    }))
+                    .unwrap()
+                );
             } else {
-                if format == "json" {
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&serde_json::json!({
-                            "detected": false,
-                            "message": "No known HPC system detected",
-                        }))
-                        .unwrap()
-                    );
-                } else {
-                    println!("No known HPC system detected.");
-                    println!("\nKnown systems:");
-                    for profile in registry.profiles() {
-                        println!("  - {} ({})", profile.display_name, profile.name);
-                    }
+                println!("No known HPC system detected.");
+                println!("\nKnown systems:");
+                for profile in registry.profiles() {
+                    println!("  - {} ({})", profile.display_name, profile.name);
                 }
             }
         }

@@ -227,31 +227,29 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
                                 std::process::exit(1);
                             }
                         }
+                    } else if user_data_list.is_empty() {
+                        println!(
+                            "No user data found for workflow ID: {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if user_data_list.is_empty() {
-                            println!(
-                                "No user data found for workflow ID: {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            println!("User data for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<UserDataTableRow> = user_data_list
-                                .iter()
-                                .map(|user_data| UserDataTableRow {
-                                    id: user_data.id.unwrap_or(-1),
-                                    name: user_data.name.clone(),
-                                    ephemeral: user_data
-                                        .is_ephemeral
-                                        .map_or("N/A".to_string(), |e| e.to_string()),
-                                    data_preview: user_data
-                                        .data
-                                        .as_ref()
-                                        .and_then(|d| serde_json::to_string(d).ok())
-                                        .unwrap_or_else(|| "N/A".to_string()),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "user data records");
-                        }
+                        println!("User data for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<UserDataTableRow> = user_data_list
+                            .iter()
+                            .map(|user_data| UserDataTableRow {
+                                id: user_data.id.unwrap_or(-1),
+                                name: user_data.name.clone(),
+                                ephemeral: user_data
+                                    .is_ephemeral
+                                    .map_or("N/A".to_string(), |e| e.to_string()),
+                                data_preview: user_data
+                                    .data
+                                    .as_ref()
+                                    .and_then(|d| serde_json::to_string(d).ok())
+                                    .unwrap_or_else(|| "N/A".to_string()),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "user data records");
                     }
                 }
                 Err(e) => {
@@ -410,16 +408,14 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
                                 std::process::exit(1);
                             }
                         }
+                    } else if missing_data.user_data.is_empty() {
+                        println!("No missing user data for workflow ID: {}", workflow_id);
                     } else {
-                        if missing_data.user_data.is_empty() {
-                            println!("No missing user data for workflow ID: {}", workflow_id);
-                        } else {
-                            println!("Missing user data for workflow ID {}:", workflow_id);
-                            println!("{:<30}", "Missing User Data ID");
-                            println!("{}", "-".repeat(30));
-                            for user_data_id in &missing_data.user_data {
-                                println!("{:<30}", user_data_id);
-                            }
+                        println!("Missing user data for workflow ID {}:", workflow_id);
+                        println!("{:<30}", "Missing User Data ID");
+                        println!("{}", "-".repeat(30));
+                        for user_data_id in &missing_data.user_data {
+                            println!("{:<30}", user_data_id);
                         }
                     }
                 }

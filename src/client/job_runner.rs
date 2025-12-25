@@ -152,6 +152,7 @@ pub struct JobRunner {
 }
 
 impl JobRunner {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: Configuration,
         workflow: WorkflowModel,
@@ -593,12 +594,12 @@ impl JobRunner {
         // Second pass: validate output files and complete jobs
         for (job_id, mut result, output_file_ids) in job_results {
             // Validate output files if job completed successfully
-            if result.return_code == 0 {
-                if let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids) {
-                    error!("Output file validation failed for job {}: {}", job_id, e);
-                    // Mark job as failed
-                    result.return_code = 1;
-                }
+            if result.return_code == 0
+                && let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids)
+            {
+                error!("Output file validation failed for job {}: {}", job_id, e);
+                // Mark job as failed
+                result.return_code = 1;
             }
 
             self.handle_job_completion(job_id, result);
@@ -744,7 +745,7 @@ impl JobRunner {
                 default_api::complete_job(
                     &self.config,
                     job_id,
-                    result.status.clone(),
+                    result.status,
                     result.run_id,
                     result.clone(),
                 )
@@ -1596,7 +1597,7 @@ impl ComputeNodeRules {
     ) -> Self {
         ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
-                .unwrap_or(60) as i64,
+                .unwrap_or(60),
             compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
                 .unwrap_or(60) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion

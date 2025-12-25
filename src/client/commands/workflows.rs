@@ -579,84 +579,78 @@ fn handle_list_actions(
                         std::process::exit(1);
                     }
                 }
+            } else if actions.is_empty() {
+                println!(
+                    "No workflow actions found for workflow {}",
+                    selected_workflow_id
+                );
             } else {
-                if actions.is_empty() {
-                    println!(
-                        "No workflow actions found for workflow {}",
-                        selected_workflow_id
-                    );
-                } else {
-                    println!("Workflow Actions for workflow {}:", selected_workflow_id);
-                    println!();
+                println!("Workflow Actions for workflow {}:", selected_workflow_id);
+                println!();
 
-                    let rows: Vec<WorkflowActionTableRow> = actions
-                        .iter()
-                        .map(|action| {
-                            // Determine status based on trigger_count, required_triggers, and executed
-                            let status = if action.executed {
-                                "Executed".to_string()
-                            } else if action.trigger_count >= action.required_triggers {
-                                "Pending (ready to claim)".to_string()
-                            } else {
-                                "Waiting".to_string()
-                            };
+                let rows: Vec<WorkflowActionTableRow> = actions
+                    .iter()
+                    .map(|action| {
+                        // Determine status based on trigger_count, required_triggers, and executed
+                        let status = if action.executed {
+                            "Executed".to_string()
+                        } else if action.trigger_count >= action.required_triggers {
+                            "Pending (ready to claim)".to_string()
+                        } else {
+                            "Waiting".to_string()
+                        };
 
-                            // Format progress as "trigger_count/required_triggers"
-                            let progress =
-                                format!("{}/{}", action.trigger_count, action.required_triggers);
+                        // Format progress as "trigger_count/required_triggers"
+                        let progress =
+                            format!("{}/{}", action.trigger_count, action.required_triggers);
 
-                            // Format job_ids for display
-                            let job_ids = match &action.job_ids {
-                                Some(ids) if !ids.is_empty() => {
-                                    if ids.len() <= 5 {
+                        // Format job_ids for display
+                        let job_ids = match &action.job_ids {
+                            Some(ids) if !ids.is_empty() => {
+                                if ids.len() <= 5 {
+                                    ids.iter()
+                                        .map(|id| id.to_string())
+                                        .collect::<Vec<_>>()
+                                        .join(", ")
+                                } else {
+                                    format!(
+                                        "{}, ... (+{} more)",
                                         ids.iter()
+                                            .take(3)
                                             .map(|id| id.to_string())
                                             .collect::<Vec<_>>()
-                                            .join(", ")
-                                    } else {
-                                        format!(
-                                            "{}, ... (+{} more)",
-                                            ids.iter()
-                                                .take(3)
-                                                .map(|id| id.to_string())
-                                                .collect::<Vec<_>>()
-                                                .join(", "),
-                                            ids.len() - 3
-                                        )
-                                    }
+                                            .join(", "),
+                                        ids.len() - 3
+                                    )
                                 }
-                                _ => "(all jobs)".to_string(),
-                            };
-
-                            WorkflowActionTableRow {
-                                id: action.id.unwrap_or(-1),
-                                trigger_type: action.trigger_type.clone(),
-                                action_type: action.action_type.clone(),
-                                progress,
-                                status,
-                                executed_at: action
-                                    .executed_at
-                                    .as_deref()
-                                    .unwrap_or("-")
-                                    .to_string(),
-                                job_ids,
                             }
-                        })
-                        .collect();
+                            _ => "(all jobs)".to_string(),
+                        };
 
-                    display_table_with_count(&rows, "actions");
+                        WorkflowActionTableRow {
+                            id: action.id.unwrap_or(-1),
+                            trigger_type: action.trigger_type.clone(),
+                            action_type: action.action_type.clone(),
+                            progress,
+                            status,
+                            executed_at: action.executed_at.as_deref().unwrap_or("-").to_string(),
+                            job_ids,
+                        }
+                    })
+                    .collect();
 
-                    // Print a helpful legend
-                    println!();
-                    println!("Status legend:");
-                    println!(
-                        "  Waiting  - trigger_count < required_triggers (action not yet triggered)"
-                    );
-                    println!(
-                        "  Pending  - trigger_count >= required_triggers (ready to be claimed and executed)"
-                    );
-                    println!("  Executed - action has been claimed and executed");
-                }
+                display_table_with_count(&rows, "actions");
+
+                // Print a helpful legend
+                println!();
+                println!("Status legend:");
+                println!(
+                    "  Waiting  - trigger_count < required_triggers (action not yet triggered)"
+                );
+                println!(
+                    "  Pending  - trigger_count >= required_triggers (ready to be claimed and executed)"
+                );
+                println!("  Executed - action has been claimed and executed");
             }
         }
         Err(e) => {
@@ -1242,26 +1236,27 @@ fn handle_initialize(
                 // Normal initialization (not dry-run)
                 match default_api::is_workflow_uninitialized(config, selected_workflow_id) {
                     Ok(is_initialized) => {
-                        if is_initialized.as_bool().unwrap_or(false) {
-                            if !no_prompts && format != "json" {
-                                println!("\nWarning: This workflow has already been initialized.");
-                                println!("Some jobs already have initialized status.");
-                                print!("\nDo you want to continue? (y/N): ");
-                                io::stdout().flush().unwrap();
+                        if is_initialized.as_bool().unwrap_or(false)
+                            && !no_prompts
+                            && format != "json"
+                        {
+                            println!("\nWarning: This workflow has already been initialized.");
+                            println!("Some jobs already have initialized status.");
+                            print!("\nDo you want to continue? (y/N): ");
+                            io::stdout().flush().unwrap();
 
-                                let mut input = String::new();
-                                match io::stdin().read_line(&mut input) {
-                                    Ok(_) => {
-                                        let response = input.trim().to_lowercase();
-                                        if response != "y" && response != "yes" {
-                                            println!("Initialization cancelled.");
-                                            std::process::exit(0);
-                                        }
+                            let mut input = String::new();
+                            match io::stdin().read_line(&mut input) {
+                                Ok(_) => {
+                                    let response = input.trim().to_lowercase();
+                                    if response != "y" && response != "yes" {
+                                        println!("Initialization cancelled.");
+                                        std::process::exit(0);
                                     }
-                                    Err(e) => {
-                                        eprintln!("Failed to read input: {}", e);
-                                        std::process::exit(1);
-                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to read input: {}", e);
+                                    std::process::exit(1);
                                 }
                             }
                         }
@@ -1316,7 +1311,7 @@ fn handle_run(
     workflow_id: &Option<i64>,
     poll_interval: f64,
     max_parallel_jobs: Option<i64>,
-    output_dir: &std::path::PathBuf,
+    output_dir: &std::path::Path,
 ) {
     let user_name = get_env_user_name();
 
@@ -1329,7 +1324,7 @@ fn handle_run(
     let args = crate::run_jobs_cmd::Args {
         workflow_id: Some(selected_workflow_id),
         url: config.base_path.clone(),
-        output_dir: output_dir.clone(),
+        output_dir: output_dir.to_path_buf(),
         poll_interval,
         max_parallel_jobs,
         database_poll_interval: 30,
@@ -1623,7 +1618,7 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
         }
 
         // Proceed with deletion
-        match default_api::delete_workflow(config, selected_id as i64, None) {
+        match default_api::delete_workflow(config, selected_id, None) {
             Ok(removed_workflow) => {
                 deleted_workflows.push(removed_workflow);
             }
@@ -1641,10 +1636,10 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
             .map(|wf| {
                 let mut json = serde_json::to_value(wf).unwrap();
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &wf.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &wf.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
                 json
             })
@@ -1723,12 +1718,11 @@ fn handle_update(
                         let mut json = serde_json::to_value(&updated_workflow).unwrap();
 
                         // Parse resource_monitor_config from JSON string to object if present
-                        if let Some(config_str) = &updated_workflow.resource_monitor_config {
-                            if let Ok(config_obj) =
+                        if let Some(config_str) = &updated_workflow.resource_monitor_config
+                            && let Ok(config_obj) =
                                 serde_json::from_str::<serde_json::Value>(config_str)
-                            {
-                                json["resource_monitor_config"] = config_obj;
-                            }
+                        {
+                            json["resource_monitor_config"] = config_obj;
                         }
 
                         match serde_json::to_string_pretty(&json) {
@@ -1776,10 +1770,10 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, f
                 let mut json = serde_json::to_value(&workflow).unwrap();
 
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &workflow.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &workflow.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
 
                 match serde_json::to_string_pretty(&json) {
@@ -1808,6 +1802,7 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, f
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_list(
     config: &Configuration,
     user: &Option<String>,
@@ -1857,12 +1852,11 @@ fn handle_list(
                         let mut json = serde_json::to_value(workflow).unwrap();
 
                         // Parse resource_monitor_config from JSON string to object if present
-                        if let Some(config_str) = &workflow.resource_monitor_config {
-                            if let Ok(config_obj) =
+                        if let Some(config_str) = &workflow.resource_monitor_config
+                            && let Ok(config_obj) =
                                 serde_json::from_str::<serde_json::Value>(config_str)
-                            {
-                                json["resource_monitor_config"] = config_obj;
-                            }
+                        {
+                            json["resource_monitor_config"] = config_obj;
                         }
 
                         json
@@ -1876,55 +1870,43 @@ fn handle_list(
                         std::process::exit(1);
                     }
                 }
-            } else {
-                if workflows.is_empty() {
-                    if all_users {
-                        println!("No workflows found for any user");
-                    } else {
-                        let display_user = user.clone().unwrap_or_else(|| {
-                            std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                        });
-                        println!("No workflows found for user: {}", display_user);
-                    }
+            } else if workflows.is_empty() {
+                if all_users {
+                    println!("No workflows found for any user");
                 } else {
-                    if all_users {
-                        println!("Workflows for all users:");
-                        let rows: Vec<WorkflowTableRow> = workflows
-                            .iter()
-                            .map(|workflow| WorkflowTableRow {
-                                id: workflow.id.unwrap_or(-1),
-                                name: workflow.name.clone(),
-                                description: workflow
-                                    .description
-                                    .as_deref()
-                                    .unwrap_or("")
-                                    .to_string(),
-                                user: workflow.user.clone(),
-                                timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
-                            })
-                            .collect();
-                        display_table_with_count(&rows, "workflows");
-                    } else {
-                        let display_user = user.clone().unwrap_or_else(|| {
-                            std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                        });
-                        println!("Workflows for user {}:", display_user);
-                        let rows: Vec<WorkflowTableRowNoUser> = workflows
-                            .iter()
-                            .map(|workflow| WorkflowTableRowNoUser {
-                                id: workflow.id.unwrap_or(-1),
-                                name: workflow.name.clone(),
-                                description: workflow
-                                    .description
-                                    .as_deref()
-                                    .unwrap_or("")
-                                    .to_string(),
-                                timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
-                            })
-                            .collect();
-                        display_table_with_count(&rows, "workflows");
-                    }
+                    let display_user = user.clone().unwrap_or_else(|| {
+                        std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
+                    });
+                    println!("No workflows found for user: {}", display_user);
                 }
+            } else if all_users {
+                println!("Workflows for all users:");
+                let rows: Vec<WorkflowTableRow> = workflows
+                    .iter()
+                    .map(|workflow| WorkflowTableRow {
+                        id: workflow.id.unwrap_or(-1),
+                        name: workflow.name.clone(),
+                        description: workflow.description.as_deref().unwrap_or("").to_string(),
+                        user: workflow.user.clone(),
+                        timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
+                    })
+                    .collect();
+                display_table_with_count(&rows, "workflows");
+            } else {
+                let display_user = user.clone().unwrap_or_else(|| {
+                    std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
+                });
+                println!("Workflows for user {}:", display_user);
+                let rows: Vec<WorkflowTableRowNoUser> = workflows
+                    .iter()
+                    .map(|workflow| WorkflowTableRowNoUser {
+                        id: workflow.id.unwrap_or(-1),
+                        name: workflow.name.clone(),
+                        description: workflow.description.as_deref().unwrap_or("").to_string(),
+                        timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
+                    })
+                    .collect();
+                display_table_with_count(&rows, "workflows");
             }
         }
         Err(e) => {
@@ -1951,10 +1933,10 @@ fn handle_new(
                 let mut json = serde_json::to_value(&created_workflow).unwrap();
 
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &created_workflow.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &created_workflow.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
 
                 match serde_json::to_string_pretty(&json) {
@@ -2126,6 +2108,7 @@ fn handle_create(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_create_slurm(
     config: &Configuration,
     file: &str,

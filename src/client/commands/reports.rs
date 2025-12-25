@@ -11,7 +11,7 @@ use crate::client::log_paths::{
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
 use serde_json;
-use std::path::PathBuf;
+use std::path::Path;
 use tabled::Tabled;
 
 /// Format memory bytes into a human-readable string
@@ -496,7 +496,7 @@ fn check_resource_utilization(
 
             println!("{}", serde_json::to_string_pretty(&json_output).unwrap());
         }
-        "table" | _ => {
+        _ => {
             if rows.is_empty() {
                 if show_all {
                     println!(
@@ -565,7 +565,7 @@ fn check_log_file_exists(path: &str, log_type: &str, job_id: i64) {
 fn generate_results_report(
     config: &Configuration,
     workflow_id: Option<i64>,
-    output_dir: &PathBuf,
+    output_dir: &Path,
     all_runs: bool,
 ) {
     // Validate that output directory exists
@@ -681,7 +681,7 @@ fn generate_results_report(
                     "local" => {
                         // For local runner, we need hostname, workflow_id, and run_id
                         let log_path = get_job_runner_log_file(
-                            output_dir.clone(),
+                            output_dir.to_path_buf(),
                             &compute_node.hostname,
                             wf_id,
                             result.run_id,
@@ -691,39 +691,36 @@ fn generate_results_report(
                     }
                     "slurm" => {
                         // For slurm runner, extract slurm job ID from scheduler JSON
-                        if let Some(scheduler_value) = &compute_node.scheduler {
-                            if let Some(slurm_job_id) = scheduler_value.get("slurm_job_id") {
-                                if let Some(slurm_job_id_str) = slurm_job_id.as_str() {
-                                    // Build slurm job runner log path
-                                    // We need node_id and task_pid from the scheduler data
-                                    // The slurm job runner uses format: job_runner_slurm_{job_id}_{node_id}_{task_pid}.log
-                                    // We can extract node_id and task_pid from environment during slurm execution
-                                    // For now, we'll try to get it from the hostname or compute_node.pid
+                        if let Some(scheduler_value) = &compute_node.scheduler
+                            && let Some(slurm_job_id) = scheduler_value.get("slurm_job_id")
+                            && let Some(slurm_job_id_str) = slurm_job_id.as_str()
+                        {
+                            // Build slurm job runner log path
+                            // We need node_id and task_pid from the scheduler data
+                            // The slurm job runner uses format: job_runner_slurm_{job_id}_{node_id}_{task_pid}.log
+                            // We can extract node_id and task_pid from environment during slurm execution
+                            // For now, we'll try to get it from the hostname or compute_node.pid
 
-                                    // Use hostname as node_id and pid as task_pid for the log path
-                                    let node_id = &compute_node.hostname;
-                                    let task_pid = compute_node.pid as usize;
+                            // Use hostname as node_id and pid as task_pid for the log path
+                            let node_id = &compute_node.hostname;
+                            let task_pid = compute_node.pid as usize;
 
-                                    let log_path = get_slurm_job_runner_log_file(
-                                        output_dir.clone(),
-                                        slurm_job_id_str,
-                                        node_id,
-                                        task_pid,
-                                    );
-                                    check_log_file_exists(&log_path, "slurm job runner", job_id);
-                                    record["job_runner_log"] = serde_json::json!(log_path);
+                            let log_path = get_slurm_job_runner_log_file(
+                                output_dir.to_path_buf(),
+                                slurm_job_id_str,
+                                node_id,
+                                task_pid,
+                            );
+                            check_log_file_exists(&log_path, "slurm job runner", job_id);
+                            record["job_runner_log"] = serde_json::json!(log_path);
 
-                                    // Add slurm stdout/stderr paths
-                                    let slurm_stdout =
-                                        get_slurm_stdout_path(output_dir, slurm_job_id_str);
-                                    let slurm_stderr =
-                                        get_slurm_stderr_path(output_dir, slurm_job_id_str);
-                                    check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
-                                    check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
-                                    record["slurm_stdout"] = serde_json::json!(slurm_stdout);
-                                    record["slurm_stderr"] = serde_json::json!(slurm_stderr);
-                                }
-                            }
+                            // Add slurm stdout/stderr paths
+                            let slurm_stdout = get_slurm_stdout_path(output_dir, slurm_job_id_str);
+                            let slurm_stderr = get_slurm_stderr_path(output_dir, slurm_job_id_str);
+                            check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
+                            check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
+                            record["slurm_stdout"] = serde_json::json!(slurm_stdout);
+                            record["slurm_stderr"] = serde_json::json!(slurm_stderr);
                         }
                     }
                     _ => {

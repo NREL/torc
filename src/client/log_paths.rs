@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Return the name of the job runner log file for the local runner.
 pub fn get_job_runner_log_file(
@@ -34,7 +34,7 @@ pub fn get_slurm_job_runner_log_file(
 
 /// Get the path to a job's stdout log file
 pub fn get_job_stdout_path(
-    output_dir: &PathBuf,
+    output_dir: &Path,
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
@@ -50,7 +50,7 @@ pub fn get_job_stdout_path(
 
 /// Get the path to a job's stderr log file
 pub fn get_job_stderr_path(
-    output_dir: &PathBuf,
+    output_dir: &Path,
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
@@ -65,12 +65,12 @@ pub fn get_job_stderr_path(
 }
 
 /// Get the path to Slurm's stdout log file
-pub fn get_slurm_stdout_path(output_dir: &PathBuf, slurm_job_id: &str) -> String {
+pub fn get_slurm_stdout_path(output_dir: &Path, slurm_job_id: &str) -> String {
     format!("{}/slurm_output_{}.o", output_dir.display(), slurm_job_id)
 }
 
 /// Get the path to Slurm's stderr log file
-pub fn get_slurm_stderr_path(output_dir: &PathBuf, slurm_job_id: &str) -> String {
+pub fn get_slurm_stderr_path(output_dir: &Path, slurm_job_id: &str) -> String {
     format!("{}/slurm_output_{}.e", output_dir.display(), slurm_job_id)
 }
 

@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ResourceRequirementsListParams {
     pub job_id: Option<i64>,
     pub offset: i64,
@@ -27,24 +27,6 @@ pub struct ResourceRequirementsListParams {
     pub num_gpus: Option<i64>,
     pub num_nodes: Option<i64>,
     pub runtime: Option<String>,
-}
-
-impl Default for ResourceRequirementsListParams {
-    fn default() -> Self {
-        Self {
-            job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            name: None,
-            memory: None,
-            num_cpus: None,
-            num_gpus: None,
-            num_nodes: None,
-            runtime: None,
-        }
-    }
 }
 
 // Builder methods for ResourceRequirementsListParams

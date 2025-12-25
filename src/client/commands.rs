@@ -104,7 +104,7 @@ pub fn get_user_name(user: &Option<String>) -> String {
     if user.is_some() {
         return user.as_deref().unwrap().to_string();
     }
-    return get_env_user_name();
+    get_env_user_name()
 }
 
 pub fn get_env_user_name() -> String {

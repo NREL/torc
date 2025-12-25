@@ -185,22 +185,20 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                                 std::process::exit(1);
                             }
                         }
+                    } else if events.is_empty() {
+                        println!("No events found for workflow {}", selected_workflow_id);
                     } else {
-                        if events.is_empty() {
-                            println!("No events found for workflow {}", selected_workflow_id);
-                        } else {
-                            println!("Events for workflow {}:", selected_workflow_id);
-                            let rows: Vec<EventTableRow> = events
-                                .iter()
-                                .map(|event| EventTableRow {
-                                    id: event.id.unwrap_or(-1),
-                                    timestamp: format_timestamp_ms(event.timestamp),
-                                    data: serde_json::to_string(&event.data)
-                                        .unwrap_or_else(|_| "Unable to display".to_string()),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "events");
-                        }
+                        println!("Events for workflow {}:", selected_workflow_id);
+                        let rows: Vec<EventTableRow> = events
+                            .iter()
+                            .map(|event| EventTableRow {
+                                id: event.id.unwrap_or(-1),
+                                timestamp: format_timestamp_ms(event.timestamp),
+                                data: serde_json::to_string(&event.data)
+                                    .unwrap_or_else(|_| "Unable to display".to_string()),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "events");
                     }
                 }
                 Err(e) => {
@@ -370,11 +368,11 @@ fn handle_monitor_events(
 
     loop {
         // Check if we've exceeded the duration
-        if let Some(max_seconds) = duration_seconds {
-            if start_time.elapsed().as_secs() >= max_seconds as u64 {
-                println!("\nMonitoring duration completed.");
-                break;
-            }
+        if let Some(max_seconds) = duration_seconds
+            && start_time.elapsed().as_secs() >= max_seconds as u64
+        {
+            println!("\nMonitoring duration completed.");
+            break;
         }
 
         // Fetch events after the last timestamp (timestamp is in milliseconds)
@@ -389,33 +387,33 @@ fn handle_monitor_events(
             Some(last_timestamp_ms),
         ) {
             Ok(response) => {
-                if let Some(events) = response.items {
-                    if !events.is_empty() {
-                        // Process new events
-                        for event in &events {
-                            if format == "json" {
-                                match serde_json::to_string(&event) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing event to JSON: {}", e);
-                                    }
+                if let Some(events) = response.items
+                    && !events.is_empty()
+                {
+                    // Process new events
+                    for event in &events {
+                        if format == "json" {
+                            match serde_json::to_string(&event) {
+                                Ok(json) => println!("{}", json),
+                                Err(e) => {
+                                    eprintln!("Error serializing event to JSON: {}", e);
                                 }
-                            } else {
-                                println!(
-                                    "[{}] Event ID {}: {}",
-                                    format_timestamp_ms(event.timestamp),
-                                    event.id.unwrap_or(-1),
-                                    serde_json::to_string(&event.data)
-                                        .unwrap_or_else(|_| "Unable to display".to_string())
-                                );
                             }
+                        } else {
+                            println!(
+                                "[{}] Event ID {}: {}",
+                                format_timestamp_ms(event.timestamp),
+                                event.id.unwrap_or(-1),
+                                serde_json::to_string(&event.data)
+                                    .unwrap_or_else(|_| "Unable to display".to_string())
+                            );
                         }
+                    }
 
-                        // Update last_timestamp_ms to the newest event's timestamp
-                        // Timestamp is now stored as i64 milliseconds, no parsing needed
-                        if let Some(latest_event) = events.last() {
-                            last_timestamp_ms = latest_event.timestamp;
-                        }
+                    // Update last_timestamp_ms to the newest event's timestamp
+                    // Timestamp is now stored as i64 milliseconds, no parsing needed
+                    if let Some(latest_event) = events.last() {
+                        last_timestamp_ms = latest_event.timestamp;
                     }
                 }
             }

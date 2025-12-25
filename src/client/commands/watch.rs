@@ -6,7 +6,7 @@ use log::{LevelFilter, debug, error, info, warn};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
@@ -475,12 +475,10 @@ fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> 
         None,            // scheduler_id
         None,            // scheduler_config_id
         Some("pending"), // status
-    ) {
-        if let Some(nodes) = response.items {
-            if !nodes.is_empty() {
-                return true;
-            }
-        }
+    ) && let Some(nodes) = response.items
+        && !nodes.is_empty()
+    {
+        return true;
     }
 
     // Check for active allocations
@@ -494,12 +492,10 @@ fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> 
         None,           // scheduler_id
         None,           // scheduler_config_id
         Some("active"), // status
-    ) {
-        if let Some(nodes) = response.items {
-            if !nodes.is_empty() {
-                return true;
-            }
-        }
+    ) && let Some(nodes) = response.items
+        && !nodes.is_empty()
+    {
+        return true;
     }
 
     false
@@ -528,24 +524,23 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
         Some("active"), // status
     );
 
-    if let Ok(response) = active_nodes {
-        if let Some(nodes) = response.items {
-            for node in nodes {
-                if node.scheduler_type.to_lowercase() == "slurm" {
-                    // Check if this Slurm job is still running
-                    if let Ok(slurm) = SlurmInterface::new() {
-                        let slurm_job_id = node.scheduler_id.to_string();
-                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
-                            if info.status == HpcJobStatus::Running
-                                || info.status == HpcJobStatus::Queued
-                            {
-                                debug!(
-                                    "Found valid active Slurm allocation {} (status: {:?})",
-                                    slurm_job_id, info.status
-                                );
-                                return true;
-                            }
-                        }
+    if let Ok(response) = active_nodes
+        && let Some(nodes) = response.items
+    {
+        for node in nodes {
+            if node.scheduler_type.to_lowercase() == "slurm" {
+                // Check if this Slurm job is still running
+                if let Ok(slurm) = SlurmInterface::new() {
+                    let slurm_job_id = node.scheduler_id.to_string();
+                    if let Ok(info) = slurm.get_status(&slurm_job_id)
+                        && (info.status == HpcJobStatus::Running
+                            || info.status == HpcJobStatus::Queued)
+                    {
+                        debug!(
+                            "Found valid active Slurm allocation {} (status: {:?})",
+                            slurm_job_id, info.status
+                        );
+                        return true;
                     }
                 }
             }
@@ -565,24 +560,23 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
         Some("pending"), // status
     );
 
-    if let Ok(response) = pending_nodes {
-        if let Some(nodes) = response.items {
-            for node in nodes {
-                if node.scheduler_type.to_lowercase() == "slurm" {
-                    // Check if this Slurm job is still queued
-                    if let Ok(slurm) = SlurmInterface::new() {
-                        let slurm_job_id = node.scheduler_id.to_string();
-                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
-                            if info.status == HpcJobStatus::Running
-                                || info.status == HpcJobStatus::Queued
-                            {
-                                debug!(
-                                    "Found valid pending Slurm allocation {} (status: {:?})",
-                                    slurm_job_id, info.status
-                                );
-                                return true;
-                            }
-                        }
+    if let Ok(response) = pending_nodes
+        && let Some(nodes) = response.items
+    {
+        for node in nodes {
+            if node.scheduler_type.to_lowercase() == "slurm" {
+                // Check if this Slurm job is still queued
+                if let Ok(slurm) = SlurmInterface::new() {
+                    let slurm_job_id = node.scheduler_id.to_string();
+                    if let Ok(info) = slurm.get_status(&slurm_job_id)
+                        && (info.status == HpcJobStatus::Running
+                            || info.status == HpcJobStatus::Queued)
+                    {
+                        debug!(
+                            "Found valid pending Slurm allocation {} (status: {:?})",
+                            slurm_job_id, info.status
+                        );
+                        return true;
                     }
                 }
             }
@@ -855,7 +849,7 @@ fn poll_until_complete(
 }
 
 /// Diagnose failures and return job IDs that need resource adjustments
-fn diagnose_failures(workflow_id: i64, _output_dir: &PathBuf) -> Result<serde_json::Value, String> {
+fn diagnose_failures(workflow_id: i64, _output_dir: &Path) -> Result<serde_json::Value, String> {
     // Run check-resource-utilization command
     // Note: This command doesn't take an output_dir argument - it reads from the database
     let output = Command::new("torc")
@@ -881,7 +875,7 @@ fn diagnose_failures(workflow_id: i64, _output_dir: &PathBuf) -> Result<serde_js
 }
 
 /// Get Slurm log information for failed jobs
-fn get_slurm_log_info(workflow_id: i64, output_dir: &PathBuf) -> Result<serde_json::Value, String> {
+fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<serde_json::Value, String> {
     // Run reports results command to get log paths
     let output = Command::new("torc")
         .args([
@@ -948,10 +942,10 @@ fn correlate_slurm_logs(
     let mut failed_log_map = HashMap::new();
     if let Some(failed_jobs) = diagnosis.get("failed_jobs").and_then(|v| v.as_array()) {
         for job_info in failed_jobs {
-            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64()) {
-                if let Some(log_info) = log_map.remove(&job_id) {
-                    failed_log_map.insert(job_id, log_info);
-                }
+            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64())
+                && let Some(log_info) = log_map.remove(&job_id)
+            {
+                failed_log_map.insert(job_id, log_info);
             }
         }
     }
@@ -983,7 +977,7 @@ fn apply_recovery_heuristics(
     memory_multiplier: f64,
     runtime_multiplier: f64,
     retry_unknown: bool,
-    output_dir: &PathBuf,
+    output_dir: &Path,
 ) -> Result<RecoveryResult, String> {
     let mut oom_fixed = 0;
     let mut timeout_fixed = 0;
@@ -1028,10 +1022,10 @@ fn apply_recovery_heuristics(
         }
 
         // Log Slurm info if available
-        if let Some(slurm_info) = slurm_log_map.get(&job_id) {
-            if let Some(slurm_job_id) = &slurm_info.slurm_job_id {
-                log::debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
-            }
+        if let Some(slurm_info) = slurm_log_map.get(&job_id)
+            && let Some(slurm_job_id) = &slurm_info.slurm_job_id
+        {
+            log::debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
         }
 
         // Get current job to find resource requirements
@@ -1068,18 +1062,16 @@ fn apply_recovery_heuristics(
         let mut new_rr = rr.clone();
 
         // Apply OOM heuristic
-        if likely_oom {
-            if let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
-                let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
-                let new_memory = format_memory_bytes_short(new_bytes);
-                info!(
-                    "  Job {} ({}): OOM detected, increasing memory {} -> {}",
-                    job_id, job.name, rr.memory, new_memory
-                );
-                new_rr.memory = new_memory;
-                updated = true;
-                oom_fixed += 1;
-            }
+        if likely_oom && let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
+            let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
+            let new_memory = format_memory_bytes_short(new_bytes);
+            info!(
+                "  Job {} ({}): OOM detected, increasing memory {} -> {}",
+                job_id, job.name, rr.memory, new_memory
+            );
+            new_rr.memory = new_memory;
+            updated = true;
+            oom_fixed += 1;
         }
 
         // Apply timeout heuristic
@@ -1235,7 +1227,7 @@ fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String>
 }
 
 /// Regenerate Slurm schedulers and submit allocations
-fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), String> {
+fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), String> {
     let output = Command::new("torc")
         .args([
             "slurm",
@@ -1466,16 +1458,16 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         };
 
         // Step 2.5: Run recovery hook if there are unknown failures
-        if recovery_result.other_failures > 0 {
-            if let Some(ref hook_cmd) = args.recovery_hook {
-                info!(
-                    "\n{} job(s) with unknown failure cause - running recovery hook...",
-                    recovery_result.other_failures
-                );
-                if let Err(e) = run_recovery_hook(args.workflow_id, hook_cmd) {
-                    error!("Recovery hook failed: {}", e);
-                    std::process::exit(1);
-                }
+        if recovery_result.other_failures > 0
+            && let Some(ref hook_cmd) = args.recovery_hook
+        {
+            info!(
+                "\n{} job(s) with unknown failure cause - running recovery hook...",
+                recovery_result.other_failures
+            );
+            if let Err(e) = run_recovery_hook(args.workflow_id, hook_cmd) {
+                error!("Recovery hook failed: {}", e);
+                std::process::exit(1);
             }
         }
 

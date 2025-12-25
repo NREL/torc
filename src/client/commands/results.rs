@@ -241,53 +241,48 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                                 std::process::exit(1);
                             }
                         }
-                    } else {
-                        if results.is_empty() {
-                            if let Some(jid) = job_id {
-                                println!(
-                                    "No results found for workflow ID {} and job ID: {}",
-                                    selected_workflow_id, jid
-                                );
-                            } else {
-                                println!(
-                                    "No results found for workflow ID: {}",
-                                    selected_workflow_id
-                                );
-                            }
+                    } else if results.is_empty() {
+                        if let Some(jid) = job_id {
+                            println!(
+                                "No results found for workflow ID {} and job ID: {}",
+                                selected_workflow_id, jid
+                            );
                         } else {
-                            if let Some(jid) = job_id {
-                                println!(
-                                    "Results for workflow ID {} and job ID {}:",
-                                    selected_workflow_id, jid
-                                );
-                            } else {
-                                println!("Results for workflow ID {}:", selected_workflow_id);
-                            }
-
-                            // Fetch job names for the workflow
-                            let job_names = get_job_name_map(config, selected_workflow_id);
-
-                            let rows: Vec<ResultTableRow> = results
-                                .iter()
-                                .map(|result| ResultTableRow {
-                                    id: result.id.unwrap_or(-1),
-                                    job_id: result.job_id,
-                                    job_name: job_names
-                                        .get(&result.job_id)
-                                        .cloned()
-                                        .unwrap_or_else(|| "-".to_string()),
-                                    workflow_id: result.workflow_id,
-                                    run_id: result.run_id,
-                                    return_code: result.return_code,
-                                    exec_time: format!("{:.2}", result.exec_time_minutes),
-                                    peak_memory: format_memory(result.peak_memory_bytes),
-                                    peak_cpu: format_cpu(result.peak_cpu_percent),
-                                    completion_time: result.completion_time.clone(),
-                                    status: format!("{:?}", result.status),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "results");
+                            println!("No results found for workflow ID: {}", selected_workflow_id);
                         }
+                    } else {
+                        if let Some(jid) = job_id {
+                            println!(
+                                "Results for workflow ID {} and job ID {}:",
+                                selected_workflow_id, jid
+                            );
+                        } else {
+                            println!("Results for workflow ID {}:", selected_workflow_id);
+                        }
+
+                        // Fetch job names for the workflow
+                        let job_names = get_job_name_map(config, selected_workflow_id);
+
+                        let rows: Vec<ResultTableRow> = results
+                            .iter()
+                            .map(|result| ResultTableRow {
+                                id: result.id.unwrap_or(-1),
+                                job_id: result.job_id,
+                                job_name: job_names
+                                    .get(&result.job_id)
+                                    .cloned()
+                                    .unwrap_or_else(|| "-".to_string()),
+                                workflow_id: result.workflow_id,
+                                run_id: result.run_id,
+                                return_code: result.return_code,
+                                exec_time: format!("{:.2}", result.exec_time_minutes),
+                                peak_memory: format_memory(result.peak_memory_bytes),
+                                peak_cpu: format_cpu(result.peak_cpu_percent),
+                                completion_time: result.completion_time.clone(),
+                                status: format!("{:?}", result.status),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "results");
                     }
                 }
                 Err(e) => {

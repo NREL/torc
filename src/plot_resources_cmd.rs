@@ -72,10 +72,7 @@ pub fn run(args: &Args) -> Result<()> {
         );
 
         for sample in samples {
-            all_jobs
-                .entry(sample.job_id)
-                .or_insert_with(Vec::new)
-                .push(sample);
+            all_jobs.entry(sample.job_id).or_default().push(sample);
         }
 
         // Merge job names
@@ -97,27 +94,27 @@ pub fn run(args: &Args) -> Result<()> {
     // Calculate metrics for each job
     let mut job_metrics: Vec<JobMetrics> = Vec::new();
     for job_id in &jobs_to_plot {
-        if let Some(samples) = all_jobs.get(job_id) {
-            if !samples.is_empty() {
-                let job_name = job_names.get(job_id).cloned();
-                let metrics = calculate_metrics(*job_id, job_name, samples);
+        if let Some(samples) = all_jobs.get(job_id)
+            && !samples.is_empty()
+        {
+            let job_name = job_names.get(job_id).cloned();
+            let metrics = calculate_metrics(*job_id, job_name, samples);
 
-                let job_display = if let Some(ref name) = metrics.job_name {
-                    format!("Job {} ({})", metrics.job_id, name)
-                } else {
-                    format!("Job {}", metrics.job_id)
-                };
+            let job_display = if let Some(ref name) = metrics.job_name {
+                format!("Job {} ({})", metrics.job_id, name)
+            } else {
+                format!("Job {}", metrics.job_id)
+            };
 
-                println!(
-                    "{}: {} samples, {:.1}s duration, peak CPU: {:.1}%, peak mem: {:.2} GB",
-                    job_display,
-                    samples.len(),
-                    metrics.duration_seconds,
-                    metrics.peak_cpu,
-                    metrics.peak_memory_gb
-                );
-                job_metrics.push(metrics);
-            }
+            println!(
+                "{}: {} samples, {:.1}s duration, peak CPU: {:.1}%, peak mem: {:.2} GB",
+                job_display,
+                samples.len(),
+                metrics.duration_seconds,
+                metrics.peak_cpu,
+                metrics.peak_memory_gb
+            );
+            job_metrics.push(metrics);
         }
     }
 
@@ -258,7 +255,7 @@ fn write_plot(plot: &Plot, output_path: &Path, format: &str) -> Result<()> {
             std::fs::write(output_path, json_str)
                 .with_context(|| format!("Failed to write JSON to {}", output_path.display()))?;
         }
-        "html" | _ => {
+        _ => {
             plot.write_html(output_path);
         }
     }

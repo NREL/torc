@@ -135,6 +135,7 @@ pub trait ResourceRequirements {
 /// * `add_actions` - Whether to add workflow actions for scheduling
 /// * `scheduler_name_suffix` - Optional suffix for scheduler names (e.g., "_regen_20240101")
 /// * `is_recovery` - Whether this is a recovery scenario (actions marked as recovery)
+#[allow(clippy::too_many_arguments)]
 pub fn generate_scheduler_plan<RR: ResourceRequirements>(
     graph: &WorkflowGraph,
     resource_requirements: &HashMap<&str, &RR>,
@@ -186,6 +187,7 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
 }
 
 /// Process a single scheduler group and return the planned scheduler and optional action.
+#[allow(clippy::too_many_arguments)]
 fn process_scheduler_group<RR: ResourceRequirements>(
     group: &SchedulerGroup,
     resource_requirements: &HashMap<&str, &RR>,
@@ -259,8 +261,7 @@ fn process_scheduler_group<RR: ResourceRequirements>(
     );
 
     let nodes_per_job = rr.num_nodes() as u32;
-    let total_nodes_needed =
-        ((group.job_count as u32 + jobs_per_node - 1) / jobs_per_node) * nodes_per_job;
+    let total_nodes_needed = (group.job_count as u32).div_ceil(jobs_per_node) * nodes_per_job;
     let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
 
     // Allocation strategy

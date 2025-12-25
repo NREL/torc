@@ -338,22 +338,20 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                                 std::process::exit(1);
                             }
                         }
+                    } else if jobs.is_empty() {
+                        println!("No jobs found for workflow ID: {}", selected_workflow_id);
                     } else {
-                        if jobs.is_empty() {
-                            println!("No jobs found for workflow ID: {}", selected_workflow_id);
-                        } else {
-                            println!("Jobs for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<JobTableRow> = jobs
-                                .iter()
-                                .map(|job| JobTableRow {
-                                    id: job.id.unwrap_or(-1),
-                                    name: job.name.clone(),
-                                    status: job.status.expect("Job status is missing").to_string(),
-                                    command: job.command.clone(),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "jobs");
-                        }
+                        println!("Jobs for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<JobTableRow> = jobs
+                            .iter()
+                            .map(|job| JobTableRow {
+                                id: job.id.unwrap_or(-1),
+                                name: job.name.clone(),
+                                status: job.status.expect("Job status is missing").to_string(),
+                                command: job.command.clone(),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "jobs");
                     }
                 }
                 Err(e) => {
@@ -626,18 +624,16 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                                         std::process::exit(1);
                                     }
                                 }
+                            } else if let Some(count) = result.get("count") {
+                                println!(
+                                    "Successfully deleted {} job(s) from workflow ID: {}",
+                                    count, selected_workflow_id
+                                );
                             } else {
-                                if let Some(count) = result.get("count") {
-                                    println!(
-                                        "Successfully deleted {} job(s) from workflow ID: {}",
-                                        count, selected_workflow_id
-                                    );
-                                } else {
-                                    println!(
-                                        "Successfully deleted jobs from workflow ID: {}",
-                                        selected_workflow_id
-                                    );
-                                }
+                                println!(
+                                    "Successfully deleted jobs from workflow ID: {}",
+                                    selected_workflow_id
+                                );
                             }
                         }
                         Err(e) => {
@@ -745,19 +741,16 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             // Build HashMap of unique resource_requirements_id -> ResourceRequirementsModel
             let mut rr_map: HashMap<i64, models::ResourceRequirementsModel> = HashMap::new();
             for job in &jobs {
-                if let Some(rr_id) = job.resource_requirements_id {
-                    if !rr_map.contains_key(&rr_id) {
-                        match default_api::get_resource_requirements(config, rr_id) {
-                            Ok(rr) => {
-                                rr_map.insert(rr_id, rr);
-                            }
-                            Err(e) => {
-                                print_error(
-                                    &format!("getting resource requirements {}", rr_id),
-                                    &e,
-                                );
-                                std::process::exit(1);
-                            }
+                if let Some(rr_id) = job.resource_requirements_id
+                    && let std::collections::hash_map::Entry::Vacant(e) = rr_map.entry(rr_id)
+                {
+                    match default_api::get_resource_requirements(config, rr_id) {
+                        Ok(rr) => {
+                            e.insert(rr);
+                        }
+                        Err(e) => {
+                            print_error(&format!("getting resource requirements {}", rr_id), &e);
+                            std::process::exit(1);
                         }
                     }
                 }

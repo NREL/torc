@@ -518,10 +518,7 @@ fn draw_files_table(f: &mut Frame, area: Rect, app: &mut App) {
         let id = file.id.map(|i| i.to_string()).unwrap_or_default();
         let name = file.name.clone();
         let path = file.path.clone();
-        let st_mtime = file
-            .st_mtime
-            .map(|t| format_timestamp(t))
-            .unwrap_or_default();
+        let st_mtime = file.st_mtime.map(format_timestamp).unwrap_or_default();
 
         Row::new(vec![
             Cell::from(id),
@@ -649,7 +646,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
         // Format peak memory (bytes to human readable)
         let peak_mem = result
             .peak_memory_bytes
-            .map(|bytes| format_bytes(bytes))
+            .map(format_bytes)
             .unwrap_or_else(|| "-".to_string());
 
         // Format peak CPU percentage

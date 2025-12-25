@@ -1,6 +1,4 @@
 use clap::{CommandFactory, Parser};
-use clap_complete;
-use rpassword;
 
 use torc::cli::{Cli, Commands};
 use torc::client::apis::configuration::Configuration;

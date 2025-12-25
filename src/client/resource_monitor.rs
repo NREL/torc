@@ -226,10 +226,10 @@ fn run_monitoring_loop(
                     job_name,
                 } => {
                     // Store job metadata in database
-                    if let Some(ref mut conn) = db_conn {
-                        if let Err(e) = store_job_metadata(conn, job_id, &job_name) {
-                            error!("Failed to store job metadata for job {}: {}", job_id, e);
-                        }
+                    if let Some(ref mut conn) = db_conn
+                        && let Err(e) = store_job_metadata(conn, job_id, &job_name)
+                    {
+                        error!("Failed to store job metadata for job {}: {}", job_id, e);
                     }
 
                     monitored_jobs.insert(
@@ -274,17 +274,17 @@ fn run_monitoring_loop(
                 job.metrics.add_sample(cpu_percent, memory_bytes);
 
                 // Store in database if using TimeSeries
-                if let Some(ref mut conn) = db_conn {
-                    if let Err(e) = store_sample(
+                if let Some(ref mut conn) = db_conn
+                    && let Err(e) = store_sample(
                         conn,
                         job.job_id,
                         timestamp,
                         cpu_percent,
                         memory_bytes,
                         num_processes,
-                    ) {
-                        error!("Failed to store sample for job {}: {}", job.job_id, e);
-                    }
+                    )
+                {
+                    error!("Failed to store sample for job {}: {}", job.job_id, e);
                 }
 
                 debug!(

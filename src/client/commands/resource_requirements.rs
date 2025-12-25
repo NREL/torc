@@ -203,31 +203,29 @@ pub fn handle_resource_requirements_commands(
                                 std::process::exit(1);
                             }
                         }
+                    } else if requirements.is_empty() {
+                        println!(
+                            "No resource requirements found for workflow ID: {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if requirements.is_empty() {
-                            println!(
-                                "No resource requirements found for workflow ID: {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            println!(
-                                "Resource requirements for workflow ID {}:",
-                                selected_workflow_id
-                            );
-                            let rows: Vec<ResourceRequirementsTableRow> = requirements
-                                .iter()
-                                .map(|req| ResourceRequirementsTableRow {
-                                    id: req.id.unwrap_or(-1),
-                                    name: req.name.clone(),
-                                    cpus: req.num_cpus,
-                                    gpus: req.num_gpus,
-                                    nodes: req.num_nodes,
-                                    memory: req.memory.clone(),
-                                    runtime: req.runtime.clone(),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "resource requirements");
-                        }
+                        println!(
+                            "Resource requirements for workflow ID {}:",
+                            selected_workflow_id
+                        );
+                        let rows: Vec<ResourceRequirementsTableRow> = requirements
+                            .iter()
+                            .map(|req| ResourceRequirementsTableRow {
+                                id: req.id.unwrap_or(-1),
+                                name: req.name.clone(),
+                                cpus: req.num_cpus,
+                                gpus: req.num_gpus,
+                                nodes: req.num_nodes,
+                                memory: req.memory.clone(),
+                                runtime: req.runtime.clone(),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "resource requirements");
                     }
                 }
                 Err(e) => {

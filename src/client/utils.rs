@@ -151,10 +151,10 @@ pub fn claim_action(
                 }
                 Err(err) => {
                     // Check if it's a Conflict (already claimed by another compute node)
-                    if let crate::client::apis::Error::ResponseError(ref response_content) = err {
-                        if response_content.status == reqwest::StatusCode::CONFLICT {
-                            return Ok(false);
-                        }
+                    if let crate::client::apis::Error::ResponseError(ref response_content) = err
+                        && response_content.status == reqwest::StatusCode::CONFLICT
+                    {
+                        return Ok(false);
                     }
                     Err(Box::new(err))
                 }

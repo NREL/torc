@@ -404,11 +404,7 @@ pub fn generate_schedulers_for_workflow(
         .map_err(|e| format!("Failed to expand parameters: {}", e))?;
 
     // Build a map of resource requirements by name
-    let rr_vec = spec
-        .resource_requirements
-        .as_ref()
-        .map(|v| v.as_slice())
-        .unwrap_or(&[]);
+    let rr_vec = spec.resource_requirements.as_deref().unwrap_or(&[]);
     let rr_map: HashMap<&str, &ResourceRequirementsSpec> =
         rr_vec.iter().map(|rr| (rr.name.as_str(), rr)).collect();
 
@@ -987,6 +983,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 ///
 /// # Returns
 /// Result indicating success or failure
+#[allow(clippy::too_many_arguments)]
 pub fn schedule_slurm_nodes(
     config: &Configuration,
     workflow_id: i64,
@@ -1066,7 +1063,7 @@ pub fn schedule_slurm_nodes(
                 }
                 let job_id_int = job_id
                     .parse()
-                    .expect(&format!("Failed to parse Slurm job ID {}", job_id));
+                    .unwrap_or_else(|_| panic!("Failed to parse Slurm job ID {}", job_id));
                 info!(
                     "Submitted Slurm job name={} with ID={}",
                     job_name, job_id_int
@@ -1104,10 +1101,8 @@ pub fn schedule_slurm_nodes(
             }
         }
 
-        if !keep_submission_scripts {
-            if let Err(e) = std::fs::remove_file(&script_path) {
-                error!("Failed to remove submission script: {}", e);
-            }
+        if !keep_submission_scripts && let Err(e) = std::fs::remove_file(&script_path) {
+            error!("Failed to remove submission script: {}", e);
         }
     }
 
@@ -1166,8 +1161,9 @@ pub fn create_compute_node(
 ) -> models::ComputeNodeModel {
     let pid = 1; // TODO
     // TODO: send_with_retries
-    let compute_node = match default_api::create_compute_node(
-        &config,
+
+    match default_api::create_compute_node(
+        config,
         models::ComputeNodeModel::new(
             workflow_id,
             hostname.to_string(),
@@ -1186,9 +1182,7 @@ pub fn create_compute_node(
             error!("Error creating compute node: {}", e);
             std::process::exit(1);
         }
-    };
-
-    compute_node
+    }
 }
 
 /// Known Slurm error patterns and their descriptions
@@ -1421,12 +1415,11 @@ fn extract_node_from_line(line: &str) -> Option<String> {
     ];
 
     for pattern in node_patterns.iter() {
-        if let Ok(re) = Regex::new(pattern) {
-            if let Some(caps) = re.captures(line) {
-                if let Some(node) = caps.get(1) {
-                    return Some(node.as_str().to_string());
-                }
-            }
+        if let Ok(re) = Regex::new(pattern)
+            && let Some(caps) = re.captures(line)
+            && let Some(node) = caps.get(1)
+        {
+            return Some(node.as_str().to_string());
         }
     }
     None
@@ -1500,13 +1493,13 @@ fn build_slurm_to_jobs_map(
             // Get the SCN ID from the scheduler JSON
             if let Some(scn_id) = scheduler.get("scheduler_id").and_then(|v| v.as_i64()) {
                 // Look up the Slurm job ID from our SCN map
-                if let Some(slurm_job_id) = scn_to_slurm.get(&scn_id) {
-                    if let Some(node_id) = node.id {
-                        slurm_to_compute_nodes
-                            .entry(slurm_job_id.clone())
-                            .or_default()
-                            .push(node_id);
-                    }
+                if let Some(slurm_job_id) = scn_to_slurm.get(&scn_id)
+                    && let Some(node_id) = node.id
+                {
+                    slurm_to_compute_nodes
+                        .entry(slurm_job_id.clone())
+                        .or_default()
+                        .push(node_id);
                 }
             }
         }
@@ -1766,79 +1759,77 @@ pub fn parse_slurm_logs(
             "issues": all_errors,
         });
         println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    } else if all_errors.is_empty() {
+        println!(
+            "No issues found in Slurm log files for workflow {} (scanned {} file(s) in {})",
+            workflow_id,
+            scanned_files,
+            output_dir.display()
+        );
     } else {
-        if all_errors.is_empty() {
-            println!(
-                "No issues found in Slurm log files for workflow {} (scanned {} file(s) in {})",
-                workflow_id,
-                scanned_files,
-                output_dir.display()
-            );
-        } else {
-            println!("Found {} issue(s) in Slurm log files:\n", all_errors.len());
+        println!("Found {} issue(s) in Slurm log files:\n", all_errors.len());
 
-            // Group by Slurm job ID
-            let mut errors_by_job: HashMap<String, Vec<&SlurmLogError>> = HashMap::new();
-            for err in &all_errors {
-                errors_by_job
-                    .entry(err.slurm_job_id.clone())
-                    .or_default()
-                    .push(err);
-            }
+        // Group by Slurm job ID
+        let mut errors_by_job: HashMap<String, Vec<&SlurmLogError>> = HashMap::new();
+        for err in &all_errors {
+            errors_by_job
+                .entry(err.slurm_job_id.clone())
+                .or_default()
+                .push(err);
+        }
 
-            for (job_id, errors) in errors_by_job.iter() {
-                let job_label = if job_id.is_empty() {
-                    "Unknown Job".to_string()
-                } else {
-                    format!("Slurm Job {}", job_id)
+        for (job_id, errors) in errors_by_job.iter() {
+            let job_label = if job_id.is_empty() {
+                "Unknown Job".to_string()
+            } else {
+                format!("Slurm Job {}", job_id)
+            };
+
+            // Get affected Torc jobs for this Slurm job (from first error, they should all be the same)
+            let affected_jobs_info = errors
+                .first()
+                .and_then(|e| e.affected_jobs.as_ref())
+                .map(|jobs| {
+                    let job_list: Vec<String> = jobs
+                        .iter()
+                        .map(|j| format!("{} (ID: {})", j.job_name, j.job_id))
+                        .collect();
+                    format!("\n  Affected Torc jobs: {}", job_list.join(", "))
+                })
+                .unwrap_or_default();
+
+            println!("=== {} ==={}", job_label, affected_jobs_info);
+            for err in errors {
+                let severity_marker = match err.severity.as_str() {
+                    "error" => "[ERROR]",
+                    "warning" => "[WARN]",
+                    _ => "[INFO]",
                 };
-
-                // Get affected Torc jobs for this Slurm job (from first error, they should all be the same)
-                let affected_jobs_info = errors
-                    .first()
-                    .and_then(|e| e.affected_jobs.as_ref())
-                    .map(|jobs| {
-                        let job_list: Vec<String> = jobs
-                            .iter()
-                            .map(|j| format!("{} (ID: {})", j.job_name, j.job_id))
-                            .collect();
-                        format!("\n  Affected Torc jobs: {}", job_list.join(", "))
-                    })
+                let node_info = err
+                    .node
+                    .as_ref()
+                    .map(|n| format!(" (node: {})", n))
                     .unwrap_or_default();
 
-                println!("=== {} ==={}", job_label, affected_jobs_info);
-                for err in errors {
-                    let severity_marker = match err.severity.as_str() {
-                        "error" => "[ERROR]",
-                        "warning" => "[WARN]",
-                        _ => "[INFO]",
-                    };
-                    let node_info = err
-                        .node
-                        .as_ref()
-                        .map(|n| format!(" (node: {})", n))
-                        .unwrap_or_default();
-
-                    println!(
-                        "  {} {}{}: {}",
-                        severity_marker, err.pattern_description, node_info, err.line
-                    );
-                    println!("    Location: {}:{}", err.file, err.line_number);
-                }
-                println!();
+                println!(
+                    "  {} {}{}: {}",
+                    severity_marker, err.pattern_description, node_info, err.line
+                );
+                println!("    Location: {}:{}", err.file, err.line_number);
             }
-
-            // Summary
-            let error_count = all_errors.iter().filter(|e| e.severity == "error").count();
-            let warning_count = all_errors
-                .iter()
-                .filter(|e| e.severity == "warning")
-                .count();
-            println!(
-                "Summary: {} error(s), {} warning(s)",
-                error_count, warning_count
-            );
+            println!();
         }
+
+        // Summary
+        let error_count = all_errors.iter().filter(|e| e.severity == "error").count();
+        let warning_count = all_errors
+            .iter()
+            .filter(|e| e.severity == "warning")
+            .count();
+        println!(
+            "Summary: {} error(s), {} warning(s)",
+            error_count, warning_count
+        );
     }
 }
 
@@ -1940,7 +1931,7 @@ fn parse_sacct_json_to_rows(
                 .get("time")
                 .and_then(|t| t.get("elapsed"))
                 .and_then(|e| e.as_i64())
-                .map(|secs| format_duration_seconds(secs))
+                .map(format_duration_seconds)
                 .or_else(|| {
                     job.get("elapsed")
                         .and_then(|e| e.as_str())
@@ -1983,7 +1974,7 @@ fn parse_sacct_json_to_rows(
                 .and_then(|t| t.get("total"))
                 .and_then(|t| t.get("seconds"))
                 .and_then(|s| s.as_i64())
-                .map(|secs| format_duration_seconds(secs))
+                .map(format_duration_seconds)
                 .unwrap_or("-".to_string());
 
             // Get nodes
@@ -2083,11 +2074,9 @@ pub fn run_sacct_for_workflow(
     }
 
     // Create output directory if saving JSON
-    if save_json {
-        if let Err(e) = fs::create_dir_all(output_dir) {
-            eprintln!("Error creating output directory: {}", e);
-            std::process::exit(1);
-        }
+    if save_json && let Err(e) = fs::create_dir_all(output_dir) {
+        eprintln!("Error creating output directory: {}", e);
+        std::process::exit(1);
     }
 
     let mut all_summary_rows: Vec<SacctSummaryRow> = Vec::new();
@@ -2100,7 +2089,7 @@ pub fn run_sacct_for_workflow(
 
         // Run sacct with JSON output
         let sacct_result = Command::new("sacct")
-            .args(&["-j", &slurm_job_id, "--json"])
+            .args(["-j", &slurm_job_id, "--json"])
             .output();
 
         match sacct_result {
@@ -2164,35 +2153,34 @@ pub fn run_sacct_for_workflow(
             "errors": errors,
         });
         println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    } else if all_summary_rows.is_empty() && errors.is_empty() {
+        println!(
+            "No sacct data available for workflow {} (checked {} Slurm job(s))",
+            workflow_id,
+            nodes.len()
+        );
     } else {
-        if all_summary_rows.is_empty() && errors.is_empty() {
-            println!(
-                "No sacct data available for workflow {} (checked {} Slurm job(s))",
-                workflow_id,
-                nodes.len()
-            );
-        } else {
-            println!("Slurm Accounting Summary for Workflow {}\n", workflow_id);
+        println!("Slurm Accounting Summary for Workflow {}\n", workflow_id);
 
-            if !all_summary_rows.is_empty() {
-                display_table_with_count(&all_summary_rows, "job steps");
-            }
+        if !all_summary_rows.is_empty() {
+            display_table_with_count(&all_summary_rows, "job steps");
+        }
 
-            if !errors.is_empty() {
-                println!("\nErrors:");
-                for err in &errors {
-                    println!("  {}", err);
-                }
+        if !errors.is_empty() {
+            println!("\nErrors:");
+            for err in &errors {
+                println!("  {}", err);
             }
+        }
 
-            if save_json {
-                println!("\nFull JSON saved to: {}", output_dir.display());
-            }
+        if save_json {
+            println!("\nFull JSON saved to: {}", output_dir.display());
         }
     }
 }
 
 /// Handle the generate command - generates Slurm schedulers for a workflow
+#[allow(clippy::too_many_arguments)]
 fn handle_generate(
     workflow_file: &PathBuf,
     account: &str,
@@ -2349,6 +2337,7 @@ pub struct SchedulerInfo {
 }
 
 /// Handle the regenerate command - regenerates Slurm schedulers for pending jobs
+#[allow(clippy::too_many_arguments)]
 fn handle_regenerate(
     config: &Configuration,
     workflow_id: i64,
@@ -2396,7 +2385,7 @@ fn handle_regenerate(
         match paginate_jobs(
             config,
             workflow_id,
-            JobListParams::new().with_status(status.clone()),
+            JobListParams::new().with_status(*status),
         ) {
             Ok(jobs) => {
                 pending_jobs.extend(jobs);
@@ -2439,29 +2428,30 @@ fn handle_regenerate(
         Ok(actions) => {
             for action in actions {
                 // Only mark non-recovery, unexecuted schedule_nodes actions
-                if action.action_type == "schedule_nodes" && !action.is_recovery && !action.executed
+                if action.action_type == "schedule_nodes"
+                    && !action.is_recovery
+                    && !action.executed
+                    && let Some(action_id) = action.id
                 {
-                    if let Some(action_id) = action.id {
-                        match default_api::claim_action(
-                            config,
-                            workflow_id,
-                            action_id,
-                            serde_json::json!({}),
-                        ) {
-                            Ok(_) => {
-                                info!(
-                                    "Marked action {} ({} -> schedule_nodes) as executed for recovery",
-                                    action_id, action.trigger_type
-                                );
-                            }
-                            Err(e) => {
-                                // 409 Conflict means already claimed, which is fine
-                                if !format!("{:?}", e).contains("409") {
-                                    warnings.push(format!(
-                                        "Failed to mark action {} as executed: {:?}",
-                                        action_id, e
-                                    ));
-                                }
+                    match default_api::claim_action(
+                        config,
+                        workflow_id,
+                        action_id,
+                        serde_json::json!({}),
+                    ) {
+                        Ok(_) => {
+                            info!(
+                                "Marked action {} ({} -> schedule_nodes) as executed for recovery",
+                                action_id, action.trigger_type
+                            );
+                        }
+                        Err(e) => {
+                            // 409 Conflict means already claimed, which is fine
+                            if !format!("{:?}", e).contains("409") {
+                                warnings.push(format!(
+                                    "Failed to mark action {} as executed: {:?}",
+                                    action_id, e
+                                ));
                             }
                         }
                     }
@@ -2630,18 +2620,18 @@ fn handle_regenerate(
 
         // Update jobs in this group to reference this scheduler
         for job_name in &planned.job_names {
-            if let Some(job) = pending_jobs.iter().find(|j| &j.name == job_name) {
-                if let Some(job_id) = job.id {
-                    let mut updated_job = job.clone();
-                    updated_job.scheduler_id = Some(scheduler_id);
-                    // Clear status so server ignores it during comparison
-                    updated_job.status = None;
-                    if let Err(e) = default_api::update_job(config, job_id, updated_job) {
-                        warnings.push(format!(
-                            "Failed to update job {} with scheduler: {}",
-                            job_id, e
-                        ));
-                    }
+            if let Some(job) = pending_jobs.iter().find(|j| &j.name == job_name)
+                && let Some(job_id) = job.id
+            {
+                let mut updated_job = job.clone();
+                updated_job.scheduler_id = Some(scheduler_id);
+                // Clear status so server ignores it during comparison
+                updated_job.status = None;
+                if let Err(e) = default_api::update_job(config, job_id, updated_job) {
+                    warnings.push(format!(
+                        "Failed to update job {} with scheduler: {}",
+                        job_id, e
+                    ));
                 }
             }
         }

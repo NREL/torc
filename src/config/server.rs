@@ -58,21 +58,13 @@ impl Default for ServerConfig {
 /// Logging configuration for the server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct ServerLoggingConfig {
     /// Directory for log files (enables file logging with rotation)
     pub log_dir: Option<PathBuf>,
 
     /// Use JSON format for log files
     pub json_logs: bool,
-}
-
-impl Default for ServerLoggingConfig {
-    fn default() -> Self {
-        Self {
-            log_dir: None,
-            json_logs: false,
-        }
-    }
 }
 
 #[cfg(test)]

@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SlurmSchedulersListParams {
     pub offset: i64,
     pub limit: Option<i64>,
@@ -29,26 +29,6 @@ pub struct SlurmSchedulersListParams {
     pub qos: Option<String>,
     pub tmp: Option<String>,
     pub walltime: Option<String>,
-}
-
-impl Default for SlurmSchedulersListParams {
-    fn default() -> Self {
-        Self {
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            name: None,
-            account: None,
-            gres: None,
-            mem: None,
-            nodes: None,
-            partition: None,
-            qos: None,
-            tmp: None,
-            walltime: None,
-        }
-    }
 }
 
 // Builder methods for SlurmSchedulersListParams

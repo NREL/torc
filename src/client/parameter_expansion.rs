@@ -8,39 +8,38 @@ pub enum ParameterValue {
     String(String),
 }
 
-impl ParameterValue {
-    /// Convert the parameter value to a string for substitution
-    pub fn to_string(&self) -> String {
+impl std::fmt::Display for ParameterValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParameterValue::Integer(i) => i.to_string(),
-            ParameterValue::Float(f) => f.to_string(),
-            ParameterValue::String(s) => s.clone(),
+            ParameterValue::Integer(i) => write!(f, "{}", i),
+            ParameterValue::Float(fl) => write!(f, "{}", fl),
+            ParameterValue::String(s) => write!(f, "{}", s),
         }
     }
+}
 
+impl ParameterValue {
     /// Format the parameter value with optional format specifier
     /// Supports printf-style format specifiers like {:03d} for integers
     pub fn format(&self, format_spec: Option<&str>) -> String {
         match (self, format_spec) {
             (ParameterValue::Integer(i), Some(spec)) => {
                 // Parse format spec like "03d" to mean zero-padded 3 digits
-                if let Some(width_str) = spec.strip_suffix('d') {
-                    if let Some(width_str) = width_str.strip_prefix('0') {
-                        if let Ok(width) = width_str.parse::<usize>() {
-                            return format!("{:0width$}", i, width = width);
-                        }
-                    }
+                if let Some(width_str) = spec.strip_suffix('d')
+                    && let Some(width_str) = width_str.strip_prefix('0')
+                    && let Ok(width) = width_str.parse::<usize>()
+                {
+                    return format!("{:0width$}", i, width = width);
                 }
                 i.to_string()
             }
             (ParameterValue::Float(f), Some(spec)) => {
                 // Parse format spec like ".2f" to mean 2 decimal places
-                if let Some(precision_str) = spec.strip_suffix('f') {
-                    if let Some(precision_str) = precision_str.strip_prefix('.') {
-                        if let Ok(precision) = precision_str.parse::<usize>() {
-                            return format!("{:.precision$}", f, precision = precision);
-                        }
-                    }
+                if let Some(precision_str) = spec.strip_suffix('f')
+                    && let Some(precision_str) = precision_str.strip_prefix('.')
+                    && let Ok(precision) = precision_str.parse::<usize>()
+                {
+                    return format!("{:.precision$}", f, precision = precision);
                 }
                 f.to_string()
             }

@@ -433,59 +433,59 @@ impl App {
     }
 
     pub fn load_detail_data(&mut self) -> Result<()> {
-        if let Some(idx) = self.workflows_state.selected() {
-            if let Some(workflow) = self.workflows.get(idx) {
-                self.selected_workflow_id = workflow.id;
-                if let Some(workflow_id) = workflow.id {
-                    // Clear any existing filter when loading new data
-                    self.filter = None;
+        if let Some(idx) = self.workflows_state.selected()
+            && let Some(workflow) = self.workflows.get(idx)
+        {
+            self.selected_workflow_id = workflow.id;
+            if let Some(workflow_id) = workflow.id {
+                // Clear any existing filter when loading new data
+                self.filter = None;
 
-                    match self.detail_view {
-                        DetailViewType::Jobs => {
+                match self.detail_view {
+                    DetailViewType::Jobs => {
+                        self.jobs_all = self.client.list_jobs(workflow_id)?;
+                        self.jobs = self.jobs_all.clone();
+                        if !self.jobs.is_empty() {
+                            self.jobs_state.select(Some(0));
+                        }
+                    }
+                    DetailViewType::Files => {
+                        self.files_all = self.client.list_files(workflow_id)?;
+                        self.files = self.files_all.clone();
+                        if !self.files.is_empty() {
+                            self.files_state.select(Some(0));
+                        }
+                    }
+                    DetailViewType::Events => {
+                        self.events_all = self.client.list_events(workflow_id)?;
+                        self.events = self.events_all.clone();
+                        if !self.events.is_empty() {
+                            self.events_state.select(Some(0));
+                        }
+                    }
+                    DetailViewType::Results => {
+                        self.results_all = self.client.list_results(workflow_id)?;
+                        self.results = self.results_all.clone();
+                        if !self.results.is_empty() {
+                            self.results_state.select(Some(0));
+                        }
+                    }
+                    DetailViewType::ScheduledNodes => {
+                        self.scheduled_nodes_all =
+                            self.client.list_scheduled_compute_nodes(workflow_id)?;
+                        self.scheduled_nodes = self.scheduled_nodes_all.clone();
+                        if !self.scheduled_nodes.is_empty() {
+                            self.scheduled_nodes_state.select(Some(0));
+                        }
+                    }
+                    DetailViewType::Dag => {
+                        // Load jobs if not already loaded
+                        if self.jobs_all.is_empty() {
                             self.jobs_all = self.client.list_jobs(workflow_id)?;
                             self.jobs = self.jobs_all.clone();
-                            if !self.jobs.is_empty() {
-                                self.jobs_state.select(Some(0));
-                            }
                         }
-                        DetailViewType::Files => {
-                            self.files_all = self.client.list_files(workflow_id)?;
-                            self.files = self.files_all.clone();
-                            if !self.files.is_empty() {
-                                self.files_state.select(Some(0));
-                            }
-                        }
-                        DetailViewType::Events => {
-                            self.events_all = self.client.list_events(workflow_id)?;
-                            self.events = self.events_all.clone();
-                            if !self.events.is_empty() {
-                                self.events_state.select(Some(0));
-                            }
-                        }
-                        DetailViewType::Results => {
-                            self.results_all = self.client.list_results(workflow_id)?;
-                            self.results = self.results_all.clone();
-                            if !self.results.is_empty() {
-                                self.results_state.select(Some(0));
-                            }
-                        }
-                        DetailViewType::ScheduledNodes => {
-                            self.scheduled_nodes_all =
-                                self.client.list_scheduled_compute_nodes(workflow_id)?;
-                            self.scheduled_nodes = self.scheduled_nodes_all.clone();
-                            if !self.scheduled_nodes.is_empty() {
-                                self.scheduled_nodes_state.select(Some(0));
-                            }
-                        }
-                        DetailViewType::Dag => {
-                            // Load jobs if not already loaded
-                            if self.jobs_all.is_empty() {
-                                self.jobs_all = self.client.list_jobs(workflow_id)?;
-                                self.jobs = self.jobs_all.clone();
-                            }
-                            // Build the DAG
-                            self.build_dag_from_jobs();
-                        }
+                        // Build the DAG
+                        self.build_dag_from_jobs();
                     }
                 }
             }
@@ -1066,7 +1066,7 @@ impl App {
         let check_output = std::process::Command::new(&exe_path)
             .args([
                 "--url",
-                &url,
+                url,
                 "-f",
                 "json",
                 "workflows",
@@ -1246,7 +1246,7 @@ impl App {
         let check_output = std::process::Command::new(&exe_path)
             .args([
                 "--url",
-                &url,
+                url,
                 "-f",
                 "json",
                 "workflows",
@@ -1388,7 +1388,7 @@ impl App {
         let output = std::process::Command::new(&exe_path)
             .args([
                 "--url",
-                &url,
+                url,
                 "workflows",
                 "reset-status",
                 "--no-prompts",
@@ -1945,7 +1945,7 @@ impl App {
         let port = self
             .server_url
             .split(':')
-            .last()
+            .next_back()
             .and_then(|s| s.split('/').next())
             .and_then(|s| s.parse::<u16>().ok())
             .unwrap_or(8080);
@@ -2011,7 +2011,7 @@ impl App {
         let port = self
             .server_url
             .split(':')
-            .last()
+            .next_back()
             .and_then(|s| s.split('/').next())
             .and_then(|s| s.parse::<u16>().ok())
             .unwrap_or(8080);

@@ -140,10 +140,11 @@ impl WorkflowGraph {
             if let Some(ref input_files) = job.input_files {
                 for input_file in input_files {
                     for other_job in &spec.jobs {
-                        if let Some(ref output_files) = other_job.output_files {
-                            if output_files.contains(input_file) && other_job.name != job.name {
-                                dependencies.insert(other_job.name.clone());
-                            }
+                        if let Some(ref output_files) = other_job.output_files
+                            && output_files.contains(input_file)
+                            && other_job.name != job.name
+                        {
+                            dependencies.insert(other_job.name.clone());
                         }
                     }
                 }
@@ -153,10 +154,11 @@ impl WorkflowGraph {
             if let Some(ref input_data) = job.input_user_data {
                 for input_datum in input_data {
                     for other_job in &spec.jobs {
-                        if let Some(ref output_data) = other_job.output_user_data {
-                            if output_data.contains(input_datum) && other_job.name != job.name {
-                                dependencies.insert(other_job.name.clone());
-                            }
+                        if let Some(ref output_data) = other_job.output_user_data
+                            && output_data.contains(input_datum)
+                            && other_job.name != job.name
+                        {
+                            dependencies.insert(other_job.name.clone());
                         }
                     }
                 }
@@ -234,19 +236,19 @@ impl WorkflowGraph {
             }
 
             for dep_id in &dep_ids {
-                if let Some(dep_name) = job_id_to_name.get(dep_id) {
-                    if graph.nodes.contains_key(dep_name) {
-                        graph
-                            .depends_on
-                            .get_mut(&job.name)
-                            .unwrap()
-                            .insert(dep_name.clone());
-                        graph
-                            .depended_by
-                            .get_mut(dep_name)
-                            .unwrap()
-                            .insert(job.name.clone());
-                    }
+                if let Some(dep_name) = job_id_to_name.get(dep_id)
+                    && graph.nodes.contains_key(dep_name)
+                {
+                    graph
+                        .depends_on
+                        .get_mut(&job.name)
+                        .unwrap()
+                        .insert(dep_name.clone());
+                    graph
+                        .depended_by
+                        .get_mut(dep_name)
+                        .unwrap()
+                        .insert(job.name.clone());
                 }
             }
         }
@@ -257,11 +259,11 @@ impl WorkflowGraph {
             // Build file_id -> producing job_id map
             let mut file_producers: HashMap<i64, i64> = HashMap::new();
             for job in jobs {
-                if let Some(output_ids) = &job.output_file_ids {
-                    if let Some(job_id) = job.id {
-                        for file_id in output_ids {
-                            file_producers.insert(*file_id, job_id);
-                        }
+                if let Some(output_ids) = &job.output_file_ids
+                    && let Some(job_id) = job.id
+                {
+                    for file_id in output_ids {
+                        file_producers.insert(*file_id, job_id);
                     }
                 }
             }
@@ -270,23 +272,21 @@ impl WorkflowGraph {
             for job in jobs {
                 if let Some(input_ids) = &job.input_file_ids {
                     for file_id in input_ids {
-                        if let Some(producer_id) = file_producers.get(file_id) {
-                            if job.id != Some(*producer_id) {
-                                if let Some(producer_name) = job_id_to_name.get(producer_id) {
-                                    if graph.nodes.contains_key(producer_name) {
-                                        graph
-                                            .depends_on
-                                            .get_mut(&job.name)
-                                            .unwrap()
-                                            .insert(producer_name.clone());
-                                        graph
-                                            .depended_by
-                                            .get_mut(producer_name)
-                                            .unwrap()
-                                            .insert(job.name.clone());
-                                    }
-                                }
-                            }
+                        if let Some(producer_id) = file_producers.get(file_id)
+                            && job.id != Some(*producer_id)
+                            && let Some(producer_name) = job_id_to_name.get(producer_id)
+                            && graph.nodes.contains_key(producer_name)
+                        {
+                            graph
+                                .depends_on
+                                .get_mut(&job.name)
+                                .unwrap()
+                                .insert(producer_name.clone());
+                            graph
+                                .depended_by
+                                .get_mut(producer_name)
+                                .unwrap()
+                                .insert(job.name.clone());
                         }
                     }
                 }
@@ -665,22 +665,21 @@ impl WorkflowGraph {
             // Check job_name_regexes
             if let Some(ref regexes) = action.job_name_regexes {
                 for regex_str in regexes {
-                    if let Ok(re) = Regex::new(regex_str) {
-                        if jobs_becoming_ready.iter().any(|j| re.is_match(j)) {
-                            matching.push(action);
-                            break;
-                        }
+                    if let Ok(re) = Regex::new(regex_str)
+                        && jobs_becoming_ready.iter().any(|j| re.is_match(j))
+                    {
+                        matching.push(action);
+                        break;
                     }
                 }
             }
 
             // Check exact job names
-            if let Some(ref job_names) = action.jobs {
-                if jobs_becoming_ready.iter().any(|j| job_names.contains(j)) {
-                    if !matching.contains(&action) {
-                        matching.push(action);
-                    }
-                }
+            if let Some(ref job_names) = action.jobs
+                && jobs_becoming_ready.iter().any(|j| job_names.contains(j))
+                && !matching.contains(&action)
+            {
+                matching.push(action);
             }
         }
 

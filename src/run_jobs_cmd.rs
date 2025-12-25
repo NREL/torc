@@ -117,28 +117,27 @@ pub fn run(args: &Args) {
         Ok(response) => {
             if let Some(is_uninitialized) =
                 response.get("is_uninitialized").and_then(|v| v.as_bool())
+                && is_uninitialized
             {
-                if is_uninitialized {
-                    eprintln!(
-                        "Workflow {} has all jobs uninitialized. Initializing workflow...",
-                        workflow_id
-                    );
-                    let torc_config = TorcConfig::load().unwrap_or_default();
-                    let workflow_manager =
-                        WorkflowManager::new(config.clone(), torc_config, workflow.clone());
-                    match workflow_manager.initialize(false) {
-                        Ok(()) => {
-                            eprintln!("Successfully initialized workflow {}", workflow_id);
-                        }
-                        Err(e) => {
-                            eprintln!("Error initializing workflow: {}", e);
-                            std::process::exit(1);
-                        }
+                eprintln!(
+                    "Workflow {} has all jobs uninitialized. Initializing workflow...",
+                    workflow_id
+                );
+                let torc_config = TorcConfig::load().unwrap_or_default();
+                let workflow_manager =
+                    WorkflowManager::new(config.clone(), torc_config, workflow.clone());
+                match workflow_manager.initialize(false) {
+                    Ok(()) => {
+                        eprintln!("Successfully initialized workflow {}", workflow_id);
+                    }
+                    Err(e) => {
+                        eprintln!("Error initializing workflow: {}", e);
+                        std::process::exit(1);
                     }
                 }
-                // If workflow is already initialized, proceed to run it
-                // (no action needed, just continue)
             }
+            // If workflow is already initialized, proceed to run it
+            // (no action needed, just continue)
         }
         Err(e) => {
             eprintln!("Error checking if workflow is uninitialized: {}", e);

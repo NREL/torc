@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct UserDataListParams {
     pub consumer_job_id: Option<i64>,
     pub producer_job_id: Option<i64>,
@@ -24,21 +24,6 @@ pub struct UserDataListParams {
     pub reverse_sort: Option<bool>,
     pub name: Option<String>,
     pub is_ephemeral: Option<bool>,
-}
-
-impl Default for UserDataListParams {
-    fn default() -> Self {
-        Self {
-            consumer_job_id: None,
-            producer_job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            name: None,
-            is_ephemeral: None,
-        }
-    }
 }
 
 // Builder methods for UserDataListParams

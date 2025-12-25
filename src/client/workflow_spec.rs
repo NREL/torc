@@ -110,7 +110,7 @@ impl FileSpec {
         let mode = self.parameter_mode.as_deref().unwrap_or("product");
         let combinations = match mode {
             "zip" => zip_parameters(&parsed_params)?,
-            "product" | _ => cartesian_product(&parsed_params),
+            _ => cartesian_product(&parsed_params),
         };
 
         // Create a FileSpec for each combination
@@ -352,7 +352,7 @@ impl JobSpec {
         let mode = self.parameter_mode.as_deref().unwrap_or("product");
         let combinations = match mode {
             "zip" => zip_parameters(&parsed_params)?,
-            "product" | _ => cartesian_product(&parsed_params),
+            _ => cartesian_product(&parsed_params),
         };
 
         // Create a JobSpec for each combination
@@ -936,10 +936,10 @@ impl WorkflowSpec {
         if let Some(ref user_data_list) = spec.user_data {
             let mut user_data_names_set = HashSet::new();
             for ud in user_data_list {
-                if let Some(ref name) = ud.name {
-                    if !user_data_names_set.insert(name.clone()) {
-                        errors.push(format!("Duplicate user_data name: '{}'", name));
-                    }
+                if let Some(ref name) = ud.name
+                    && !user_data_names_set.insert(name.clone())
+                {
+                    errors.push(format!("Duplicate user_data name: '{}'", name));
                 }
             }
         }
@@ -961,10 +961,10 @@ impl WorkflowSpec {
         if let Some(ref schedulers) = spec.slurm_schedulers {
             let mut scheduler_names_set = HashSet::new();
             for sched in schedulers {
-                if let Some(ref name) = sched.name {
-                    if !scheduler_names_set.insert(name.clone()) {
-                        errors.push(format!("Duplicate slurm_scheduler name: '{}'", name));
-                    }
+                if let Some(ref name) = sched.name
+                    && !scheduler_names_set.insert(name.clone())
+                {
+                    errors.push(format!("Duplicate slurm_scheduler name: '{}'", name));
                 }
             }
         }
@@ -1044,23 +1044,23 @@ impl WorkflowSpec {
             dependencies.insert(job.name.clone(), job_deps);
 
             // Validate resource_requirements reference
-            if let Some(ref rr_name) = job.resource_requirements {
-                if !resource_req_names.contains(rr_name) {
-                    errors.push(format!(
-                        "Job '{}' references non-existent resource_requirements '{}'",
-                        job.name, rr_name
-                    ));
-                }
+            if let Some(ref rr_name) = job.resource_requirements
+                && !resource_req_names.contains(rr_name)
+            {
+                errors.push(format!(
+                    "Job '{}' references non-existent resource_requirements '{}'",
+                    job.name, rr_name
+                ));
             }
 
             // Validate scheduler reference
-            if let Some(ref sched_name) = job.scheduler {
-                if !scheduler_names_set.contains(sched_name) {
-                    errors.push(format!(
-                        "Job '{}' references non-existent scheduler '{}'",
-                        job.name, sched_name
-                    ));
-                }
+            if let Some(ref sched_name) = job.scheduler
+                && !scheduler_names_set.contains(sched_name)
+            {
+                errors.push(format!(
+                    "Job '{}' references non-existent scheduler '{}'",
+                    job.name, sched_name
+                ));
             }
 
             // Validate input_files references
@@ -1169,10 +1169,10 @@ impl WorkflowSpec {
                 let mut current_level = Vec::new();
 
                 for job_name in &remaining {
-                    if let Some(deps) = dependencies.get(job_name) {
-                        if deps.iter().all(|d| processed.contains(d)) {
-                            current_level.push(job_name.clone());
-                        }
+                    if let Some(deps) = dependencies.get(job_name)
+                        && deps.iter().all(|d| processed.contains(d))
+                    {
+                        current_level.push(job_name.clone());
                     }
                 }
 
@@ -1227,15 +1227,15 @@ impl WorkflowSpec {
                 }
 
                 // Validate scheduler reference in schedule_nodes actions
-                if action.action_type == "schedule_nodes" {
-                    if let Some(ref sched_name) = action.scheduler {
-                        let sched_type = action.scheduler_type.as_deref().unwrap_or("");
-                        if sched_type == "slurm" && !scheduler_names_set.contains(sched_name) {
-                            errors.push(format!(
-                                "{} references non-existent slurm scheduler '{}'",
-                                action_desc, sched_name
-                            ));
-                        }
+                if action.action_type == "schedule_nodes"
+                    && let Some(ref sched_name) = action.scheduler
+                {
+                    let sched_type = action.scheduler_type.as_deref().unwrap_or("");
+                    if sched_type == "slurm" && !scheduler_names_set.contains(sched_name) {
+                        errors.push(format!(
+                            "{} references non-existent slurm scheduler '{}'",
+                            action_desc, sched_name
+                        ));
                     }
                 }
             }
@@ -1243,59 +1243,60 @@ impl WorkflowSpec {
 
         // Step 11: Warn about heterogeneous schedulers without jobs_sort_method
         // This helps users avoid suboptimal job-to-node matching
-        if let Some(ref schedulers) = spec.slurm_schedulers {
-            if schedulers.len() > 1 && spec.jobs_sort_method.is_none() {
-                // Check if schedulers have different resource profiles
-                let has_different_gres = schedulers
-                    .iter()
-                    .map(|s| &s.gres)
-                    .collect::<HashSet<_>>()
-                    .len()
-                    > 1;
-                let has_different_mem = schedulers
-                    .iter()
-                    .map(|s| &s.mem)
-                    .collect::<HashSet<_>>()
-                    .len()
-                    > 1;
-                let has_different_walltime = schedulers
-                    .iter()
-                    .map(|s| &s.walltime)
-                    .collect::<HashSet<_>>()
-                    .len()
-                    > 1;
-                let has_different_partition = schedulers
-                    .iter()
-                    .map(|s| &s.partition)
-                    .collect::<HashSet<_>>()
-                    .len()
-                    > 1;
+        if let Some(ref schedulers) = spec.slurm_schedulers
+            && schedulers.len() > 1
+            && spec.jobs_sort_method.is_none()
+        {
+            // Check if schedulers have different resource profiles
+            let has_different_gres = schedulers
+                .iter()
+                .map(|s| &s.gres)
+                .collect::<HashSet<_>>()
+                .len()
+                > 1;
+            let has_different_mem = schedulers
+                .iter()
+                .map(|s| &s.mem)
+                .collect::<HashSet<_>>()
+                .len()
+                > 1;
+            let has_different_walltime = schedulers
+                .iter()
+                .map(|s| &s.walltime)
+                .collect::<HashSet<_>>()
+                .len()
+                > 1;
+            let has_different_partition = schedulers
+                .iter()
+                .map(|s| &s.partition)
+                .collect::<HashSet<_>>()
+                .len()
+                > 1;
 
-                let has_heterogeneous_schedulers = has_different_gres
-                    || has_different_mem
-                    || has_different_walltime
-                    || has_different_partition;
+            let has_heterogeneous_schedulers = has_different_gres
+                || has_different_mem
+                || has_different_walltime
+                || has_different_partition;
 
-                // Check if any jobs don't have explicit scheduler assignments
-                let jobs_without_scheduler =
-                    spec.jobs.iter().filter(|j| j.scheduler.is_none()).count();
+            // Check if any jobs don't have explicit scheduler assignments
+            let jobs_without_scheduler = spec.jobs.iter().filter(|j| j.scheduler.is_none()).count();
 
-                if has_heterogeneous_schedulers && jobs_without_scheduler > 0 {
-                    let mut differences = Vec::new();
-                    if has_different_gres {
-                        differences.push("GPUs (gres)");
-                    }
-                    if has_different_mem {
-                        differences.push("memory (mem)");
-                    }
-                    if has_different_walltime {
-                        differences.push("walltime");
-                    }
-                    if has_different_partition {
-                        differences.push("partition");
-                    }
+            if has_heterogeneous_schedulers && jobs_without_scheduler > 0 {
+                let mut differences = Vec::new();
+                if has_different_gres {
+                    differences.push("GPUs (gres)");
+                }
+                if has_different_mem {
+                    differences.push("memory (mem)");
+                }
+                if has_different_walltime {
+                    differences.push("walltime");
+                }
+                if has_different_partition {
+                    differences.push("partition");
+                }
 
-                    warnings.push(format!(
+                warnings.push(format!(
                         "Workflow has {} schedulers with different {} but {} job(s) have no explicit \
                         scheduler assignment and jobs_sort_method is not set. The default sort method \
                         'gpus_runtime_memory' will be used (jobs sorted by GPUs, then runtime, then \
@@ -1306,7 +1307,6 @@ impl WorkflowSpec {
                         differences.join(", "),
                         jobs_without_scheduler
                     ));
-                }
             }
         }
 
@@ -1496,7 +1496,7 @@ impl WorkflowSpec {
             workflow_model.compute_node_wait_for_healthy_database_minutes = Some(value);
         }
         if let Some(ref value) = spec.jobs_sort_method {
-            workflow_model.jobs_sort_method = Some(value.clone());
+            workflow_model.jobs_sort_method = Some(*value);
         }
 
         // Serialize resource_monitor config if present
@@ -1910,6 +1910,7 @@ impl WorkflowSpec {
 
     /// Create JobModels with proper ID mapping using bulk API in batches of 1000
     /// Jobs are created in dependency order with depends_on_job_ids set during initial creation
+    #[allow(clippy::type_complexity)]
     fn create_jobs(
         config: &Configuration,
         workflow_id: i64,
@@ -3042,13 +3043,13 @@ impl WorkflowSpec {
                 // Count the number of # needed for raw string
                 let mut hashes = 0;
                 loop {
-                    let delimiter: String = std::iter::repeat('#').take(hashes).collect();
+                    let delimiter: String = std::iter::repeat_n('#', hashes).collect();
                     if !s.contains(&format!("\"{}", delimiter)) {
                         break;
                     }
                     hashes += 1;
                 }
-                let delimiter: String = std::iter::repeat('#').take(hashes).collect();
+                let delimiter: String = std::iter::repeat_n('#', hashes).collect();
                 // KDL raw string format: r#"..."# where # count can vary
                 format!("r{}\"{}\"{}", delimiter, s, delimiter)
             } else {
@@ -3092,14 +3093,14 @@ impl WorkflowSpec {
         }
 
         // Parameters
-        if let Some(ref params) = self.parameters {
-            if !params.is_empty() {
-                lines.push("parameters {".to_string());
-                for (key, value) in params {
-                    lines.push(format!("    {} {}", key, kdl_escape(value)));
-                }
-                lines.push("}".to_string());
+        if let Some(ref params) = self.parameters
+            && !params.is_empty()
+        {
+            lines.push("parameters {".to_string());
+            for (key, value) in params {
+                lines.push(format!("    {} {}", key, kdl_escape(value)));
             }
+            lines.push("}".to_string());
         }
 
         lines.push(String::new()); // Empty line for readability
@@ -3210,14 +3211,14 @@ impl WorkflowSpec {
         } else {
             lines.push(format!("file {} {{", escape(&file.name)));
             lines.push(format!("    path {}", escape(&file.path)));
-            if let Some(ref params) = file.parameters {
-                if !params.is_empty() {
-                    lines.push("    parameters {".to_string());
-                    for (key, value) in params {
-                        lines.push(format!("        {} {}", key, escape(value)));
-                    }
-                    lines.push("    }".to_string());
+            if let Some(ref params) = file.parameters
+                && !params.is_empty()
+            {
+                lines.push("    parameters {".to_string());
+                for (key, value) in params {
+                    lines.push(format!("        {} {}", key, escape(value)));
                 }
+                lines.push("    }".to_string());
             }
             if let Some(ref mode) = file.parameter_mode {
                 lines.push(format!("    parameter_mode {}", escape(mode)));
@@ -3409,14 +3410,14 @@ impl WorkflowSpec {
         if let Some(ref sched) = job.scheduler {
             lines.push(format!("    scheduler {}", escape(sched)));
         }
-        if let Some(ref params) = job.parameters {
-            if !params.is_empty() {
-                lines.push("    parameters {".to_string());
-                for (key, value) in params {
-                    lines.push(format!("        {} {}", key, escape(value)));
-                }
-                lines.push("    }".to_string());
+        if let Some(ref params) = job.parameters
+            && !params.is_empty()
+        {
+            lines.push("    parameters {".to_string());
+            for (key, value) in params {
+                lines.push(format!("        {} {}", key, escape(value)));
             }
+            lines.push("    }".to_string());
         }
         lines.push("}".to_string());
     }
@@ -3514,10 +3515,10 @@ impl WorkflowSpec {
         let mut user_data_name_to_data = HashMap::new();
         if let Some(user_data_list) = &self.user_data {
             for user_data_spec in user_data_list {
-                if let Some(name) = &user_data_spec.name {
-                    if let Some(data) = &user_data_spec.data {
-                        user_data_name_to_data.insert(name.clone(), data.clone());
-                    }
+                if let Some(name) = &user_data_spec.name
+                    && let Some(data) = &user_data_spec.data
+                {
+                    user_data_name_to_data.insert(name.clone(), data.clone());
                 }
             }
         }
@@ -3598,6 +3599,7 @@ impl WorkflowSpec {
 
     /// Substitute variables and extract input/output dependencies
     /// Returns: (substituted_string, input_files, output_files, input_user_data, output_user_data)
+    #[allow(clippy::type_complexity)]
     fn substitute_and_extract(
         input: &str,
         file_name_to_path: &HashMap<String, String>,

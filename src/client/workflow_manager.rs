@@ -132,9 +132,11 @@ impl WorkflowManager {
     }
 
     /// Initialize the jobs and start the workflow.
+    ///
     /// If force is false:
     ///   - Return an error if required input files are missing.
     ///   - Prompt the user to confirm deletion of any output files that already exist.
+    ///
     /// If force is true:
     ///   - Ignore missing input files.
     ///   - Delete any output files that already exist.
@@ -172,7 +174,7 @@ impl WorkflowManager {
             "run_id": run_id,
             "message": format!("Started workflow on {}", self.workflow_id),
         });
-        let event = EventModel::new(self.workflow_id as i64, event_data);
+        let event = EventModel::new(self.workflow_id, event_data);
         self.create_event(event)
     }
 
@@ -355,7 +357,7 @@ impl WorkflowManager {
             "run_id": run_id,
             "message": format!("Reinitialized workflow on {}", self.workflow_id),
         });
-        let event = EventModel::new(self.workflow_id as i64, event_data);
+        let event = EventModel::new(self.workflow_id, event_data);
         self.create_event(event)
     }
 
@@ -372,9 +374,7 @@ impl WorkflowManager {
                     new_status,
                 ) {
                     Ok(_) => Ok(new_run_id),
-                    Err(err) => {
-                        return Err(TorcError::ApiError(err.to_string()));
-                    }
+                    Err(err) => Err(TorcError::ApiError(err.to_string())),
                 }
             }
             Err(err) => Err(TorcError::ApiError(err.to_string())),
@@ -616,7 +616,7 @@ impl WorkflowManager {
     pub fn initialize_jobs(&self, only_uninitialized: bool) -> Result<(), TorcError> {
         match default_api::initialize_jobs(
             &self.config,
-            self.workflow_id as i64,
+            self.workflow_id,
             Some(only_uninitialized),
             Some(false),
             None,

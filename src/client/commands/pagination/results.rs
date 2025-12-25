@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ResultListParams {
     pub job_id: Option<i64>,
     pub run_id: Option<i64>,
@@ -26,23 +26,6 @@ pub struct ResultListParams {
     pub status: Option<JobStatus>,
     pub all_runs: Option<bool>,
     pub compute_node_id: Option<i64>,
-}
-
-impl Default for ResultListParams {
-    fn default() -> Self {
-        Self {
-            job_id: None,
-            run_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            return_code: None,
-            status: None,
-            all_runs: None,
-            compute_node_id: None,
-        }
-    }
 }
 
 // Builder methods for ResultListParams

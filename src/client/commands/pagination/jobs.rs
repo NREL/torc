@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct JobListParams {
     pub status: Option<JobStatus>,
     pub needs_file_id: Option<i64>,
@@ -25,22 +25,6 @@ pub struct JobListParams {
     pub reverse_sort: Option<bool>,
     pub include_relationships: Option<bool>,
     pub active_compute_node_id: Option<i64>,
-}
-
-impl Default for JobListParams {
-    fn default() -> Self {
-        Self {
-            status: None,
-            needs_file_id: None,
-            upstream_job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            include_relationships: None,
-            active_compute_node_id: None,
-        }
-    }
 }
 
 // Builder methods for JobListParams

@@ -93,10 +93,10 @@ impl ExecutionPlan {
         let mut start_allocations = Vec::new();
         if let Some(ref actions) = spec.actions {
             for action in actions {
-                if action.trigger_type == "on_workflow_start" {
-                    if let Some(alloc) = build_scheduler_allocation(spec, action)? {
-                        start_allocations.push(alloc);
-                    }
+                if action.trigger_type == "on_workflow_start"
+                    && let Some(alloc) = build_scheduler_allocation(spec, action)?
+                {
+                    start_allocations.push(alloc);
                 }
             }
         }
@@ -204,10 +204,10 @@ impl ExecutionPlan {
 
         for (event_id, deps) in event_deps {
             for dep_event_id in deps {
-                if let Some(dep_event) = events.get_mut(&dep_event_id) {
-                    if !dep_event.unlocks_events.contains(&event_id) {
-                        dep_event.unlocks_events.push(event_id.clone());
-                    }
+                if let Some(dep_event) = events.get_mut(&dep_event_id)
+                    && !dep_event.unlocks_events.contains(&event_id)
+                {
+                    dep_event.unlocks_events.push(event_id.clone());
                 }
             }
         }
@@ -280,12 +280,11 @@ impl ExecutionPlan {
         // Find on_workflow_start scheduler allocations
         let mut start_allocations = Vec::new();
         for action in actions {
-            if action.trigger_type == "on_workflow_start" {
-                if let Some(alloc) =
+            if action.trigger_type == "on_workflow_start"
+                && let Some(alloc) =
                     build_scheduler_allocation_from_db_action(action, jobs, &scheduler_id_to_name)?
-                {
-                    start_allocations.push(alloc);
-                }
+            {
+                start_allocations.push(alloc);
             }
         }
 
@@ -316,10 +315,11 @@ impl ExecutionPlan {
                 if processed_jobs.contains(&job.name) {
                     continue;
                 }
-                if let Some(deps) = dependency_graph_by_name.get(&job.name) {
-                    if !deps.is_empty() && deps.iter().all(|d| processed_jobs.contains(d)) {
-                        newly_ready.push(job.name.clone());
-                    }
+                if let Some(deps) = dependency_graph_by_name.get(&job.name)
+                    && !deps.is_empty()
+                    && deps.iter().all(|d| processed_jobs.contains(d))
+                {
+                    newly_ready.push(job.name.clone());
                 }
             }
 
@@ -368,14 +368,14 @@ impl ExecutionPlan {
                                 .any(|job_name| job_name_to_id.get(job_name) == Some(action_job_id))
                         });
 
-                        if matches_any {
-                            if let Some(alloc) = build_scheduler_allocation_from_db_action(
+                        if matches_any
+                            && let Some(alloc) = build_scheduler_allocation_from_db_action(
                                 action,
                                 jobs,
                                 &scheduler_id_to_name,
-                            )? {
-                                scheduler_allocations.push(alloc);
-                            }
+                            )?
+                        {
+                            scheduler_allocations.push(alloc);
                         }
                     }
                 }
@@ -411,10 +411,10 @@ impl ExecutionPlan {
 
         for (event_id, deps) in event_deps {
             for dep_event_id in deps {
-                if let Some(dep_event) = events.get_mut(&dep_event_id) {
-                    if !dep_event.unlocks_events.contains(&event_id) {
-                        dep_event.unlocks_events.push(event_id.clone());
-                    }
+                if let Some(dep_event) = events.get_mut(&dep_event_id)
+                    && !dep_event.unlocks_events.contains(&event_id)
+                {
+                    dep_event.unlocks_events.push(event_id.clone());
                 }
             }
         }

@@ -3,6 +3,12 @@
 //! This module contains all client-side functionality including API wrappers,
 //! CLI command handlers, workflow management, and job execution.
 
+// apis module is generated from OpenAPI spec - suppress clippy warnings for generated code patterns
+#[allow(
+    clippy::too_many_arguments,
+    clippy::result_large_err,
+    clippy::needless_return
+)]
 pub mod apis;
 pub mod async_cli_command;
 pub mod commands;

@@ -65,10 +65,10 @@ impl ConfigPaths {
         if self.system.exists() {
             paths.push(&self.system);
         }
-        if let Some(user) = &self.user {
-            if user.exists() {
-                paths.push(user);
-            }
+        if let Some(user) = &self.user
+            && user.exists()
+        {
+            paths.push(user);
         }
         if self.local.exists() {
             paths.push(&self.local);
@@ -112,14 +112,14 @@ impl TorcConfig {
         }
 
         // 2. User config (optional)
-        if let Some(user_path) = &paths.user {
-            if user_path.exists() {
-                builder = builder.add_source(
-                    File::from(user_path.clone())
-                        .format(FileFormat::Toml)
-                        .required(false),
-                );
-            }
+        if let Some(user_path) = &paths.user
+            && user_path.exists()
+        {
+            builder = builder.add_source(
+                File::from(user_path.clone())
+                    .format(FileFormat::Toml)
+                    .required(false),
+            );
         }
 
         // 3. Project-local config (optional)

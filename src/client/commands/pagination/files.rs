@@ -14,7 +14,7 @@ use crate::models::*;
 /// - `offset` defaults to 0 (start from beginning)
 /// - All other fields default to `None` (no filtering)
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FileListParams {
     pub produced_by_job_id: Option<i64>,
     pub offset: i64,
@@ -24,21 +24,6 @@ pub struct FileListParams {
     pub name: Option<String>,
     pub path: Option<String>,
     pub is_output: Option<bool>,
-}
-
-impl Default for FileListParams {
-    fn default() -> Self {
-        Self {
-            produced_by_job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            name: None,
-            path: None,
-            is_output: None,
-        }
-    }
 }
 
 // Builder methods for FileListParams
