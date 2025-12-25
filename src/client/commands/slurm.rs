@@ -2319,6 +2319,10 @@ pub struct RegenerateResult {
     pub pending_jobs: usize,
     pub schedulers_created: Vec<SchedulerInfo>,
     pub total_allocations: i64,
+    /// Number of allocations actually submitted immediately
+    pub allocations_submitted: i64,
+    /// Number of allocations deferred (will be submitted via on_jobs_ready action)
+    pub allocations_deferred: i64,
     pub warnings: Vec<String>,
     pub submitted: bool,
 }
@@ -2412,6 +2416,8 @@ fn handle_regenerate(
                     pending_jobs: 0,
                     schedulers_created: Vec::new(),
                     total_allocations: 0,
+                    allocations_submitted: 0,
+                    allocations_deferred: 0,
                     warnings: vec!["No pending jobs found".to_string()],
                     submitted: false,
                 })
@@ -2557,6 +2563,8 @@ fn handle_regenerate(
                     pending_jobs: pending_jobs.len(),
                     schedulers_created: Vec::new(),
                     total_allocations: 0,
+                    allocations_submitted: 0,
+                    allocations_deferred: 0,
                     warnings,
                     submitted: false,
                 })
@@ -2719,6 +2727,9 @@ fn handle_regenerate(
     // Schedulers for jobs with dependencies will be submitted when the
     // on_jobs_ready action fires (after their dependencies complete).
     let mut submitted = false;
+    let mut allocations_submitted: i64 = 0;
+    let mut allocations_deferred: i64 = 0;
+
     if submit && !schedulers_created.is_empty() {
         // Create output directory
         if let Err(e) = std::fs::create_dir_all(output_dir) {
@@ -2731,9 +2742,10 @@ fn handle_regenerate(
             // when their on_jobs_ready action fires
             if scheduler_info.has_dependencies {
                 println!(
-                    "  Skipping scheduler '{}' (jobs have dependencies - will submit via on_jobs_ready action)",
-                    scheduler_info.name
+                    "  Deferring scheduler '{}' ({} allocation(s)) - will submit via on_jobs_ready action",
+                    scheduler_info.name, scheduler_info.num_allocations
                 );
+                allocations_deferred += scheduler_info.num_allocations;
                 continue;
             }
 
@@ -2752,10 +2764,11 @@ fn handle_regenerate(
                 false, // keep_submission_scripts
             ) {
                 Ok(()) => {
-                    info!(
-                        "Submitted {} allocation(s) for scheduler '{}'",
+                    println!(
+                        "  Submitted {} allocation(s) for scheduler '{}'",
                         scheduler_info.num_allocations, scheduler_info.name
                     );
+                    allocations_submitted += scheduler_info.num_allocations;
                 }
                 Err(e) => {
                     eprintln!(
@@ -2775,6 +2788,8 @@ fn handle_regenerate(
         pending_jobs: pending_jobs.len(),
         schedulers_created,
         total_allocations,
+        allocations_submitted,
+        allocations_deferred,
         warnings,
         submitted,
     };
@@ -2787,7 +2802,14 @@ fn handle_regenerate(
         println!("Summary:");
         println!("  Pending jobs: {}", result.pending_jobs);
         println!("  Schedulers created: {}", result.schedulers_created.len());
-        println!("  Total allocations: {}", result.total_allocations);
+        if result.submitted {
+            println!(
+                "  Allocations submitted: {} (deferred: {})",
+                result.allocations_submitted, result.allocations_deferred
+            );
+        } else {
+            println!("  Total allocations: {}", result.total_allocations);
+        }
         println!(
             "  Profile used: {} ({})",
             profile.display_name, profile.name
@@ -2797,9 +2819,19 @@ fn handle_regenerate(
             println!();
             println!("Schedulers:");
             for sched in &result.schedulers_created {
+                let deferred_marker = if sched.has_dependencies {
+                    " [deferred]"
+                } else {
+                    ""
+                };
                 println!(
-                    "  - {} (ID: {}): {} job(s), {} allocation(s) × {} node(s)",
-                    sched.name, sched.id, sched.job_count, sched.num_allocations, sched.nodes
+                    "  - {} (ID: {}): {} job(s), {} allocation(s) × {} node(s){}",
+                    sched.name,
+                    sched.id,
+                    sched.job_count,
+                    sched.num_allocations,
+                    sched.nodes,
+                    deferred_marker
                 );
             }
         }
@@ -2812,9 +2844,16 @@ fn handle_regenerate(
             }
         }
 
-        if result.submitted {
+        if result.submitted && result.allocations_submitted > 0 {
             println!();
-            println!("Allocations submitted successfully.");
+            if result.allocations_deferred > 0 {
+                println!(
+                    "Submitted {} allocation(s). {} deferred allocation(s) will be submitted when dependencies complete.",
+                    result.allocations_submitted, result.allocations_deferred
+                );
+            } else {
+                println!("Allocations submitted successfully.");
+            }
         } else if !result.schedulers_created.is_empty() {
             println!();
             println!("To submit the allocations, run:");

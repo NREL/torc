@@ -461,6 +461,31 @@ fn cleanup_dead_pending_slurm_jobs(
     Ok(total_cleaned)
 }
 
+/// Check if there are any active workers (compute nodes or scheduled compute nodes).
+/// This is used after workflow completion to wait for all workers to exit before
+/// proceeding with recovery actions. Workers need to complete their cleanup routines.
+fn has_active_workers(config: &Configuration, workflow_id: i64) -> bool {
+    // Check for active compute nodes (is_active=true)
+    if let Ok(response) = default_api::list_compute_nodes(
+        config,
+        workflow_id,
+        None,       // offset
+        Some(1),    // limit - just need one
+        None,       // sort_by
+        None,       // reverse_sort
+        None,       // hostname
+        Some(true), // is_active = true
+        None,       // scheduled_compute_node_id
+    ) && response.total_count > 0
+    {
+        return true;
+    }
+
+    // Also check for any scheduled compute nodes (pending or active)
+    // These represent Slurm allocations that haven't fully exited yet
+    has_any_scheduled_compute_nodes(config, workflow_id)
+}
+
 /// Check if there are any scheduled compute nodes with status pending or active.
 /// If there are none, the workflow cannot make progress.
 fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> bool {
@@ -740,25 +765,46 @@ fn fail_orphaned_running_jobs(config: &Configuration, workflow_id: i64) -> Resul
     Ok(failed_count)
 }
 
-/// Poll until workflow is complete, optionally printing status updates
+/// Poll until workflow is complete, optionally printing status updates.
+/// After the workflow is complete, continues to wait until all workers have exited
+/// (no active compute nodes and no scheduled compute nodes). This is critical for
+/// recovery scenarios to ensure workers complete their cleanup routines before
+/// any recovery actions are taken.
 fn poll_until_complete(
     config: &Configuration,
     workflow_id: i64,
     poll_interval: u64,
     show_job_counts: bool,
 ) -> Result<HashMap<String, i64>, String> {
+    let mut workflow_complete = false;
+
     loop {
         // Check if workflow is complete
-        match default_api::is_workflow_complete(config, workflow_id) {
-            Ok(response) => {
-                if response.is_complete {
-                    info!("Workflow {} is complete", workflow_id);
-                    break;
+        if !workflow_complete {
+            match default_api::is_workflow_complete(config, workflow_id) {
+                Ok(response) => {
+                    if response.is_complete {
+                        info!("Workflow {} is complete", workflow_id);
+                        workflow_complete = true;
+                        // Don't break yet - wait for workers to exit
+                    }
+                }
+                Err(e) => {
+                    return Err(format!("Error checking workflow status: {}", e));
                 }
             }
-            Err(e) => {
-                return Err(format!("Error checking workflow status: {}", e));
+        }
+
+        // If workflow is complete, wait for all workers to exit before returning
+        if workflow_complete {
+            let workers_active = has_active_workers(config, workflow_id);
+            if !workers_active {
+                info!("All workers have exited");
+                break;
             }
+            debug!("Waiting for workers to exit...");
+            std::thread::sleep(Duration::from_secs(poll_interval));
+            continue;
         }
 
         // Print current status if requested
@@ -1365,7 +1411,6 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     }
 
     loop {
-        // Poll until workflow is complete
         let counts = match poll_until_complete(
             config,
             args.workflow_id,
