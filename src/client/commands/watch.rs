@@ -52,7 +52,7 @@ pub const ORPHANED_JOB_RETURN_CODE: i64 = -128;
 pub struct WatchArgs {
     pub workflow_id: i64,
     pub poll_interval: u64,
-    pub auto_recover: bool,
+    pub recover: bool,
     pub max_retries: u32,
     pub memory_multiplier: f64,
     pub runtime_multiplier: f64,
@@ -767,12 +767,12 @@ fn poll_until_complete(
                 Ok(counts) => {
                     let completed = counts.get("Completed").unwrap_or(&0);
                     let running = counts.get("Running").unwrap_or(&0);
-                    let pending = counts.get("Pending").unwrap_or(&0);
+                    let ready = counts.get("Ready").unwrap_or(&0);
                     let failed = counts.get("Failed").unwrap_or(&0);
                     let blocked = counts.get("Blocked").unwrap_or(&0);
                     info!(
-                        "  completed={}, running={}, pending={}, failed={}, blocked={}",
-                        completed, running, pending, failed, blocked
+                        "  completed={}, running={}, ready={}, failed={}, blocked={}",
+                        completed, running, ready, failed, blocked
                     );
                 }
                 Err(e) => {
@@ -1321,8 +1321,8 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         "Watching workflow {} (poll interval: {}s{}{})",
         args.workflow_id,
         args.poll_interval,
-        if args.auto_recover {
-            format!(", auto-recover enabled, max retries: {}", args.max_retries)
+        if args.recover {
+            format!(", recover enabled, max retries: {}", args.max_retries)
         } else {
             String::new()
         },
@@ -1371,8 +1371,8 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         warn!("  - Completed: {}", completed);
 
         // Check if we should attempt recovery
-        if !args.auto_recover {
-            info!("\nAuto-recovery disabled. To enable, use --auto-recover flag.");
+        if !args.recover {
+            info!("\nRecovery disabled. To enable, use --recover flag.");
             info!("Or use the Torc MCP server with your AI assistant for manual recovery.");
             std::process::exit(1);
         }

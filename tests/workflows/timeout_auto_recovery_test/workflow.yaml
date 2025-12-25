@@ -1,6 +1,6 @@
 # Timeout Auto-Recovery Test Workflow
 #
-# This workflow tests the automatic timeout recovery feature of `torc watch --auto-recover`.
+# This workflow tests the automatic timeout recovery feature of `torc watch --recover`.
 #
 # Setup:
 # - 2 jobs that each specify 5 minutes runtime in resource requirements
@@ -10,7 +10,7 @@
 #
 # Test procedure:
 # 1. Submit the workflow: torc submit-slurm --account <account> workflow.yaml
-# 2. Watch with auto-recover: torc watch <workflow_id> --auto-recover
+# 2. Watch with auto-recover: torc watch <workflow_id> --recover
 # 3. job_slow will be killed by Slurm at ~8 minutes (walltime exceeded)
 # 4. Watcher detects timeout and increases runtime (5min -> 7.5min -> 11.25min)
 # 5. Scheduler regenerates with longer walltime

@@ -54,7 +54,7 @@ The following directories contain complete test scenarios for `torc watch` funct
 
 ### recovery_hook_test/
 
-Tests the `--recovery-hook` feature of `torc watch --auto-recover`.
+Tests the `--recovery-hook` feature of `torc watch --recover`.
 
 **Scenario:**
 
@@ -70,14 +70,14 @@ cd tests/workflows/recovery_hook_test
 # Edit workflow.yaml to set your Slurm account
 torc submit-slurm --account <account> workflow.yaml
 export TORC_OUTPUT_DIR=output
-torc watch <workflow_id> --auto-recover --recovery-hook "bash create_missing_file.sh"
+torc watch <workflow_id> --recover --recovery-hook "bash create_missing_file.sh"
 ```
 
 See `recovery_hook_test/README.md` for detailed instructions.
 
 ### oom_auto_recovery_test/
 
-Tests automatic OOM recovery in `torc watch --auto-recover`.
+Tests automatic OOM recovery in `torc watch --recover`.
 
 **Scenario:**
 
@@ -93,14 +93,14 @@ cd tests/workflows/oom_auto_recovery_test
 # Edit workflow.yaml to set your Slurm account
 chmod +x allocate_memory.sh
 torc submit-slurm --account <account> workflow.yaml
-torc watch <workflow_id> --auto-recover --max-retries 5
+torc watch <workflow_id> --recover --max-retries 5
 ```
 
 See `oom_auto_recovery_test/README.md` for detailed instructions.
 
 ### timeout_auto_recovery_test/
 
-Tests automatic timeout recovery in `torc watch --auto-recover`.
+Tests automatic timeout recovery in `torc watch --recover`.
 
 **Scenario:**
 
@@ -116,7 +116,7 @@ Tests automatic timeout recovery in `torc watch --auto-recover`.
 cd tests/workflows/timeout_auto_recovery_test
 # Edit workflow.yaml to set your Slurm account
 torc submit-slurm --account <account> workflow.yaml
-torc watch <workflow_id> --auto-recover --max-retries 3
+torc watch <workflow_id> --recover --max-retries 3
 ```
 
 See `timeout_auto_recovery_test/README.md` for detailed instructions.

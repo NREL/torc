@@ -5,8 +5,8 @@ and when to use automatic vs manual recovery.
 
 ## Overview
 
-Torc provides **automatic failure recovery** through the `torc watch --auto-recover` command. When
-jobs fail, the system:
+Torc provides **automatic failure recovery** through the `torc watch --recover` command. When jobs
+fail, the system:
 
 1. Diagnoses the failure cause (OOM, timeout, or unknown)
 2. Applies heuristics to adjust resource requirements
@@ -95,13 +95,13 @@ This is handled by `torc slurm regenerate --submit`.
 
 ```bash
 torc watch <workflow_id> \
-  --auto-recover \              # Enable automatic recovery
-  --max-retries 3 \             # Maximum recovery attempts
+  -r \                          # Enable automatic recovery (--recover)
+  -m 3 \                        # Maximum recovery attempts (--max-retries)
   --memory-multiplier 1.5 \     # Memory increase factor for OOM
   --runtime-multiplier 1.5 \    # Runtime increase factor for timeout
-  --poll-interval 60 \          # Seconds between status checks
-  --output-dir output \         # Directory for job output files
-  --show-job-counts             # Display job counts during polling (optional)
+  -p 60 \                       # Seconds between status checks (--poll-interval)
+  -o output \                   # Directory for job output files (--output-dir)
+  -s                            # Display job counts during polling (--show-job-counts)
 ```
 
 ### Retry Limits
@@ -163,7 +163,7 @@ The Torc MCP server provides tools for AI-assisted investigation:
 ### The Watch Command
 
 ```bash
-torc watch <workflow_id> --auto-recover
+torc watch <workflow_id> --recover
 ```
 
 Main loop:
@@ -171,7 +171,7 @@ Main loop:
 1. Poll `is_workflow_complete` API
 2. Print status updates
 3. On completion, check for failures
-4. If failures and auto-recover enabled:
+4. If failures and recover enabled:
    - Run `torc reports check-resource-utilization --include-failed`
    - Parse results for `likely_oom` and `likely_timeout` flags
    - Update resource requirements via API

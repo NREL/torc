@@ -22,7 +22,7 @@ By the end of this tutorial, you will:
 The `torc watch` command can automatically recover from common failures:
 
 ```bash
-torc watch 42 --auto-recover
+torc watch 42 --recover
 ```
 
 This will:
@@ -49,7 +49,7 @@ This will:
 ### Configuration Options
 
 ```bash
-torc watch 42 --auto-recover \
+torc watch 42 --recover \
   --max-retries 5 \           # Maximum recovery attempts (default: 3)
   --memory-multiplier 2.0 \   # Memory increase factor (default: 1.5)
   --runtime-multiplier 2.0 \  # Runtime increase factor (default: 1.5)
@@ -68,7 +68,7 @@ recovery script using `--recovery-hook`. This is useful for domain-specific reco
 adjusting Apache Spark cluster sizes or fixing configuration issues.
 
 ```bash
-torc watch 42 --auto-recover --recovery-hook "bash fix-spark-cluster.sh"
+torc watch 42 --recover --recovery-hook "bash fix-spark-cluster.sh"
 ```
 
 The hook receives the workflow ID in two ways:
@@ -139,7 +139,7 @@ Submitted to Slurm with 10 allocations
 ### 2. Start Watching with Auto-Recovery
 
 ```bash
-torc watch 42 --auto-recover --max-retries 3 --show-job-counts
+torc watch 42 --recover --max-retries 3 --show-job-counts
 ```
 
 > **Note:** The `--show-job-counts` flag is optional. Without it, the command polls silently until
@@ -148,7 +148,7 @@ torc watch 42 --auto-recover --max-retries 3 --show-job-counts
 Output:
 
 ```
-Watching workflow 42 (poll interval: 60s, auto-recover enabled, max retries: 3, job counts enabled)
+Watching workflow 42 (poll interval: 60s, recover enabled, max retries: 3, job counts enabled)
   completed=0, running=10, pending=0, failed=0, blocked=90
   completed=25, running=10, pending=0, failed=0, blocked=65
   ...
@@ -177,7 +177,7 @@ Regenerating Slurm schedulers and submitting...
 
 Recovery initiated. Resuming monitoring...
 
-Watching workflow 42 (poll interval: 60s, auto-recover enabled, max retries: 3, job counts enabled)
+Watching workflow 42 (poll interval: 60s, recover enabled, max retries: 3, job counts enabled)
   completed=95, running=5, pending=0, failed=0, blocked=0
   ...
 Workflow 42 is complete
@@ -211,9 +211,9 @@ Use the Torc MCP server with your AI assistant to investigate.
 
 At this point, you can use the MCP server with an AI assistant to investigate the root cause.
 
-## Manual Recovery (Without --auto-recover)
+## Manual Recovery (Without `-r`/`--recover`)
 
-Without the `--auto-recover` flag, `torc watch` simply monitors and reports:
+Without the `-r`/`--recover` flag, `torc watch` simply monitors and reports:
 
 ```bash
 torc watch 42
@@ -226,13 +226,13 @@ Workflow completed with failures:
   - Failed: 5
   - Completed: 95
 
-Auto-recovery disabled. To enable, use --auto-recover flag.
+Recovery disabled. To enable, use --recover flag.
 Or use the Torc MCP server with your AI assistant for manual recovery.
 ```
 
 ## When to Use Each Approach
 
-### Use Automatic Recovery (`--auto-recover`) when:
+### Use Automatic Recovery (`-r`/`--recover`) when:
 
 - Running standard compute jobs with predictable failure modes
 - You want hands-off operation for OOM and timeout failures
@@ -306,7 +306,7 @@ Using [tmux](https://github.com/tmux/tmux/wiki) (recommended):
 tmux new -s torc-watch
 
 # Run the watch command
-torc watch 42 --auto-recover --poll-interval 300 --show-job-counts
+torc watch 42 --recover --poll-interval 300 --show-job-counts
 
 # Detach from session: press Ctrl+b, then d
 # Reattach later: tmux attach -t torc-watch
@@ -316,7 +316,7 @@ Using screen:
 
 ```bash
 screen -S torc-watch
-torc watch 42 --auto-recover --poll-interval 300 --show-job-counts
+torc watch 42 --recover --poll-interval 300 --show-job-counts
 # Detach: Ctrl+a, then d
 # Reattach: screen -r torc-watch
 ```
@@ -365,7 +365,7 @@ If jobs are requesting more resources than partitions allow:
 
 ## Summary
 
-The `torc watch --auto-recover` command provides:
+The `torc watch -r` (or `--recover`) command provides:
 
 - **Automatic OOM handling**: Detects memory issues and increases allocations
 - **Automatic timeout handling**: Detects slow jobs and increases runtime

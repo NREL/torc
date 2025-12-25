@@ -1,7 +1,7 @@
 # Timeout Auto-Recovery Test
 
-This test verifies that `torc watch --auto-recover` correctly detects timeout failures and
-automatically increases runtime allocations for retry.
+This test verifies that `torc watch --recover` correctly detects timeout failures and automatically
+increases runtime allocations for retry.
 
 ## Workflow Description
 
@@ -41,7 +41,7 @@ Note the workflow ID from the output.
 ### 3. Run the watcher with auto-recover
 
 ```bash
-torc watch <workflow_id> --auto-recover --max-retries 3
+torc watch <workflow_id> --recover --max-retries 3
 ```
 
 ### 4. Expected output
@@ -111,7 +111,7 @@ To make the test faster:
 
 1. Use a higher runtime multiplier:
    ```bash
-   torc watch <workflow_id> --auto-recover --runtime-multiplier 2.5
+   torc watch <workflow_id> --recover --runtime-multiplier 2.5
    ```
    With 2.5x: 5min → 12.5min (success in 1 retry)
 

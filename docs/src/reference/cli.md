@@ -311,15 +311,15 @@ workflow_with_schedulers.yaml
 
 Watch a workflow and automatically recover from failures
 
-Monitors a workflow until completion. With --auto-recover, automatically diagnoses failures, adjusts
+Monitors a workflow until completion. With --recover, automatically diagnoses failures, adjusts
 resource requirements, and resubmits jobs.
 
 Recovery heuristics: - OOM (out of memory): Increase memory by --memory-multiplier (default 1.5x) -
 Timeout: Increase runtime by --runtime-multiplier (default 1.5x) - Other failures: Retry without
 changes (transient errors)
 
-Without --auto-recover, reports failures and exits for manual intervention or AI-assisted recovery
-via the MCP server.
+Without --recover, reports failures and exits for manual intervention or AI-assisted recovery via
+the MCP server.
 
 **Usage:** `torc watch [OPTIONS] <WORKFLOW_ID>`
 
@@ -332,8 +332,8 @@ via the MCP server.
 - `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds
 
   Default value: `60`
-- `--auto-recover` — Enable automatic failure recovery
-- `--max-retries <MAX_RETRIES>` — Maximum number of recovery attempts
+- `-r`, `--recover` — Enable automatic failure recovery
+- `-m`, `--max-retries <MAX_RETRIES>` — Maximum number of recovery attempts
 
   Default value: `3`
 - `--memory-multiplier <MEMORY_MULTIPLIER>` — Memory multiplier for OOM failures (default: 1.5 = 50%
@@ -365,7 +365,7 @@ via the MCP server.
 - `-o`, `--output-dir <OUTPUT_DIR>` — Output directory for job files
 
   Default value: `output`
-- `--show-job-counts` — Show job counts by status during polling
+- `-s`, `--show-job-counts` — Show job counts by status during polling
 
   WARNING: This option queries all jobs on each poll, which can cause high server load for large
   workflows. Only use for debugging or small workflows.

@@ -1,6 +1,6 @@
 # OOM Auto-Recovery Test Workflow
 #
-# This workflow tests the automatic OOM recovery feature of `torc watch --auto-recover`.
+# This workflow tests the automatic OOM recovery feature of `torc watch --recover`.
 #
 # Setup:
 # - 10 work jobs that each request 10GB memory and 10 CPUs
@@ -9,7 +9,7 @@
 #
 # Test procedure:
 # 1. Submit the workflow: torc submit-slurm --account <account> workflow.yaml
-# 2. Watch with auto-recover: torc watch <workflow_id> --auto-recover
+# 2. Watch with auto-recover: torc watch <workflow_id> --recover
 # 3. Jobs will fail with OOM, watcher increases memory (10GB -> 15GB -> 22GB -> 33GB)
 # 4. Eventually jobs get enough memory and succeed
 #

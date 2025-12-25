@@ -1,7 +1,7 @@
 # OOM Auto-Recovery Test
 
-This test verifies that `torc watch --auto-recover` correctly detects OOM (Out of Memory) failures
-and automatically increases memory allocations for retry.
+This test verifies that `torc watch --recover` correctly detects OOM (Out of Memory) failures and
+automatically increases memory allocations for retry.
 
 ## Workflow Description
 
@@ -46,7 +46,7 @@ Note the workflow ID from the output.
 ### 4. Run the watcher with auto-recover
 
 ```bash
-torc watch <workflow_id> --auto-recover --max-retries 5
+torc watch <workflow_id> --recover --max-retries 5
 ```
 
 ### 5. Expected output
@@ -107,7 +107,7 @@ To make the test faster, you can:
 
 1. Use a higher memory multiplier:
    ```bash
-   torc watch <workflow_id> --auto-recover --memory-multiplier 2.0
+   torc watch <workflow_id> --recover --memory-multiplier 2.0
    ```
    With 2.0x: 10GB → 20GB → 40GB (success in 2 retries)
 

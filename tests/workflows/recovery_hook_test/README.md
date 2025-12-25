@@ -31,7 +31,7 @@ Note the workflow ID from the output.
 
 ```bash
 export TORC_OUTPUT_DIR=output
-torc watch <workflow_id> --auto-recover --recovery-hook "bash create_missing_file.sh"
+torc watch <workflow_id> --recover --recovery-hook "bash create_missing_file.sh"
 ```
 
 ### 4. Expected behavior

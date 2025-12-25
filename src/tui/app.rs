@@ -39,8 +39,8 @@ pub enum WorkflowAction {
     Reset,
     Run,
     Submit,
-    Watch,       // Watch workflow with auto-recovery
-    WatchNoAuto, // Watch workflow without auto-recovery
+    Watch,       // Watch workflow with recovery
+    WatchNoAuto, // Watch workflow without recovery
     Delete,
     Cancel,
 }
@@ -66,7 +66,7 @@ impl WorkflowAction {
             Self::Run => format!("Run workflow '{}' locally?", workflow_name),
             Self::Submit => format!("Submit workflow '{}' to scheduler?", workflow_name),
             Self::Watch => format!(
-                "Watch workflow '{}' with auto-recovery?\nThis will monitor and automatically retry failed jobs.",
+                "Watch workflow '{}' with recovery?\nThis will monitor and automatically retry failed jobs.",
                 workflow_name
             ),
             Self::WatchNoAuto => format!(
@@ -1473,10 +1473,10 @@ impl App {
         &mut self,
         workflow_id: i64,
         workflow_name: &str,
-        auto_recover: bool,
+        recover: bool,
     ) -> Result<()> {
-        let title = if auto_recover {
-            format!("Watching (auto-recovery): {}", workflow_name)
+        let title = if recover {
+            format!("Watching (recovery): {}", workflow_name)
         } else {
             format!("Watching: {}", workflow_name)
         };
@@ -1488,13 +1488,13 @@ impl App {
         let workflow_id_str = workflow_id.to_string();
         let url = self.client.get_base_url();
 
-        let args: Vec<&str> = if auto_recover {
+        let args: Vec<&str> = if recover {
             vec![
                 "--url",
                 &url,
                 "watch",
                 &workflow_id_str,
-                "--auto-recover",
+                "--recover",
                 "--show-job-counts",
             ]
         } else {
@@ -1512,11 +1512,8 @@ impl App {
                 self.previous_focus = self.focus;
                 self.focus = Focus::Popup;
                 self.popup = Some(PopupType::ProcessViewer(viewer));
-                let msg = if auto_recover {
-                    format!(
-                        "Watching workflow '{}' with auto-recovery...",
-                        workflow_name
-                    )
+                let msg = if recover {
+                    format!("Watching workflow '{}' with recovery...", workflow_name)
                 } else {
                     format!("Watching workflow '{}'...", workflow_name)
                 };

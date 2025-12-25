@@ -1027,7 +1027,7 @@ async fn cli_run_stream_handler(
 }
 
 /// Streaming workflow watch handler using Server-Sent Events
-/// Runs `torc watch --auto-recover` for the specified workflow
+/// Runs `torc watch --recover` for the specified workflow
 async fn cli_watch_stream_handler(
     State(state): State<Arc<AppState>>,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
@@ -1065,7 +1065,7 @@ async fn cli_watch_stream_handler(
         // Build command arguments
         let mut args = vec!["watch".to_string(), workflow_id.clone()];
         if auto_recover {
-            args.push("--auto-recover".to_string());
+            args.push("--recover".to_string());
         }
         // Use 60 second poll interval as specified
         args.push("--poll-interval".to_string());
