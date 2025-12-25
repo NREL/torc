@@ -28,6 +28,29 @@ client-server architecture where:
 - **Schedulers**: Local or Slurm-based job execution environments
 - **Compute Nodes**: Available compute resources for job execution
 
+## Code Quality Requirements
+
+**All code changes must pass the following checks before being committed:**
+
+```bash
+cargo fmt -- --check       # Rust formatting
+cargo clippy -- -D warnings  # Rust linting (warnings are errors)
+dprint check               # Markdown formatting (100 char line limit)
+```
+
+These checks are enforced by pre-commit hooks installed via `cargo-husky`. The hooks run
+automatically on every commit attempt.
+
+**Key requirements:**
+
+- **Rust code**: Must compile without clippy warnings. Use `cargo clippy -- -D warnings` to verify.
+- **Markdown files**: Must comply with dprint formatting with a maximum line length of 100
+  characters. Run `dprint fmt` to auto-format or `dprint check` to verify.
+- **Before committing**: Always run the checks manually if unsure. The pre-commit hook will block
+  commits that fail any check.
+
+For detailed style guidelines, see `docs/src/style-guide.md`.
+
 ## Repository Structure
 
 ```

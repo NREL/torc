@@ -125,7 +125,7 @@ Recovery actions are ephemeral - they exist only during the recovery period:
 ```mermaid
 stateDiagram-v2
     [*] --> Created: regenerate creates action
-    Created --> Executed: Jobs become ready<br/>action triggers
+    Created --> Executed: Jobs become ready, action triggers
     Executed --> Deleted: Workflow reinitialized
     Created --> Deleted: Workflow reinitialized
 ```

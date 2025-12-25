@@ -31,6 +31,7 @@
     - [Web Dashboard](./explanation/design/dashboard.md)
     - [Workflow Recovery](./explanation/design/recovery.md)
     - [Workflow Graph](./explanation/design/workflow-graph.md)
+    - [Interface Architecture](./explanation/design/interfaces.md)
 
 # How-To Guides
 
@@ -86,4 +87,4 @@
 
 ---
 
-[Contributing](./contributing.md)
+[Contributing](./contributing.md) [Rust Developer Style Guide](./style-guide.md)

@@ -23,11 +23,11 @@ with the CLI.
 
 Torc provides:
 
-- **AI-Assisted Management** — Use Claude Code or GitHub Copilot to create, debug, and manage
-  workflows through conversation
 - **Declarative Workflow Definitions** — Define workflows in YAML, JSON, JSON5, or KDL
 - **Automatic Dependency Resolution** — Dependencies inferred from file and data relationships
 - **Distributed Execution** — Run jobs across local machines and HPC clusters
+- **AI-Assisted Management** — Use Claude Code or GitHub Copilot to create, debug, and manage
+  workflows through conversation
 - **Resource Management** — Track CPU, memory, and GPU usage across all jobs
 - **Automatic Failure Recovery** — Detect OOM/timeout failures and retry with adjusted resources
 - **Fault Tolerance** — Resume workflows after failures without losing progress
