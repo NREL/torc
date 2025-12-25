@@ -4393,36 +4393,10 @@ where
             }
         };
 
-        // 3. Add/update workflow_result record
-        // First, delete any existing record for this workflow_id and job_id combination
-        // This handles the case where a job is being re-run or a result is being replaced
+        // 3. Add/update workflow_result record using INSERT OR REPLACE for atomic upsert.
+        // This handles the case where a job is being re-run or a result is being replaced.
+        // The table has PRIMARY KEY (workflow_id, job_id), so conflicts are automatically resolved.
         let workflow_id = job.workflow_id;
-        match sqlx::query!(
-            "DELETE FROM workflow_result WHERE workflow_id = ? AND job_id = ?",
-            workflow_id,
-            id
-        )
-        .execute(self.pool.as_ref())
-        .await
-        {
-            Ok(result) => {
-                if result.rows_affected() > 0 {
-                    error!(
-                        "Bug in complete_job: found existing workflow_result record for workflow_id={}, job_id={}",
-                        workflow_id, id
-                    );
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Failed to delete existing workflow_result for workflow_id={}, job_id={}: {}",
-                    workflow_id, id, e
-                );
-                return Err(ApiError("Database error".to_string()));
-            }
-        }
-
-        // Now insert the new workflow_result record
         let result_id_value = result_id.ok_or_else(|| {
             error!("Result ID is missing after creating result");
             ApiError("Result ID is missing".to_string())
@@ -4430,7 +4404,7 @@ where
 
         match sqlx::query!(
             r#"
-            INSERT INTO workflow_result (workflow_id, job_id, result_id)
+            INSERT OR REPLACE INTO workflow_result (workflow_id, job_id, result_id)
             VALUES (?, ?, ?)
             "#,
             workflow_id,
