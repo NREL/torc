@@ -45,7 +45,13 @@ pub trait ResourceRequirementsApi<C> {
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: i64,
         limit: i64,
         sort_by: Option<String>,
@@ -316,7 +322,13 @@ where
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: i64,
         limit: i64,
         sort_by: Option<String>,
@@ -324,9 +336,15 @@ where
         context: &C,
     ) -> Result<ListResourceRequirementsResponse, ApiError> {
         debug!(
-            "list_resource_requirements({}, {:?}, {}, {}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_resource_requirements({}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
+            job_id,
             name,
+            memory,
+            num_cpus,
+            num_gpus,
+            num_nodes,
+            runtime,
             offset,
             limit,
             sort_by,
@@ -339,12 +357,34 @@ where
 
         // Build WHERE clause conditions
         let mut where_conditions = vec!["workflow_id = ?".to_string()];
-        let mut bind_values: Vec<Box<dyn sqlx::Encode<'_, sqlx::Sqlite> + Send>> =
-            vec![Box::new(workflow_id)];
 
-        if let Some(name_filter) = &name {
+        if job_id.is_some() {
+            where_conditions
+                .push("id IN (SELECT resource_requirements_id FROM jobs WHERE id = ?)".to_string());
+        }
+
+        if name.is_some() {
             where_conditions.push("name = ?".to_string());
-            bind_values.push(Box::new(name_filter.clone()));
+        }
+
+        if memory.is_some() {
+            where_conditions.push("memory = ?".to_string());
+        }
+
+        if num_cpus.is_some() {
+            where_conditions.push("num_cpus = ?".to_string());
+        }
+
+        if num_gpus.is_some() {
+            where_conditions.push("num_gpus = ?".to_string());
+        }
+
+        if num_nodes.is_some() {
+            where_conditions.push("num_nodes = ?".to_string());
+        }
+
+        if runtime.is_some() {
+            where_conditions.push("runtime_s = ?".to_string());
         }
 
         let where_clause = where_conditions.join(" AND ");
@@ -360,12 +400,36 @@ where
         // Execute the query
         let mut sqlx_query = sqlx::query(&query);
 
-        // Bind workflow_id
+        // Bind workflow_id first
         sqlx_query = sqlx_query.bind(workflow_id);
 
-        // Bind optional parameters in order
+        // Bind optional parameters in order they appear in the WHERE clause
+        if let Some(job_id_val) = job_id {
+            sqlx_query = sqlx_query.bind(job_id_val);
+        }
+
         if let Some(name_filter) = &name {
             sqlx_query = sqlx_query.bind(name_filter);
+        }
+
+        if let Some(memory_filter) = &memory {
+            sqlx_query = sqlx_query.bind(memory_filter);
+        }
+
+        if let Some(num_cpus_filter) = num_cpus {
+            sqlx_query = sqlx_query.bind(num_cpus_filter);
+        }
+
+        if let Some(num_gpus_filter) = num_gpus {
+            sqlx_query = sqlx_query.bind(num_gpus_filter);
+        }
+
+        if let Some(num_nodes_filter) = num_nodes {
+            sqlx_query = sqlx_query.bind(num_nodes_filter);
+        }
+
+        if let Some(runtime_filter) = runtime {
+            sqlx_query = sqlx_query.bind(runtime_filter);
         }
 
         let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
@@ -398,8 +462,33 @@ where
 
         let mut count_sqlx_query = sqlx::query(&count_query);
         count_sqlx_query = count_sqlx_query.bind(workflow_id);
+
+        if let Some(job_id_val) = job_id {
+            count_sqlx_query = count_sqlx_query.bind(job_id_val);
+        }
+
         if let Some(name_filter) = &name {
             count_sqlx_query = count_sqlx_query.bind(name_filter);
+        }
+
+        if let Some(memory_filter) = &memory {
+            count_sqlx_query = count_sqlx_query.bind(memory_filter);
+        }
+
+        if let Some(num_cpus_filter) = num_cpus {
+            count_sqlx_query = count_sqlx_query.bind(num_cpus_filter);
+        }
+
+        if let Some(num_gpus_filter) = num_gpus {
+            count_sqlx_query = count_sqlx_query.bind(num_gpus_filter);
+        }
+
+        if let Some(num_nodes_filter) = num_nodes {
+            count_sqlx_query = count_sqlx_query.bind(num_nodes_filter);
+        }
+
+        if let Some(runtime_filter) = runtime {
+            count_sqlx_query = count_sqlx_query.bind(runtime_filter);
         }
 
         let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {

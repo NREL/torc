@@ -847,8 +847,8 @@ fn poll_until_complete(
                     let failed = counts.get("Failed").unwrap_or(&0);
                     let blocked = counts.get("Blocked").unwrap_or(&0);
                     info!(
-                        "  completed={}, running={}, ready={}, failed={}, blocked={}",
-                        completed, running, ready, failed, blocked
+                        "  ready={}, blocked={}, running={}, completed={}, failed={}",
+                        ready, blocked, running, completed, failed
                     );
                 }
                 Err(e) => {

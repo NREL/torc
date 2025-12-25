@@ -2500,7 +2500,13 @@ where
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2511,7 +2517,13 @@ where
         self.resource_requirements_api
             .list_resource_requirements(
                 workflow_id,
+                job_id,
                 name,
+                memory,
+                num_cpus,
+                num_gpus,
+                num_nodes,
+                runtime,
                 processed_offset,
                 processed_limit,
                 sort_by,
