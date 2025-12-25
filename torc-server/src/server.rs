@@ -289,8 +289,11 @@ async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> R
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
-    // Retry logic for database lock contention
-    const MAX_RETRIES: u32 = 3;
+    // Retry logic for database lock contention.
+    // Note: SQLite's busy_timeout doesn't work with sqlx's BEGIN DEFERRED transactions
+    // because SQLITE_BUSY is returned immediately when upgrading to a write lock.
+    // We implement our own retry logic to wait up to ~45 seconds (matching busy_timeout).
+    const MAX_RETRIES: u32 = 45;
     const RETRY_DELAY_MS: u64 = 1000;
 
     let mut last_error: Option<ApiError> = None;
@@ -813,11 +816,17 @@ impl<C> Server<C> {
             .resource_requirements_api
             .list_resource_requirements(
                 workflow_id,
-                Some("default".to_string()),
-                0,
-                1,
-                None,
-                None,
+                None,                             // job_id
+                Some("default".to_string()),     // name
+                None,                             // memory
+                None,                             // num_cpus
+                None,                             // num_gpus
+                None,                             // num_nodes
+                None,                             // runtime
+                0,                                // offset
+                1,                                // limit
+                None,                             // sort_by
+                None,                             // reverse_sort
                 context,
             )
             .await;
