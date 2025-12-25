@@ -1163,58 +1163,88 @@ impl<C> Server<C> {
         let ready_status = models::JobStatus::Ready.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
 
-        // First, cancel jobs that have cancel_on_blocking_job_failure AND a failed dependency
-        let _canceled = sqlx::query!(
+        // Quick pre-check: Are there ANY failed/canceled/terminated jobs in this workflow?
+        // If not, skip the expensive cancellation query entirely.
+        // This is critical for workflows where all jobs succeed.
+        let has_failed_jobs = match sqlx::query!(
             r#"
-            UPDATE job
-            SET status = ?
-            WHERE workflow_id = ?
-              AND status = ?
-              AND cancel_on_blocking_job_failure = 1
-              AND id IN (
-                  SELECT jbb.job_id
-                  FROM job_depends_on jbb
-                  WHERE jbb.depends_on_job_id = ?
-                    AND jbb.workflow_id = ?
-                    AND NOT EXISTS (
-                        SELECT 1
-                        FROM job_depends_on jbb2
-                        JOIN job j2 ON jbb2.depends_on_job_id = j2.id
-                        WHERE jbb2.job_id = jbb.job_id
-                          AND jbb2.depends_on_job_id != ?
-                          AND j2.status NOT IN (?, ?, ?, ?)
-                    )
-              )
-              AND EXISTS (
-                  SELECT 1
-                  FROM job_depends_on jbb_fail
-                  JOIN job j_fail ON jbb_fail.depends_on_job_id = j_fail.id
-                  JOIN result r_fail ON j_fail.id = r_fail.job_id
-                  JOIN workflow_status ws ON j_fail.workflow_id = ws.id AND r_fail.run_id = ws.run_id
-                  WHERE jbb_fail.job_id = job.id
-                    AND jbb_fail.workflow_id = ?
-                    AND j_fail.status IN (?, ?, ?, ?)
-                    AND r_fail.return_code != 0
-              )
+            SELECT EXISTS (
+                SELECT 1
+                FROM job
+                WHERE workflow_id = ?
+                AND status IN (?, ?, ?)
+            ) as has_failed
             "#,
-            canceled_status,
             workflow_id,
-            blocked_status,
-            completed_job_id,
-            workflow_id,
-            completed_job_id,
-            completed_status,
-            failed_status,
-            canceled_status,
-            terminated_status,
-            workflow_id,
-            completed_status,
             failed_status,
             canceled_status,
             terminated_status
         )
-        .execute(&mut **tx)
-        .await;
+        .fetch_one(&mut **tx)
+        .await
+        {
+            Ok(row) => row.has_failed != 0,
+            Err(e) => {
+                debug!("Failed jobs pre-check failed: {}", e);
+                // If pre-check fails, fall through to cancellation query
+                true
+            }
+        };
+
+        // Only run the expensive cancellation query if there are failed jobs
+        if has_failed_jobs {
+            let _canceled = sqlx::query!(
+                r#"
+                UPDATE job
+                SET status = ?
+                WHERE workflow_id = ?
+                  AND status = ?
+                  AND cancel_on_blocking_job_failure = 1
+                  AND id IN (
+                      SELECT jbb.job_id
+                      FROM job_depends_on jbb
+                      WHERE jbb.depends_on_job_id = ?
+                        AND jbb.workflow_id = ?
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM job_depends_on jbb2
+                            JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                            WHERE jbb2.job_id = jbb.job_id
+                              AND jbb2.depends_on_job_id != ?
+                              AND j2.status NOT IN (?, ?, ?, ?)
+                        )
+                  )
+                  AND EXISTS (
+                      SELECT 1
+                      FROM job_depends_on jbb_fail
+                      JOIN job j_fail ON jbb_fail.depends_on_job_id = j_fail.id
+                      JOIN result r_fail ON j_fail.id = r_fail.job_id
+                      JOIN workflow_status ws ON j_fail.workflow_id = ws.id AND r_fail.run_id = ws.run_id
+                      WHERE jbb_fail.job_id = job.id
+                        AND jbb_fail.workflow_id = ?
+                        AND j_fail.status IN (?, ?, ?, ?)
+                        AND r_fail.return_code != 0
+                  )
+                "#,
+                canceled_status,
+                workflow_id,
+                blocked_status,
+                completed_job_id,
+                workflow_id,
+                completed_job_id,
+                completed_status,
+                failed_status,
+                canceled_status,
+                terminated_status,
+                workflow_id,
+                completed_status,
+                failed_status,
+                canceled_status,
+                terminated_status
+            )
+            .execute(&mut **tx)
+            .await;
+        }
 
         // Then, mark remaining unblocked jobs as ready (those without failed dependencies
         // or without cancel_on_blocking_job_failure)
