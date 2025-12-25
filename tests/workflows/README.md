@@ -1,7 +1,7 @@
 # Test Workflows
 
-This directory contains workflow specifications for testing Torc features.
-These are not intended for end users - they are for development and testing purposes.
+This directory contains workflow specifications for testing Torc features. These are not intended
+for end users - they are for development and testing purposes.
 
 ## Workflows
 
@@ -10,12 +10,14 @@ These are not intended for end users - they are for development and testing purp
 Tests Slurm debugging features by intentionally triggering an Out-of-Memory (OOM) condition.
 
 **Purpose:** Verify that the following tools correctly detect and report OOM failures:
+
 - `torc slurm parse-logs` - Should find OOM-related errors in Slurm logs
 - `torc slurm sacct` - Should show `OUT_OF_MEMORY` state in the summary table
 - torc-dash Debugging tab - Should display the errors in the web UI
 - torc TUI - Should allow viewing Slurm logs with 'l' key
 
 **Usage:**
+
 ```bash
 # Set your Slurm account (or the workflow will use 'default')
 export SLURM_ACCOUNT=myaccount
@@ -38,6 +40,7 @@ torc-dash --standalone
 ```
 
 **Expected Results:**
+
 - Job should fail within ~2-5 minutes after starting
 - `parse-logs` should detect "oom-kill" or "out of memory" patterns
 - `sacct` should show state as `OUT_OF_MEMORY` or `FAILED`
@@ -54,12 +57,14 @@ The following directories contain complete test scenarios for `torc watch` funct
 Tests the `--recovery-hook` feature of `torc watch --auto-recover`.
 
 **Scenario:**
+
 - 5 work jobs + 1 postprocess job
 - `work_3` fails because a required file is missing
 - Recovery hook script creates the missing file
 - Workflow succeeds on retry
 
 **Usage:**
+
 ```bash
 cd tests/workflows/recovery_hook_test
 # Edit workflow.yaml to set your Slurm account
@@ -75,12 +80,14 @@ See `recovery_hook_test/README.md` for detailed instructions.
 Tests automatic OOM recovery in `torc watch --auto-recover`.
 
 **Scenario:**
+
 - 10 work jobs that request 10GB memory but try to allocate 30GB
 - Jobs fail with OOM
 - Watcher detects OOM and increases memory (10GB → 15GB → 22GB → 33GB)
 - Eventually jobs get enough memory and succeed
 
 **Usage:**
+
 ```bash
 cd tests/workflows/oom_auto_recovery_test
 # Edit workflow.yaml to set your Slurm account
@@ -96,6 +103,7 @@ See `oom_auto_recovery_test/README.md` for detailed instructions.
 Tests automatic timeout recovery in `torc watch --auto-recover`.
 
 **Scenario:**
+
 - 2 jobs with 5 minute runtime specified
 - `job_fast` completes in 1 minute (succeeds)
 - `job_slow` runs for 10 minutes (exceeds walltime, gets killed)
@@ -103,6 +111,7 @@ Tests automatic timeout recovery in `torc watch --auto-recover`.
 - Eventually job gets enough time and succeeds
 
 **Usage:**
+
 ```bash
 cd tests/workflows/timeout_auto_recovery_test
 # Edit workflow.yaml to set your Slurm account

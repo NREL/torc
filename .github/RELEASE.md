@@ -5,6 +5,7 @@ This document explains how to use the automated release build system for Torc.
 ## Overview
 
 The release workflow builds binaries for:
+
 - **macOS**: Apple Silicon (aarch64)
 - **Linux**:
   - x86_64-musl (static, works on all distros)
@@ -14,6 +15,7 @@ The release workflow builds binaries for:
 ## Binaries Produced
 
 Each platform build produces three binaries:
+
 1. `torc` - Unified CLI with all features
 2. `torc-server` - Standalone server
 3. `torc-slurm-job-runner` - Slurm job runner
@@ -21,19 +23,24 @@ Each platform build produces three binaries:
 ## Triggering a Release
 
 ### Automatic (Recommended)
+
 Push a version tag to trigger the build:
+
 ```bash
 git tag v0.7.0
 git push origin v0.7.0
 ```
 
 This will:
+
 1. Build binaries for all platforms
 2. Create a draft GitHub release
 3. Upload all binaries to the release
 
 ### Manual
+
 You can also trigger builds manually from the GitHub Actions UI:
+
 1. Go to Actions → "Build Release Binaries"
 2. Click "Run workflow"
 3. Optionally specify a tag name
@@ -45,11 +52,13 @@ Manual builds create artifacts but don't create a GitHub release.
 ### Which Linux binary should users download?
 
 **For maximum compatibility (recommended for most users):**
+
 - Use `torc-x86_64-unknown-linux-musl.tar.gz`
 - This is a fully static binary that works on any Linux distro
 - No external dependencies required
 
 **For better performance on modern systems:**
+
 - Use `torc-x86_64-unknown-linux-gnu.tar.gz`
 - Built on Ubuntu 20.04, compatible with glibc 2.31+
 - Works on Ubuntu 20.04+, Debian 11+, RHEL 8+, etc.
@@ -57,6 +66,7 @@ Manual builds create artifacts but don't create a GitHub release.
 ## Adding More Platforms
 
 ### Additional Linux Versions
+
 To support older distros, add entries to the matrix in `.github/workflows/release.yml`:
 
 ```yaml
@@ -67,6 +77,7 @@ To support older distros, add entries to the matrix in `.github/workflows/releas
 ```
 
 ### Intel macOS
+
 To also build for Intel Macs, add:
 
 ```yaml
@@ -77,6 +88,7 @@ To also build for Intel Macs, add:
 ```
 
 ### ARM64 Linux
+
 For ARM64 servers (like AWS Graviton), add:
 
 ```yaml
@@ -89,17 +101,23 @@ For ARM64 servers (like AWS Graviton), add:
 ## Troubleshooting
 
 ### Build fails with OpenSSL errors on Windows
+
 The workflow installs OpenSSL via vcpkg. If it fails:
+
 1. Check that vcpkg is available on the runner
 2. Verify the OpenSSL environment variables are set correctly
 
 ### Build fails with musl linking errors
+
 If you see linker errors with musl:
+
 1. Ensure `cross` is being used (set `use_cross: true`)
 2. Or ensure musl-tools are installed for native builds
 
 ### Binary size is too large
+
 Release binaries include debug symbols. To reduce size:
+
 1. Add strip step to workflow after build:
    ```yaml
    - name: Strip binaries (Unix)
@@ -135,13 +153,17 @@ Expand-Archive torc-x86_64-pc-windows-msvc.zip
 ## Automation Tips
 
 ### Auto-publish releases
+
 To automatically publish releases (instead of drafts), change in release.yml:
+
 ```yaml
 draft: false  # Change from true
 ```
 
 ### Build on every push
+
 To build binaries on every push (for testing), add to `on:` section:
+
 ```yaml
 on:
   push:
@@ -150,7 +172,9 @@ on:
 ```
 
 ### Notification on failure
+
 Add a notification step at the end of the build job:
+
 ```yaml
 - name: Notify on failure
   if: failure()

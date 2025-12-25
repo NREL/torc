@@ -1,6 +1,7 @@
 # Tutorial 1: Many Independent Jobs
 
-This tutorial teaches you how to create and run a workflow with many independent parallel jobs using Torc's parameterization feature.
+This tutorial teaches you how to create and run a workflow with many independent parallel jobs using
+Torc's parameterization feature.
 
 ## Learning Objectives
 
@@ -18,6 +19,7 @@ By the end of this tutorial, you will:
 ## Use Cases
 
 This pattern is ideal for:
+
 - **Parameter sweeps**: Testing different configurations
 - **Monte Carlo simulations**: Running many independent trials
 - **Batch processing**: Processing many files with the same logic
@@ -31,9 +33,11 @@ First, ensure the Torc server is running:
 torc-server run
 ```
 
-By default, the server listens on port 8080, making the API URL `http://localhost:8080/torc-service/v1`.
+By default, the server listens on port 8080, making the API URL
+`http://localhost:8080/torc-service/v1`.
 
 If you use a custom port, set the environment variable:
+
 ```console
 export TORC_API_URL="http://localhost:8100/torc-service/v1"
 ```
@@ -69,13 +73,16 @@ resource_requirements:
 
 Let's break down the key elements:
 
-- **`name: job_{i:03d}`**: The `{i:03d}` is a parameter placeholder. The `:03d` format specifier means "3-digit zero-padded integer", so jobs will be named `job_001`, `job_002`, ..., `job_100`.
+- **`name: job_{i:03d}`**: The `{i:03d}` is a parameter placeholder. The `:03d` format specifier
+  means "3-digit zero-padded integer", so jobs will be named `job_001`, `job_002`, ..., `job_100`.
 
-- **`parameters: i: "1:100"`**: This defines a parameter `i` that ranges from 1 to 100 (inclusive). Torc will create one job for each value.
+- **`parameters: i: "1:100"`**: This defines a parameter `i` that ranges from 1 to 100 (inclusive).
+  Torc will create one job for each value.
 
 - **`resource_requirements: minimal`**: Each job uses the "minimal" resource profile defined below.
 
-When Torc processes this specification, it **expands** the single job definition into 100 separate jobs, each with its own parameter value substituted.
+When Torc processes this specification, it **expands** the single job definition into 100 separate
+jobs, each with its own parameter value substituted.
 
 ## Step 3: Run the Workflow
 
@@ -86,6 +93,7 @@ torc run hundred_jobs.yaml
 ```
 
 This command:
+
 1. Creates the workflow on the server
 2. Expands the parameterized job into 100 individual jobs
 3. Initializes the dependency graph (in this case, no dependencies)
@@ -108,7 +116,8 @@ torc jobs list <workflow_id>
 torc tui
 ```
 
-Since all 100 jobs are independent (no dependencies between them), Torc will run as many in parallel as your system resources allow.
+Since all 100 jobs are independent (no dependencies between them), Torc will run as many in parallel
+as your system resources allow.
 
 ## Step 5: View Results
 
@@ -129,23 +138,29 @@ When you run this workflow, Torc:
 3. **Executes in parallel**: The job runner claims and executes jobs based on available resources
 4. **Tracks completion**: Each job's return code and metrics are recorded
 
-The job runner respects the resource requirements you specified. With `num_cpus: 1` per job, if your machine has 8 CPUs, approximately 8 jobs will run simultaneously.
+The job runner respects the resource requirements you specified. With `num_cpus: 1` per job, if your
+machine has 8 CPUs, approximately 8 jobs will run simultaneously.
 
 ## What You Learned
 
 In this tutorial, you learned how to:
 
-- ✅ Use parameter expansion (`parameters: i: "1:100"`) to generate multiple jobs from one definition
+- ✅ Use parameter expansion (`parameters: i: "1:100"`) to generate multiple jobs from one
+  definition
 - ✅ Use format specifiers (`{i:03d}`) for consistent naming
 - ✅ Run independent parallel jobs with `torc run`
 - ✅ Monitor workflow progress and view results
 
 ## Example Files
 
-See [hundred_jobs_parameterized.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hundred_jobs_parameterized.yaml) for a ready-to-run version of this workflow.
+See
+[hundred_jobs_parameterized.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hundred_jobs_parameterized.yaml)
+for a ready-to-run version of this workflow.
 
 ## Next Steps
 
 - [Tutorial 2: Diamond Workflow](./diamond.md) - Learn how to create job dependencies using files
-- [Tutorial 4: Simple Parameterization](./simple-params.md) - Explore more parameter expansion options
-- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
+- [Tutorial 4: Simple Parameterization](./simple-params.md) - Explore more parameter expansion
+  options
+- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs
+  efficiently

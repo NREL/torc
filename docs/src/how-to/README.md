@@ -1,6 +1,7 @@
 # How-To Guides
 
-This section provides task-oriented guides for accomplishing specific goals with Torc. Each guide shows you how to complete a concrete task.
+This section provides task-oriented guides for accomplishing specific goals with Torc. Each guide
+shows you how to complete a concrete task.
 
 **Topics covered:**
 

@@ -1,6 +1,7 @@
 # Job Parameterization
 
-Parameterization allows creating multiple jobs/files from a single specification by expanding parameter ranges.
+Parameterization allows creating multiple jobs/files from a single specification by expanding
+parameter ranges.
 
 ## Parameter Formats
 
@@ -57,6 +58,7 @@ jobs:
 ```
 
 Expands to:
+
 ```yaml
 jobs:
   - name: job_1
@@ -123,6 +125,7 @@ jobs:
 ```
 
 This expands to 3 × 3 = **9 jobs**:
+
 - `train_lr0.0001_bs16`
 - `train_lr0.0001_bs32`
 - `train_lr0.0001_bs64`
@@ -168,6 +171,7 @@ jobs:
 ```
 
 This creates 6 jobs with proper dependencies:
+
 - `generate_A` → `process_A`
 - `generate_B` → `process_B`
 - `generate_C` → `process_C`
@@ -198,7 +202,8 @@ user_data:
 
 ## Shared (Workflow-Level) Parameters
 
-Define parameters once at the workflow level and reuse them across multiple jobs and files using `use_parameters`:
+Define parameters once at the workflow level and reuse them across multiple jobs and files using
+`use_parameters`:
 
 ### Basic Usage
 
@@ -325,7 +330,8 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
 
 ## Parameter Modes
 
-By default, when multiple parameters are specified, Torc generates the Cartesian product of all parameter values. You can change this behavior using `parameter_mode`.
+By default, when multiple parameters are specified, Torc generates the Cartesian product of all
+parameter values. You can change this behavior using `parameter_mode`.
 
 ### Product Mode (Default)
 
@@ -345,7 +351,8 @@ This creates 3 × 3 = **9 jobs**: `job_1_x`, `job_1_y`, `job_1_z`, `job_2_x`, et
 
 ### Zip Mode
 
-Use `parameter_mode: zip` to pair parameters element-wise (like Python's `zip()` function). All parameter lists must have the same length.
+Use `parameter_mode: zip` to pair parameters element-wise (like Python's `zip()` function). All
+parameter lists must have the same length.
 
 ```yaml
 jobs:
@@ -358,17 +365,20 @@ jobs:
 ```
 
 This creates **3 jobs** (not 9):
+
 - `train_cifar10_resnet`
 - `train_mnist_cnn`
 - `train_imagenet_transformer`
 
 **When to use zip mode:**
+
 - Pre-determined parameter pairings (dataset A always uses model X)
 - Corresponding input/output file pairs
 - Parallel arrays where position matters
 
-**Error handling:**
-If parameter lists have different lengths in zip mode, Torc will return an error:
+**Error handling:** If parameter lists have different lengths in zip mode, Torc will return an
+error:
+
 ```
 All parameters must have the same number of values when using 'zip' mode.
 Parameter 'dataset' has 3 values, but 'model' has 2 values.
@@ -405,9 +415,13 @@ job "train_{dataset}_{model}" {
 
 1. **Use descriptive parameter names** - `lr` not `x`, `batch_size` not `b`
 2. **Format numbers consistently** - Use `:03d` for run IDs, `:.4f` for learning rates
-3. **Keep parameter counts reasonable** - 3×3×3 = 27 jobs is manageable, 10×10×10 = 1000 may overwhelm the system
-4. **Match parameter ranges across related jobs** - Use same parameter values for generator and consumer jobs
+3. **Keep parameter counts reasonable** - 3×3×3 = 27 jobs is manageable, 10×10×10 = 1000 may
+   overwhelm the system
+4. **Match parameter ranges across related jobs** - Use same parameter values for generator and
+   consumer jobs
 5. **Consider parameter dependencies** - Some parameter combinations may be invalid
-6. **Prefer shared parameters for multi-job workflows** - Use `use_parameters` to avoid repeating definitions
+6. **Prefer shared parameters for multi-job workflows** - Use `use_parameters` to avoid repeating
+   definitions
 7. **Use selective inheritance** - Only inherit the parameters each job actually needs
-8. **Use zip mode for paired parameters** - When parameters have a 1:1 correspondence, use `parameter_mode: zip`
+8. **Use zip mode for paired parameters** - When parameters have a 1:1 correspondence, use
+   `parameter_mode: zip`

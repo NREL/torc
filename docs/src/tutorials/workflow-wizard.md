@@ -1,6 +1,8 @@
 # Creating Workflows with the Dashboard Wizard
 
-This tutorial walks you through creating a workflow using the interactive wizard in the Torc dashboard. The wizard provides a guided, step-by-step interface for building workflows without writing YAML or JSON files.
+This tutorial walks you through creating a workflow using the interactive wizard in the Torc
+dashboard. The wizard provides a guided, step-by-step interface for building workflows without
+writing YAML or JSON files.
 
 ## Learning Objectives
 
@@ -77,18 +79,21 @@ Choose a resource preset or customize:
 Let's create a simple pipeline:
 
 **Job 1: preprocess**
+
 - Name: `preprocess`
 - Command: `echo "Preprocessing..." && sleep 5`
 - Blocked By: (none - this runs first)
 - Resources: Small
 
 **Job 2: analyze**
+
 - Name: `analyze`
 - Command: `echo "Analyzing..." && sleep 10`
 - Blocked By: `preprocess`
 - Resources: Medium
 
 **Job 3: report**
+
 - Name: `report`
 - Command: `echo "Generating report..." && sleep 3`
 - Blocked By: `analyze`
@@ -98,7 +103,8 @@ Click **Next** when all jobs are configured.
 
 ## Step 4: Configure Schedulers (Optional)
 
-If you're running on an HPC system with Slurm, you can define scheduler configurations here. Skip this step for local execution.
+If you're running on an HPC system with Slurm, you can define scheduler configurations here. Skip
+this step for local execution.
 
 ### Adding a Scheduler
 
@@ -139,7 +145,8 @@ Click **Next** when scheduler configuration is complete.
 
 ## Step 5: Configure Actions (Optional)
 
-Actions automatically schedule Slurm nodes when certain events occur. This is useful for dynamic resource allocation.
+Actions automatically schedule Slurm nodes when certain events occur. This is useful for dynamic
+resource allocation.
 
 ### Trigger Types
 
@@ -160,17 +167,20 @@ Actions automatically schedule Slurm nodes when certain events occur. This is us
 For a workflow with setup, compute, and finalize stages:
 
 **Action 1: Setup Stage**
+
 - Trigger: When workflow starts
 - Scheduler: `setup_scheduler`
 - Allocations: 1
 
 **Action 2: Compute Stage**
+
 - Trigger: When jobs become ready
 - Jobs: `compute_job1`, `compute_job2`, `compute_job3`
 - Scheduler: `compute_scheduler`
 - Allocations: 3
 
 **Action 3: Finalize Stage**
+
 - Trigger: When jobs become ready
 - Jobs: `finalize`
 - Scheduler: `finalize_scheduler`
@@ -180,7 +190,8 @@ Click **Next** to proceed to review.
 
 ## Step 6: Review and Create
 
-The review step shows the generated workflow specification in JSON format. This is exactly what will be submitted to the server.
+The review step shows the generated workflow specification in JSON format. This is exactly what will
+be submitted to the server.
 
 ### Reviewing the Spec
 
@@ -207,21 +218,21 @@ If successful, you'll see a success notification and the workflow will appear in
 Here's how to create a diamond-pattern workflow using the wizard:
 
 ```
-     preprocess
-       /    \
-    work1   work2
-       \    /
-    postprocess
+ preprocess
+   /    \
+work1   work2
+   \    /
+postprocess
 ```
 
 ### Jobs Configuration
 
-| Job | Command | Blocked By | Resources |
-|-----|---------|------------|-----------|
-| preprocess | `./preprocess.sh` | (none) | Small |
-| work1 | `./work1.sh` | preprocess | Medium |
-| work2 | `./work2.sh` | preprocess | Medium |
-| postprocess | `./postprocess.sh` | work1, work2 | Small |
+| Job         | Command            | Blocked By   | Resources |
+| ----------- | ------------------ | ------------ | --------- |
+| preprocess  | `./preprocess.sh`  | (none)       | Small     |
+| work1       | `./work1.sh`       | preprocess   | Medium    |
+| work2       | `./work2.sh`       | preprocess   | Medium    |
+| postprocess | `./postprocess.sh` | work1, work2 | Small     |
 
 ### Generated Spec Preview
 

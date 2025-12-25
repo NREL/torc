@@ -4,9 +4,11 @@ This tutorial will teach you how to build a workflow from Python functions inste
 executables and run on it on an HPC with `Slurm`.
 
 ## Pre-requisites
-This tutorial requires installation of the python package `torc-client`. Until the latest version
-is published at pypi.org, you must clone this repository install the package in a virtual
-environment. Use Python 3.11 or later.
+
+This tutorial requires installation of the python package `torc-client`. Until the latest version is
+published at pypi.org, you must clone this repository install the package in a virtual environment.
+Use Python 3.11 or later.
+
 ```
 git clone https://github.com/NREL/torc
 cd torc/python_client
@@ -63,20 +65,22 @@ def postprocess(results: list[dict]) -> dict:
 You need to run this function on hundreds of sets of input parameters and want torc to help you
 scale this work on an HPC.
 
-The recommended procedure for this task is torc's Python API as shown below. The
-goal is to mimic the behavior of Python's [concurrent.futures.ProcessPoolExecutor.map](https://docs.python.org/3/library/concurrent.futures.html#processpoolexecutor)
+The recommended procedure for this task is torc's Python API as shown below. The goal is to mimic
+the behavior of Python's
+[concurrent.futures.ProcessPoolExecutor.map](https://docs.python.org/3/library/concurrent.futures.html#processpoolexecutor)
 as much as possible.
 
-Similar functionality is also available with [Dask](https://docs.dask.org/en/stable/deploying.html?highlight=slurm#deploy-dask-clusters).
+Similar functionality is also available with
+[Dask](https://docs.dask.org/en/stable/deploying.html?highlight=slurm#deploy-dask-clusters).
 
 ### Resource Constraints
 
 - Each function call needs 4 CPUs and 20 GiB of memory.
 - The function call takes 1 hour to run.
 
-A compute node with 92 GiB of memory are easiest to acquire but would only be able to run 4 jobs at a time.
-The 180 GiB nodes are fewer in number but would use fewer AUs because they would be able to run 8
-jobs at a time.
+A compute node with 92 GiB of memory are easiest to acquire but would only be able to run 4 jobs at
+a time. The 180 GiB nodes are fewer in number but would use fewer AUs because they would be able to
+run 8 jobs at a time.
 
 ## Torc Overview
 
@@ -85,9 +89,9 @@ Here is what torc does to solve this problem:
 - User creates a workflow in Python.
 - User passes a callable function as well as a list of all input parameters that need to be mapped
   to the function.
-- For each set of input parameters torc creates a record in the `user_data` table in the
-  database, creates a job with a relationship to that record as an input, and creates a
-  placeholder for data to be created by that job.
+- For each set of input parameters torc creates a record in the `user_data` table in the database,
+  creates a job with a relationship to that record as an input, and creates a placeholder for data
+  to be created by that job.
 - When torc runs each job it reads the correct input parameters from the database, imports the
   user's function, and then calls it with the input parameters.
 - When the function completes, torc stores any returned data in the database.
@@ -97,8 +101,8 @@ Here is what torc does to solve this problem:
 
 ## Build the workflow
 
-1. Write a script to create the workflow. Note that you need to correct the `api` URL and the
-   Slurm `account`.
+1. Write a script to create the workflow. Note that you need to correct the `api` URL and the Slurm
+   `account`.
 
 ```python
 import getpass
@@ -188,11 +192,11 @@ if __name__ == "__main__":
 - Your run function should raise an exception if there is a failure. If that happens, torc will
   record a non-zero return code for the job.
 
-- If you want torc to store result data in the database, return it from your run function.
-  **Note**: be careful on how much result data you return. If you are using a custom database
-  for one workflow, store as much as you want. If you are using a shared server, ensure that
-  you are following its administrator's policies. You could consider storing large data in
-  files and only storing file paths in the database.
+- If you want torc to store result data in the database, return it from your run function. **Note**:
+  be careful on how much result data you return. If you are using a custom database for one
+  workflow, store as much as you want. If you are using a shared server, ensure that you are
+  following its administrator's policies. You could consider storing large data in files and only
+  storing file paths in the database.
 
 - If you choose to define a postprocess function and want torc to store the final data in the
   database, return it from that function.
@@ -201,8 +205,8 @@ if __name__ == "__main__":
   Basic types like numbers and strings and lists and dictionaries of those will work fine. If you
   need to store complex, custom types, consider these options:
 
-  - Define data models with [Pydantic](https://docs.pydantic.dev/latest/usage/models/). You can
-    use their existing serialization/de-serialization methods or define custom methods.
+  - Define data models with [Pydantic](https://docs.pydantic.dev/latest/usage/models/). You can use
+    their existing serialization/de-serialization methods or define custom methods.
   - Pickle your data and store the result as a string. Your run function would need to understand
     how to de-serialize it. Note that this has portability limitations. (Please contact the
     developers if you would like to see this happen automatically.)
@@ -211,7 +215,8 @@ if __name__ == "__main__":
 
   - Put the script in the current directory.
   - Install it in the environment.
-  - Specify its parent directory like this: `map_function_to_jobs(..., module_directory="my_module")`
+  - Specify its parent directory like this:
+    `map_function_to_jobs(..., module_directory="my_module")`
 
 ```console
 python map_function_across_workers.py
@@ -241,6 +246,6 @@ $ torc -f json user-data list 342
 
 You could add "normal" jobs to the workflow as well. For example, you might have preprocessing and
 post-processing work to do. You can add those jobs through the API. You could also add multiple
-rounds of mapped functions. `map_function_to_jobs` provides a `depends_on_job_ids` parameter to specify
-ordering. You could also define job-job relationships through files or user-data as discussed
-elsewhere in this documentation.
+rounds of mapped functions. `map_function_to_jobs` provides a `depends_on_job_ids` parameter to
+specify ordering. You could also define job-job relationships through files or user-data as
+discussed elsewhere in this documentation.

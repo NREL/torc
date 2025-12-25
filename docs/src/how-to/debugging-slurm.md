@@ -1,8 +1,10 @@
 # Debugging Slurm Workflows
 
-When running workflows on Slurm clusters, Torc provides additional debugging tools specifically designed for Slurm environments. This guide covers Slurm-specific debugging techniques and tools.
+When running workflows on Slurm clusters, Torc provides additional debugging tools specifically
+designed for Slurm environments. This guide covers Slurm-specific debugging techniques and tools.
 
-For general debugging concepts and tools that apply to all workflows, see [Debugging Workflows](debugging.md).
+For general debugging concepts and tools that apply to all workflows, see
+[Debugging Workflows](debugging.md).
 
 ## Overview
 
@@ -12,11 +14,13 @@ Slurm workflows generate additional log files beyond the standard job logs:
 - **Slurm environment logs**: All SLURM environment variables captured at job runner startup
 - **dmesg logs**: Kernel message buffer captured when the Slurm job runner exits
 
-These logs help diagnose issues specific to the cluster environment, such as resource allocation failures, node problems, and system-level errors.
+These logs help diagnose issues specific to the cluster environment, such as resource allocation
+failures, node problems, and system-level errors.
 
 ## Slurm Log File Structure
 
-For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`), the debug report includes these additional log paths:
+For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`), the debug report includes
+these additional log paths:
 
 ```json
 {
@@ -50,13 +54,16 @@ For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`), the debug 
 4. **dmesg log** (`output/dmesg_slurm_<slurm_job_id>_<node_id>_<task_pid>.log`):
    - Kernel message buffer captured when the Slurm job runner exits
    - Contains system-level events: OOM killer activity, hardware errors, kernel panics
-   - **Use for**: Investigating job failures caused by system-level issues (e.g., out-of-memory kills, hardware failures)
+   - **Use for**: Investigating job failures caused by system-level issues (e.g., out-of-memory
+     kills, hardware failures)
 
-**Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID in the filename for correlation with Slurm's own logs.
+**Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID in the filename for
+correlation with Slurm's own logs.
 
 ## Parsing Slurm Log Files for Errors
 
-The `torc slurm parse-logs` command scans Slurm stdout/stderr log files for known error patterns and correlates them with affected Torc jobs:
+The `torc slurm parse-logs` command scans Slurm stdout/stderr log files for known error patterns and
+correlates them with affected Torc jobs:
 
 ```bash
 # Parse logs for a specific workflow
@@ -74,34 +81,41 @@ torc slurm parse-logs <workflow_id> --format json
 The command detects common Slurm failure patterns including:
 
 **Memory Errors:**
+
 - `out of memory`, `oom-kill`, `cannot allocate memory`
 - `memory cgroup out of memory`, `Exceeded job memory limit`
 - `task/cgroup: .*: Killed`
 - `std::bad_alloc` (C++), `MemoryError` (Python)
 
 **Slurm-Specific Errors:**
+
 - `slurmstepd: error:`, `srun: error:`
 - `DUE TO TIME LIMIT`, `DUE TO PREEMPTION`
 - `NODE_FAIL`, `FAILED`, `CANCELLED`
 - `Exceeded.*step.*limit`
 
 **GPU/CUDA Errors:**
+
 - `CUDA out of memory`, `CUDA error`, `GPU memory.*exceeded`
 
 **Signal/Crash Errors:**
+
 - `Segmentation fault`, `SIGSEGV`
 - `Bus error`, `SIGBUS`
 - `killed by signal`, `core dumped`
 
 **Python Errors:**
+
 - `Traceback (most recent call last)`
 - `ModuleNotFoundError`, `ImportError`
 
 **File System Errors:**
+
 - `No space left on device`, `Disk quota exceeded`
 - `Read-only file system`, `Permission denied`
 
 **Network Errors:**
+
 - `Connection refused`, `Connection timed out`, `Network is unreachable`
 
 ### Example Output
@@ -124,7 +138,8 @@ Found 2 error(s) in log files:
 
 ## Viewing Slurm Accounting Data
 
-The `torc slurm sacct` command displays a summary of Slurm job accounting data for all scheduled compute nodes in a workflow:
+The `torc slurm sacct` command displays a summary of Slurm job accounting data for all scheduled
+compute nodes in a workflow:
 
 ```bash
 # Display sacct summary table for a workflow
@@ -140,6 +155,7 @@ torc slurm sacct <workflow_id> --format json
 ### Summary Table Fields
 
 The command displays a summary table with key metrics:
+
 - **Slurm Job**: The Slurm job ID
 - **Job Step**: Name of the job step (e.g., "worker_1", "batch")
 - **State**: Job state (COMPLETED, FAILED, TIMEOUT, OUT_OF_MEMORY, etc.)
@@ -187,7 +203,8 @@ The Debugging tab includes a "Slurm Log Analysis" section:
 3. Enter the output directory path (default: `output`)
 4. Click **Analyze Slurm Logs**
 
-The results show all detected errors with their Slurm job IDs, line numbers, error patterns, severity levels, and affected Torc jobs.
+The results show all detected errors with their Slurm job IDs, line numbers, error patterns,
+severity levels, and affected Torc jobs.
 
 ### Debugging Tab - Slurm Accounting Data
 
@@ -197,7 +214,9 @@ The Debugging tab also includes a "Slurm Accounting Data" section:
 2. Find the **Slurm Accounting Data** section
 3. Click **Collect sacct Data**
 
-This displays a summary table showing job state, exit codes, elapsed time, memory usage (Max RSS), CPU time, and nodes for all Slurm job steps. The table helps quickly identify failed jobs and resource usage patterns.
+This displays a summary table showing job state, exit codes, elapsed time, memory usage (Max RSS),
+CPU time, and nodes for all Slurm job steps. The table helps quickly identify failed jobs and
+resource usage patterns.
 
 ### Scheduled Nodes Tab - View Slurm Logs
 
@@ -222,6 +241,7 @@ The `torc tui` terminal interface also supports Slurm log viewing:
 5. Press `l` to view the Slurm job's logs
 
 The log viewer shows:
+
 - **stdout tab**: Slurm job standard output (`slurm_output_<id>.o`)
 - **stderr tab**: Slurm job standard error (`slurm_output_<id>.e`)
 
@@ -263,11 +283,13 @@ When a Slurm job fails, follow this debugging workflow:
 ### Out of Memory (OOM) Kills
 
 **Symptoms:**
+
 - `torc slurm parse-logs` shows "Out of Memory (OOM) Kill"
 - Job exits with signal 9 (SIGKILL)
 - dmesg log shows "oom-kill" entries
 
 **Solutions:**
+
 - Increase memory request in job specification
 - Check `torc slurm sacct` output for actual memory usage (Max RSS)
 - Consider splitting job into smaller chunks
@@ -275,10 +297,12 @@ When a Slurm job fails, follow this debugging workflow:
 ### Time Limit Exceeded
 
 **Symptoms:**
+
 - `torc slurm parse-logs` shows "DUE TO TIME LIMIT"
 - Job state in sacct shows "TIMEOUT"
 
 **Solutions:**
+
 - Increase runtime in job specification
 - Check if job is stuck (review stdout for progress)
 - Consider optimizing the job or splitting into phases
@@ -286,10 +310,12 @@ When a Slurm job fails, follow this debugging workflow:
 ### Node Failures
 
 **Symptoms:**
+
 - `torc slurm parse-logs` shows "NODE_FAIL"
 - Job may have completed partially
 
 **Solutions:**
+
 - Reinitialize workflow to retry failed jobs
 - Check cluster status with `sinfo`
 - Review dmesg logs for hardware issues
@@ -297,9 +323,11 @@ When a Slurm job fails, follow this debugging workflow:
 ### GPU/CUDA Errors
 
 **Symptoms:**
+
 - `torc slurm parse-logs` shows "CUDA out of memory" or "CUDA error"
 
 **Solutions:**
+
 - Reduce batch size or model size
 - Check GPU memory with `nvidia-smi` in job script
 - Ensure correct CUDA version is loaded

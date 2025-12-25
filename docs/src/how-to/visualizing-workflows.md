@@ -1,10 +1,13 @@
 # Visualizing Workflow Structure
 
-Understanding how your workflow will execute—which jobs run in parallel, how dependencies create stages, and when Slurm allocations are requested—is essential for debugging and optimization. Torc provides several tools for visualizing workflow structure.
+Understanding how your workflow will execute—which jobs run in parallel, how dependencies create
+stages, and when Slurm allocations are requested—is essential for debugging and optimization. Torc
+provides several tools for visualizing workflow structure.
 
 ## Execution Plan Command
 
-The `torc workflows execution-plan` command analyzes a workflow and displays its execution stages, showing how jobs are grouped and when schedulers allocate resources.
+The `torc workflows execution-plan` command analyzes a workflow and displays its execution stages,
+showing how jobs are grouped and when schedulers allocate resources.
 
 ### Basic Usage
 
@@ -59,13 +62,15 @@ Total Stages: 4
 ### What the Execution Plan Shows
 
 1. **Stages**: Groups of jobs that become ready at the same time based on dependency resolution
-2. **Scheduler Allocations**: Which Slurm schedulers request resources at each stage (for workflows with Slurm configuration)
+2. **Scheduler Allocations**: Which Slurm schedulers request resources at each stage (for workflows
+   with Slurm configuration)
 3. **Jobs Becoming Ready**: Which jobs transition to "ready" status at each stage
 4. **Subgraphs**: Independent branches of the workflow that can execute in parallel
 
 ### Workflows Without Slurm Schedulers
 
-For workflows without pre-defined Slurm schedulers, the execution plan shows the job stages without scheduler information:
+For workflows without pre-defined Slurm schedulers, the execution plan shows the job stages without
+scheduler information:
 
 ```bash
 torc workflows execution-plan workflow_no_slurm.yaml
@@ -90,7 +95,8 @@ Total Jobs: 10
 Total Stages: 3
 ```
 
-This helps you understand the workflow topology before adding Slurm configuration with `torc slurm generate`.
+This helps you understand the workflow topology before adding Slurm configuration with
+`torc slurm generate`.
 
 ### Use Cases
 
@@ -114,11 +120,11 @@ The [web dashboard](./dashboard.md) provides interactive DAG (Directed Acyclic G
 
 The dashboard supports three DAG visualization types:
 
-| Type | Description |
-|------|-------------|
-| **Job Dependencies** | Shows explicit and implicit dependencies between jobs |
-| **Job-File Relations** | Shows how jobs connect through input/output files |
-| **Job-UserData Relations** | Shows how jobs connect through user data |
+| Type                       | Description                                           |
+| -------------------------- | ----------------------------------------------------- |
+| **Job Dependencies**       | Shows explicit and implicit dependencies between jobs |
+| **Job-File Relations**     | Shows how jobs connect through input/output files     |
+| **Job-UserData Relations** | Shows how jobs connect through user data              |
 
 ### DAG Features
 
@@ -137,11 +143,11 @@ The terminal UI (`torc tui`) also includes DAG visualization:
 
 ## Comparing Visualization Tools
 
-| Tool | Best For |
-|------|----------|
+| Tool             | Best For                                                |
+| ---------------- | ------------------------------------------------------- |
 | `execution-plan` | Understanding execution stages, Slurm allocation timing |
-| Dashboard DAG | Interactive exploration, status monitoring |
-| TUI DAG | Quick terminal-based visualization |
+| Dashboard DAG    | Interactive exploration, status monitoring              |
+| TUI DAG          | Quick terminal-based visualization                      |
 
 ## Example: Analyzing a Complex Workflow
 
@@ -159,6 +165,7 @@ torc workflows execution-plan examples/subgraphs/subgraphs_workflow.yaml
 ```
 
 The execution plan helps you verify that:
+
 - Independent subgraphs are correctly identified
 - Stages align with your expected execution order
 - Slurm allocations are timed appropriately
@@ -168,4 +175,5 @@ The execution plan helps you verify that:
 - [Web Dashboard](./dashboard.md) — Full dashboard documentation
 - [Slurm Workflows](../explanation/slurm-workflows.md) — Understanding Slurm integration
 - [Workflow Actions](../explanation/workflow-actions.md) — How actions trigger scheduler allocations
-- [Subgraphs Example](https://github.com/NREL/torc/tree/main/examples/subgraphs) — Complete example with multiple subgraphs
+- [Subgraphs Example](https://github.com/NREL/torc/tree/main/examples/subgraphs) — Complete example
+  with multiple subgraphs

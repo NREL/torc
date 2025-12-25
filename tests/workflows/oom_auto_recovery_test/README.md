@@ -1,7 +1,7 @@
 # OOM Auto-Recovery Test
 
-This test verifies that `torc watch --auto-recover` correctly detects OOM (Out of Memory)
-failures and automatically increases memory allocations for retry.
+This test verifies that `torc watch --auto-recover` correctly detects OOM (Out of Memory) failures
+and automatically increases memory allocations for retry.
 
 ## Workflow Description
 
@@ -111,5 +111,5 @@ To make the test faster, you can:
    ```
    With 2.0x: 10GB → 20GB → 40GB (success in 2 retries)
 
-2. Start with higher initial memory in `workflow.yaml`:
-   Change `memory: 10g` to `memory: 20g` to reduce the number of retries needed.
+2. Start with higher initial memory in `workflow.yaml`: Change `memory: 10g` to `memory: 20g` to
+   reduce the number of retries needed.

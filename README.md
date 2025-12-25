@@ -1,26 +1,29 @@
-
 # Torc workflow management system
 
 **Distributed workflow orchestration for complex computational pipelines**
 
-Torc is a workflow management system designed for running large-scale computational workflows with complex dependencies on local machines and HPC clusters. It uses a client-server architecture with a centralized SQLite database for state management and coordination.
+Torc is a workflow management system designed for running large-scale computational workflows with
+complex dependencies on local machines and HPC clusters. It uses a client-server architecture with a
+centralized SQLite database for state management and coordination.
 
 [![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
 
 ## Project Status
-The software is currently being ported from Python + JavaScript + ArangoDB to Rust + SQLite.
-This increases portability, especially for local environments. Previous releases are still
-available and supported.
+
+The software is currently being ported from Python + JavaScript + ArangoDB to Rust + SQLite. This
+increases portability, especially for local environments. Previous releases are still available and
+supported.
 
 Most functionality is currently available, but the interfaces should not be treated as stable.
-Validation is not complete, and so the tool should not be used for production workloads.
-We expect the port to be ready for use by January 2026.
+Validation is not complete, and so the tool should not be used for production workloads. We expect
+the port to be ready for use by January 2026.
 
 Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc/discussions).
 
 ## Features
 
-- **AI-Assisted Management** - Use Claude Code or GitHub Copilot to create, debug, and manage workflows through natural language
+- **AI-Assisted Management** - Use Claude Code or GitHub Copilot to create, debug, and manage
+  workflows through natural language
 - **Declarative Workflow Specifications** - Define workflows in YAML, JSON5, JSON, or KDL
 - **Automatic Dependency Resolution** - Dependencies inferred from file and data relationships
 - **Job Parameterization** - Create parameter sweeps and grid searches with simple syntax
@@ -36,13 +39,16 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 
 ### Installation
 
-Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases) or build from source:
+Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases) or
+build from source:
 
 ```bash
 cargo build --workspace --release
 ```
 
-**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute after downloading:
+**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS
+Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute
+after downloading:
 
 ```bash
 xattr -cr /path/to/torc*
@@ -122,14 +128,16 @@ Torc provides a unified CLI with the following commands:
 - **Reports**: `torc reports <subcommand>`
 
 **Global Options**:
+
 - `--url <URL>` - Specify Torc server URL (or use `TORC_API_URL` env var)
 - `-f, --format <FORMAT>` - Output format: `table` or `json`
 
 Standalone binaries are also available for deployment scenarios:
+
 - `torc-server` - REST API server (**always run as standalone**, not in unified CLI)
 
-
 ## Why develop another workflow management tool?
+
 Since there are so many open source workflow management tools available, some may ask, "why develop
 another?" We evaluated many of them, including [Nextflow](https://www.nextflow.io/),
 [Snakemake](https://snakemake.github.io/), and [Pegasus](https://pegasus.isi.edu/). Those are
@@ -138,8 +146,8 @@ wasn't difficult to create exactly what we wanted.
 
 Here are the features of Torc that we think differentiate it from other tools:
 
-- Simple execution on local computers. Many tools require advanced setup and management.
-  Torc provides precompiled binaries for each supported platform.
+- Simple execution on local computers. Many tools require advanced setup and management. Torc
+  provides precompiled binaries for each supported platform.
 
 - Node packing on HPC compute nodes
 
@@ -151,10 +159,10 @@ Here are the features of Torc that we think differentiate it from other tools:
 
 - Torc API Server
 
-  Torc provides a server that implements an API conforming to an [OpenAPI
-  specification](https://swagger.io/specification/), providing automatic client library generation.
-  We use both Python and Julia clients to build and manage workflows. Users can monitor workflows
-  through Torc-provided CLI and TUI applications or develop their own scripts.
+  Torc provides a server that implements an API conforming to an
+  [OpenAPI specification](https://swagger.io/specification/), providing automatic client library
+  generation. We use both Python and Julia clients to build and manage workflows. Users can monitor
+  workflows through Torc-provided CLI and TUI applications or develop their own scripts.
 
 - Debugging errors
 
@@ -168,7 +176,9 @@ Here are the features of Torc that we think differentiate it from other tools:
   All workflows and results are stored in a database, tracked by user and other metadata.
 
 ## License
+
 Torc is released under a BSD 3-Clause [license](https://github.com/NREL/torc/blob/main/LICENSE).
 
 ## Software Record
+
 This package is developed under NREL Software Record SWR-24-127.

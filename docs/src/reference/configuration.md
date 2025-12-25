@@ -31,26 +31,26 @@ Settings for the `torc` CLI.
 
 ### `[client]` Section
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `api_url` | string | `http://localhost:8080/torc-service/v1` | Torc server API URL |
-| `format` | string | `table` | Output format: `table` or `json` |
-| `log_level` | string | `info` | Log level: `error`, `warn`, `info`, `debug`, `trace` |
-| `username` | string | (none) | Username for basic authentication |
+| Option      | Type   | Default                                 | Description                                          |
+| ----------- | ------ | --------------------------------------- | ---------------------------------------------------- |
+| `api_url`   | string | `http://localhost:8080/torc-service/v1` | Torc server API URL                                  |
+| `format`    | string | `table`                                 | Output format: `table` or `json`                     |
+| `log_level` | string | `info`                                  | Log level: `error`, `warn`, `info`, `debug`, `trace` |
+| `username`  | string | (none)                                  | Username for basic authentication                    |
 
 ### `[client.run]` Section
 
 Settings for `torc run` command.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `poll_interval` | float | `5.0` | Job completion poll interval (seconds) |
-| `output_dir` | path | `output` | Output directory for job logs |
-| `database_poll_interval` | int | `30` | Database poll interval (seconds) |
-| `max_parallel_jobs` | int | (none) | Maximum parallel jobs (overrides resource-based) |
-| `num_cpus` | int | (none) | Available CPUs for resource-based scheduling |
-| `memory_gb` | float | (none) | Available memory (GB) for resource-based scheduling |
-| `num_gpus` | int | (none) | Available GPUs for resource-based scheduling |
+| Option                   | Type  | Default  | Description                                         |
+| ------------------------ | ----- | -------- | --------------------------------------------------- |
+| `poll_interval`          | float | `5.0`    | Job completion poll interval (seconds)              |
+| `output_dir`             | path  | `output` | Output directory for job logs                       |
+| `database_poll_interval` | int   | `30`     | Database poll interval (seconds)                    |
+| `max_parallel_jobs`      | int   | (none)   | Maximum parallel jobs (overrides resource-based)    |
+| `num_cpus`               | int   | (none)   | Available CPUs for resource-based scheduling        |
+| `memory_gb`              | float | (none)   | Available memory (GB) for resource-based scheduling |
+| `num_gpus`               | int   | (none)   | Available GPUs for resource-based scheduling        |
 
 ### Example
 
@@ -74,47 +74,47 @@ num_gpus = 1
 
 Settings for HPC profile system (used by `torc hpc` and `torc slurm` commands).
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `profile_overrides` | table | `{}` | Override settings for built-in HPC profiles |
-| `custom_profiles` | table | `{}` | Define custom HPC profiles |
+| Option              | Type  | Default | Description                                 |
+| ------------------- | ----- | ------- | ------------------------------------------- |
+| `profile_overrides` | table | `{}`    | Override settings for built-in HPC profiles |
+| `custom_profiles`   | table | `{}`    | Define custom HPC profiles                  |
 
 ### `[client.hpc.profile_overrides.<profile>]` Section
 
 Override settings for built-in profiles (e.g., `kestrel`).
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `default_account` | string | (none) | Default Slurm account for this profile |
+| Option            | Type   | Default | Description                            |
+| ----------------- | ------ | ------- | -------------------------------------- |
+| `default_account` | string | (none)  | Default Slurm account for this profile |
 
 ### `[client.hpc.custom_profiles.<name>]` Section
 
 Define a custom HPC profile.
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `display_name` | string | No | Human-readable name |
-| `description` | string | No | Profile description |
-| `detect_env_var` | string | No | Environment variable for detection (`NAME=value`) |
-| `detect_hostname` | string | No | Regex pattern for hostname detection |
-| `default_account` | string | No | Default Slurm account |
-| `partitions` | array | Yes | List of partition configurations |
+| Option            | Type   | Required | Description                                       |
+| ----------------- | ------ | -------- | ------------------------------------------------- |
+| `display_name`    | string | No       | Human-readable name                               |
+| `description`     | string | No       | Profile description                               |
+| `detect_env_var`  | string | No       | Environment variable for detection (`NAME=value`) |
+| `detect_hostname` | string | No       | Regex pattern for hostname detection              |
+| `default_account` | string | No       | Default Slurm account                             |
+| `partitions`      | array  | Yes      | List of partition configurations                  |
 
 ### `[[client.hpc.custom_profiles.<name>.partitions]]` Section
 
 Define partitions for a custom profile.
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `name` | string | Yes | Partition name |
-| `cpus_per_node` | int | Yes | CPU cores per node |
-| `memory_mb` | int | Yes | Memory per node in MB |
-| `max_walltime_secs` | int | Yes | Maximum walltime in seconds |
-| `gpus_per_node` | int | No | GPUs per node |
-| `gpu_type` | string | No | GPU model (e.g., "H100") |
-| `shared` | bool | No | Whether partition supports shared jobs |
-| `min_nodes` | int | No | Minimum required nodes |
-| `requires_explicit_request` | bool | No | Must be explicitly requested |
+| Option                      | Type   | Required | Description                            |
+| --------------------------- | ------ | -------- | -------------------------------------- |
+| `name`                      | string | Yes      | Partition name                         |
+| `cpus_per_node`             | int    | Yes      | CPU cores per node                     |
+| `memory_mb`                 | int    | Yes      | Memory per node in MB                  |
+| `max_walltime_secs`         | int    | Yes      | Maximum walltime in seconds            |
+| `gpus_per_node`             | int    | No       | GPUs per node                          |
+| `gpu_type`                  | string | No       | GPU model (e.g., "H100")               |
+| `shared`                    | bool   | No       | Whether partition supports shared jobs |
+| `min_nodes`                 | int    | No       | Minimum required nodes                 |
+| `requires_explicit_request` | bool   | No       | Must be explicitly requested           |
 
 ### HPC Example
 
@@ -151,24 +151,24 @@ Settings for `torc-server`.
 
 ### `[server]` Section
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `log_level` | string | `info` | Log level |
-| `https` | bool | `false` | Enable HTTPS |
-| `url` | string | `localhost` | Hostname/IP to bind to |
-| `port` | int | `8080` | Port to listen on |
-| `threads` | int | `1` | Number of worker threads |
-| `database` | string | (none) | SQLite database path (falls back to `DATABASE_URL` env) |
-| `auth_file` | string | (none) | Path to htpasswd file |
-| `require_auth` | bool | `false` | Require authentication for all requests |
-| `completion_check_interval_secs` | float | `60.0` | Background job processing interval |
+| Option                           | Type   | Default     | Description                                             |
+| -------------------------------- | ------ | ----------- | ------------------------------------------------------- |
+| `log_level`                      | string | `info`      | Log level                                               |
+| `https`                          | bool   | `false`     | Enable HTTPS                                            |
+| `url`                            | string | `localhost` | Hostname/IP to bind to                                  |
+| `port`                           | int    | `8080`      | Port to listen on                                       |
+| `threads`                        | int    | `1`         | Number of worker threads                                |
+| `database`                       | string | (none)      | SQLite database path (falls back to `DATABASE_URL` env) |
+| `auth_file`                      | string | (none)      | Path to htpasswd file                                   |
+| `require_auth`                   | bool   | `false`     | Require authentication for all requests                 |
+| `completion_check_interval_secs` | float  | `60.0`      | Background job processing interval                      |
 
 ### `[server.logging]` Section
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `log_dir` | path | (none) | Directory for log files (enables file logging) |
-| `json_logs` | bool | `false` | Use JSON format for log files |
+| Option      | Type | Default | Description                                    |
+| ----------- | ---- | ------- | ---------------------------------------------- |
+| `log_dir`   | path | (none)  | Directory for log files (enables file logging) |
+| `json_logs` | bool | `false` | Use JSON format for log files                  |
 
 ### Example
 
@@ -195,17 +195,17 @@ Settings for `torc-dash`.
 
 ### `[dash]` Section
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `host` | string | `127.0.0.1` | Hostname/IP to bind to |
-| `port` | int | `8090` | Port to listen on |
-| `api_url` | string | `http://localhost:8080/torc-service/v1` | Torc server API URL |
-| `torc_bin` | string | `torc` | Path to torc CLI binary |
-| `torc_server_bin` | string | `torc-server` | Path to torc-server binary |
-| `standalone` | bool | `false` | Auto-start torc-server |
-| `server_port` | int | `0` | Server port for standalone mode (0 = auto) |
-| `database` | string | (none) | Database path for standalone mode |
-| `completion_check_interval_secs` | int | `5` | Completion check interval (standalone mode) |
+| Option                           | Type   | Default                                 | Description                                 |
+| -------------------------------- | ------ | --------------------------------------- | ------------------------------------------- |
+| `host`                           | string | `127.0.0.1`                             | Hostname/IP to bind to                      |
+| `port`                           | int    | `8090`                                  | Port to listen on                           |
+| `api_url`                        | string | `http://localhost:8080/torc-service/v1` | Torc server API URL                         |
+| `torc_bin`                       | string | `torc`                                  | Path to torc CLI binary                     |
+| `torc_server_bin`                | string | `torc-server`                           | Path to torc-server binary                  |
+| `standalone`                     | bool   | `false`                                 | Auto-start torc-server                      |
+| `server_port`                    | int    | `0`                                     | Server port for standalone mode (0 = auto)  |
+| `database`                       | string | (none)                                  | Database path for standalone mode           |
+| `completion_check_interval_secs` | int    | `5`                                     | Completion check interval (standalone mode) |
 
 ### Example
 
@@ -227,57 +227,57 @@ Environment variables use double underscore (`__`) to separate nested keys.
 
 ### Client Variables
 
-| Variable | Maps To |
-|----------|---------|
-| `TORC_CLIENT__API_URL` | `client.api_url` |
-| `TORC_CLIENT__FORMAT` | `client.format` |
-| `TORC_CLIENT__LOG_LEVEL` | `client.log_level` |
-| `TORC_CLIENT__USERNAME` | `client.username` |
-| `TORC_CLIENT__RUN__POLL_INTERVAL` | `client.run.poll_interval` |
-| `TORC_CLIENT__RUN__OUTPUT_DIR` | `client.run.output_dir` |
+| Variable                              | Maps To                        |
+| ------------------------------------- | ------------------------------ |
+| `TORC_CLIENT__API_URL`                | `client.api_url`               |
+| `TORC_CLIENT__FORMAT`                 | `client.format`                |
+| `TORC_CLIENT__LOG_LEVEL`              | `client.log_level`             |
+| `TORC_CLIENT__USERNAME`               | `client.username`              |
+| `TORC_CLIENT__RUN__POLL_INTERVAL`     | `client.run.poll_interval`     |
+| `TORC_CLIENT__RUN__OUTPUT_DIR`        | `client.run.output_dir`        |
 | `TORC_CLIENT__RUN__MAX_PARALLEL_JOBS` | `client.run.max_parallel_jobs` |
-| `TORC_CLIENT__RUN__NUM_CPUS` | `client.run.num_cpus` |
-| `TORC_CLIENT__RUN__MEMORY_GB` | `client.run.memory_gb` |
-| `TORC_CLIENT__RUN__NUM_GPUS` | `client.run.num_gpus` |
+| `TORC_CLIENT__RUN__NUM_CPUS`          | `client.run.num_cpus`          |
+| `TORC_CLIENT__RUN__MEMORY_GB`         | `client.run.memory_gb`         |
+| `TORC_CLIENT__RUN__NUM_GPUS`          | `client.run.num_gpus`          |
 
 ### Server Variables
 
-| Variable | Maps To |
-|----------|---------|
-| `TORC_SERVER__URL` | `server.url` |
-| `TORC_SERVER__PORT` | `server.port` |
-| `TORC_SERVER__THREADS` | `server.threads` |
-| `TORC_SERVER__DATABASE` | `server.database` |
-| `TORC_SERVER__AUTH_FILE` | `server.auth_file` |
-| `TORC_SERVER__REQUIRE_AUTH` | `server.require_auth` |
-| `TORC_SERVER__LOG_LEVEL` | `server.log_level` |
+| Variable                                      | Maps To                                 |
+| --------------------------------------------- | --------------------------------------- |
+| `TORC_SERVER__URL`                            | `server.url`                            |
+| `TORC_SERVER__PORT`                           | `server.port`                           |
+| `TORC_SERVER__THREADS`                        | `server.threads`                        |
+| `TORC_SERVER__DATABASE`                       | `server.database`                       |
+| `TORC_SERVER__AUTH_FILE`                      | `server.auth_file`                      |
+| `TORC_SERVER__REQUIRE_AUTH`                   | `server.require_auth`                   |
+| `TORC_SERVER__LOG_LEVEL`                      | `server.log_level`                      |
 | `TORC_SERVER__COMPLETION_CHECK_INTERVAL_SECS` | `server.completion_check_interval_secs` |
-| `TORC_SERVER__LOGGING__LOG_DIR` | `server.logging.log_dir` |
-| `TORC_SERVER__LOGGING__JSON_LOGS` | `server.logging.json_logs` |
+| `TORC_SERVER__LOGGING__LOG_DIR`               | `server.logging.log_dir`                |
+| `TORC_SERVER__LOGGING__JSON_LOGS`             | `server.logging.json_logs`              |
 
 ### Dashboard Variables
 
-| Variable | Maps To |
-|----------|---------|
-| `TORC_DASH__HOST` | `dash.host` |
-| `TORC_DASH__PORT` | `dash.port` |
-| `TORC_DASH__API_URL` | `dash.api_url` |
+| Variable                | Maps To           |
+| ----------------------- | ----------------- |
+| `TORC_DASH__HOST`       | `dash.host`       |
+| `TORC_DASH__PORT`       | `dash.port`       |
+| `TORC_DASH__API_URL`    | `dash.api_url`    |
 | `TORC_DASH__STANDALONE` | `dash.standalone` |
 
 ### Legacy Variables
 
 These environment variables are still supported directly by clap:
 
-| Variable | Component | Description |
-|----------|-----------|-------------|
-| `TORC_API_URL` | Client | Server API URL (CLI only) |
-| `TORC_USERNAME` | Client | Authentication username (CLI only) |
-| `TORC_PASSWORD` | Client | Authentication password (CLI only) |
-| `TORC_AUTH_FILE` | Server | htpasswd file path |
-| `TORC_LOG_DIR` | Server | Log directory |
-| `TORC_COMPLETION_CHECK_INTERVAL_SECS` | Server | Completion check interval |
-| `DATABASE_URL` | Server | SQLite database URL |
-| `RUST_LOG` | All | Log level filter |
+| Variable                              | Component | Description                        |
+| ------------------------------------- | --------- | ---------------------------------- |
+| `TORC_API_URL`                        | Client    | Server API URL (CLI only)          |
+| `TORC_USERNAME`                       | Client    | Authentication username (CLI only) |
+| `TORC_PASSWORD`                       | Client    | Authentication password (CLI only) |
+| `TORC_AUTH_FILE`                      | Server    | htpasswd file path                 |
+| `TORC_LOG_DIR`                        | Server    | Log directory                      |
+| `TORC_COMPLETION_CHECK_INTERVAL_SECS` | Server    | Completion check interval          |
+| `DATABASE_URL`                        | Server    | SQLite database URL                |
+| `RUST_LOG`                            | All       | Log level filter                   |
 
 ## Complete Example
 

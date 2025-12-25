@@ -4,7 +4,8 @@ Complete reference for HPC profile system and CLI commands.
 
 ## Overview
 
-HPC profiles contain pre-configured knowledge about High-Performance Computing systems, enabling automatic Slurm scheduler generation based on job resource requirements.
+HPC profiles contain pre-configured knowledge about High-Performance Computing systems, enabling
+automatic Slurm scheduler generation based on job resource requirements.
 
 ## CLI Commands
 
@@ -17,11 +18,13 @@ torc hpc list [OPTIONS]
 ```
 
 **Options:**
-| Option | Description |
-|--------|-------------|
+
+| Option                  | Description                      |
+| ----------------------- | -------------------------------- |
 | `-f, --format <FORMAT>` | Output format: `table` or `json` |
 
 **Output columns:**
+
 - **Name**: Profile identifier used in commands
 - **Display Name**: Human-readable name
 - **Partitions**: Number of configured partitions
@@ -38,8 +41,9 @@ torc hpc detect [OPTIONS]
 ```
 
 **Options:**
-| Option | Description |
-|--------|-------------|
+
+| Option                  | Description                      |
+| ----------------------- | -------------------------------- |
 | `-f, --format <FORMAT>` | Output format: `table` or `json` |
 
 Returns the detected profile name, or indicates no match.
@@ -55,13 +59,15 @@ torc hpc show <PROFILE> [OPTIONS]
 ```
 
 **Arguments:**
-| Argument | Description |
-|----------|-------------|
+
+| Argument    | Description                    |
+| ----------- | ------------------------------ |
 | `<PROFILE>` | Profile name (e.g., `kestrel`) |
 
 **Options:**
-| Option | Description |
-|--------|-------------|
+
+| Option                  | Description                      |
+| ----------------------- | -------------------------------- |
 | `-f, --format <FORMAT>` | Output format: `table` or `json` |
 
 ---
@@ -75,16 +81,19 @@ torc hpc partitions <PROFILE> [OPTIONS]
 ```
 
 **Arguments:**
-| Argument | Description |
-|----------|-------------|
+
+| Argument    | Description                    |
+| ----------- | ------------------------------ |
 | `<PROFILE>` | Profile name (e.g., `kestrel`) |
 
 **Options:**
-| Option | Description |
-|--------|-------------|
+
+| Option                  | Description                      |
+| ----------------------- | -------------------------------- |
 | `-f, --format <FORMAT>` | Output format: `table` or `json` |
 
 **Output columns:**
+
 - **Name**: Partition name
 - **CPUs/Node**: CPU cores per node
 - **Mem/Node**: Memory per node
@@ -104,22 +113,25 @@ torc hpc match <PROFILE> [OPTIONS]
 ```
 
 **Arguments:**
-| Argument | Description |
-|----------|-------------|
+
+| Argument    | Description                    |
+| ----------- | ------------------------------ |
 | `<PROFILE>` | Profile name (e.g., `kestrel`) |
 
 **Options:**
-| Option | Description |
-|--------|-------------|
-| `--cpus <N>` | Required CPU cores |
-| `--memory <SIZE>` | Required memory (e.g., `64g`, `512m`) |
+
+| Option                  | Description                               |
+| ----------------------- | ----------------------------------------- |
+| `--cpus <N>`            | Required CPU cores                        |
+| `--memory <SIZE>`       | Required memory (e.g., `64g`, `512m`)     |
 | `--walltime <DURATION>` | Required walltime (e.g., `2h`, `4:00:00`) |
-| `--gpus <N>` | Required GPUs |
-| `-f, --format <FORMAT>` | Output format: `table` or `json` |
+| `--gpus <N>`            | Required GPUs                             |
+| `-f, --format <FORMAT>` | Output format: `table` or `json`          |
 
 **Memory format:** `<number><unit>` where unit is `k`, `m`, `g`, or `t` (case-insensitive).
 
 **Walltime formats:**
+
 - `HH:MM:SS` (e.g., `04:00:00`)
 - `<N>h` (e.g., `4h`)
 - `<N>m` (e.g., `30m`)
@@ -136,18 +148,20 @@ torc slurm generate [OPTIONS] --account <ACCOUNT> <WORKFLOW_FILE>
 ```
 
 **Arguments:**
-| Argument | Description |
-|----------|-------------|
+
+| Argument          | Description                                                |
+| ----------------- | ---------------------------------------------------------- |
 | `<WORKFLOW_FILE>` | Path to workflow specification file (YAML, JSON, or JSON5) |
 
 **Options:**
-| Option | Description |
-|--------|-------------|
-| `--account <ACCOUNT>` | Slurm account to use (required) |
-| `--profile <PROFILE>` | HPC profile to use (auto-detected if not specified) |
+
+| Option                | Description                                          |
+| --------------------- | ---------------------------------------------------- |
+| `--account <ACCOUNT>` | Slurm account to use (required)                      |
+| `--profile <PROFILE>` | HPC profile to use (auto-detected if not specified)  |
 | `-o, --output <FILE>` | Output file path (prints to stdout if not specified) |
-| `--no-actions` | Don't add workflow actions for scheduling nodes |
-| `--force` | Overwrite existing schedulers in the workflow |
+| `--no-actions`        | Don't add workflow actions for scheduling nodes      |
+| `--force`             | Overwrite existing schedulers in the workflow        |
 
 **Generated artifacts:**
 
@@ -169,20 +183,21 @@ torc slurm generate [OPTIONS] --account <ACCOUNT> <WORKFLOW_FILE>
 
 **Partitions:**
 
-| Partition | CPUs | Memory | Max Walltime | GPUs | Notes |
-|-----------|------|--------|--------------|------|-------|
-| `debug` | 104 | 240 GB | 1h | - | Quick testing |
-| `short` | 104 | 240 GB | 4h | - | Short jobs |
-| `standard` | 104 | 240 GB | 48h | - | General workloads |
-| `long` | 104 | 240 GB | 240h | - | Extended jobs |
-| `medmem` | 104 | 480 GB | 48h | - | Medium memory |
-| `bigmem` | 104 | 2048 GB | 48h | - | High memory |
-| `shared` | 104 | 240 GB | 48h | - | Shared node access |
-| `hbw` | 104 | 240 GB | 48h | - | High-bandwidth memory, min 10 nodes |
-| `nvme` | 104 | 240 GB | 48h | - | NVMe local storage |
-| `gpu-h100` | 2 | 240 GB | 48h | 4x H100 | GPU compute |
+| Partition  | CPUs | Memory  | Max Walltime | GPUs    | Notes                               |
+| ---------- | ---- | ------- | ------------ | ------- | ----------------------------------- |
+| `debug`    | 104  | 240 GB  | 1h           | -       | Quick testing                       |
+| `short`    | 104  | 240 GB  | 4h           | -       | Short jobs                          |
+| `standard` | 104  | 240 GB  | 48h          | -       | General workloads                   |
+| `long`     | 104  | 240 GB  | 240h         | -       | Extended jobs                       |
+| `medmem`   | 104  | 480 GB  | 48h          | -       | Medium memory                       |
+| `bigmem`   | 104  | 2048 GB | 48h          | -       | High memory                         |
+| `shared`   | 104  | 240 GB  | 48h          | -       | Shared node access                  |
+| `hbw`      | 104  | 240 GB  | 48h          | -       | High-bandwidth memory, min 10 nodes |
+| `nvme`     | 104  | 240 GB  | 48h          | -       | NVMe local storage                  |
+| `gpu-h100` | 2    | 240 GB  | 48h          | 4x H100 | GPU compute                         |
 
 **Node specifications:**
+
 - **Standard nodes**: 104 cores (2x Intel Xeon Sapphire Rapids), 240 GB RAM
 - **GPU nodes**: 4x NVIDIA H100 80GB HBM3, 128 cores, 2 TB RAM
 
@@ -192,7 +207,9 @@ torc slurm generate [OPTIONS] --account <ACCOUNT> <WORKFLOW_FILE>
 
 ### Custom Profiles
 
-> **Don't see your HPC?** Please [request built-in support](https://github.com/NREL/torc/issues) so everyone benefits. See the [Custom HPC Profile Tutorial](../tutorials/custom-hpc-profile.md) for creating a profile while you wait.
+> **Don't see your HPC?** Please [request built-in support](https://github.com/NREL/torc/issues) so
+> everyone benefits. See the [Custom HPC Profile Tutorial](../tutorials/custom-hpc-profile.md) for
+> creating a profile while you wait.
 
 Define custom profiles in your Torc configuration file:
 
@@ -236,41 +253,41 @@ default_account = "my_default_account"
 
 **`[client.hpc]` Section:**
 
-| Option | Type | Description |
-|--------|------|-------------|
+| Option              | Type  | Description                             |
+| ------------------- | ----- | --------------------------------------- |
 | `profile_overrides` | table | Override settings for built-in profiles |
-| `custom_profiles` | table | Define custom HPC profiles |
+| `custom_profiles`   | table | Define custom HPC profiles              |
 
 **Profile override options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
+| Option            | Type   | Description                            |
+| ----------------- | ------ | -------------------------------------- |
 | `default_account` | string | Default Slurm account for this profile |
 
 **Custom profile options:**
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `display_name` | string | No | Human-readable name |
-| `description` | string | No | Profile description |
-| `detect_env_var` | string | No | Environment variable for detection (`NAME=value`) |
-| `detect_hostname` | string | No | Regex pattern for hostname detection |
-| `default_account` | string | No | Default Slurm account |
-| `partitions` | array | Yes | List of partition configurations |
+| Option            | Type   | Required | Description                                       |
+| ----------------- | ------ | -------- | ------------------------------------------------- |
+| `display_name`    | string | No       | Human-readable name                               |
+| `description`     | string | No       | Profile description                               |
+| `detect_env_var`  | string | No       | Environment variable for detection (`NAME=value`) |
+| `detect_hostname` | string | No       | Regex pattern for hostname detection              |
+| `default_account` | string | No       | Default Slurm account                             |
+| `partitions`      | array  | Yes      | List of partition configurations                  |
 
 **Partition options:**
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `name` | string | Yes | Partition name |
-| `cpus_per_node` | int | Yes | CPU cores per node |
-| `memory_mb` | int | Yes | Memory per node in MB |
-| `max_walltime_secs` | int | Yes | Maximum walltime in seconds |
-| `gpus_per_node` | int | No | GPUs per node |
-| `gpu_type` | string | No | GPU model (e.g., "H100") |
-| `shared` | bool | No | Whether partition supports shared jobs |
-| `min_nodes` | int | No | Minimum required nodes |
-| `requires_explicit_request` | bool | No | Must be explicitly requested |
+| Option                      | Type   | Required | Description                            |
+| --------------------------- | ------ | -------- | -------------------------------------- |
+| `name`                      | string | Yes      | Partition name                         |
+| `cpus_per_node`             | int    | Yes      | CPU cores per node                     |
+| `memory_mb`                 | int    | Yes      | Memory per node in MB                  |
+| `max_walltime_secs`         | int    | Yes      | Maximum walltime in seconds            |
+| `gpus_per_node`             | int    | No       | GPUs per node                          |
+| `gpu_type`                  | string | No       | GPU model (e.g., "H100")               |
+| `shared`                    | bool   | No       | Whether partition supports shared jobs |
+| `min_nodes`                 | int    | No       | Minimum required nodes                 |
+| `requires_explicit_request` | bool   | No       | Must be explicitly requested           |
 
 ---
 
@@ -330,13 +347,13 @@ actions:
 
 Resource requirements use ISO 8601 duration format for runtime:
 
-| Format | Example | Meaning |
-|--------|---------|---------|
-| `PTnH` | `PT4H` | 4 hours |
-| `PTnM` | `PT30M` | 30 minutes |
-| `PTnS` | `PT3600S` | 3600 seconds |
+| Format   | Example   | Meaning            |
+| -------- | --------- | ------------------ |
+| `PTnH`   | `PT4H`    | 4 hours            |
+| `PTnM`   | `PT30M`   | 30 minutes         |
+| `PTnS`   | `PT3600S` | 3600 seconds       |
 | `PTnHnM` | `PT2H30M` | 2 hours 30 minutes |
-| `PnDTnH` | `P1DT12H` | 1 day 12 hours |
+| `PnDTnH` | `P1DT12H` | 1 day 12 hours     |
 
 Generated walltime uses `HH:MM:SS` format (e.g., `04:00:00`).
 

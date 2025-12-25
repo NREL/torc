@@ -1,10 +1,12 @@
 # Timing Instrumentation Guide
 
-The Torc server has been instrumented with `tracing-timing` to collect performance metrics for key operations.
+The Torc server has been instrumented with `tracing-timing` to collect performance metrics for key
+operations.
 
 ## How to View Timing Stats
 
-**Quick Answer:** Set the `TORC_TIMING_ENABLED` environment variable and run the server with DEBUG logging:
+**Quick Answer:** Set the `TORC_TIMING_ENABLED` environment variable and run the server with DEBUG
+logging:
 
 ```bash
 TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run
@@ -13,13 +15,18 @@ TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run
 Look for log lines that show timing information after each instrumented function completes.
 
 **Note:**
-- Timing instrumentation is disabled by default to reduce log noise. Set `TORC_TIMING_ENABLED=1` or `TORC_TIMING_ENABLED=true` to enable it.
-- The instrumented functions emit logs at DEBUG level, so you must use `RUST_LOG=debug` or `RUST_LOG=trace` to see them.
-- Without `TORC_TIMING_ENABLED=1`, you'll only see explicit INFO-level log messages, not span/timing data.
+
+- Timing instrumentation is disabled by default to reduce log noise. Set `TORC_TIMING_ENABLED=1` or
+  `TORC_TIMING_ENABLED=true` to enable it.
+- The instrumented functions emit logs at DEBUG level, so you must use `RUST_LOG=debug` or
+  `RUST_LOG=trace` to see them.
+- Without `TORC_TIMING_ENABLED=1`, you'll only see explicit INFO-level log messages, not span/timing
+  data.
 
 ## Instrumented Functions
 
 ### Server API (`torc-server/src/server.rs`)
+
 - `get_pending_actions` - Get pending workflow actions
 - `claim_action` - Atomically claim a workflow action
 - `get_ready_job_requirements` - Get resource requirements for ready jobs
@@ -33,6 +40,7 @@ Look for log lines that show timing information after each instrumented function
 - **`prepare_ready_jobs`** - **CRITICAL** - Select jobs from database with write locks
 
 ### Jobs API (`src/server/api/jobs.rs`)
+
 - `create_job` - Create single job
 - `create_jobs` - Bulk job creation
 - `get_job` - Retrieve job with relationships
@@ -42,6 +50,7 @@ Look for log lines that show timing information after each instrumented function
 - `process_changed_job_inputs` - Process changed inputs
 
 ### Workflows API (`src/server/api/workflows.rs`)
+
 - `create_workflow` - Create workflow
 - `cancel_workflow` - Cancel workflow
 - `get_workflow_status` - Get workflow status
@@ -60,13 +69,16 @@ TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run 2>&1 | tee 
 ```
 
 You'll see output like:
+
 ```
 DEBUG prepare_ready_jobs{workflow_id=1 limit=10}: close time.busy=15.2ms time.idle=0.1ms
 ```
 
-Note: Without `TORC_TIMING_ENABLED=1`, instrumented functions don't produce any log output, even at DEBUG level.
+Note: Without `TORC_TIMING_ENABLED=1`, instrumented functions don't produce any log output, even at
+DEBUG level.
 
 Filter for timing data:
+
 ```bash
 grep "close time" server.log
 ```
@@ -161,6 +173,7 @@ For production monitoring, export to Jaeger or another OpenTelemetry backend:
 ## What Gets Measured
 
 For each instrumented function, `tracing-timing` records:
+
 - **Entry/exit times** - Total duration of function execution
 - **Nested spans** - If an instrumented function calls another, the hierarchy is tracked
 - **Span attributes** - Key parameters like workflow_id, job_id, etc.
@@ -169,7 +182,8 @@ For each instrumented function, `tracing-timing` records:
 
 Pay special attention to these functions in multi-worker scenarios:
 
-- **`prepare_ready_jobs`** - Uses SQLite `BEGIN IMMEDIATE TRANSACTION` to prevent race conditions. This is likely your bottleneck with many workers.
+- **`prepare_ready_jobs`** - Uses SQLite `BEGIN IMMEDIATE TRANSACTION` to prevent race conditions.
+  This is likely your bottleneck with many workers.
 - **`claim_jobs_based_on_resources`** - Main job claiming endpoint, calls `prepare_ready_jobs`
 - **`complete_job`** - Triggers dependent jobs, can cascade
 - **`manage_status_change`** - Updates job status and manages side effects
@@ -177,13 +191,15 @@ Pay special attention to these functions in multi-worker scenarios:
 
 ## Why No Built-in Timing Report Endpoint?
 
-Due to Rust's ownership model and the `tracing-timing` API design, the timing layer must be moved into the tracing subscriber and cannot be easily accessed afterward. The cleanest solutions are:
+Due to Rust's ownership model and the `tracing-timing` API design, the timing layer must be moved
+into the tracing subscriber and cannot be easily accessed afterward. The cleanest solutions are:
 
 1. **Use trace logging** (shown above) - Simple and always works
 2. **Use `tokio-console`** - Best for development
 3. **Use OpenTelemetry** - Best for production
 
-These external tools provide richer visualizations and better analysis capabilities than a simple HTTP endpoint would.
+These external tools provide richer visualizations and better analysis capabilities than a simple
+HTTP endpoint would.
 
 ## Example Analysis
 
@@ -201,4 +217,5 @@ cat timings.txt | awk '{sum+=$1; sumsq+=$1*$1} END {
 }'
 ```
 
-This will show you the average time spent in the critical `prepare_ready_jobs` function and help identify performance bottlenecks.
+This will show you the average time spent in the critical `prepare_ready_jobs` function and help
+identify performance bottlenecks.

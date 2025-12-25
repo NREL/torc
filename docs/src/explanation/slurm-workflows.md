@@ -1,6 +1,8 @@
 # Slurm Workflows
 
-This document explains how Torc simplifies running workflows on Slurm-based HPC systems. The key insight is that **you don't need to understand Slurm schedulers or workflow actions** to run workflows on HPC systems—Torc handles this automatically.
+This document explains how Torc simplifies running workflows on Slurm-based HPC systems. The key
+insight is that **you don't need to understand Slurm schedulers or workflow actions** to run
+workflows on HPC systems—Torc handles this automatically.
 
 ## The Simple Approach
 
@@ -9,9 +11,15 @@ Running a workflow on Slurm requires just two things:
 1. **Define your jobs with resource requirements**
 2. **Submit with `submit-slurm`**
 
-That's it. Torc will analyze your workflow, generate appropriate Slurm configurations, and submit everything for execution.
+That's it. Torc will analyze your workflow, generate appropriate Slurm configurations, and submit
+everything for execution.
 
-> **⚠️ Important:** The `submit-slurm` command uses heuristics to auto-generate Slurm schedulers and workflow actions. For complex workflows with unusual dependency patterns, the generated configuration may not be optimal and could result in suboptimal allocation timing. **Always preview the configuration first** using `torc slurm generate` (see [Previewing Generated Configuration](#previewing-generated-configuration)) before submitting production workflows.
+> **⚠️ Important:** The `submit-slurm` command uses heuristics to auto-generate Slurm schedulers and
+> workflow actions. For complex workflows with unusual dependency patterns, the generated
+> configuration may not be optimal and could result in suboptimal allocation timing. **Always
+> preview the configuration first** using `torc slurm generate` (see
+> [Previewing Generated Configuration](#previewing-generated-configuration)) before submitting
+> production workflows.
 
 ### Example Workflow
 
@@ -66,6 +74,7 @@ torc submit-slurm --account myproject workflow.yaml
 ```
 
 Torc will:
+
 1. Detect which HPC system you're on (e.g., NREL Kestrel)
 2. Match each job's requirements to appropriate partitions
 3. Generate Slurm scheduler configurations
@@ -79,6 +88,7 @@ When you use `submit-slurm`, Torc performs intelligent analysis of your workflow
 ### 1. Per-Job Scheduler Generation
 
 Each job gets its own Slurm scheduler configuration based on its resource requirements. This means:
+
 - Jobs are matched to the most appropriate partition
 - Memory, CPU, and GPU requirements are correctly specified
 - Walltime is set to the partition's maximum (explained below)
@@ -88,9 +98,12 @@ Each job gets its own Slurm scheduler configuration based on its resource requir
 Torc analyzes job dependencies and creates **staged workflow actions**:
 
 - **Jobs without dependencies** trigger `on_workflow_start` — resources are allocated immediately
-- **Jobs with dependencies** trigger `on_jobs_ready` — resources are allocated only when the job becomes ready to run
+- **Jobs with dependencies** trigger `on_jobs_ready` — resources are allocated only when the job
+  becomes ready to run
 
-This prevents wasting allocation time on resources that aren't needed yet. For example, in the workflow above:
+This prevents wasting allocation time on resources that aren't needed yet. For example, in the
+workflow above:
+
 - `preprocess` resources are allocated at workflow start
 - `train_model` resources are allocated when `preprocess` completes
 - `evaluate` resources are allocated when `train_model` completes
@@ -98,26 +111,33 @@ This prevents wasting allocation time on resources that aren't needed yet. For e
 
 ### 3. Conservative Walltime
 
-Torc sets the walltime to the **partition's maximum** rather than your job's estimated runtime. This provides:
+Torc sets the walltime to the **partition's maximum** rather than your job's estimated runtime. This
+provides:
+
 - Headroom for jobs that run slightly longer than expected
 - No additional cost since Torc workers exit when work completes
 - Protection against job termination due to tight time limits
 
-For example, if your job requests 3 hours and matches the "short" partition (4 hours max), the allocation will request 4 hours.
+For example, if your job requests 3 hours and matches the "short" partition (4 hours max), the
+allocation will request 4 hours.
 
 ### 4. HPC Profile Knowledge
 
 Torc includes built-in knowledge of HPC systems like NREL Kestrel, including:
+
 - Available partitions and their resource limits
 - GPU configurations
 - Memory and CPU specifications
 - Special requirements (e.g., minimum node counts for high-bandwidth partitions)
 
-> **Using an unsupported HPC?** Please [request built-in support](https://github.com/NREL/torc/issues) so everyone benefits. You can also [create a custom profile](../tutorials/custom-hpc-profile.md) for immediate use.
+> **Using an unsupported HPC?** Please
+> [request built-in support](https://github.com/NREL/torc/issues) so everyone benefits. You can also
+> [create a custom profile](../tutorials/custom-hpc-profile.md) for immediate use.
 
 ## Resource Requirements Specification
 
-Resource requirements are the key to the simplified workflow. Define them once and reference them from jobs:
+Resource requirements are the key to the simplified workflow. Define them once and reference them
+from jobs:
 
 ```yaml
 resource_requirements:
@@ -138,18 +158,19 @@ resource_requirements:
 
 ### Fields
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `name` | Reference name for jobs | `"compute"` |
-| `num_cpus` | CPU cores required | `32` |
-| `num_gpus` | GPUs required (0 if none) | `2` |
-| `num_nodes` | Nodes required | `1` |
-| `memory` | Memory with unit suffix | `"64g"`, `"512m"` |
-| `runtime` | ISO8601 duration | `"PT2H"`, `"PT30M"` |
+| Field       | Description               | Example             |
+| ----------- | ------------------------- | ------------------- |
+| `name`      | Reference name for jobs   | `"compute"`         |
+| `num_cpus`  | CPU cores required        | `32`                |
+| `num_gpus`  | GPUs required (0 if none) | `2`                 |
+| `num_nodes` | Nodes required            | `1`                 |
+| `memory`    | Memory with unit suffix   | `"64g"`, `"512m"`   |
+| `runtime`   | ISO8601 duration          | `"PT2H"`, `"PT30M"` |
 
 ### Runtime Format
 
 Use ISO8601 duration format:
+
 - `PT30M` — 30 minutes
 - `PT2H` — 2 hours
 - `PT1H30M` — 1 hour 30 minutes
@@ -203,7 +224,9 @@ jobs:
 
 ## Previewing Generated Configuration
 
-> **Recommended Practice:** Always preview the generated configuration before submitting to Slurm, especially for complex workflows. This allows you to verify that schedulers and actions are appropriate for your workflow structure.
+> **Recommended Practice:** Always preview the generated configuration before submitting to Slurm,
+> especially for complex workflows. This allows you to verify that schedulers and actions are
+> appropriate for your workflow structure.
 
 ### Viewing the Execution Plan
 
@@ -213,7 +236,9 @@ Before generating schedulers, visualize how your workflow will execute in stages
 torc workflows execution-plan workflow.yaml
 ```
 
-This shows the execution stages, which jobs run at each stage, and (if schedulers are defined) when Slurm allocations are requested. See [Visualizing Workflow Structure](../how-to/visualizing-workflows.md) for detailed examples.
+This shows the execution stages, which jobs run at each stage, and (if schedulers are defined) when
+Slurm allocations are requested. See
+[Visualizing Workflow Structure](../how-to/visualizing-workflows.md) for detailed examples.
 
 ### Generating Slurm Configuration
 
@@ -280,7 +305,8 @@ torc slurm generate --account myproject workflow.yaml -o workflow_with_scheduler
 
 The Torc server must be accessible to compute nodes. Options include:
 
-1. **Shared server** (Recommended): A team member allocates a dedicated server in the HPC environment
+1. **Shared server** (Recommended): A team member allocates a dedicated server in the HPC
+   environment
 2. **Login node**: Suitable for small workflows with few, long-running jobs
 
 For large workflows with many short jobs, a dedicated server prevents overloading login nodes.
@@ -358,7 +384,8 @@ torc submit-slurm --account myproject workflow.yaml
 
 ## Limitations and Caveats
 
-The auto-generation in `submit-slurm` uses heuristics that work well for common workflow patterns but may not be optimal for all cases:
+The auto-generation in `submit-slurm` uses heuristics that work well for common workflow patterns
+but may not be optimal for all cases:
 
 ### When Auto-Generation Works Well
 
@@ -369,7 +396,8 @@ The auto-generation in `submit-slurm` uses heuristics that work well for common 
 
 ### When to Use Manual Configuration
 
-Consider using `torc slurm generate` to preview and manually adjust, or define schedulers manually, when:
+Consider using `torc slurm generate` to preview and manually adjust, or define schedulers manually,
+when:
 
 - **Complex dependency graphs**: Multiple interleaved dependency patterns
 - **Shared schedulers**: You want multiple jobs to share the same Slurm allocation
@@ -386,13 +414,16 @@ Without previewing, auto-generation might:
 3. **Create suboptimal scheduler groupings**: Not sharing allocations when beneficial
 4. **Miss optimization opportunities**: Not recognizing patterns that could share resources
 
-**Best Practice**: For production workflows, always run `torc slurm generate` first, review the output, and submit the reviewed configuration with `torc submit`.
+**Best Practice**: For production workflows, always run `torc slurm generate` first, review the
+output, and submit the reviewed configuration with `torc submit`.
 
 ## Advanced: Manual Scheduler Configuration
 
-For advanced users who need fine-grained control, you can define schedulers and actions manually. See [Working with Slurm](../how-to/slurm.md) for details.
+For advanced users who need fine-grained control, you can define schedulers and actions manually.
+See [Working with Slurm](../how-to/slurm.md) for details.
 
 Common reasons for manual configuration:
+
 - Non-standard partition requirements
 - Custom Slurm directives (e.g., `--constraint`)
 - Multi-node jobs with specific topology requirements
@@ -403,6 +434,7 @@ Common reasons for manual configuration:
 ### "No partition found for job"
 
 Your resource requirements exceed what's available. Check:
+
 - Memory doesn't exceed partition limits
 - Runtime doesn't exceed partition walltime
 - GPU count is available on GPU partitions
@@ -412,6 +444,7 @@ Use `torc hpc partitions <profile>` to see available resources.
 ### Jobs Not Starting
 
 Ensure the Torc server is accessible from compute nodes:
+
 ```bash
 # From a compute node
 curl $TORC_API_URL/health
@@ -420,13 +453,15 @@ curl $TORC_API_URL/health
 ### Wrong Partition Selected
 
 Use `torc hpc match` to see which partitions match your requirements:
+
 ```bash
 torc hpc match kestrel --cpus 32 --memory 64g --walltime 2h --gpus 2
 ```
 
 ## See Also
 
-- [Visualizing Workflow Structure](../how-to/visualizing-workflows.md) — Execution plans and DAG visualization
+- [Visualizing Workflow Structure](../how-to/visualizing-workflows.md) — Execution plans and DAG
+  visualization
 - [HPC Profiles](../how-to/hpc-profiles.md) — Detailed HPC profile usage
 - [Working with Slurm](../how-to/slurm.md) — Advanced Slurm configuration
 - [Resource Requirements Reference](../reference/resources.md) — Complete specification

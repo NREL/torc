@@ -1,6 +1,8 @@
 # Environment Variables
 
-When Torc executes jobs, it automatically sets several environment variables that provide context about the job and enable communication with the Torc server. These variables are available to all job commands during execution.
+When Torc executes jobs, it automatically sets several environment variables that provide context
+about the job and enable communication with the Torc server. These variables are available to all
+job commands during execution.
 
 ## Variables Set During Job Execution
 
@@ -10,7 +12,8 @@ The unique identifier of the workflow that contains this job.
 
 - **Type**: Integer (provided as string)
 - **Example**: `"42"`
-- **Use case**: Jobs can use this to query workflow information or to organize output files by workflow
+- **Use case**: Jobs can use this to query workflow information or to organize output files by
+  workflow
 
 ```bash
 # Example: Create a workflow-specific output directory
@@ -24,7 +27,8 @@ The unique identifier of the currently executing job.
 
 - **Type**: Integer (provided as string)
 - **Example**: `"123"`
-- **Use case**: Jobs can use this for logging, creating job-specific output files, or querying job metadata
+- **Use case**: Jobs can use this for logging, creating job-specific output files, or querying job
+  metadata
 
 ```bash
 # Example: Log job-specific information
@@ -37,7 +41,8 @@ The URL of the Torc API server that the job runner is communicating with.
 
 - **Type**: String (URL)
 - **Example**: `"http://localhost:8080/torc-service/v1"`
-- **Use case**: Jobs can make API calls to the Torc server to query data, create files, update user data, or perform other operations
+- **Use case**: Jobs can make API calls to the Torc server to query data, create files, update user
+  data, or perform other operations
 
 ```bash
 # Example: Query workflow information from within a job

@@ -1,18 +1,23 @@
 # Workflow Recovery
 
-Torc provides mechanisms for recovering workflows when Slurm allocations are preempted or fail before completing all jobs. The `torc slurm regenerate` command creates new schedulers and allocations for pending jobs.
+Torc provides mechanisms for recovering workflows when Slurm allocations are preempted or fail
+before completing all jobs. The `torc slurm regenerate` command creates new schedulers and
+allocations for pending jobs.
 
 ## The Recovery Problem
 
-When running workflows on Slurm, allocations can fail or be preempted before all jobs complete. This leaves workflows in a partial state with:
+When running workflows on Slurm, allocations can fail or be preempted before all jobs complete. This
+leaves workflows in a partial state with:
 
 1. **Ready/uninitialized jobs** - Jobs that were waiting to run but never got scheduled
 2. **Blocked jobs** - Jobs whose dependencies haven't completed yet
 
 Simply creating new Slurm schedulers and submitting allocations isn't enough because:
 
-1. **Duplicate allocations**: If the workflow had `on_workflow_start` actions to schedule nodes, those actions would fire again when the workflow is reinitialized, creating duplicate allocations
-2. **Missing allocations for blocked jobs**: Blocked jobs will eventually become ready, but there's no mechanism to schedule new allocations for them
+1. **Duplicate allocations**: If the workflow had `on_workflow_start` actions to schedule nodes,
+   those actions would fire again when the workflow is reinitialized, creating duplicate allocations
+2. **Missing allocations for blocked jobs**: Blocked jobs will eventually become ready, but there's
+   no mechanism to schedule new allocations for them
 
 ## Recovery Actions
 
@@ -41,7 +46,8 @@ flowchart TD
 
 ### Step 1: Mark Existing Actions as Executed
 
-All existing `schedule_nodes` actions are marked as executed using the `claim_action` API. This prevents them from firing again and creating duplicate allocations:
+All existing `schedule_nodes` actions are marked as executed using the `claim_action` API. This
+prevents them from firing again and creating duplicate allocations:
 
 ```mermaid
 sequenceDiagram
@@ -60,10 +66,13 @@ sequenceDiagram
 
 ### Step 2: Group Jobs Using WorkflowGraph
 
-The system builds a `WorkflowGraph` from pending jobs and uses `scheduler_groups()` to group them by `(resource_requirements, has_dependencies)`. This aligns with the behavior of `torc workflows create-slurm`:
+The system builds a `WorkflowGraph` from pending jobs and uses `scheduler_groups()` to group them by
+`(resource_requirements, has_dependencies)`. This aligns with the behavior of
+`torc workflows create-slurm`:
 
 - **Jobs without dependencies**: Can be scheduled immediately with `on_workflow_start`
-- **Jobs with dependencies** (deferred): Need `on_jobs_ready` recovery actions to schedule when they become ready
+- **Jobs with dependencies** (deferred): Need `on_jobs_ready` recovery actions to schedule when they
+  become ready
 
 ```mermaid
 flowchart TD
@@ -88,7 +97,8 @@ flowchart TD
 
 ### Step 3: Create Recovery Actions for Deferred Groups
 
-For groups with `has_dependencies = true`, the system creates `on_jobs_ready` recovery actions. These actions:
+For groups with `has_dependencies = true`, the system creates `on_jobs_ready` recovery actions.
+These actions:
 
 - Have `is_recovery = true` to mark them as ephemeral
 - Use a `_deferred` suffix in the scheduler name
@@ -120,23 +130,24 @@ stateDiagram-v2
     Created --> Deleted: Workflow reinitialized
 ```
 
-When a workflow is reinitialized (e.g., after resetting jobs), all recovery actions are deleted and original actions are reset to their initial state. This ensures a clean slate for the next run.
+When a workflow is reinitialized (e.g., after resetting jobs), all recovery actions are deleted and
+original actions are reset to their initial state. This ensures a clean slate for the next run.
 
 ## Database Schema
 
 Recovery actions are tracked using the `is_recovery` column in the `workflow_action` table:
 
-| Column | Type | Description |
-|--------|------|-------------|
+| Column        | Type    | Description                            |
+| ------------- | ------- | -------------------------------------- |
 | `is_recovery` | INTEGER | 0 = normal action, 1 = recovery action |
 
 ### Behavior Differences
 
-| Operation | Normal Actions | Recovery Actions |
-|-----------|----------------|------------------|
-| On `reset_actions_for_reinitialize` | Reset `executed` to 0 | Deleted entirely |
-| Created by | Workflow spec | `torc slurm regenerate` |
-| Purpose | Configured behavior | Temporary recovery |
+| Operation                           | Normal Actions        | Recovery Actions        |
+| ----------------------------------- | --------------------- | ----------------------- |
+| On `reset_actions_for_reinitialize` | Reset `executed` to 0 | Deleted entirely        |
+| Created by                          | Workflow spec         | `torc slurm regenerate` |
+| Purpose                             | Configured behavior   | Temporary recovery      |
 
 ## Usage
 
@@ -162,8 +173,11 @@ The recovery logic is implemented in:
 
 Key implementation notes:
 
-1. **WorkflowGraph construction**: A `WorkflowGraph` is built from pending jobs using `from_jobs()`, which reconstructs the dependency structure from `depends_on_job_ids`
-2. **Scheduler grouping**: Jobs are grouped using `scheduler_groups()` by `(resource_requirements, has_dependencies)`, matching `create-slurm` behavior
+1. **WorkflowGraph construction**: A `WorkflowGraph` is built from pending jobs using `from_jobs()`,
+   which reconstructs the dependency structure from `depends_on_job_ids`
+2. **Scheduler grouping**: Jobs are grouped using `scheduler_groups()` by
+   `(resource_requirements, has_dependencies)`, matching `create-slurm` behavior
 3. **Deferred schedulers**: Groups with dependencies get a `_deferred` suffix in the scheduler name
 4. **Allocation calculation**: Number of allocations is based on job count and resources per node
-5. **Recovery actions**: Only deferred groups (jobs with dependencies) get `on_jobs_ready` recovery actions
+5. **Recovery actions**: Only deferred groups (jobs with dependencies) get `on_jobs_ready` recovery
+   actions

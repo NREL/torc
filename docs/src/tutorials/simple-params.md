@@ -1,6 +1,7 @@
 # Tutorial 4: Simple Job Parameterization
 
-This tutorial teaches you how to create parameter sweeps—generating multiple related jobs from a single job definition using Torc's parameterization feature.
+This tutorial teaches you how to create parameter sweeps—generating multiple related jobs from a
+single job definition using Torc's parameterization feature.
 
 ## Learning Objectives
 
@@ -19,7 +20,8 @@ By the end of this tutorial, you will:
 
 ## Why Parameterization?
 
-Without parameterization, a 5-value hyperparameter sweep would require writing 5 separate job definitions. With parameterization, you write one definition and Torc expands it:
+Without parameterization, a 5-value hyperparameter sweep would require writing 5 separate job
+definitions. With parameterization, you write one definition and Torc expands it:
 
 ```yaml
 # Without parameterization: 5 separate definitions
@@ -107,18 +109,21 @@ resource_requirements:
 ### Understanding the Specification
 
 **Parameter Syntax:**
+
 - `{lr}` - Simple substitution with the parameter value
 - `{lr:.4f}` - Format specifier: 4 decimal places (e.g., `0.0010` not `0.001`)
 
 **Parameter Values:**
+
 - `"[0.0001,0.0005,0.001,0.005,0.01]"` - A list of 5 specific values
 
-**File Parameterization:**
-Notice that both jobs AND files have `parameters:`. When Torc expands:
+**File Parameterization:** Notice that both jobs AND files have `parameters:`. When Torc expands:
+
 - Each `train_lr{lr:.4f}` job gets a corresponding `model_lr{lr:.4f}` file
 - The file dependencies are matched by parameter value
 
 **Dependency Flow:**
+
 1. `train_lr0.0001` → outputs `model_lr0.0001` → unblocks `evaluate_lr0.0001`
 2. `train_lr0.0005` → outputs `model_lr0.0005` → unblocks `evaluate_lr0.0005`
 3. (and so on for each learning rate)
@@ -147,6 +152,7 @@ torc jobs list $WORKFLOW_ID -f json | jq -r '.jobs[].name' | sort
 ```
 
 Output:
+
 ```
 compare_results
 evaluate_lr0.0001
@@ -162,8 +168,10 @@ train_lr0.0100
 ```
 
 Notice:
+
 - One job per parameter value for `train_*` and `evaluate_*`
-- Only one `compare_results` job (it has the parameter for dependencies, but doesn't expand because its name has no `{lr}`)
+- Only one `compare_results` job (it has the parameter for dependencies, but doesn't expand because
+  its name has no `{lr}`)
 
 ## Step 4: Check Dependencies
 
@@ -172,6 +180,7 @@ torc jobs list $WORKFLOW_ID
 ```
 
 Expected statuses:
+
 - All `train_*` jobs: **ready** (no input dependencies)
 - All `evaluate_*` jobs: **blocked** (waiting for corresponding model file)
 - `compare_results`: **blocked** (waiting for all metrics files)
@@ -185,10 +194,12 @@ torc run $WORKFLOW_ID
 Execution flow:
 
 1. **All 5 training jobs run in parallel** - They have no dependencies on each other
-2. **Each evaluation unblocks independently** - When `train_lr0.0001` finishes, `evaluate_lr0.0001` can start (doesn't wait for other training jobs)
+2. **Each evaluation unblocks independently** - When `train_lr0.0001` finishes, `evaluate_lr0.0001`
+   can start (doesn't wait for other training jobs)
 3. **Compare runs last** - Only after all 5 evaluations complete
 
-This is more efficient than a simple two-stage workflow because evaluations can start as soon as their specific training job completes.
+This is more efficient than a simple two-stage workflow because evaluations can start as soon as
+their specific training job completes.
 
 ## Parameter Format Reference
 
@@ -217,12 +228,12 @@ parameters:
 
 Control how values appear in names:
 
-| Specifier | Example Value | Result |
-|-----------|---------------|--------|
-| `{i}` | 5 | `5` |
-| `{i:03d}` | 5 | `005` |
-| `{lr:.4f}` | 0.001 | `0.0010` |
-| `{lr:.2e}` | 0.001 | `1.00e-03` |
+| Specifier  | Example Value | Result     |
+| ---------- | ------------- | ---------- |
+| `{i}`      | 5             | `5`        |
+| `{i:03d}`  | 5             | `005`      |
+| `{lr:.4f}` | 0.001         | `0.0010`   |
+| `{lr:.2e}` | 0.001         | `1.00e-03` |
 
 ## How Parameterization and File Dependencies Interact
 
@@ -248,6 +259,7 @@ files:
 ```
 
 Torc creates these relationships:
+
 - `train_1` → `model_1` → `eval_1`
 - `train_2` → `model_2` → `eval_2`
 - `train_3` → `model_3` → `eval_3`
@@ -256,7 +268,8 @@ Each chain is independent—`eval_2` doesn't wait for `train_1`.
 
 ## Parameter Modes: Product vs Zip
 
-By default, multiple parameters create a **Cartesian product** (all combinations). For **paired parameters**, use `parameter_mode: zip`:
+By default, multiple parameters create a **Cartesian product** (all combinations). For **paired
+parameters**, use `parameter_mode: zip`:
 
 ```yaml
 jobs:
@@ -276,7 +289,8 @@ jobs:
     parameter_mode: zip
 ```
 
-Use zip mode when parameters have a 1:1 correspondence (e.g., input/output file pairs, pre-determined configurations).
+Use zip mode when parameters have a 1:1 correspondence (e.g., input/output file pairs,
+pre-determined configurations).
 
 See [Parameterization Reference](../reference/parameterization.md#parameter-modes) for details.
 
@@ -294,4 +308,5 @@ In this tutorial, you learned:
 ## Next Steps
 
 - [Tutorial 5: Advanced Parameterization](./advanced-params.md) - Multi-dimensional grid searches
-- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of parameterized jobs
+- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of
+  parameterized jobs

@@ -1,6 +1,7 @@
 # Tutorial 3: User Data Dependencies
 
-This tutorial teaches you how to pass structured data (JSON) between jobs using Torc's **user_data** feature—an alternative to file-based dependencies that stores data directly in the database.
+This tutorial teaches you how to pass structured data (JSON) between jobs using Torc's **user_data**
+feature—an alternative to file-based dependencies that stores data directly in the database.
 
 ## Learning Objectives
 
@@ -19,22 +20,24 @@ By the end of this tutorial, you will:
 
 ## What is User Data?
 
-**User data** is Torc's mechanism for passing small, structured data between jobs without creating actual files. The data is stored in the Torc database and can be:
+**User data** is Torc's mechanism for passing small, structured data between jobs without creating
+actual files. The data is stored in the Torc database and can be:
 
 - JSON objects (configurations, parameters)
 - Arrays
 - Simple values (strings, numbers)
 
-Like files, user_data creates **implicit dependencies**: a job that reads user_data will be blocked until the job that writes it completes.
+Like files, user_data creates **implicit dependencies**: a job that reads user_data will be blocked
+until the job that writes it completes.
 
 ### User Data vs Files
 
-| Feature | User Data | Files |
-|---------|-----------|-------|
-| Storage | Torc database | Filesystem |
-| Size | Small (KB) | Any size |
-| Format | JSON | Any format |
-| Access | Via `torc user-data` CLI | Direct file I/O |
+| Feature  | User Data                | Files                    |
+| -------- | ------------------------ | ------------------------ |
+| Storage  | Torc database            | Filesystem               |
+| Size     | Small (KB)               | Any size                 |
+| Format   | JSON                     | Any format               |
+| Access   | Via `torc user-data` CLI | Direct file I/O          |
 | Best for | Config, params, metadata | Datasets, binaries, logs |
 
 ## Step 1: Create the Workflow Specification
@@ -100,6 +103,7 @@ Key elements:
 - **`${user_data.input.ml_config}`** - Job reads from this user_data (creates dependency)
 
 The dependency flow:
+
 1. `generate_config` outputs `ml_config` → runs first
 2. `train_model` and `evaluate_model` input `ml_config` → blocked until step 1 completes
 3. After `generate_config` finishes, both become ready and can run in parallel
@@ -125,6 +129,7 @@ torc user-data list $WORKFLOW_ID
 ```
 
 Output:
+
 ```
 ╭────┬───────────┬──────┬─────────────╮
 │ ID │ Name      │ Data │ Workflow ID │
@@ -140,6 +145,7 @@ torc jobs list $WORKFLOW_ID
 ```
 
 You should see:
+
 - `generate_config`: **ready** (no input dependencies)
 - `train_model`: **blocked** (waiting for `ml_config`)
 - `evaluate_model`: **blocked** (waiting for `ml_config`)
@@ -159,6 +165,7 @@ torc user-data list $WORKFLOW_ID -f json | jq '.[] | {name, data}'
 ```
 
 Output:
+
 ```json
 {
   "name": "ml_config",
@@ -171,6 +178,7 @@ Output:
 ```
 
 The data is now stored in the database. At this point:
+
 - `train_model` and `evaluate_model` unblock
 - Both can read the configuration and run in parallel
 
@@ -188,18 +196,20 @@ All three jobs should show return code 0.
 
 The mechanism is identical to file dependencies:
 
-| Syntax | Meaning | Effect |
-|--------|---------|--------|
-| `${user_data.input.name}` | Job reads this data | Creates dependency on producer |
-| `${user_data.output.name}` | Job writes this data | Satisfies dependencies |
+| Syntax                     | Meaning              | Effect                         |
+| -------------------------- | -------------------- | ------------------------------ |
+| `${user_data.input.name}`  | Job reads this data  | Creates dependency on producer |
+| `${user_data.output.name}` | Job writes this data | Satisfies dependencies         |
 
-Torc substitutes these variables with the actual user_data ID at runtime, and the `torc user-data` CLI commands use that ID to read/write the data.
+Torc substitutes these variables with the actual user_data ID at runtime, and the `torc user-data`
+CLI commands use that ID to read/write the data.
 
 ## Accessing User Data in Your Code
 
 From within a job, you can:
 
 **Read user_data:**
+
 ```bash
 # Get the full record
 torc user-data get $USER_DATA_ID
@@ -212,6 +222,7 @@ torc user-data get $USER_DATA_ID | jq '.data' > config.json
 ```
 
 **Write user_data:**
+
 ```bash
 # Update with JSON data
 torc user-data update $USER_DATA_ID --data '{"key": "value"}'

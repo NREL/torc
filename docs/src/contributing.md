@@ -120,6 +120,7 @@ git push origin feature/my-new-feature
 5. **Open a Pull Request:**
 
 Go to the original repository and open a pull request with:
+
 - Clear description of changes
 - Reference to any related issues
 - Test results

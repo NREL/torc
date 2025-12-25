@@ -1,6 +1,7 @@
 # Torc Documentation
 
-This directory contains the source files for Torc's user documentation, built with [mdBook](https://rust-lang.github.io/mdBook/).
+This directory contains the source files for Torc's user documentation, built with
+[mdBook](https://rust-lang.github.io/mdBook/).
 
 ## Building the Documentation
 
@@ -29,6 +30,7 @@ mdbook serve
 ```
 
 This will:
+
 - Build the documentation
 - Start a local web server at `http://localhost:3000`
 - Watch for file changes and rebuild automatically
@@ -175,23 +177,28 @@ Edit `book.toml` to customize:
 - Search settings
 - Output format options
 
-See [mdBook documentation](https://rust-lang.github.io/mdBook/format/configuration/index.html) for all options.
+See [mdBook documentation](https://rust-lang.github.io/mdBook/format/configuration/index.html) for
+all options.
 
 ## Troubleshooting
 
 **Build fails with "File not found":**
+
 - Check that all files referenced in `SUMMARY.md` exist
 - Verify paths are relative to `src/` directory
 
 **Links broken in generated site:**
+
 - Use relative links: `[Link](./page.md)` not absolute paths
 - Check link anchors match actual heading IDs
 
 **Styles not applying:**
+
 - Custom CSS goes in `theme/` directory
 - See mdBook theme documentation
 
 **Search not working:**
+
 - Search is enabled by default in `book.toml`
 - Rebuild if search index seems stale
 

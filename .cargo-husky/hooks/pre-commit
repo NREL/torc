@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Pre-commit hook for torc project
+# Runs Rust formatting, linting, and markdown formatting
+#
+
+set -e
+
+echo '+cargo fmt -- --check'
+cargo fmt -- --check
+
+echo '+cargo clippy -- -D warnings'
+cargo clippy -- -D warnings
+
+echo '+dprint check'
+dprint check

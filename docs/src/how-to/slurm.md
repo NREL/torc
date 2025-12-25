@@ -1,8 +1,11 @@
 # Working with Slurm
 
-This guide covers advanced Slurm configuration for users who need fine-grained control over their HPC workflows.
+This guide covers advanced Slurm configuration for users who need fine-grained control over their
+HPC workflows.
 
-> **For most users**: See [Slurm Workflows](../explanation/slurm-workflows.md) for the recommended approach using `torc submit-slurm`. You don't need to manually configure schedulers or actions—Torc handles this automatically.
+> **For most users**: See [Slurm Workflows](../explanation/slurm-workflows.md) for the recommended
+> approach using `torc submit-slurm`. You don't need to manually configure schedulers or
+> actions—Torc handles this automatically.
 
 ## When to Use Manual Configuration
 
@@ -18,8 +21,10 @@ Manual Slurm configuration is useful when you need:
 
 The Torc server must be accessible from compute nodes:
 
-- **External server** (Recommended): A team member allocates a shared server in the HPC environment. This is recommended if your operations team provides this capability.
-- **Login node**: Suitable for small workflows. The server runs single-threaded by default. If you have many thousands of short jobs, check with your operations team about resource limits.
+- **External server** (Recommended): A team member allocates a shared server in the HPC environment.
+  This is recommended if your operations team provides this capability.
+- **Login node**: Suitable for small workflows. The server runs single-threaded by default. If you
+  have many thousands of short jobs, check with your operations team about resource limits.
 
 ## Manual Scheduler Configuration
 
@@ -47,19 +52,19 @@ slurm_schedulers:
 
 ### Scheduler Fields
 
-| Field | Description | Required |
-|-------|-------------|----------|
-| `name` | Scheduler identifier | Yes |
-| `account` | Slurm account/allocation | Yes |
-| `nodes` | Number of nodes | Yes |
-| `walltime` | Time limit (HH:MM:SS or D-HH:MM:SS) | Yes |
-| `partition` | Slurm partition | No |
-| `mem` | Memory per node | No |
-| `gres` | Generic resources (e.g., GPUs) | No |
-| `qos` | Quality of Service | No |
-| `ntasks_per_node` | Tasks per node | No |
-| `tmp` | Temporary disk space | No |
-| `extra` | Additional sbatch arguments | No |
+| Field             | Description                         | Required |
+| ----------------- | ----------------------------------- | -------- |
+| `name`            | Scheduler identifier                | Yes      |
+| `account`         | Slurm account/allocation            | Yes      |
+| `nodes`           | Number of nodes                     | Yes      |
+| `walltime`        | Time limit (HH:MM:SS or D-HH:MM:SS) | Yes      |
+| `partition`       | Slurm partition                     | No       |
+| `mem`             | Memory per node                     | No       |
+| `gres`            | Generic resources (e.g., GPUs)      | No       |
+| `qos`             | Quality of Service                  | No       |
+| `ntasks_per_node` | Tasks per node                      | No       |
+| `tmp`             | Temporary disk space                | No       |
+| `extra`           | Additional sbatch arguments         | No       |
 
 ### Defining Workflow Actions
 
@@ -83,12 +88,12 @@ actions:
 
 ### Action Trigger Types
 
-| Trigger | Description |
-|---------|-------------|
-| `on_workflow_start` | Fires when workflow is submitted |
-| `on_jobs_ready` | Fires when specified jobs become ready |
-| `on_jobs_complete` | Fires when specified jobs complete |
-| `on_workflow_complete` | Fires when all jobs complete |
+| Trigger                | Description                            |
+| ---------------------- | -------------------------------------- |
+| `on_workflow_start`    | Fires when workflow is submitted       |
+| `on_jobs_ready`        | Fires when specified jobs become ready |
+| `on_jobs_complete`     | Fires when specified jobs complete     |
+| `on_workflow_complete` | Fires when all jobs complete           |
 
 ### Assigning Jobs to Schedulers
 
@@ -128,16 +133,19 @@ actions:
 ```
 
 **When to use:**
+
 - Jobs have diverse resource requirements
 - Want independent time limits per job
 - Cluster has low queue wait times
 
 **Benefits:**
+
 - Maximum scheduling flexibility
 - Independent time limits per allocation
 - Fault isolation
 
 **Drawbacks:**
+
 - More Slurm queue overhead
 - Multiple jobs to schedule
 
@@ -162,14 +170,17 @@ actions:
 ```
 
 **When to use:**
+
 - Many jobs with similar requirements
 - Want faster queue scheduling (larger jobs often prioritized)
 
 **Benefits:**
+
 - Single queue wait
 - Often prioritized by Slurm scheduler
 
 **Drawbacks:**
+
 - Shared time limit for all workers
 - Less flexibility
 
@@ -193,6 +204,7 @@ actions:
 ```
 
 **When to use:**
+
 - Your application manages node coordination
 - Need full control over compute resources
 
@@ -243,7 +255,8 @@ actions:
     num_allocations: 1
 ```
 
-> **Note**: The `torc submit-slurm` command handles this automatically by analyzing job dependencies.
+> **Note**: The `torc submit-slurm` command handles this automatically by analyzing job
+> dependencies.
 
 ## Custom Slurm Directives
 
@@ -286,6 +299,7 @@ squeue -u $USER
 ### View Torc Worker Logs
 
 Workers log to the Slurm output file. Check:
+
 ```bash
 cat slurm-<jobid>.out
 ```
@@ -293,6 +307,7 @@ cat slurm-<jobid>.out
 ### Verify Server Connectivity
 
 From a compute node:
+
 ```bash
 curl $TORC_API_URL/health
 ```

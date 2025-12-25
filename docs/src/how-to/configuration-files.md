@@ -14,13 +14,13 @@ Edit the file at `~/.config/torc/config.toml` to set your defaults.
 
 ## Configuration File Locations
 
-| Location | Purpose | Priority |
-|----------|---------|----------|
-| `/etc/torc/config.toml` | System-wide defaults | 1 (lowest) |
-| `~/.config/torc/config.toml` | User preferences | 2 |
-| `./torc.toml` | Project-specific | 3 |
-| Environment variables | Runtime overrides | 4 |
-| CLI arguments | Explicit overrides | 5 (highest) |
+| Location                     | Purpose              | Priority    |
+| ---------------------------- | -------------------- | ----------- |
+| `/etc/torc/config.toml`      | System-wide defaults | 1 (lowest)  |
+| `~/.config/torc/config.toml` | User preferences     | 2           |
+| `./torc.toml`                | Project-specific     | 3           |
+| Environment variables        | Runtime overrides    | 4           |
+| CLI arguments                | Explicit overrides   | 5 (highest) |
 
 ## Available Commands
 
@@ -102,7 +102,8 @@ completion_check_interval_secs = 5
 
 ## Environment Variables
 
-Use environment variables for runtime configuration. Use double underscore (`__`) to separate nested keys:
+Use environment variables for runtime configuration. Use double underscore (`__`) to separate nested
+keys:
 
 ```bash
 # Client settings

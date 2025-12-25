@@ -1,14 +1,19 @@
 # Workflow Graph
 
-The `WorkflowGraph` module provides a directed acyclic graph (DAG) representation of workflow jobs and their dependencies. It serves as the core data structure for dependency analysis, scheduler planning, and execution visualization.
+The `WorkflowGraph` module provides a directed acyclic graph (DAG) representation of workflow jobs
+and their dependencies. It serves as the core data structure for dependency analysis, scheduler
+planning, and execution visualization.
 
 ## Purpose
 
 The graph abstraction addresses several key challenges:
 
-- **Unified Representation**: Works with both workflow specifications (at creation time) and database models (at runtime), providing a consistent interface for graph algorithms
-- **Dependency Analysis**: Enables topological sorting, level computation, and critical path detection
-- **Scheduler Planning**: Groups jobs by resource requirements and dependency status for efficient scheduler generation
+- **Unified Representation**: Works with both workflow specifications (at creation time) and
+  database models (at runtime), providing a consistent interface for graph algorithms
+- **Dependency Analysis**: Enables topological sorting, level computation, and critical path
+  detection
+- **Scheduler Planning**: Groups jobs by resource requirements and dependency status for efficient
+  scheduler generation
 - **Sub-workflow Detection**: Identifies connected components that can be scheduled independently
 
 ## Data Structures
@@ -65,6 +70,7 @@ WorkflowGraph::from_spec(&spec) -> Result<Self, Error>
 ```
 
 Builds the graph at workflow creation time:
+
 1. Creates nodes for each job specification
 2. Resolves explicit dependencies (`depends_on`)
 3. Resolves regex dependencies (`depends_on_regexes`)
@@ -77,6 +83,7 @@ WorkflowGraph::from_jobs(jobs, resource_requirements) -> Result<Self, Error>
 ```
 
 Builds the graph from fetched database records (used for recovery and visualization):
+
 1. Creates nodes from `JobModel` records
 2. Resolves dependencies via `depends_on_job_ids` (if available)
 3. Falls back to computing dependencies from file relationships
@@ -106,7 +113,8 @@ Groups jobs by `(resource_requirements, has_dependencies)` for scheduler generat
 
 - Jobs without dependencies: Submitted at workflow start
 - Jobs with dependencies: Submitted on-demand when jobs become ready
-- Enables the shared `generate_scheduler_plan()` function used by both `torc slurm generate` and `torc slurm regenerate`
+- Enables the shared `generate_scheduler_plan()` function used by both `torc slurm generate` and
+  `torc slurm regenerate`
 
 ### Critical Path
 
@@ -152,15 +160,20 @@ let plan = generate_scheduler_plan(&graph, ...);
 
 ### Bidirectional Edges
 
-The graph maintains both `depends_on` and `depended_by` maps for O(1) traversal in either direction. This is critical for:
+The graph maintains both `depends_on` and `depended_by` maps for O(1) traversal in either direction.
+This is critical for:
+
 - Finding what becomes ready when a job completes
 - Computing connected components efficiently
 - Building subgraphs for partial analysis
 
 ### Lazy Computation with Caching
 
-Topological levels and connected components are computed on-demand and cached. This avoids unnecessary computation for simple queries while ensuring efficient repeated access.
+Topological levels and connected components are computed on-demand and cached. This avoids
+unnecessary computation for simple queries while ensuring efficient repeated access.
 
 ### Parameterized Job Handling
 
-Parameterized jobs are represented as single nodes with `instance_count > 1`. The `name_pattern` field provides a regex for matching expanded instances, enabling scheduler grouping without full expansion.
+Parameterized jobs are represented as single nodes with `instance_count > 1`. The `name_pattern`
+field provides a regex for matching expanded instances, enabling scheduler grouping without full
+expansion.

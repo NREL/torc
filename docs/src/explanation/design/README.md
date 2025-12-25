@@ -1,6 +1,8 @@
 # Design
 
-This section covers Torc's internal design and implementation details. These topics are intended for developers who want to understand how Torc works internally, contribute to the project, or debug complex issues.
+This section covers Torc's internal design and implementation details. These topics are intended for
+developers who want to understand how Torc works internally, contribute to the project, or debug
+complex issues.
 
 ## Contents
 

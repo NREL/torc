@@ -17,13 +17,13 @@ This tutorial shows how to use AI assistants to manage Torc workflows using natu
 
 With Torc's AI integration, you can manage workflows using natural language:
 
-| Task | Example |
-|------|---------|
-| Check status | *"What's the status of workflow 42?"* |
-| Debug failures | *"Why did a job in workflow 5 fail?"* |
-| Create workflows | *"Create a workflow with 10 parallel jobs"* |
-| Fix problems | *"Restart the failed jobs with doubled memory"* |
-| Investigate | *"Check if any jobs exceeded their memory limits"* |
+| Task             | Example                                            |
+| ---------------- | -------------------------------------------------- |
+| Check status     | _"What's the status of workflow 42?"_              |
+| Debug failures   | _"Why did a job in workflow 5 fail?"_              |
+| Create workflows | _"Create a workflow with 10 parallel jobs"_        |
+| Fix problems     | _"Restart the failed jobs with doubled memory"_    |
+| Investigate      | _"Check if any jobs exceeded their memory limits"_ |
 
 ---
 
@@ -142,6 +142,7 @@ Claude:
 
 ## Next Steps
 
-- [AI Assistant Reference](../reference/ai-assistant.md) — Full configuration options, all tools, troubleshooting
+- [AI Assistant Reference](../reference/ai-assistant.md) — Full configuration options, all tools,
+  troubleshooting
 - [Automatic Failure Recovery](./automatic-recovery.md) — Use `torc watch` for automated recovery
 - [Configuration Files](./configuration.md) — Set up Torc configuration

@@ -1,14 +1,17 @@
 # Creating a Custom HPC Profile
 
-This tutorial walks you through creating a custom HPC profile for a cluster that Torc doesn't have built-in support for.
+This tutorial walks you through creating a custom HPC profile for a cluster that Torc doesn't have
+built-in support for.
 
 ## Before You Start
 
 > **Request Built-in Support First!**
 >
-> If your HPC system is widely used, consider requesting that Torc developers add it as a built-in profile. This benefits everyone using that system.
+> If your HPC system is widely used, consider requesting that Torc developers add it as a built-in
+> profile. This benefits everyone using that system.
 >
 > Open an issue at [github.com/NREL/torc/issues](https://github.com/NREL/torc/issues) with:
+>
 > - Your HPC system name and organization
 > - Partition names and their resource limits (CPUs, memory, walltime, GPUs)
 > - How to detect the system (environment variable or hostname pattern)
@@ -19,6 +22,7 @@ This tutorial walks you through creating a custom HPC profile for a cluster that
 ## When to Create a Custom Profile
 
 Create a custom profile when:
+
 - Your HPC isn't supported and you need to use it immediately
 - You have a private or internal cluster
 - You want to test profile configurations before submitting upstream
@@ -37,24 +41,26 @@ sinfo -o "%P %c %m %l %G"
 
 For this tutorial, let's say your cluster "ResearchCluster" has these partitions:
 
-| Partition | CPUs/Node | Memory | Max Walltime | GPUs |
-|-----------|-----------|--------|--------------|------|
-| `batch`   | 48        | 192 GB | 72 hours     | -    |
-| `short`   | 48        | 192 GB | 4 hours      | -    |
-| `gpu`     | 32        | 256 GB | 48 hours     | 4x A100 |
-| `himem`   | 48        | 1024 GB | 48 hours    | -    |
+| Partition | CPUs/Node | Memory  | Max Walltime | GPUs    |
+| --------- | --------- | ------- | ------------ | ------- |
+| `batch`   | 48        | 192 GB  | 72 hours     | -       |
+| `short`   | 48        | 192 GB  | 4 hours      | -       |
+| `gpu`     | 32        | 256 GB  | 48 hours     | 4x A100 |
+| `himem`   | 48        | 1024 GB | 48 hours     | -       |
 
 ## Step 2: Identify Detection Method
 
 Determine how Torc can detect when you're on this system. Common methods:
 
 **Environment variable** (most common):
+
 ```bash
 echo $CLUSTER_NAME    # e.g., "research"
 echo $SLURM_CLUSTER   # e.g., "researchcluster"
 ```
 
 **Hostname pattern**:
+
 ```bash
 hostname              # e.g., "login01.research.edu"
 ```
@@ -317,7 +323,8 @@ If your HPC is used by others, please contribute it upstream:
 3. Add tests for your profile
 4. Submit a pull request
 
-Or simply [open an issue](https://github.com/NREL/torc/issues) with your partition information and we'll add it for you.
+Or simply [open an issue](https://github.com/NREL/torc/issues) with your partition information and
+we'll add it for you.
 
 ## See Also
 

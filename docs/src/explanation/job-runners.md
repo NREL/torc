@@ -16,6 +16,7 @@ The job runner supports two different strategies for retrieving and executing jo
 **Used when**: `--max-parallel-jobs` is NOT specified
 
 **Behavior**:
+
 - Retrieves jobs from the server via the command `claim_jobs_based_on_resources`
 - Server filters jobs based on available compute node resources (CPU, memory, GPU)
 - Only returns jobs that fit within the current resource capacity
@@ -23,11 +24,13 @@ The job runner supports two different strategies for retrieving and executing jo
 - Defaults to requiring one CPU and 1 MB of memory for each job.
 
 **Use cases**:
+
 - When you want parallelization based on one CPU per job.
-- When you have heterogeneous jobs with different resource requirements and want
-intelligent resource management.
+- When you have heterogeneous jobs with different resource requirements and want intelligent
+  resource management.
 
 **Example 1: Run jobs at queue depth of num_cpus**:
+
 ```yaml
 parameters:
   i: "1:100"
@@ -39,6 +42,7 @@ jobs:
 ```
 
 **Example 2: Resource-based parallelization**:
+
 ```yaml
 resource_requirements:
   - name: "work_resources"
@@ -62,16 +66,18 @@ jobs:
 **Used when**: `--max-parallel-jobs` is specified
 
 **Behavior**:
+
 - Retrieves jobs from the server via the command `claim_next_jobs`
 - Server returns the next N ready jobs from the queue (up to the specified limit)
 - Ignores job resource requirements completely
 - Simply limits the number of concurrent jobs
 
 **Use cases**: When all jobs have similar resource needs or when the resource bottleneck is not
-tracked by Torc, such as network or storage I/O. This is the only way to run jobs at a queue
-depth higher than the number of CPUs in the worker.
+tracked by Torc, such as network or storage I/O. This is the only way to run jobs at a queue depth
+higher than the number of CPUs in the worker.
 
 **Example**:
+
 ```bash
 torc run $WORKFLOW_ID \
   --max-parallel-jobs 10 \
@@ -103,9 +109,11 @@ The runner continues until the workflow is complete or canceled.
 ## Resource Management (Resource-Based Allocation Only)
 
 When using resource-based allocation (default), the local job runner tracks:
+
 - Number of CPUs in use
 - Memory allocated to running jobs
 - GPUs in use
 - Job runtime limits
 
-When a ready job is retrieved, the runner checks if sufficient resources are available before executing it.
+When a ready job is retrieved, the runner checks if sufficient resources are available before
+executing it.

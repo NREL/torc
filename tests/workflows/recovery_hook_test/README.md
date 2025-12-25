@@ -1,7 +1,7 @@
 # Recovery Hook Test
 
-This test verifies that `torc watch --recovery-hook` correctly invokes a custom
-recovery script when jobs fail with unknown causes.
+This test verifies that `torc watch --recovery-hook` correctly invokes a custom recovery script when
+jobs fail with unknown causes.
 
 ## Workflow Description
 

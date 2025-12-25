@@ -13,14 +13,18 @@ This document describes major performance optimizations implemented in Torc:
 
 ### Problem
 
-When a job completes in a workflow with complex dependencies, the server must find and unblock all downstream jobs that were waiting for it. This involves:
+When a job completes in a workflow with complex dependencies, the server must find and unblock all
+downstream jobs that were waiting for it. This involves:
+
 - Recursive CTE queries to find dependent jobs
 - Checking if all blocking jobs are complete
 - Updating job statuses
 - Adding jobs to the ready queue
 - Triggering workflow actions
 
-With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions/second), this became a bottleneck:
+With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions/second), this
+became a bottleneck:
+
 - Each `complete_job` API call took 50-500ms
 - Exclusive database locks serialized all completions
 - Workers were blocked waiting for API responses
@@ -39,15 +43,18 @@ With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions
 ### Performance Impact
 
 #### Before
+
 - `complete_job` API latency: 50-500ms
 - Throughput: ~33 completions/second (serialized by database locks)
 - Workers blocked during unblocking logic
 
 #### After
+
 - `complete_job` API latency: 1-5ms (100× faster)
 - Throughput: 2000+ completions/second
 - No worker blocking
-- Trade-off: Downstream jobs delayed by up to `TORC_COMPLETION_CHECK_INTERVAL_SECS` (default: 60 seconds)
+- Trade-off: Downstream jobs delayed by up to `TORC_COMPLETION_CHECK_INTERVAL_SECS` (default: 60
+  seconds)
 
 ### Configuration
 
@@ -67,22 +74,26 @@ export TORC_COMPLETION_CHECK_INTERVAL_SECS=0.1
 ### HPC Suitability
 
 The 60-second delay is negligible for typical HPC workflows:
+
 - Jobs run for minutes to hours
 - 60-second delay is <1% of job runtime
 - Batching provides massive scalability benefits
 
 For workflows with extremely short jobs (<5 seconds), consider:
+
 - Reducing interval to 1-5 seconds
 - Redesigning workflow to have longer-running jobs
 
 ### Database Changes
 
 New column:
+
 ```sql
 ALTER TABLE job ADD COLUMN unblocking_processed INTEGER NOT NULL DEFAULT 0;
 ```
 
 New indexes:
+
 ```sql
 CREATE INDEX idx_job_unblocking_pending ON job(workflow_id, status, unblocking_processed)
 WHERE status IN (6, 7, 8) AND unblocking_processed = 0;
@@ -107,7 +118,8 @@ Processed 15 completions for workflow 42, 8 jobs became ready
 
 ### Summary
 
-Database indexes have been added to significantly improve query performance, particularly for workflows with thousands of jobs.
+Database indexes have been added to significantly improve query performance, particularly for
+workflows with thousands of jobs.
 
 ## What Was Added
 
@@ -116,11 +128,13 @@ Database indexes have been added to significantly improve query performance, par
 **Total Indexes Added**: 17 indexes across 11 tables
 
 ### Critical Performance Indexes (Phase 1)
+
 1. `idx_job_workflow_id` - Filter jobs by workflow (10-50x faster)
 2. `idx_job_workflow_status` - Filter jobs by workflow and status (10-50x faster)
 3. `idx_result_workflow_id` - Filter results by workflow (10-50x faster)
 
 ### Relationship Lookups (Phase 2)
+
 4. `idx_event_workflow_id` - Filter events by workflow
 5. `idx_compute_node_workflow_id` - Filter compute nodes by workflow
 6. `idx_job_depends_on_depends_on_job_id` - Reverse dependency lookups
@@ -130,13 +144,16 @@ Database indexes have been added to significantly improve query performance, par
 10. `idx_job_output_user_data_user_data_id` - Find jobs producing user data
 
 ### Resource Allocation Optimization (Phase 3)
+
 11. `idx_resource_requirements_sort_gpus_runtime_memory` - Optimize resource-based job sorting
 
 ### User and Workflow Filtering (Phase 4)
+
 12. `idx_workflow_user` - Filter workflows by user
 13. `idx_workflow_user_archived` - Filter workflows by user and archived status
 
 ### Additional Optimizations
+
 14. `idx_result_job_id` - Filter results by job
 15. `idx_result_run_id` - Filter results by run
 16. `idx_compute_node_workflow_active` - Filter active compute nodes
@@ -144,12 +161,14 @@ Database indexes have been added to significantly improve query performance, par
 ## Expected Performance Improvements
 
 ### Before Indexes (10,000-job workflow)
+
 - List jobs: ~100-500ms (table scan)
 - Find ready jobs: ~100-500ms (table scan)
 - List results: ~50-200ms (table scan)
 - Dependency lookups: ~50-200ms (table scan)
 
 ### After Indexes (10,000-job workflow)
+
 - List jobs: ~5-20ms (index scan) - **10-50x faster**
 - Find ready jobs: ~2-10ms (composite index) - **10-50x faster**
 - List results: ~5-15ms (index scan) - **10-50x faster**
@@ -158,6 +177,7 @@ Database indexes have been added to significantly improve query performance, par
 ## Storage Overhead
 
 For a 10,000-job workflow:
+
 - Total index overhead: ~500 KB - 1 MB
 - Write performance impact: ~10-15% overhead on INSERT/UPDATE/DELETE
 - Read performance improvement: 10-50x faster
@@ -180,6 +200,7 @@ sqlite3 torc.db "EXPLAIN QUERY PLAN SELECT * FROM job WHERE workflow_id = 1;"
 ```
 
 ### Expected Output
+
 ```
 QUERY PLAN
 `--SEARCH job USING INDEX idx_job_workflow_id (workflow_id=?)
@@ -250,6 +271,7 @@ WHERE workflow_id = 1 AND status = 1;
 ### Automatic Optimization
 
 SQLite automatically:
+
 - Updates statistics after significant changes
 - Chooses optimal indexes for queries
 - Maintains indexes during INSERT/UPDATE/DELETE
@@ -297,17 +319,20 @@ PRAGMA optimize;
 ## Impact on Existing Systems
 
 ### Development Environments
+
 - Migration will run automatically on next `cargo run`
 - No code changes required
 - Immediate performance improvement
 
 ### Production Systems
+
 - Apply migration during maintenance window
 - Migration is very fast (<1 second typical)
 - No downtime required (WAL mode)
 - Can be rolled back if needed
 
 ### Testing
+
 - All existing tests pass with indexes
 - No behavior changes, only performance improvements
 - Test suite runs faster due to improved query performance
@@ -315,6 +340,7 @@ PRAGMA optimize;
 ## Questions?
 
 For issues or questions about database performance:
+
 1. Check `EXPLAIN QUERY PLAN` output for your queries
 2. Review `docs/DATABASE_INDEXES.md` for detailed analysis
 3. Enable SQL logging with `RUST_LOG=sqlx=debug`

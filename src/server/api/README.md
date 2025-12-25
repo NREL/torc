@@ -1,6 +1,8 @@
 # API Module Refactoring
 
-This directory contains the refactored API implementation that was previously all contained in the main `server/mod.rs` file. The refactoring separates the API logic into individual modules based on model types, making the codebase more maintainable and organized.
+This directory contains the refactored API implementation that was previously all contained in the
+main `server/mod.rs` file. The refactoring separates the API logic into individual modules based on
+model types, making the codebase more maintainable and organized.
 
 ## Structure
 
@@ -36,7 +38,7 @@ pub struct ApiContext {
 ### Common Utilities
 
 - `database_error()` - Standardized database error handling
-- `json_parse_error()` - JSON parsing error handling  
+- `json_parse_error()` - JSON parsing error handling
 - `PaginationInfo` - Common pagination response structure
 - `MAX_RECORD_TRANSFER_COUNT` - Shared constant for maximum record limits
 
@@ -110,12 +112,14 @@ impl<C> Api<C> for Server<C> {
 ## Migration Status
 
 ### Fully Migrated
+
 - ✅ Events API - All event-related endpoints moved to `events.rs`
 - ✅ Workflows API - All workflow-related endpoints moved to `workflows.rs`
 - ✅ Jobs API - Core job functionality moved to `jobs.rs`
 - ✅ Files API - File operations moved to `files.rs`
 
 ### Partially Migrated (Stubs Created)
+
 - 🚧 Results API - Structure in place, implementations needed
 - 🚧 Compute Nodes API - Structure in place, implementations needed
 - 🚧 Schedulers API - Structure in place, implementations needed
@@ -148,4 +152,5 @@ let server = Server::new(pool);
 let response = server.create_event(event_model, &context).await?;
 ```
 
-This refactoring maintains full backward compatibility while providing a much cleaner and more maintainable codebase structure.
+This refactoring maintains full backward compatibility while providing a much cleaner and more
+maintainable codebase structure.

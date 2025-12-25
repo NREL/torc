@@ -1,6 +1,7 @@
 # Tutorial 5: Advanced Multi-Dimensional Parameterization
 
-This tutorial teaches you how to create multi-dimensional parameter sweeps—grid searches over multiple hyperparameters that generate all combinations automatically.
+This tutorial teaches you how to create multi-dimensional parameter sweeps—grid searches over
+multiple hyperparameters that generate all combinations automatically.
 
 ## Learning Objectives
 
@@ -19,7 +20,8 @@ By the end of this tutorial, you will:
 
 ## Multi-Dimensional Parameters: Cartesian Product
 
-When a job has multiple parameters, Torc creates the **Cartesian product**—every combination of values:
+When a job has multiple parameters, Torc creates the **Cartesian product**—every combination of
+values:
 
 ```yaml
 parameters:
@@ -28,12 +30,14 @@ parameters:
 ```
 
 This generates 2 × 2 = **4 jobs**:
+
 - `lr=0.001, bs=16`
 - `lr=0.001, bs=32`
 - `lr=0.01, bs=16`
 - `lr=0.01, bs=32`
 
 With three parameters:
+
 ```yaml
 parameters:
   lr: "[0.0001,0.001,0.01]"  # 3 values
@@ -151,7 +155,9 @@ resource_requirements:
 
 **Key insight: Why `aggregate_results` has parameters**
 
-The `aggregate_results` job won't expand into multiple jobs (its name has no `{}`). However, it needs `parameters:` to match the parameterized `input_files`. This tells Torc: "this job depends on ALL 18 metrics files."
+The `aggregate_results` job won't expand into multiple jobs (its name has no `{}`). However, it
+needs `parameters:` to match the parameterized `input_files`. This tells Torc: "this job depends on
+ALL 18 metrics files."
 
 ## Step 2: Create and Initialize the Workflow
 
@@ -179,6 +185,7 @@ torc jobs list $WORKFLOW_ID -f json | jq -r '.jobs[] | select(.name | startswith
 ```
 
 Output (18 training jobs):
+
 ```
 train_lr0.0001_bs16_optadam
 train_lr0.0001_bs16_optsgd
@@ -207,6 +214,7 @@ torc jobs list $WORKFLOW_ID
 ```
 
 Initial states:
+
 - `prepare_data`: **ready** (no dependencies)
 - All `train_*`: **blocked** (waiting for `training_data` file)
 - `aggregate_results`: **blocked** (waiting for all 18 metrics files)
@@ -221,6 +229,7 @@ torc run $WORKFLOW_ID
 ```
 
 Execution flow:
+
 1. `prepare_data` runs and produces `training_data`
 2. All 18 `train_*` jobs unblock and run in parallel (resource-limited)
 3. `aggregate_results` waits for all training jobs, then runs
@@ -258,20 +267,22 @@ cat /results/summary.csv
 Multi-dimensional parameters grow exponentially:
 
 | Dimensions | Values per Dimension | Total Jobs |
-|------------|---------------------|------------|
-| 1 | 10 | 10 |
-| 2 | 10 × 10 | 100 |
-| 3 | 10 × 10 × 10 | 1,000 |
-| 4 | 10 × 10 × 10 × 10 | 10,000 |
+| ---------- | -------------------- | ---------- |
+| 1          | 10                   | 10         |
+| 2          | 10 × 10              | 100        |
+| 3          | 10 × 10 × 10         | 1,000      |
+| 4          | 10 × 10 × 10 × 10    | 10,000     |
 
 ### Dependency Count
 
 Without barriers, dependencies also grow quickly. In this tutorial:
+
 - 18 training jobs each depend on 1 file = 18 dependencies
 - 1 aggregate job depends on 18 files = 18 dependencies
 - Total: ~36 dependencies
 
-For larger sweeps (1000+ jobs), consider the [barrier pattern](./multi-stage-barrier.md) to reduce dependencies from O(n²) to O(n).
+For larger sweeps (1000+ jobs), consider the [barrier pattern](./multi-stage-barrier.md) to reduce
+dependencies from O(n²) to O(n).
 
 ## Common Patterns
 
@@ -296,11 +307,11 @@ jobs:
 Use the file dependency pattern shown in this tutorial:
 
 ```yaml
-  - name: aggregate
-    input_files:
-      - result_{i}    # Matches all parameterized result files
-    parameters:
-      i: "1:100"      # Same parameters as producer jobs
+- name: aggregate
+  input_files:
+    - result_{i}    # Matches all parameterized result files
+  parameters:
+    i: "1:100"      # Same parameters as producer jobs
 ```
 
 ### Nested Parameter Sweeps
@@ -333,11 +344,15 @@ In this tutorial, you learned:
 ## Example Files
 
 See these example files for hyperparameter sweep patterns:
-- [hyperparameter_sweep.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hyperparameter_sweep.yaml) - Basic 3×3×2 grid search
-- [hyperparameter_sweep_shared_params.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hyperparameter_sweep_shared_params.yaml) - Grid search with shared parameter definitions
+
+- [hyperparameter_sweep.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hyperparameter_sweep.yaml) -
+  Basic 3×3×2 grid search
+- [hyperparameter_sweep_shared_params.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/hyperparameter_sweep_shared_params.yaml) -
+  Grid search with shared parameter definitions
 
 ## Next Steps
 
-- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Essential for scaling to thousands of jobs
+- [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Essential for scaling to
+  thousands of jobs
 - [Working with Slurm](../how-to/slurm.md) - Deploy grid searches on HPC clusters
 - [Resource Monitoring](../how-to/resource-monitoring.md) - Track resource usage across your sweep

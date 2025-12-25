@@ -1,6 +1,7 @@
 # Configuration Files Tutorial
 
-This tutorial walks you through setting up Torc configuration files to customize your workflows without specifying options on every command.
+This tutorial walks you through setting up Torc configuration files to customize your workflows
+without specifying options on every command.
 
 ## What You'll Learn
 
@@ -23,6 +24,7 @@ torc config paths
 ```
 
 Output:
+
 ```
 Configuration file paths (in priority order):
 
@@ -103,6 +105,7 @@ torc config validate
 ```
 
 Output:
+
 ```
 Validating configuration...
 

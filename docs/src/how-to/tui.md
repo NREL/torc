@@ -1,6 +1,7 @@
 # Terminal User Interface (TUI)
 
-The Torc TUI provides a full-featured terminal interface for managing workflows, designed for HPC users working in terminal-over-SSH environments.
+The Torc TUI provides a full-featured terminal interface for managing workflows, designed for HPC
+users working in terminal-over-SSH environments.
 
 ## Quick Start
 
@@ -31,7 +32,8 @@ torc tui --standalone --port 8090
 torc tui --standalone --database /path/to/workflows.db
 ```
 
-In standalone mode, the TUI automatically starts a `torc-server` process with the specified configuration.
+In standalone mode, the TUI automatically starts a `torc-server` process with the specified
+configuration.
 
 ## Features
 
@@ -64,48 +66,50 @@ When the TUI starts, you'll see:
 
 ## Basic Navigation
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Move up/down in the current table |
-| `←` / `→` | Switch focus between Workflows and Details panes |
-| `Tab` | Switch between detail tabs (Jobs → Files → Events → Results → DAG) |
-| `Enter` | Load details for selected workflow |
-| `q` | Quit (or close popup/dialog) |
-| `?` | Show help popup with all keybindings |
+| Key       | Action                                                             |
+| --------- | ------------------------------------------------------------------ |
+| `↑` / `↓` | Move up/down in the current table                                  |
+| `←` / `→` | Switch focus between Workflows and Details panes                   |
+| `Tab`     | Switch between detail tabs (Jobs → Files → Events → Results → DAG) |
+| `Enter`   | Load details for selected workflow                                 |
+| `q`       | Quit (or close popup/dialog)                                       |
+| `?`       | Show help popup with all keybindings                               |
 
 ## Workflow Actions
 
 Select a workflow and use these keys:
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `n` | New | Create workflow from spec file |
-| `i` | Initialize | Set up job dependencies, mark ready jobs |
+| Key | Action        | Description                                             |
+| --- | ------------- | ------------------------------------------------------- |
+| `n` | New           | Create workflow from spec file                          |
+| `i` | Initialize    | Set up job dependencies, mark ready jobs                |
 | `I` | Re-initialize | Reset and re-initialize (prompts if output files exist) |
-| `R` | Reset | Reset all job statuses |
-| `x` | Run | Run workflow locally (shows real-time output) |
-| `s` | Submit | Submit to HPC scheduler (Slurm) |
-| `C` | Cancel | Cancel running workflow |
-| `d` | Delete | Delete workflow (destructive!) |
+| `R` | Reset         | Reset all job statuses                                  |
+| `x` | Run           | Run workflow locally (shows real-time output)           |
+| `s` | Submit        | Submit to HPC scheduler (Slurm)                         |
+| `C` | Cancel        | Cancel running workflow                                 |
+| `d` | Delete        | Delete workflow (destructive!)                          |
 
 All destructive actions show a confirmation dialog.
 
 ### Handling Existing Output Files
 
-When initializing or re-initializing a workflow, if existing output files are detected, the TUI will show a confirmation dialog listing the files that will be deleted. Press `y` to proceed with `--force` or `n` to cancel.
+When initializing or re-initializing a workflow, if existing output files are detected, the TUI will
+show a confirmation dialog listing the files that will be deleted. Press `y` to proceed with
+`--force` or `n` to cancel.
 
 ## Job Management
 
 Navigate to the Jobs tab (`→` then `Tab` if needed) to manage individual jobs:
 
-| Key | Action |
-|-----|--------|
-| `Enter` | View job details |
-| `l` | View job logs (stdout/stderr) |
-| `c` | Cancel job |
-| `t` | Terminate job |
-| `y` | Retry failed job |
-| `f` | Filter jobs by column |
+| Key     | Action                        |
+| ------- | ----------------------------- |
+| `Enter` | View job details              |
+| `l`     | View job logs (stdout/stderr) |
+| `c`     | Cancel job                    |
+| `t`     | Terminate job                 |
+| `y`     | Retry failed job              |
+| `f`     | Filter jobs by column         |
 
 ### Job Status Colors
 
@@ -121,19 +125,20 @@ Navigate to the Jobs tab (`→` then `Tab` if needed) to manage individual jobs:
 
 Press `l` on a job to view its logs:
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Switch between stdout and stderr |
-| `↑` / `↓` | Scroll one line |
-| `PgUp` / `PgDn` | Scroll 20 lines |
-| `g` / `G` | Jump to top / bottom |
-| `/` | Start search |
-| `n` / `N` | Next / previous search match |
-| `q` | Close log viewer |
+| Key             | Action                           |
+| --------------- | -------------------------------- |
+| `Tab`           | Switch between stdout and stderr |
+| `↑` / `↓`       | Scroll one line                  |
+| `PgUp` / `PgDn` | Scroll 20 lines                  |
+| `g` / `G`       | Jump to top / bottom             |
+| `/`             | Start search                     |
+| `n` / `N`       | Next / previous search match     |
+| `q`             | Close log viewer                 |
 
 ## File Viewer
 
-Navigate to the Files tab and press `Enter` on a file to view its contents. The file viewer supports:
+Navigate to the Files tab and press `Enter` on a file to view its contents. The file viewer
+supports:
 
 - Files up to 1MB
 - Binary files show a hex dump preview
@@ -143,28 +148,30 @@ Navigate to the Files tab and press `Enter` on a file to view its contents. The 
 
 The TUI can start and manage a `torc-server` instance:
 
-| Key | Action |
-|-----|--------|
-| `S` | Start torc-server |
-| `K` | Stop/Kill server |
+| Key | Action             |
+| --- | ------------------ |
+| `S` | Start torc-server  |
+| `K` | Stop/Kill server   |
 | `O` | Show server output |
 
 The server status indicator in the connection bar shows:
+
 - `●` (green): Server is running (managed by TUI)
 - `○` (yellow): Server was started but has stopped
 - No indicator: External server (not managed by TUI)
 
 ## Connection Settings
 
-| Key | Action |
-|-----|--------|
-| `u` | Change server URL |
-| `w` | Change user filter |
+| Key | Action                |
+| --- | --------------------- |
+| `u` | Change server URL     |
+| `w` | Change user filter    |
 | `a` | Toggle show all users |
 
 ## Auto-Refresh
 
-Press `A` to toggle auto-refresh (30-second interval). When enabled, the workflow list and details refresh automatically.
+Press `A` to toggle auto-refresh (30-second interval). When enabled, the workflow list and details
+refresh automatically.
 
 ## Configuration
 
@@ -188,6 +195,7 @@ The TUI respects Torc's layered configuration system:
 ### "No log content available"
 
 Logs may not be available if:
+
 - The job hasn't run yet
 - You're on a different machine than where jobs ran
 - The output directory is in a different location
@@ -200,16 +208,16 @@ Logs may not be available if:
 
 ## TUI vs Web Dashboard
 
-| Feature | TUI (`torc tui`) | Web (`torc-dash`) |
-|---------|------------------|-------------------|
-| Environment | Terminal/SSH | Web browser |
-| Startup | Instant | ~2 seconds |
-| Dependencies | None (single binary) | Python + packages |
-| Workflow actions | Yes | Yes |
-| Job actions | Yes | Yes |
-| Log viewing | Yes | Yes |
-| DAG visualization | Text-based | Interactive graph |
-| Resource plots | Planned | Yes |
+| Feature           | TUI (`torc tui`)     | Web (`torc-dash`) |
+| ----------------- | -------------------- | ----------------- |
+| Environment       | Terminal/SSH         | Web browser       |
+| Startup           | Instant              | ~2 seconds        |
+| Dependencies      | None (single binary) | Python + packages |
+| Workflow actions  | Yes                  | Yes               |
+| Job actions       | Yes                  | Yes               |
+| Log viewing       | Yes                  | Yes               |
+| DAG visualization | Text-based           | Interactive graph |
+| Resource plots    | Planned              | Yes               |
 
 **Choose the TUI for**: SSH sessions, HPC environments, quick operations, low-bandwidth connections.
 
