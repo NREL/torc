@@ -12,6 +12,20 @@ use std::time::Duration;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::utils;
+
+/// Default wait time for database connectivity issues (in minutes)
+const WAIT_FOR_HEALTHY_DATABASE_MINUTES: u64 = 20;
+
+/// Execute an API call with automatic retries for network errors.
+/// This wraps utils::send_with_retries with a default timeout.
+fn send_with_retries<T, E, F>(config: &Configuration, api_call: F) -> Result<T, E>
+where
+    F: FnMut() -> Result<T, E>,
+    E: std::fmt::Display,
+{
+    utils::send_with_retries(config, api_call, WAIT_FOR_HEALTHY_DATABASE_MINUTES)
+}
 use crate::client::commands::pagination::{
     ComputeNodeListParams, JobListParams, ScheduledComputeNodeListParams, paginate_compute_nodes,
     paginate_jobs, paginate_scheduled_compute_nodes,
@@ -466,17 +480,19 @@ fn cleanup_dead_pending_slurm_jobs(
 /// proceeding with recovery actions. Workers need to complete their cleanup routines.
 fn has_active_workers(config: &Configuration, workflow_id: i64) -> bool {
     // Check for active compute nodes (is_active=true)
-    if let Ok(response) = default_api::list_compute_nodes(
-        config,
-        workflow_id,
-        None,       // offset
-        Some(1),    // limit - just need one
-        None,       // sort_by
-        None,       // reverse_sort
-        None,       // hostname
-        Some(true), // is_active = true
-        None,       // scheduled_compute_node_id
-    ) && let Some(nodes) = response.items
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_compute_nodes(
+            config,
+            workflow_id,
+            None,       // offset
+            Some(1),    // limit - just need one
+            None,       // sort_by
+            None,       // reverse_sort
+            None,       // hostname
+            Some(true), // is_active = true
+            None,       // scheduled_compute_node_id
+        )
+    }) && let Some(nodes) = response.items
         && !nodes.is_empty()
     {
         return true;
@@ -491,34 +507,38 @@ fn has_active_workers(config: &Configuration, workflow_id: i64) -> bool {
 /// If there are none, the workflow cannot make progress.
 fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> bool {
     // Check for pending allocations
-    if let Ok(response) = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,            // offset
-        Some(1),         // limit - just need one
-        None,            // sort_by
-        None,            // reverse_sort
-        None,            // scheduler_id
-        None,            // scheduler_config_id
-        Some("pending"), // status
-    ) && let Some(nodes) = response.items
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,            // offset
+            Some(1),         // limit - just need one
+            None,            // sort_by
+            None,            // reverse_sort
+            None,            // scheduler_id
+            None,            // scheduler_config_id
+            Some("pending"), // status
+        )
+    }) && let Some(nodes) = response.items
         && !nodes.is_empty()
     {
         return true;
     }
 
     // Check for active allocations
-    if let Ok(response) = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,           // offset
-        Some(1),        // limit - just need one
-        None,           // sort_by
-        None,           // reverse_sort
-        None,           // scheduler_id
-        None,           // scheduler_config_id
-        Some("active"), // status
-    ) && let Some(nodes) = response.items
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,           // offset
+            Some(1),        // limit - just need one
+            None,           // sort_by
+            None,           // reverse_sort
+            None,           // scheduler_id
+            None,           // scheduler_config_id
+            Some("active"), // status
+        )
+    }) && let Some(nodes) = response.items
         && !nodes.is_empty()
     {
         return true;
@@ -538,17 +558,19 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
     // We'll sample one from each category to check
 
     // First check for active allocations
-    let active_nodes = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,           // offset
-        Some(1),        // limit - just need one
-        None,           // sort_by
-        None,           // reverse_sort
-        None,           // scheduler_id
-        None,           // scheduler_config_id
-        Some("active"), // status
-    );
+    let active_nodes = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,           // offset
+            Some(1),        // limit - just need one
+            None,           // sort_by
+            None,           // reverse_sort
+            None,           // scheduler_id
+            None,           // scheduler_config_id
+            Some("active"), // status
+        )
+    });
 
     if let Ok(response) = active_nodes
         && let Some(nodes) = response.items
@@ -574,17 +596,19 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
     }
 
     // Check for pending allocations
-    let pending_nodes = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,            // offset
-        Some(1),         // limit - just need one
-        None,            // sort_by
-        None,            // reverse_sort
-        None,            // scheduler_id
-        None,            // scheduler_config_id
-        Some("pending"), // status
-    );
+    let pending_nodes = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,            // offset
+            Some(1),         // limit - just need one
+            None,            // sort_by
+            None,            // reverse_sort
+            None,            // scheduler_id
+            None,            // scheduler_config_id
+            Some("pending"), // status
+        )
+    });
 
     if let Ok(response) = pending_nodes
         && let Some(nodes) = response.items
@@ -782,7 +806,9 @@ fn poll_until_complete(
     loop {
         // Check if workflow is complete
         if !workflow_complete {
-            match default_api::is_workflow_complete(config, workflow_id) {
+            match send_with_retries(config, || {
+                default_api::is_workflow_complete(config, workflow_id)
+            }) {
                 Ok(response) => {
                     if response.is_complete {
                         info!(
