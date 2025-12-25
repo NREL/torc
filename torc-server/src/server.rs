@@ -1662,84 +1662,54 @@ impl<C> Server<C> {
             job_id, workflow_id
         );
 
-        // Find all jobs that were blocked by this job and are currently completed/failed
         let completed_status = models::JobStatus::Completed.to_int();
         let failed_status = models::JobStatus::Failed.to_int();
         let uninitialized_status = models::JobStatus::Uninitialized.to_int();
 
-        let affected_jobs = match sqlx::query!(
+        // Update downstream jobs to uninitialized in a single query using a subquery
+        let result = match sqlx::query!(
             r#"
-            SELECT DISTINCT jbb.job_id
-            FROM job_depends_on jbb
-            JOIN job j ON jbb.job_id = j.id
-            WHERE jbb.depends_on_job_id = ?
-            AND jbb.workflow_id = ?
-            AND j.status IN (?, ?)
+            UPDATE job
+            SET status = ?
+            WHERE workflow_id = ?
+            AND id IN (
+                SELECT DISTINCT jbb.job_id
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jbb.depends_on_job_id = ?
+                AND jbb.workflow_id = ?
+                AND j.status IN (?, ?)
+            )
             "#,
+            uninitialized_status,
+            workflow_id,
             job_id,
             workflow_id,
             completed_status,
             failed_status
         )
-        .fetch_all(self.pool.as_ref())
+        .execute(self.pool.as_ref())
         .await
         {
-            Ok(rows) => rows,
+            Ok(result) => result,
             Err(e) => {
-                error!("Database error finding downstream jobs: {}", e);
+                error!("Database error reinitializing downstream jobs: {}", e);
                 return Err(ApiError("Database error".to_string()));
             }
         };
 
-        if affected_jobs.is_empty() {
+        let affected_count = result.rows_affected();
+        if affected_count == 0 {
             debug!(
                 "reinitialize_downstream_jobs: no downstream jobs to reinitialize for job_id={}",
                 job_id
             );
-            return Ok(());
+        } else {
+            info!(
+                "reinitialize_downstream_jobs: successfully reinitialized {} downstream jobs for job_id={}",
+                affected_count, job_id
+            );
         }
-
-        debug!(
-            "reinitialize_downstream_jobs: found {} downstream jobs to reinitialize",
-            affected_jobs.len()
-        );
-
-        // Update the status of affected jobs to uninitialized
-        for row in &affected_jobs {
-            let downstream_job_id = row.job_id;
-
-            match sqlx::query!(
-                "UPDATE job SET status = ? WHERE id = ? AND workflow_id = ?",
-                uninitialized_status,
-                downstream_job_id,
-                workflow_id
-            )
-            .execute(self.pool.as_ref())
-            .await
-            {
-                Ok(result) => {
-                    if result.rows_affected() > 0 {
-                        debug!(
-                            "reinitialize_downstream_jobs: reset job_id={} from done to uninitialized",
-                            downstream_job_id
-                        );
-                    }
-                }
-                Err(e) => {
-                    error!(
-                        "Database error updating job {} status: {}",
-                        downstream_job_id, e
-                    );
-                    return Err(ApiError("Database error".to_string()));
-                }
-            }
-        }
-
-        info!(
-            "reinitialize_downstream_jobs: successfully reinitialized {} downstream jobs for job_id={}",
-            affected_jobs.len(),
-            job_id
-        );
 
         Ok(())
     }
@@ -3738,19 +3708,25 @@ where
             }
         }
 
-        // If we have jobs to update, update their status to pending
+        // If we have jobs to update, update their status to pending using bulk UPDATE
         if !job_ids_to_update.is_empty() {
-            // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
-            for job_id in &job_ids_to_update {
-                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
-                    .execute(&mut *conn)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to update job status: {}", e);
-                        ApiError("Database update error".to_string())
-                    })?;
-            }
+            // SAFETY: job_ids are i64 from database query results.
+            // i64::to_string() only produces numeric strings - SQL injection impossible.
+            // Using string formatting because sqlx doesn't support parameterized IN clauses.
+            let job_ids_str = job_ids_to_update
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            let sql = format!(
+                "UPDATE job SET status = {} WHERE id IN ({})",
+                pending, job_ids_str
+            );
+            sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
+                error!("Failed to update job status: {}", e);
+                ApiError("Database update error".to_string())
+            })?;
 
             debug!(
                 "Updated {} jobs to pending status for workflow {}",
@@ -4944,19 +4920,25 @@ where
             }
         }
 
-        // If we have jobs to update, update their status to pending
+        // If we have jobs to update, update their status to pending using bulk UPDATE
         if !job_ids_to_update.is_empty() {
-            // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
-            for job_id in &job_ids_to_update {
-                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
-                    .execute(&mut *conn)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to update job status: {}", e);
-                        ApiError("Database update error".to_string())
-                    })?;
-            }
+            // SAFETY: job_ids are i64 from database query results.
+            // i64::to_string() only produces numeric strings - SQL injection impossible.
+            // Using string formatting because sqlx doesn't support parameterized IN clauses.
+            let job_ids_str = job_ids_to_update
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            let sql = format!(
+                "UPDATE job SET status = {} WHERE id IN ({})",
+                pending, job_ids_str
+            );
+            sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
+                error!("Failed to update job status: {}", e);
+                ApiError("Database update error".to_string())
+            })?;
 
             debug!(
                 "Updated {} jobs to pending status for workflow {}",
