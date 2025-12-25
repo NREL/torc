@@ -47,6 +47,8 @@ pub trait ComputeNodesApi<C> {
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError>;
@@ -278,16 +280,20 @@ where
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         debug!(
-            "list_compute_nodes({}, {}, {}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_compute_nodes({}, {}, {}, {:?}, {:?}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
             offset,
             limit,
             sort_by,
             reverse_sort,
+            hostname,
+            is_active,
             scheduled_compute_node_id,
             context.get().0.clone()
         );
@@ -315,6 +321,12 @@ where
 
         // Build WHERE clause conditions
         let mut where_conditions = vec!["workflow_id = ?".to_string()];
+        if hostname.is_some() {
+            where_conditions.push("hostname = ?".to_string());
+        }
+        if is_active.is_some() {
+            where_conditions.push("is_active = ?".to_string());
+        }
         if scheduled_compute_node_id.is_some() {
             // Filter by scheduler.scheduler_id in the JSON field
             where_conditions.push("json_extract(scheduler, '$.scheduler_id') = ?".to_string());
@@ -330,6 +342,13 @@ where
 
         // Execute the query
         let mut sqlx_query = sqlx::query(&query).bind(workflow_id);
+        if let Some(ref h) = hostname {
+            sqlx_query = sqlx_query.bind(h);
+        }
+        if let Some(active) = is_active {
+            // Convert boolean to integer for SQLite
+            sqlx_query = sqlx_query.bind(if active { 1i64 } else { 0i64 });
+        }
         if let Some(scn_id) = scheduled_compute_node_id {
             sqlx_query = sqlx_query.bind(scn_id);
         }

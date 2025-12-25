@@ -1247,6 +1247,8 @@ pub trait Api<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError>;
@@ -1983,6 +1985,8 @@ pub trait ApiNoContext<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError>;
 
@@ -2743,6 +2747,8 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         let context = self.context().clone();
@@ -2753,6 +2759,8 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 limit,
                 sort_by,
                 reverse_sort,
+                hostname,
+                is_active,
                 scheduled_compute_node_id,
                 &context,
             )

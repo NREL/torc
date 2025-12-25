@@ -3612,7 +3612,7 @@ where
                         .filter(|e| e.0 == "hostname")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_hostname = match param_hostname {
+                    let param_hostname = match param_hostname {
                         Some(param_hostname) => {
                             let param_hostname =
                                 <String as std::str::FromStr>::from_str(&param_hostname);
@@ -3631,7 +3631,7 @@ where
                         .filter(|e| e.0 == "is_active")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_is_active = match param_is_active {
+                    let param_is_active = match param_is_active {
                         Some(param_is_active) => {
                             let param_is_active =
                                 <bool as std::str::FromStr>::from_str(&param_is_active);
@@ -3674,6 +3674,8 @@ where
                             param_limit,
                             param_sort_by,
                             param_reverse_sort,
+                            param_hostname,
+                            param_is_active,
                             param_scheduled_compute_node_id,
                             &context,
                         )
