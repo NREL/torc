@@ -1,0 +1,448 @@
+//! Scheduler plan generation for Slurm workflows.
+//!
+//! This module provides a common abstraction for generating Slurm scheduler
+//! configurations. It extracts the core logic that is shared between:
+//! - `generate_schedulers_for_workflow` (for new workflows from specs)
+//! - `handle_regenerate` (for existing workflows from database)
+//!
+//! The plan can then be applied to either a WorkflowSpec or to the database via API.
+
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::client::hpc::HpcProfile;
+use crate::client::workflow_graph::{SchedulerGroup, WorkflowGraph};
+use crate::time_utils::duration_string_to_seconds;
+
+use super::commands::slurm::{parse_memory_mb, secs_to_walltime};
+
+/// A planned Slurm scheduler configuration.
+///
+/// This is an intermediate representation that can be converted to either
+/// a `SlurmSchedulerSpec` (for workflow specs) or a `SlurmSchedulerModel` (for database).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlannedScheduler {
+    /// Scheduler name (includes suffix like "_deferred" for jobs with dependencies)
+    pub name: String,
+    /// Slurm account
+    pub account: String,
+    /// Partition (if explicit request required)
+    pub partition: Option<String>,
+    /// Memory request
+    pub mem: Option<String>,
+    /// Walltime in HH:MM:SS format
+    pub walltime: String,
+    /// Nodes per allocation
+    pub nodes: i64,
+    /// GPU gres string (e.g., "gpu:2")
+    pub gres: Option<String>,
+    /// QOS
+    pub qos: Option<String>,
+    /// Resource requirements name this scheduler is for
+    pub resource_requirements: String,
+    /// Whether this scheduler is for jobs with dependencies
+    pub has_dependencies: bool,
+    /// Number of jobs this scheduler will handle
+    pub job_count: usize,
+    /// Job names that will use this scheduler
+    pub job_names: Vec<String>,
+    /// Job name patterns for action matching
+    pub job_name_patterns: Vec<String>,
+    /// Number of allocations to create
+    pub num_allocations: i64,
+}
+
+/// A planned workflow action for scheduling nodes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlannedAction {
+    /// Trigger type: "on_workflow_start" or "on_jobs_ready"
+    pub trigger_type: String,
+    /// Scheduler name this action references
+    pub scheduler_name: String,
+    /// Job name regex patterns (for on_jobs_ready triggers)
+    pub job_name_patterns: Option<Vec<String>>,
+    /// Number of allocations to submit
+    pub num_allocations: i64,
+    /// Whether to start one worker per node
+    pub start_one_worker_per_node: bool,
+    /// Whether this is a recovery action (ephemeral, deleted on reinitialize)
+    pub is_recovery: bool,
+}
+
+/// A complete scheduler plan for a workflow.
+///
+/// Contains all the schedulers and actions needed to run the workflow,
+/// plus job-to-scheduler assignments.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SchedulerPlan {
+    /// Schedulers to create
+    pub schedulers: Vec<PlannedScheduler>,
+    /// Actions to create
+    pub actions: Vec<PlannedAction>,
+    /// Map of job name -> scheduler name
+    pub job_assignments: HashMap<String, String>,
+    /// Warnings generated during planning
+    pub warnings: Vec<String>,
+}
+
+impl SchedulerPlan {
+    /// Create an empty plan
+    pub fn new() -> Self {
+        Self {
+            schedulers: Vec::new(),
+            actions: Vec::new(),
+            job_assignments: HashMap::new(),
+            warnings: Vec::new(),
+        }
+    }
+
+    /// Get total number of allocations across all schedulers
+    pub fn total_allocations(&self) -> i64 {
+        self.schedulers.iter().map(|s| s.num_allocations).sum()
+    }
+}
+
+impl Default for SchedulerPlan {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Resource requirements abstraction for plan generation.
+///
+/// This trait allows both `ResourceRequirementsSpec` and `ResourceRequirementsModel`
+/// to be used with the plan generator.
+pub trait ResourceRequirements {
+    fn name(&self) -> &str;
+    fn memory(&self) -> &str;
+    fn runtime(&self) -> &str;
+    fn num_cpus(&self) -> i64;
+    fn num_gpus(&self) -> i64;
+    fn num_nodes(&self) -> i64;
+}
+
+/// Generate a scheduler plan from a workflow graph and resource requirements.
+///
+/// This is the core planning logic shared between workflow creation and regeneration.
+///
+/// # Arguments
+/// * `graph` - The workflow graph with job dependency information
+/// * `resource_requirements` - Map of RR name to RR data
+/// * `profile` - HPC profile with partition information
+/// * `account` - Slurm account to use
+/// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode)
+/// * `add_actions` - Whether to add workflow actions for scheduling
+/// * `scheduler_name_suffix` - Optional suffix for scheduler names (e.g., "_regen_20240101")
+/// * `is_recovery` - Whether this is a recovery scenario (actions marked as recovery)
+pub fn generate_scheduler_plan<RR: ResourceRequirements>(
+    graph: &WorkflowGraph,
+    resource_requirements: &HashMap<&str, &RR>,
+    profile: &HpcProfile,
+    account: &str,
+    single_allocation: bool,
+    add_actions: bool,
+    scheduler_name_suffix: Option<&str>,
+    is_recovery: bool,
+) -> SchedulerPlan {
+    let mut plan = SchedulerPlan::new();
+
+    // Get scheduler groups from the graph
+    // Groups jobs by (resource_requirements, has_dependencies)
+    let scheduler_groups = graph.scheduler_groups();
+
+    // Process each scheduler group
+    for group in &scheduler_groups {
+        match process_scheduler_group(
+            group,
+            resource_requirements,
+            profile,
+            account,
+            single_allocation,
+            add_actions,
+            scheduler_name_suffix,
+            is_recovery,
+        ) {
+            Ok((scheduler, action)) => {
+                // Record job assignments
+                for job_name in &scheduler.job_names {
+                    plan.job_assignments
+                        .insert(job_name.clone(), scheduler.name.clone());
+                }
+
+                plan.schedulers.push(scheduler);
+
+                if let Some(action) = action {
+                    plan.actions.push(action);
+                }
+            }
+            Err(warning) => {
+                plan.warnings.push(warning);
+            }
+        }
+    }
+
+    plan
+}
+
+/// Process a single scheduler group and return the planned scheduler and optional action.
+fn process_scheduler_group<RR: ResourceRequirements>(
+    group: &SchedulerGroup,
+    resource_requirements: &HashMap<&str, &RR>,
+    profile: &HpcProfile,
+    account: &str,
+    single_allocation: bool,
+    add_actions: bool,
+    scheduler_name_suffix: Option<&str>,
+    is_recovery: bool,
+) -> Result<(PlannedScheduler, Option<PlannedAction>), String> {
+    let rr_name = &group.resource_requirements;
+    let rr = resource_requirements.get(rr_name.as_str()).ok_or_else(|| {
+        format!(
+            "Resource requirements '{}' not found, skipping {} job(s)",
+            rr_name, group.job_count
+        )
+    })?;
+
+    // Parse resource requirements
+    let memory_mb = parse_memory_mb(rr.memory()).map_err(|e| {
+        format!(
+            "Failed to parse memory '{}' for RR '{}': {}",
+            rr.memory(),
+            rr.name(),
+            e
+        )
+    })?;
+
+    let runtime_secs = duration_string_to_seconds(rr.runtime()).map_err(|e| {
+        format!(
+            "Failed to parse runtime '{}' for RR '{}': {}",
+            rr.runtime(),
+            rr.name(),
+            e
+        )
+    })? as u64;
+
+    let gpus = if rr.num_gpus() > 0 {
+        Some(rr.num_gpus() as u32)
+    } else {
+        None
+    };
+
+    // Find best partition
+    let partition = profile
+        .find_best_partition(rr.num_cpus() as u32, memory_mb, runtime_secs, gpus)
+        .ok_or_else(|| {
+            format!(
+                "No partition found for resource requirements '{}' (CPUs: {}, Memory: {}, Runtime: {}, GPUs: {:?})",
+                rr.name(),
+                rr.num_cpus(),
+                rr.memory(),
+                rr.runtime(),
+                gpus
+            )
+        })?;
+
+    // Calculate jobs per node and total nodes needed
+    let jobs_per_node_by_cpu = partition.cpus_per_node / rr.num_cpus() as u32;
+    let jobs_per_node_by_mem = (partition.memory_mb / memory_mb) as u32;
+    let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
+        (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
+        _ => u32::MAX,
+    };
+    let jobs_per_node = std::cmp::max(
+        1,
+        std::cmp::min(
+            jobs_per_node_by_cpu,
+            std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
+        ),
+    );
+
+    let nodes_per_job = rr.num_nodes() as u32;
+    let total_nodes_needed =
+        ((group.job_count as u32 + jobs_per_node - 1) / jobs_per_node) * nodes_per_job;
+    let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
+
+    // Allocation strategy
+    let (nodes_per_alloc, num_allocations) = if single_allocation {
+        (total_nodes_needed, 1i64)
+    } else {
+        (1i64, total_nodes_needed)
+    };
+
+    // Generate scheduler name
+    let base_name = if group.has_dependencies {
+        format!("{}_deferred", rr_name)
+    } else {
+        rr_name.clone()
+    };
+    let scheduler_name = match scheduler_name_suffix {
+        Some(suffix) => format!("{}_{}", base_name, suffix),
+        None => format!("{}_scheduler", base_name),
+    };
+
+    let scheduler = PlannedScheduler {
+        name: scheduler_name.clone(),
+        account: account.to_string(),
+        partition: if partition.requires_explicit_request {
+            Some(partition.name.clone())
+        } else {
+            None
+        },
+        mem: Some(rr.memory().to_string()),
+        walltime: secs_to_walltime(partition.max_walltime_secs),
+        nodes: nodes_per_alloc,
+        gres: gpus.map(|g| format!("gpu:{}", g)),
+        qos: partition.default_qos.clone(),
+        resource_requirements: rr_name.clone(),
+        has_dependencies: group.has_dependencies,
+        job_count: group.job_count,
+        job_names: group.job_names.clone(),
+        job_name_patterns: group.job_name_patterns.clone(),
+        num_allocations,
+    };
+
+    // Create action if requested
+    let action = if add_actions {
+        let start_one_worker_per_node = nodes_per_alloc > 1;
+
+        let (trigger_type, job_name_patterns) = if group.has_dependencies {
+            ("on_jobs_ready", Some(group.job_name_patterns.clone()))
+        } else {
+            ("on_workflow_start", None)
+        };
+
+        Some(PlannedAction {
+            trigger_type: trigger_type.to_string(),
+            scheduler_name: scheduler_name.clone(),
+            job_name_patterns,
+            num_allocations,
+            start_one_worker_per_node,
+            is_recovery,
+        })
+    } else {
+        None
+    };
+
+    Ok((scheduler, action))
+}
+
+// ============================================================================
+// Trait implementations for ResourceRequirementsSpec and ResourceRequirementsModel
+// ============================================================================
+
+impl ResourceRequirements for crate::client::workflow_spec::ResourceRequirementsSpec {
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn memory(&self) -> &str {
+        &self.memory
+    }
+    fn runtime(&self) -> &str {
+        &self.runtime
+    }
+    fn num_cpus(&self) -> i64 {
+        self.num_cpus
+    }
+    fn num_gpus(&self) -> i64 {
+        self.num_gpus
+    }
+    fn num_nodes(&self) -> i64 {
+        self.num_nodes
+    }
+}
+
+impl ResourceRequirements for crate::models::ResourceRequirementsModel {
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn memory(&self) -> &str {
+        &self.memory
+    }
+    fn runtime(&self) -> &str {
+        &self.runtime
+    }
+    fn num_cpus(&self) -> i64 {
+        self.num_cpus
+    }
+    fn num_gpus(&self) -> i64 {
+        self.num_gpus
+    }
+    fn num_nodes(&self) -> i64 {
+        self.num_nodes
+    }
+}
+
+// ============================================================================
+// Apply plan to WorkflowSpec
+// ============================================================================
+
+use crate::client::workflow_spec::{SlurmSchedulerSpec, WorkflowActionSpec, WorkflowSpec};
+
+/// Apply a scheduler plan to a WorkflowSpec.
+///
+/// This adds the planned schedulers and actions to the spec, and updates
+/// job scheduler assignments.
+pub fn apply_plan_to_spec(plan: &SchedulerPlan, spec: &mut WorkflowSpec) {
+    // Convert planned schedulers to SlurmSchedulerSpec
+    let schedulers: Vec<SlurmSchedulerSpec> = plan
+        .schedulers
+        .iter()
+        .map(|ps| SlurmSchedulerSpec {
+            name: Some(ps.name.clone()),
+            account: ps.account.clone(),
+            partition: ps.partition.clone(),
+            mem: ps.mem.clone(),
+            walltime: ps.walltime.clone(),
+            nodes: ps.nodes,
+            gres: ps.gres.clone(),
+            ntasks_per_node: None,
+            qos: ps.qos.clone(),
+            tmp: None,
+            extra: None,
+        })
+        .collect();
+
+    // Convert planned actions to WorkflowActionSpec
+    let actions: Vec<WorkflowActionSpec> = plan
+        .actions
+        .iter()
+        .map(|pa| {
+            let start_one_worker_per_node = if pa.start_one_worker_per_node {
+                Some(true)
+            } else {
+                None
+            };
+
+            WorkflowActionSpec {
+                trigger_type: pa.trigger_type.clone(),
+                action_type: "schedule_nodes".to_string(),
+                jobs: None,
+                job_name_regexes: pa.job_name_patterns.clone(),
+                commands: None,
+                scheduler: Some(pa.scheduler_name.clone()),
+                scheduler_type: Some("slurm".to_string()),
+                num_allocations: Some(pa.num_allocations),
+                start_one_worker_per_node,
+                max_parallel_jobs: None,
+                persistent: None,
+            }
+        })
+        .collect();
+
+    // Update workflow spec
+    spec.slurm_schedulers = Some(schedulers);
+
+    if !actions.is_empty() {
+        let mut existing_actions = spec.actions.take().unwrap_or_default();
+        existing_actions.extend(actions);
+        spec.actions = Some(existing_actions);
+    }
+
+    // Update job scheduler assignments
+    for job in &mut spec.jobs {
+        if let Some(scheduler_name) = plan.job_assignments.get(&job.name) {
+            job.scheduler = Some(scheduler_name.clone());
+        }
+    }
+}

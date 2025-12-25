@@ -29,6 +29,8 @@
     - [Server API Handler](./explanation/design/server.md)
     - [Central Database](./explanation/design/database.md)
     - [Web Dashboard](./explanation/design/dashboard.md)
+    - [Workflow Recovery](./explanation/design/recovery.md)
+    - [Workflow Graph](./explanation/design/workflow-graph.md)
 
 # How-To Guides
 

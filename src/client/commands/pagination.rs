@@ -16,6 +16,7 @@ pub mod jobs;
 pub mod resource_requirements;
 pub mod results;
 pub mod scheduled_compute_nodes;
+pub mod slurm_schedulers;
 pub mod user_data;
 pub mod utils;
 pub mod workflows;
@@ -28,6 +29,7 @@ pub use jobs::*;
 pub use resource_requirements::*;
 pub use results::*;
 pub use scheduled_compute_nodes::*;
+pub use slurm_schedulers::*;
 pub use user_data::*;
 pub use workflows::*;
 

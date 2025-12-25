@@ -17,6 +17,7 @@ pub mod job_runner;
 pub mod log_paths;
 pub mod parameter_expansion;
 pub mod resource_monitor;
+pub mod scheduler_plan;
 pub mod utils;
 pub mod workflow_graph;
 pub mod workflow_manager;

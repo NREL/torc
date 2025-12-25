@@ -3742,9 +3742,33 @@ fn test_subgraph_workflow_execution_plan_from_database() {
     .map(|r| r.items.unwrap_or_default())
     .unwrap_or_default();
 
+    let resource_requirements = default_api::list_resource_requirements(
+        &start_server.config,
+        workflow_id,
+        None, // job_id
+        None, // offset
+        None, // limit
+        None, // sort_by
+        None, // reverse_sort
+        None, // name
+        None, // memory
+        None, // num_cpus
+        None, // num_gpus
+        None, // num_nodes
+        None, // runtime
+    )
+    .map(|r| r.items.unwrap_or_default())
+    .unwrap_or_default();
+
     // Build execution plan from database models
-    let plan = ExecutionPlan::from_database_models(&workflow, &jobs, &actions, &slurm_schedulers)
-        .expect("Failed to build execution plan from database");
+    let plan = ExecutionPlan::from_database_models(
+        &workflow,
+        &jobs,
+        &actions,
+        &slurm_schedulers,
+        &resource_requirements,
+    )
+    .expect("Failed to build execution plan from database");
 
     // With the DAG structure, we have 6 events:
     // 1. start event (prep_a, prep_b)
@@ -3895,10 +3919,33 @@ fn test_subgraph_workflow_execution_plan_spec_vs_database() {
     .map(|r| r.items.unwrap_or_default())
     .unwrap_or_default();
 
+    let resource_requirements = default_api::list_resource_requirements(
+        &start_server.config,
+        workflow_id,
+        None, // job_id
+        None, // offset
+        None, // limit
+        None, // sort_by
+        None, // reverse_sort
+        None, // name
+        None, // memory
+        None, // num_cpus
+        None, // num_gpus
+        None, // num_nodes
+        None, // runtime
+    )
+    .map(|r| r.items.unwrap_or_default())
+    .unwrap_or_default();
+
     // Build execution plan from database models
-    let db_plan =
-        ExecutionPlan::from_database_models(&workflow, &jobs, &actions, &slurm_schedulers)
-            .expect("Failed to build plan from database");
+    let db_plan = ExecutionPlan::from_database_models(
+        &workflow,
+        &jobs,
+        &actions,
+        &slurm_schedulers,
+        &resource_requirements,
+    )
+    .expect("Failed to build plan from database");
 
     // Compare event counts
     assert_eq!(

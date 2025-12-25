@@ -6,8 +6,9 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::hpc::create_registry_with_config_public;
 use crate::client::commands::pagination::{
-    JobListParams, ScheduledComputeNodeListParams, WorkflowListParams, paginate_jobs,
-    paginate_scheduled_compute_nodes, paginate_workflows,
+    JobListParams, ResourceRequirementsListParams, ScheduledComputeNodeListParams,
+    SlurmSchedulersListParams, WorkflowListParams, paginate_jobs, paginate_resource_requirements,
+    paginate_scheduled_compute_nodes, paginate_slurm_schedulers, paginate_workflows,
 };
 use crate::client::commands::slurm::generate_schedulers_for_workflow;
 use crate::client::commands::{
@@ -447,27 +448,28 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
     };
 
     // Fetch slurm schedulers for this workflow
-    let slurm_schedulers = match default_api::list_slurm_schedulers(
+    let slurm_schedulers =
+        match paginate_slurm_schedulers(config, workflow_id, SlurmSchedulersListParams::new()) {
+            Ok(schedulers) => schedulers,
+            Err(e) => {
+                eprintln!(
+                    "Warning: Could not fetch slurm schedulers for workflow {}: {}",
+                    workflow_id, e
+                );
+                vec![]
+            }
+        };
+
+    // Fetch resource requirements for this workflow
+    let resource_requirements = match paginate_resource_requirements(
         config,
         workflow_id,
-        None, // offset
-        None, // limit
-        None, // sort_by
-        None, // reverse_sort
-        None, // name
-        None, // account
-        None, // gres
-        None, // mem
-        None, // nodes
-        None, // partition
-        None, // qos
-        None, // tmp
-        None, // walltime
+        ResourceRequirementsListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(rrs) => rrs,
         Err(e) => {
             eprintln!(
-                "Warning: Could not fetch slurm schedulers for workflow {}: {}",
+                "Warning: Could not fetch resource requirements for workflow {}: {}",
                 workflow_id, e
             );
             vec![]
@@ -480,6 +482,7 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
         &jobs,
         &actions,
         &slurm_schedulers,
+        &resource_requirements,
     ) {
         Ok(plan) => {
             if format == "json" {

@@ -10617,6 +10617,12 @@ pub struct WorkflowActionModel {
     #[serde(rename = "persistent")]
     #[serde(default)]
     pub persistent: bool,
+
+    /// Whether the action was created during recovery (e.g., by `torc slurm regenerate`)
+    /// Recovery actions are ephemeral and deleted when the workflow is reinitialized
+    #[serde(rename = "is_recovery")]
+    #[serde(default)]
+    pub is_recovery: bool,
 }
 
 impl WorkflowActionModel {
@@ -10640,6 +10646,7 @@ impl WorkflowActionModel {
             executed_at: None,
             executed_by: None,
             persistent: false,
+            is_recovery: false,
         }
     }
 }

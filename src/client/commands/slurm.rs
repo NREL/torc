@@ -16,8 +16,9 @@ use crate::client::commands::get_env_user_name;
 use crate::client::commands::hpc::create_registry_with_config_public;
 use crate::client::commands::pagination::{
     ComputeNodeListParams, JobListParams, ResourceRequirementsListParams, ResultListParams,
-    ScheduledComputeNodeListParams, paginate_compute_nodes, paginate_jobs,
-    paginate_resource_requirements, paginate_results, paginate_scheduled_compute_nodes,
+    ScheduledComputeNodeListParams, SlurmSchedulersListParams, paginate_compute_nodes,
+    paginate_jobs, paginate_resource_requirements, paginate_results,
+    paginate_scheduled_compute_nodes, paginate_slurm_schedulers,
 };
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
@@ -26,12 +27,9 @@ use crate::client::hpc::HpcProfile;
 use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::workflow_graph::WorkflowGraph;
 use crate::client::workflow_manager::WorkflowManager;
-use crate::client::workflow_spec::{
-    ResourceRequirementsSpec, SlurmSchedulerSpec, WorkflowActionSpec, WorkflowSpec,
-};
+use crate::client::workflow_spec::{ResourceRequirementsSpec, WorkflowSpec};
 use crate::config::TorcConfig;
 use crate::models;
-use crate::time_utils::duration_string_to_seconds;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -57,25 +55,12 @@ fn select_slurm_scheduler_interactively(
     config: &Configuration,
     workflow_id: i64,
 ) -> Result<i64, Box<dyn std::error::Error>> {
-    match default_api::list_slurm_schedulers(
+    match paginate_slurm_schedulers(
         config,
         workflow_id,
-        Some(0),  // offset
-        Some(50), // limit
-        None,     // sort_by
-        None,     // reverse_sort
-        None,     // name filter
-        None,     // account filter
-        None,     // gres filter
-        None,     // mem filter
-        None,     // nodes filter
-        None,     // partition filter
-        None,     // qos filter
-        None,     // tmp filter
-        None,     // walltime filter
+        SlurmSchedulersListParams::new().with_limit(50),
     ) {
-        Ok(response) => {
-            let schedulers = response.items.unwrap_or_default();
+        Ok(schedulers) => {
             if schedulers.is_empty() {
                 eprintln!("No Slurm schedulers found for workflow: {}", workflow_id);
                 std::process::exit(1);
@@ -376,11 +361,6 @@ pub fn secs_to_walltime(secs: u64) -> String {
     }
 }
 
-/// Generate a scheduler name from a resource requirements name
-fn scheduler_name_from_rr(rr_name: &str) -> String {
-    format!("{}_scheduler", rr_name)
-}
-
 /// Generate Slurm schedulers for a workflow spec based on resource requirements
 ///
 /// This creates one scheduler per unique resource requirement (not per job).
@@ -417,16 +397,20 @@ pub fn generate_schedulers_for_workflow(
         }
     }
 
+    use crate::client::scheduler_plan::{apply_plan_to_spec, generate_scheduler_plan};
+
     // Expand parameters before building the graph to properly detect file-based dependencies
     spec.expand_parameters()
         .map_err(|e| format!("Failed to expand parameters: {}", e))?;
 
     // Build a map of resource requirements by name
-    let rr_map: std::collections::HashMap<String, &ResourceRequirementsSpec> = spec
+    let rr_vec = spec
         .resource_requirements
         .as_ref()
-        .map(|rrs| rrs.iter().map(|rr| (rr.name.clone(), rr)).collect())
-        .unwrap_or_default();
+        .map(|v| v.as_slice())
+        .unwrap_or(&[]);
+    let rr_map: HashMap<&str, &ResourceRequirementsSpec> =
+        rr_vec.iter().map(|rr| (rr.name.as_str(), rr)).collect();
 
     if rr_map.is_empty() {
         return Err(
@@ -439,15 +423,8 @@ pub fn generate_schedulers_for_workflow(
     let graph = WorkflowGraph::from_spec(spec)
         .map_err(|e| format!("Failed to build workflow graph: {}", e))?;
 
-    let mut schedulers: Vec<SlurmSchedulerSpec> = Vec::new();
-    let mut actions: Vec<WorkflowActionSpec> = Vec::new();
+    // Check for jobs without resource requirements and collect warnings
     let mut warnings: Vec<String> = Vec::new();
-
-    // Get scheduler groups from the graph
-    // Groups jobs by (resource_requirements, has_dependencies)
-    let scheduler_groups = graph.scheduler_groups();
-
-    // Check for jobs without resource requirements
     for job in &spec.jobs {
         if job.resource_requirements.is_none() {
             warnings.push(format!(
@@ -457,172 +434,31 @@ pub fn generate_schedulers_for_workflow(
         }
     }
 
-    // Create schedulers and actions for each group
-    for group in &scheduler_groups {
-        let rr_name = &group.resource_requirements;
-        let has_deps = group.has_dependencies;
-        let rr = match rr_map.get(rr_name) {
-            Some(rr) => *rr,
-            None => {
-                return Err(format!("Resource requirements '{}' not found", rr_name));
-            }
-        };
+    // Generate the scheduler plan using shared logic
+    let plan = generate_scheduler_plan(
+        &graph,
+        &rr_map,
+        profile,
+        account,
+        single_allocation,
+        add_actions,
+        None,  // No suffix for regular generation (uses "_scheduler")
+        false, // Not a recovery scenario
+    );
 
-        // Parse resource requirements
-        let memory_mb = parse_memory_mb(&rr.memory)?;
-        let runtime_secs = duration_string_to_seconds(&rr.runtime)? as u64;
-        let gpus = if rr.num_gpus > 0 {
-            Some(rr.num_gpus as u32)
-        } else {
-            None
-        };
+    // Combine warnings
+    warnings.extend(plan.warnings.clone());
 
-        // Find best partition
-        let partition = match profile.find_best_partition(
-            rr.num_cpus as u32,
-            memory_mb,
-            runtime_secs,
-            gpus,
-        ) {
-            Some(p) => p,
-            None => {
-                warnings.push(format!(
-                    "No partition found for resource requirements '{}' (CPUs: {}, Memory: {}, Runtime: {}, GPUs: {:?})",
-                    rr_name, rr.num_cpus, rr.memory, rr.runtime, gpus
-                ));
-                continue;
-            }
-        };
-
-        // Scheduler naming: jobs with deps get "_deferred" suffix
-        let scheduler_name = if has_deps {
-            format!("{}_deferred_scheduler", rr_name)
-        } else {
-            scheduler_name_from_rr(rr_name)
-        };
-
-        // Calculate total nodes needed based on job count and partition capacity
-        // Jobs per node is the minimum of what fits by CPU, memory, and GPU constraints
-        let jobs_per_node_by_cpu = partition.cpus_per_node / rr.num_cpus as u32;
-        let jobs_per_node_by_mem = (partition.memory_mb / memory_mb) as u32;
-        let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
-            (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
-            _ => u32::MAX, // No GPU constraint
-        };
-        let jobs_per_node = std::cmp::max(
-            1,
-            std::cmp::min(
-                jobs_per_node_by_cpu,
-                std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
-            ),
-        );
-        // Total nodes needed to run all jobs concurrently (respecting num_nodes per job)
-        let nodes_per_job = rr.num_nodes as u32;
-        let total_nodes_needed =
-            ((group.job_count as u32 + jobs_per_node - 1) / jobs_per_node) * nodes_per_job;
-        let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
-
-        // Allocation strategy:
-        // - N×1 mode (default): N separate 1-node allocations, jobs start as nodes become available
-        // - 1×N mode (--single-allocation): 1 allocation with N nodes, all nodes must be available
-        let (nodes_per_alloc, effective_num_allocations) = if single_allocation {
-            // 1×N mode: single allocation with all nodes
-            (total_nodes_needed, 1i64)
-        } else {
-            // N×1 mode: many single-node allocations
-            (1i64, total_nodes_needed)
-        };
-
-        // Create scheduler for this group
-        // Use the partition's max walltime for headroom
-        let mut scheduler = SlurmSchedulerSpec {
-            name: Some(scheduler_name.clone()),
-            account: account.to_string(),
-            partition: if partition.requires_explicit_request {
-                Some(partition.name.clone())
-            } else {
-                None // Auto-routed
-            },
-            mem: Some(rr.memory.clone()),
-            walltime: secs_to_walltime(partition.max_walltime_secs),
-            nodes: nodes_per_alloc,
-            gres: None,
-            ntasks_per_node: None,
-            qos: partition.default_qos.clone(),
-            tmp: None,
-            extra: None,
-        };
-
-        // Add GPU gres if needed
-        if let Some(gpu_count) = gpus {
-            scheduler.gres = Some(format!("gpu:{}", gpu_count));
-        }
-
-        schedulers.push(scheduler);
-
-        // Create action for this scheduler
-        if add_actions {
-            // If requesting multiple nodes, start one worker per node
-            let start_one_worker_per_node = if nodes_per_alloc > 1 {
-                Some(true)
-            } else {
-                None
-            };
-
-            let (trigger_type, job_name_regexes) = if has_deps {
-                // Jobs with dependencies: trigger on_jobs_ready when they become unblocked
-                // This fires when the first job in the group becomes ready
-                ("on_jobs_ready", Some(group.job_name_patterns.clone()))
-            } else {
-                // Jobs without dependencies: trigger on_workflow_start
-                ("on_workflow_start", None)
-            };
-
-            let action = WorkflowActionSpec {
-                trigger_type: trigger_type.to_string(),
-                action_type: "schedule_nodes".to_string(),
-                jobs: None,
-                job_name_regexes,
-                commands: None,
-                scheduler: Some(scheduler_name.clone()),
-                scheduler_type: Some("slurm".to_string()),
-                num_allocations: Some(effective_num_allocations),
-                start_one_worker_per_node,
-                max_parallel_jobs: None,
-                persistent: None,
-            };
-            actions.push(action);
-        }
-    }
-
-    if schedulers.is_empty() {
+    if plan.schedulers.is_empty() {
         return Err("No schedulers could be generated. Check resource requirements.".to_string());
     }
 
-    // Update jobs to reference their scheduler based on (resource_requirement, has_dependencies)
-    for job in &mut spec.jobs {
-        if let Some(rr_name) = &job.resource_requirements {
-            let has_deps = graph.has_dependencies(&job.name);
-            let scheduler_name = if has_deps {
-                format!("{}_deferred_scheduler", rr_name)
-            } else {
-                scheduler_name_from_rr(rr_name)
-            };
-            job.scheduler = Some(scheduler_name);
-        }
-    }
-
-    // Update workflow with schedulers and actions
-    spec.slurm_schedulers = Some(schedulers);
-    if add_actions && !actions.is_empty() {
-        let mut existing_actions = spec.actions.take().unwrap_or_default();
-        existing_actions.extend(actions.clone());
-        spec.actions = Some(existing_actions);
-    }
+    // Apply the plan to the spec
+    apply_plan_to_spec(&plan, spec);
 
     Ok(GenerateResult {
-        scheduler_count: spec.slurm_schedulers.as_ref().map(|s| s.len()).unwrap_or(0),
-        action_count: actions.len(),
+        scheduler_count: plan.schedulers.len(),
+        action_count: plan.actions.len(),
         warnings,
     })
 }
@@ -872,25 +708,14 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 })
             });
 
-            match default_api::list_slurm_schedulers(
+            match paginate_slurm_schedulers(
                 config,
                 wf_id,
-                Some(*offset),
-                Some(*limit),
-                None, // sort_by
-                None, // reverse_sort
-                None, // name filter
-                None, // account filter
-                None, // gres filter
-                None, // mem filter
-                None, // nodes filter
-                None, // partition filter
-                None, // qos filter
-                None, // tmp filter
-                None, // walltime filter
+                SlurmSchedulersListParams::new()
+                    .with_offset(*offset)
+                    .with_limit(*limit),
             ) {
-                Ok(response) => {
-                    let schedulers = response.items.unwrap_or_default();
+                Ok(schedulers) => {
                     if format == "json" {
                         println!("{}", serde_json::to_string_pretty(&schedulers).unwrap());
                     } else {
@@ -2606,6 +2431,49 @@ fn handle_regenerate(
         return;
     }
 
+    let mut warnings: Vec<String> = Vec::new();
+
+    // Mark existing schedule_nodes actions as executed to prevent duplicate allocations
+    // This is critical for recovery scenarios where original actions would otherwise fire again
+    match default_api::get_workflow_actions(config, workflow_id) {
+        Ok(actions) => {
+            for action in actions {
+                // Only mark non-recovery, unexecuted schedule_nodes actions
+                if action.action_type == "schedule_nodes" && !action.is_recovery && !action.executed
+                {
+                    if let Some(action_id) = action.id {
+                        match default_api::claim_action(
+                            config,
+                            workflow_id,
+                            action_id,
+                            serde_json::json!({}),
+                        ) {
+                            Ok(_) => {
+                                info!(
+                                    "Marked action {} ({} -> schedule_nodes) as executed for recovery",
+                                    action_id, action.trigger_type
+                                );
+                            }
+                            Err(e) => {
+                                // 409 Conflict means already claimed, which is fine
+                                if !format!("{:?}", e).contains("409") {
+                                    warnings.push(format!(
+                                        "Failed to mark action {} as executed: {:?}",
+                                        action_id, e
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            // Non-fatal: we can still proceed with regeneration
+            warnings.push(format!("Failed to fetch workflow actions: {:?}", e));
+        }
+    }
+
     // Fetch all resource requirements for the workflow
     let resource_requirements = match paginate_resource_requirements(
         config,
@@ -2619,36 +2487,15 @@ fn handle_regenerate(
         }
     };
 
-    // Build a map of resource requirement ID -> model
-    let rr_map: HashMap<i64, &models::ResourceRequirementsModel> = resource_requirements
-        .iter()
-        .filter_map(|rr| rr.id.map(|id| (id, rr)))
-        .collect();
-
     // Get existing schedulers to use as defaults
-    let existing_schedulers = match default_api::list_slurm_schedulers(
-        config,
-        workflow_id,
-        Some(0),
-        Some(100),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-    ) {
-        Ok(response) => response.items.unwrap_or_default(),
-        Err(e) => {
-            print_error("listing existing schedulers", &e);
-            std::process::exit(1);
-        }
-    };
+    let existing_schedulers =
+        match paginate_slurm_schedulers(config, workflow_id, SlurmSchedulersListParams::new()) {
+            Ok(schedulers) => schedulers,
+            Err(e) => {
+                print_error("listing existing schedulers", &e);
+                std::process::exit(1);
+            }
+        };
 
     // Determine account to use
     let account_to_use = account
@@ -2660,14 +2507,21 @@ fn handle_regenerate(
             std::process::exit(1);
         });
 
-    // Group jobs by resource requirements
-    let mut jobs_by_rr: HashMap<i64, Vec<&models::JobModel>> = HashMap::new();
-    let mut warnings: Vec<String> = Vec::new();
+    use crate::client::scheduler_plan::generate_scheduler_plan;
 
+    // Build WorkflowGraph from pending jobs for proper dependency-aware grouping
+    // This aligns with create-slurm's behavior of separating jobs by (rr, has_dependencies)
+    let graph = match WorkflowGraph::from_jobs(&pending_jobs, &resource_requirements) {
+        Ok(g) => g,
+        Err(e) => {
+            eprintln!("Failed to build workflow graph: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Warn about jobs without resource requirements
     for job in &pending_jobs {
-        if let Some(rr_id) = job.resource_requirements_id {
-            jobs_by_rr.entry(rr_id).or_default().push(job);
-        } else {
+        if job.resource_requirements_id.is_none() {
             warnings.push(format!(
                 "Job '{}' (ID: {}) has no resource requirements, skipping",
                 job.name,
@@ -2676,7 +2530,29 @@ fn handle_regenerate(
         }
     }
 
-    if jobs_by_rr.is_empty() {
+    // Build a map of RR name -> RR model for lookups
+    let rr_name_to_model: HashMap<&str, &models::ResourceRequirementsModel> = resource_requirements
+        .iter()
+        .map(|rr| (rr.name.as_str(), rr))
+        .collect();
+
+    // Generate scheduler plan using shared logic
+    let timestamp = Utc::now().format("%Y%m%d_%H%M%S").to_string();
+    let plan = generate_scheduler_plan(
+        &graph,
+        &rr_name_to_model,
+        profile,
+        &account_to_use,
+        single_allocation,
+        true, // add_actions (we'll create them as recovery actions)
+        Some(&format!("regen_{}", timestamp)),
+        true, // is_recovery
+    );
+
+    // Combine warnings from planning
+    warnings.extend(plan.warnings.clone());
+
+    if plan.schedulers.is_empty() {
         if format == "json" {
             println!(
                 "{}",
@@ -2699,117 +2575,26 @@ fn handle_regenerate(
         return;
     }
 
-    // Generate schedulers for each resource requirement group
+    // Apply plan to database: create schedulers and track IDs
     let mut schedulers_created: Vec<SchedulerInfo> = Vec::new();
     let mut total_allocations: i64 = 0;
-    let timestamp = Utc::now().format("%Y%m%d_%H%M%S");
+    // Maps scheduler name -> (scheduler_id, start_one_worker_per_node)
+    let mut scheduler_name_to_info: HashMap<String, (i64, bool)> = HashMap::new();
 
-    for (rr_id, jobs) in &jobs_by_rr {
-        let rr = match rr_map.get(rr_id) {
-            Some(rr) => *rr,
-            None => {
-                warnings.push(format!(
-                    "Resource requirements ID {} not found, skipping {} job(s)",
-                    rr_id,
-                    jobs.len()
-                ));
-                continue;
-            }
-        };
-
-        // Parse resource requirements
-        let memory_mb = match parse_memory_mb(&rr.memory) {
-            Ok(m) => m,
-            Err(e) => {
-                warnings.push(format!(
-                    "Failed to parse memory '{}' for RR {}: {}",
-                    rr.memory, rr_id, e
-                ));
-                continue;
-            }
-        };
-
-        let runtime_secs = match duration_string_to_seconds(&rr.runtime) {
-            Ok(s) => s as u64,
-            Err(e) => {
-                warnings.push(format!(
-                    "Failed to parse runtime '{}' for RR {}: {}",
-                    rr.runtime, rr_id, e
-                ));
-                continue;
-            }
-        };
-
-        let gpus = if rr.num_gpus > 0 {
-            Some(rr.num_gpus as u32)
-        } else {
-            None
-        };
-
-        // Find best partition
-        let partition = match profile.find_best_partition(
-            rr.num_cpus as u32,
-            memory_mb,
-            runtime_secs,
-            gpus,
-        ) {
-            Some(p) => p,
-            None => {
-                warnings.push(format!(
-                    "No partition found for resource requirements '{}' (CPUs: {}, Memory: {}, Runtime: {}, GPUs: {:?})",
-                    rr.name, rr.num_cpus, rr.memory, rr.runtime, gpus
-                ));
-                continue;
-            }
-        };
-
-        // Calculate jobs per node and total nodes needed
-        let jobs_per_node_by_cpu = partition.cpus_per_node / rr.num_cpus as u32;
-        let jobs_per_node_by_mem = (partition.memory_mb / memory_mb) as u32;
-        let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
-            (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
-            _ => u32::MAX,
-        };
-        let jobs_per_node = std::cmp::max(
-            1,
-            std::cmp::min(
-                jobs_per_node_by_cpu,
-                std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
-            ),
-        );
-
-        let nodes_per_job = rr.num_nodes as u32;
-        let total_nodes_needed =
-            ((jobs.len() as u32 + jobs_per_node - 1) / jobs_per_node) * nodes_per_job;
-        let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
-
-        // Allocation strategy
-        let (nodes_per_alloc, num_allocations) = if single_allocation {
-            (total_nodes_needed, 1i64)
-        } else {
-            (1i64, total_nodes_needed)
-        };
-
-        // Create scheduler name with timestamp to avoid conflicts
-        let scheduler_name = format!("{}_regen_{}", rr.name, timestamp);
-
+    for planned in &plan.schedulers {
         // Create the scheduler in the database
         let scheduler = models::SlurmSchedulerModel {
             id: None,
             workflow_id,
-            name: Some(scheduler_name.clone()),
-            account: account_to_use.clone(),
-            partition: if partition.requires_explicit_request {
-                Some(partition.name.clone())
-            } else {
-                None
-            },
-            mem: Some(rr.memory.clone()),
-            walltime: secs_to_walltime(partition.max_walltime_secs),
-            nodes: nodes_per_alloc,
-            gres: gpus.map(|g| format!("gpu:{}", g)),
+            name: Some(planned.name.clone()),
+            account: planned.account.clone(),
+            partition: planned.partition.clone(),
+            mem: planned.mem.clone(),
+            walltime: planned.walltime.clone(),
+            nodes: planned.nodes,
+            gres: planned.gres.clone(),
             ntasks_per_node: None,
-            qos: partition.default_qos.clone(),
+            qos: planned.qos.clone(),
             tmp: None,
             extra: None,
         };
@@ -2823,34 +2608,111 @@ fn handle_regenerate(
         };
 
         let scheduler_id = created_scheduler.id.unwrap_or(-1);
+        let start_one_worker_per_node = planned.nodes > 1;
+
+        scheduler_name_to_info.insert(
+            planned.name.clone(),
+            (scheduler_id, start_one_worker_per_node),
+        );
 
         schedulers_created.push(SchedulerInfo {
             id: scheduler_id,
-            name: scheduler_name.clone(),
-            account: account_to_use.clone(),
+            name: planned.name.clone(),
+            account: planned.account.clone(),
             partition: created_scheduler.partition.clone(),
             walltime: created_scheduler.walltime.clone(),
-            nodes: nodes_per_alloc,
-            num_allocations,
-            job_count: jobs.len(),
+            nodes: planned.nodes,
+            num_allocations: planned.num_allocations,
+            job_count: planned.job_count,
         });
 
-        total_allocations += num_allocations;
+        total_allocations += planned.num_allocations;
 
-        // Update jobs to reference this scheduler
-        for job in jobs {
-            if let Some(job_id) = job.id {
-                let mut updated_job = (*job).clone();
-                updated_job.scheduler_id = Some(scheduler_id);
-                // Clear status so server ignores it during comparison
-                // (avoids 422 errors if status changed since job was fetched)
-                updated_job.status = None;
-                if let Err(e) = default_api::update_job(config, job_id, updated_job) {
-                    warnings.push(format!(
-                        "Failed to update job {} with scheduler: {}",
-                        job_id, e
-                    ));
+        // Update jobs in this group to reference this scheduler
+        for job_name in &planned.job_names {
+            if let Some(job) = pending_jobs.iter().find(|j| &j.name == job_name) {
+                if let Some(job_id) = job.id {
+                    let mut updated_job = job.clone();
+                    updated_job.scheduler_id = Some(scheduler_id);
+                    // Clear status so server ignores it during comparison
+                    updated_job.status = None;
+                    if let Err(e) = default_api::update_job(config, job_id, updated_job) {
+                        warnings.push(format!(
+                            "Failed to update job {} with scheduler: {}",
+                            job_id, e
+                        ));
+                    }
                 }
+            }
+        }
+    }
+
+    // Create recovery actions for deferred groups (from planned actions with is_recovery=true)
+    for action in &plan.actions {
+        if !action.is_recovery {
+            continue; // Skip non-recovery actions
+        }
+
+        let (scheduler_id, start_one_worker_per_node) =
+            match scheduler_name_to_info.get(&action.scheduler_name) {
+                Some(info) => *info,
+                None => continue,
+            };
+
+        // Get job IDs for this action's jobs
+        let job_ids: Vec<i64> = action
+            .job_name_patterns
+            .as_ref()
+            .map(|patterns| {
+                pending_jobs
+                    .iter()
+                    .filter(|j| {
+                        patterns.iter().any(|p| {
+                            regex::Regex::new(p)
+                                .map(|re| re.is_match(&j.name))
+                                .unwrap_or(false)
+                        })
+                    })
+                    .filter_map(|j| j.id)
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        if job_ids.is_empty() {
+            continue;
+        }
+
+        let action_config = serde_json::json!({
+            "scheduler_type": "slurm",
+            "scheduler_id": scheduler_id,
+            "num_allocations": action.num_allocations,
+            "start_one_worker_per_node": start_one_worker_per_node,
+        });
+
+        let action_body = serde_json::json!({
+            "workflow_id": workflow_id,
+            "trigger_type": "on_jobs_ready",
+            "action_type": "schedule_nodes",
+            "action_config": action_config,
+            "job_ids": job_ids,
+            "persistent": false,
+            "is_recovery": true,
+        });
+
+        match default_api::create_workflow_action(config, workflow_id, action_body) {
+            Ok(created_action) => {
+                info!(
+                    "Created recovery action {} for {} deferred jobs using scheduler {}",
+                    created_action.id.unwrap_or(-1),
+                    job_ids.len(),
+                    scheduler_id
+                );
+            }
+            Err(e) => {
+                warnings.push(format!(
+                    "Failed to create recovery action for scheduler {}: {:?}",
+                    scheduler_id, e
+                ));
             }
         }
     }
