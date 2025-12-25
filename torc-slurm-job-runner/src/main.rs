@@ -265,21 +265,35 @@ mod unix_main {
 
         let job_runner_result = job_runner.run_worker();
 
-        // Capture dmesg output before exiting - may contain useful debug info if any job failed
-        let dmesg_path = get_slurm_dmesg_log_file(
-            args.output_dir.clone(),
-            &job_id,
-            &node_id,
-            task_pid as usize,
-        );
-        utils::capture_dmesg(std::path::Path::new(&dmesg_path));
+        match &job_runner_result {
+            Ok(result) => {
+                info!(
+                    "JobRunner completed successfully (had_failures={}, had_terminations={})",
+                    result.had_failures, result.had_terminations
+                );
 
-        match job_runner_result {
-            Ok(_) => {
-                info!("JobRunner completed successfully");
+                // Only capture dmesg output if there were failures or terminations
+                if result.had_failures || result.had_terminations {
+                    info!("Capturing dmesg output due to job failures or terminations");
+                    let dmesg_path = get_slurm_dmesg_log_file(
+                        args.output_dir.clone(),
+                        &job_id,
+                        &node_id,
+                        task_pid as usize,
+                    );
+                    utils::capture_dmesg(std::path::Path::new(&dmesg_path));
+                }
             }
             Err(e) => {
                 error!("JobRunner::run_worker failed: {}", e);
+                // Capture dmesg on error as well
+                let dmesg_path = get_slurm_dmesg_log_file(
+                    args.output_dir.clone(),
+                    &job_id,
+                    &node_id,
+                    task_pid as usize,
+                );
+                utils::capture_dmesg(std::path::Path::new(&dmesg_path));
                 std::process::exit(1);
             }
         }

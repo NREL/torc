@@ -79,11 +79,20 @@ use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
 use crate::config::TorcConfig;
 use crate::models::{
-    ClaimJobsSortMethod, ComputeNodesResources, ResourceRequirementsModel, ResultModel,
+    ClaimJobsSortMethod, ComputeNodesResources, JobStatus, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
 };
 
 const GB: i64 = 1024 * 1024 * 1024;
+
+/// Result of running the job worker, indicating whether any jobs failed or were terminated.
+#[derive(Debug, Default, Clone)]
+pub struct WorkerResult {
+    /// True if any job failed during execution
+    pub had_failures: bool,
+    /// True if any job was terminated (e.g., due to SIGTERM or time limit)
+    pub had_terminations: bool,
+}
 
 // Cache for memory string to GB conversions
 thread_local! {
@@ -136,6 +145,10 @@ pub struct JobRunner {
     /// Uses std::time::Instant instead of wall clock time to avoid issues with
     /// NTP clock adjustments that could cause premature idle timeout exits.
     last_job_claimed_time: Option<Instant>,
+    /// Tracks whether any job failed during this run
+    had_failures: bool,
+    /// Tracks whether any job was terminated during this run
+    had_terminations: bool,
 }
 
 impl JobRunner {
@@ -230,6 +243,8 @@ impl JobRunner {
             resource_monitor,
             termination_requested: Arc::new(AtomicBool::new(false)),
             last_job_claimed_time: None,
+            had_failures: false,
+            had_terminations: false,
         }
     }
 
@@ -276,7 +291,7 @@ impl JobRunner {
         self.termination_requested.store(true, Ordering::SeqCst);
     }
 
-    pub fn run_worker(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_worker(&mut self) -> Result<WorkerResult, Box<dyn std::error::Error>> {
         let version = env!("CARGO_PKG_VERSION");
         let hostname = hostname::get()
             .expect("Failed to get hostname")
@@ -421,8 +436,14 @@ impl JobRunner {
             monitor.shutdown();
         }
 
-        info!("Job runner completed for workflow ID: {}", self.workflow_id);
-        Ok(())
+        info!(
+            "Job runner completed for workflow ID: {} (had_failures={}, had_terminations={})",
+            self.workflow_id, self.had_failures, self.had_terminations
+        );
+        Ok(WorkerResult {
+            had_failures: self.had_failures,
+            had_terminations: self.had_terminations,
+        })
     }
 
     /// Cancel all running jobs and handle completions.
@@ -710,6 +731,13 @@ impl JobRunner {
     }
 
     fn handle_job_completion(&mut self, job_id: i64, result: ResultModel) {
+        // Track failures and terminations
+        match result.status {
+            JobStatus::Failed => self.had_failures = true,
+            JobStatus::Terminated => self.had_terminations = true,
+            _ => {}
+        }
+
         match utils::send_with_retries(
             &self.config,
             || {
@@ -724,7 +752,10 @@ impl JobRunner {
             self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(_) => {
-                info!("Successfully completed job {}", job_id);
+                info!(
+                    "Successfully completed job {} with status {:?}",
+                    job_id, result.status
+                );
                 if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
                     self.increment_resources(&job_rr);
                 }

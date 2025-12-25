@@ -2709,7 +2709,6 @@ pub struct JobModel {
 
     /// Optional database ID of scheduler needed by this job
     #[serde(rename = "scheduler_id")]
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub scheduler_id: Option<i64>,
 }
 
