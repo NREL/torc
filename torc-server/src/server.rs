@@ -337,11 +337,11 @@ where
     let mut tx = match server.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
-            error!(
+            debug!(
                 "Failed to begin transaction for workflow {}: {}",
                 workflow_id, e
             );
-            return Err(ApiError("Database error".to_string()));
+            return Err(ApiError(format!("Database error: {}", e)));
         }
     };
 
@@ -367,11 +367,11 @@ where
     {
         Ok(jobs) => jobs,
         Err(e) => {
-            error!(
+            debug!(
                 "Database error fetching completed jobs for workflow {}: {}",
                 workflow_id, e
             );
-            return Err(ApiError("Database error".to_string()));
+            return Err(ApiError(format!("Database error: {}", e)));
         }
     };
 
@@ -402,7 +402,7 @@ where
                 all_ready_job_ids.extend(ready_job_ids);
             }
             Err(e) => {
-                error!(
+                debug!(
                     "Error unblocking jobs for completed job {} in workflow {}: {}",
                     job.id, workflow_id, e
                 );
@@ -428,20 +428,20 @@ where
     );
 
     if let Err(e) = sqlx::query(&sql).execute(&mut *tx).await {
-        error!(
+        debug!(
             "Database error marking jobs as processed for workflow {}: {}",
             workflow_id, e
         );
-        return Err(ApiError("Database error".to_string()));
+        return Err(ApiError(format!("Database error: {}", e)));
     }
 
     // Commit the transaction
     if let Err(e) = tx.commit().await {
-        error!(
+        debug!(
             "Failed to commit transaction for workflow {}: {}",
             workflow_id, e
         );
-        return Err(ApiError("Database error".to_string()));
+        return Err(ApiError(format!("Database error: {}", e)));
     }
 
     info!(
