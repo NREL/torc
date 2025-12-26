@@ -388,6 +388,26 @@ where
         workflow_id
     );
 
+    // Check if any job in this batch failed
+    let batch_has_failures = completed_jobs.iter().any(|j| j.return_code != 0);
+
+    // Check if we've seen failures before for this workflow (from previous batches)
+    let workflow_has_prior_failures = server
+        .workflows_with_failures
+        .read()
+        .map(|set| set.contains(&workflow_id))
+        .unwrap_or(true); // Assume failures on lock error
+
+    // If this batch has failures, record it for future batches
+    if batch_has_failures {
+        if let Ok(mut set) = server.workflows_with_failures.write() {
+            set.insert(workflow_id);
+        }
+    }
+
+    // Combine: workflow has failures if either this batch or prior batches had failures
+    let workflow_has_failures = batch_has_failures || workflow_has_prior_failures;
+
     // Track all jobs that become ready for action triggering
     let mut all_ready_job_ids = Vec::new();
 
@@ -398,6 +418,7 @@ where
             workflow_id,
             job.id,
             job.return_code,
+            workflow_has_failures,
         )
         .await
         {
@@ -490,6 +511,10 @@ pub struct Server<C> {
     /// Timestamp (Unix millis) of the last job completion. Used by the background
     /// unblock task to skip processing when no new completions have occurred.
     last_completion_time: Arc<AtomicU64>,
+    /// Tracks workflows that have had job failures in the current run.
+    /// Used to skip expensive cancellation queries when all jobs succeed.
+    /// Cleared when a workflow is reset/restarted.
+    workflows_with_failures: Arc<std::sync::RwLock<std::collections::HashSet<i64>>>,
     compute_nodes_api: ComputeNodesApiImpl,
     events_api: EventsApiImpl,
     files_api: FilesApiImpl,
@@ -513,6 +538,9 @@ impl<C> Server<C> {
             // Initialize to 1 so the background task runs at least once on startup
             // to process any completions that happened while server was down
             last_completion_time: Arc::new(AtomicU64::new(1)),
+            workflows_with_failures: Arc::new(std::sync::RwLock::new(
+                std::collections::HashSet::new(),
+            )),
             compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
             events_api: EventsApiImpl::new(api_context.clone()),
             files_api: FilesApiImpl::new(api_context.clone()),
@@ -1147,6 +1175,7 @@ impl<C> Server<C> {
     /// * `tx` - The database transaction to use
     /// * `workflow_id` - The workflow ID containing the jobs
     /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_has_failures` - Whether any job in this workflow has failed (from in-memory tracking)
     ///
     /// # Returns
     /// * `Ok(Vec<i64>)` - IDs of jobs that became ready
@@ -1155,6 +1184,7 @@ impl<C> Server<C> {
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         workflow_id: i64,
         completed_job_id: i64,
+        workflow_has_failures: bool,
     ) -> Result<Vec<i64>, ApiError> {
         let completed_status = models::JobStatus::Completed.to_int();
         let failed_status = models::JobStatus::Failed.to_int();
@@ -1163,36 +1193,9 @@ impl<C> Server<C> {
         let ready_status = models::JobStatus::Ready.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
 
-        // Quick pre-check: Are there ANY failed/canceled/terminated jobs in this workflow?
-        // If not, skip the expensive cancellation query entirely.
-        // This is critical for workflows where all jobs succeed.
-        let has_failed_jobs = match sqlx::query!(
-            r#"
-            SELECT EXISTS (
-                SELECT 1
-                FROM job
-                WHERE workflow_id = ?
-                AND status IN (?, ?, ?)
-            ) as has_failed
-            "#,
-            workflow_id,
-            failed_status,
-            canceled_status,
-            terminated_status
-        )
-        .fetch_one(&mut **tx)
-        .await
-        {
-            Ok(row) => row.has_failed != 0,
-            Err(e) => {
-                debug!("Failed jobs pre-check failed: {}", e);
-                // If pre-check fails, fall through to cancellation query
-                true
-            }
-        };
-
-        // Only run the expensive cancellation query if there are failed jobs
-        if has_failed_jobs {
+        // Only run the expensive cancellation query if we know there are failed jobs.
+        // The workflow_has_failures flag is tracked in memory to avoid database queries.
+        if workflow_has_failures {
             let _canceled = sqlx::query!(
                 r#"
                 UPDATE job
@@ -1518,6 +1521,7 @@ impl<C> Server<C> {
     /// * `completed_job_id` - The ID of the job that just completed
     /// * `workflow_id` - The workflow ID containing the jobs
     /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    /// * `workflow_has_failures` - Whether any job in this workflow has failed (used to skip cancellation checks)
     ///
     /// # Returns
     /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
@@ -1527,10 +1531,11 @@ impl<C> Server<C> {
         workflow_id: i64,
         completed_job_id: i64,
         return_code: i64,
+        workflow_has_failures: bool,
     ) -> Result<Vec<i64>, ApiError> {
         debug!(
-            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={}",
-            completed_job_id, workflow_id, return_code
+            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={} workflow_has_failures={}",
+            completed_job_id, workflow_id, return_code, workflow_has_failures
         );
 
         let completed_status = models::JobStatus::Completed.to_int();
@@ -1593,7 +1598,13 @@ impl<C> Server<C> {
         // Dispatch to appropriate path based on return code
         if return_code == 0 {
             // Fast path for successful completions: uses bulk updates
-            Self::unblock_jobs_fast_path_tx(tx, workflow_id, completed_job_id).await
+            Self::unblock_jobs_fast_path_tx(
+                tx,
+                workflow_id,
+                completed_job_id,
+                workflow_has_failures,
+            )
+            .await
         } else {
             // Slow path for failed completions: uses recursive CTE for cascading cancellations
             Self::unblock_jobs_slow_path_tx(tx, workflow_id, completed_job_id).await
@@ -1631,9 +1642,16 @@ impl<C> Server<C> {
         };
 
         // Call the transaction-based helper
-        let ready_job_ids =
-            Self::unblock_jobs_waiting_for_tx(&mut tx, workflow_id, completed_job_id, return_code)
-                .await?;
+        // Pass true for workflow_has_failures since this codepath doesn't have access to
+        // in-memory failure tracking (used outside background batch processing)
+        let ready_job_ids = Self::unblock_jobs_waiting_for_tx(
+            &mut tx,
+            workflow_id,
+            completed_job_id,
+            return_code,
+            true, // Conservative: assume failures possible, let DB pre-check optimize
+        )
+        .await?;
 
         // Commit the transaction
         if let Err(e) = tx.commit().await {
@@ -3035,6 +3053,11 @@ where
             context.get().0.clone()
         );
 
+        // Clear in-memory failure tracking for this workflow when (re)initializing
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
+
         // Begin a transaction to ensure all initialization steps are atomic
         let mut tx = match self.pool.begin().await {
             Ok(tx) => tx,
@@ -3467,6 +3490,13 @@ where
         body: models::WorkflowStatusModel,
         context: &C,
     ) -> Result<UpdateWorkflowStatusResponse, ApiError> {
+        // Clear in-memory failure tracking when workflow is being archived
+        if body.is_archived == Some(true) {
+            if let Ok(mut set) = self.workflows_with_failures.write() {
+                set.remove(&id);
+            }
+        }
+
         self.workflows_api
             .update_workflow_status(id, body, context)
             .await
@@ -3913,6 +3943,11 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<DeleteWorkflowResponse, ApiError> {
+        // Clear in-memory failure tracking for this workflow
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
+
         self.workflows_api.delete_workflow(id, body, context).await
     }
 
@@ -3954,6 +3989,11 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ResetWorkflowStatusResponse, ApiError> {
+        // Clear in-memory failure tracking for this workflow
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
+
         // TODO: don't allow this if any nodes are scheduled
         self.workflows_api
             .reset_workflow_status(id, force, body, context)
