@@ -70,6 +70,7 @@ pub enum ReportCommands {
         #[arg(short, long)]
         all: bool,
         /// Include failed and terminated jobs in the analysis (for recovery diagnostics)
+        /// Include failed and terminated jobs in the analysis (for recovery diagnostics)
         #[arg(long)]
         include_failed: bool,
     },

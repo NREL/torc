@@ -55,6 +55,7 @@ torc watch 42 --recover \
   --runtime-multiplier 2.0 \  # Runtime increase factor (default: 1.5)
   --retry-unknown \           # Also retry jobs with unknown failures (default: skip)
   --recovery-hook "bash fix.sh" \  # Custom recovery script for unknown failures
+  --recovery-hook "bash fix.sh" \  # Custom recovery script for unknown failures
   --poll-interval 120 \       # Seconds between status checks (default: 60)
   --output-dir /scratch/output \
   --show-job-counts \         # Display per-status job counts (optional, adds server load)
