@@ -235,7 +235,8 @@ class TestFileCRUD:
         mtime = test_file.stat().st_mtime
         file.st_mtime = mtime
         updated = api_client.update_file(file.id, file)
-        assert updated.st_mtime == mtime
+        # Use approx comparison due to floating-point precision loss in JSON serialization
+        assert updated.st_mtime == pytest.approx(mtime)
 
     def test_delete_file(self, api_client, test_workflow, tmp_path):
         """Test deleting a file."""
