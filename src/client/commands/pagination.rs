@@ -4,11 +4,18 @@
 //! 1. **Lazy iteration** using `iter_*` functions - memory efficient, items are fetched on-demand
 //! 2. **Vector collection** using `paginate_*` functions - collects all items into a Vec
 //!
+//! # Generic Framework
+//!
+//! The `base` module provides a trait-based generic pagination framework.
+//! New resource types can implement the `Paginatable` trait to get
+//! automatic pagination support.
+//!
 //! # Simple Iteration APIs
 //!
 //! The main APIs provide simple, clean interfaces for iterating over jobs, files, events, results, user data, resource requirements, and workflows:
 //!
 
+pub mod base;
 pub mod compute_nodes;
 pub mod events;
 pub mod files;

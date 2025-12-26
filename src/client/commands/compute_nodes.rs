@@ -1,11 +1,11 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::{print_if_json, print_json};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -96,14 +96,8 @@ pub fn handle_compute_node_commands(
     match command {
         ComputeNodeCommands::Get { id } => match default_api::get_compute_node(config, *id) {
             Ok(node) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&node) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing compute node to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &node, "compute node") {
+                    // JSON was printed
                 } else {
                     println!("Compute Node Details:");
                     println!("  ID: {}", node.id.unwrap_or(-1));
@@ -171,13 +165,7 @@ pub fn handle_compute_node_commands(
                             "items": nodes,
                             "total_count": response.total_count,
                         });
-                        match serde_json::to_string_pretty(&json_output) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing compute nodes to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json(&json_output, "compute nodes");
                     } else if nodes.is_empty() {
                         println!(
                             "No compute nodes found for workflow {}",

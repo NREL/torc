@@ -1,11 +1,11 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::print_if_json;
 use crate::client::commands::{
     pagination, print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 /// Format memory bytes into a human-readable string
@@ -293,14 +293,8 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
         }
         ResultCommands::Get { id } => match default_api::get_result(config, *id) {
             Ok(result) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&result) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing result to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &result, "result") {
+                    // JSON was printed
                 } else {
                     println!("Result ID {}:", id);
                     println!("  Job ID: {}", result.job_id);
@@ -343,14 +337,8 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
         },
         ResultCommands::Delete { id } => match default_api::delete_result(config, *id, None) {
             Ok(removed_result) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_result) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing result to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_result, "result") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed result:");
                     println!("  ID: {}", removed_result.id.unwrap_or(-1));

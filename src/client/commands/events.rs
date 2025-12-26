@@ -4,7 +4,7 @@ use std::time::{Duration as StdDuration, Instant};
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
-use crate::client::commands::pagination::utils::display_json_results;
+use crate::client::commands::output::{print_if_json, print_json, print_json_wrapped};
 use crate::client::commands::pagination::{EventListParams, paginate_events};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
@@ -118,14 +118,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
 
             match default_api::create_event(config, event) {
                 Ok(created_event) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_event) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing event to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_event, "event") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created event:");
                         println!("  ID: {}", created_event.id.unwrap_or(-1));
@@ -178,13 +172,7 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
             match paginate_events(config, selected_workflow_id as i64, params) {
                 Ok(events) => {
                     if format == "json" {
-                        match display_json_results("events", &events) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing events to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json_wrapped("events", &events, "events");
                     } else if events.is_empty() {
                         println!("No events found for workflow {}", selected_workflow_id);
                     } else {
@@ -248,14 +236,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 Ok(response) => {
                     if let Some(events) = response.items {
                         if let Some(latest_event) = events.first() {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&latest_event) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing event to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &latest_event, "event") {
+                                // JSON was printed
                             } else {
                                 println!("Latest event for workflow {}:", selected_workflow_id);
                                 println!("  ID: {}", latest_event.id.unwrap_or(-1));
@@ -284,14 +266,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         }
         EventCommands::Delete { id } => match default_api::delete_event(config, *id, None) {
             Ok(removed_event) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_event) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing event to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_event, "event") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed event:");
                     println!("  ID: {}", removed_event.id.unwrap_or(-1));
@@ -393,12 +369,7 @@ fn handle_monitor_events(
                     // Process new events
                     for event in &events {
                         if format == "json" {
-                            match serde_json::to_string(&event) {
-                                Ok(json) => println!("{}", json),
-                                Err(e) => {
-                                    eprintln!("Error serializing event to JSON: {}", e);
-                                }
-                            }
+                            print_json(&event, "event");
                         } else {
                             println!(
                                 "[{}] Event ID {}: {}",

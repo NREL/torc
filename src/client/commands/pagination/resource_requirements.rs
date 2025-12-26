@@ -1,38 +1,51 @@
 //! Resource requirements pagination functionality.
 //!
-//! This module provides lazy iteration and vector collection support for resource requirements.
-//! It includes both simple iterators that work with the real API and mock iterators
-//! for testing purposes.
+//! This module provides lazy iteration and vector collection support for resource requirements
+//! using the generic pagination framework.
 
 use crate::client::apis;
-use crate::models::*;
+use crate::client::commands::pagination::base::{
+    Paginatable, PaginatedIterator, PaginatedResponse, PaginationParams,
+};
+use crate::models::ResourceRequirementsModel;
 
 /// Parameters for listing resource requirements with default values and builder methods.
-///
-/// This struct provides a clean way to specify filtering and pagination
-/// parameters for resource requirement queries. All fields have sensible defaults:
-/// - `offset` defaults to 0 (start from beginning)
-/// - All other fields default to `None` (no filtering)
-///
 #[derive(Debug, Clone, Default)]
 pub struct ResourceRequirementsListParams {
+    /// Workflow ID to list resource requirements from
+    pub workflow_id: i64,
+    /// Filter by job ID
     pub job_id: Option<i64>,
+    /// Pagination offset
     pub offset: i64,
+    /// Maximum number of records to return
     pub limit: Option<i64>,
+    /// Field to sort by
     pub sort_by: Option<String>,
+    /// Reverse sort order
     pub reverse_sort: Option<bool>,
+    /// Filter by name
     pub name: Option<String>,
+    /// Filter by memory
     pub memory: Option<String>,
+    /// Filter by number of CPUs
     pub num_cpus: Option<i64>,
+    /// Filter by number of GPUs
     pub num_gpus: Option<i64>,
+    /// Filter by number of nodes
     pub num_nodes: Option<i64>,
+    /// Filter by runtime
     pub runtime: Option<String>,
 }
 
-// Builder methods for ResourceRequirementsListParams
 impl ResourceRequirementsListParams {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn with_job_id(mut self, job_id: i64) -> Self {
+        self.job_id = Some(job_id);
+        self
     }
 
     pub fn with_offset(mut self, offset: i64) -> Self {
@@ -54,150 +67,123 @@ impl ResourceRequirementsListParams {
         self.reverse_sort = Some(reverse);
         self
     }
-}
 
-/// Iterator for resource requirements with lazy pagination
-pub struct ResourceRequirementsIterator {
-    config: apis::configuration::Configuration,
-    workflow_id: i64,
-    params: ResourceRequirementsListParams,
-    remaining_limit: i64,
-    initial_limit: i64,
-    current_page: std::vec::IntoIter<ResourceRequirementsModel>,
-    finished: bool,
-}
-
-impl ResourceRequirementsIterator {
-    pub fn new(
-        config: apis::configuration::Configuration,
-        workflow_id: i64,
-        params: ResourceRequirementsListParams,
-        initial_limit: Option<i64>,
-    ) -> Self {
-        let remaining_limit = params.limit.unwrap_or(i64::MAX);
-        Self {
-            config,
-            workflow_id,
-            params,
-            remaining_limit,
-            initial_limit: initial_limit.unwrap_or(1000),
-            current_page: Vec::new().into_iter(),
-            finished: false,
-        }
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
     }
 
-    fn fetch_next_page(
-        &mut self,
-    ) -> Result<bool, apis::Error<apis::default_api::ListResourceRequirementsError>> {
-        if self.finished || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0) {
-            return Ok(false);
-        }
+    pub fn with_memory(mut self, memory: String) -> Self {
+        self.memory = Some(memory);
+        self
+    }
 
-        let page_limit = std::cmp::min(self.remaining_limit, self.initial_limit);
+    pub fn with_num_cpus(mut self, num_cpus: i64) -> Self {
+        self.num_cpus = Some(num_cpus);
+        self
+    }
+
+    pub fn with_num_gpus(mut self, num_gpus: i64) -> Self {
+        self.num_gpus = Some(num_gpus);
+        self
+    }
+
+    pub fn with_num_nodes(mut self, num_nodes: i64) -> Self {
+        self.num_nodes = Some(num_nodes);
+        self
+    }
+
+    pub fn with_runtime(mut self, runtime: String) -> Self {
+        self.runtime = Some(runtime);
+        self
+    }
+}
+
+impl PaginationParams for ResourceRequirementsListParams {
+    fn offset(&self) -> i64 {
+        self.offset
+    }
+
+    fn set_offset(&mut self, offset: i64) {
+        self.offset = offset;
+    }
+
+    fn limit(&self) -> Option<i64> {
+        self.limit
+    }
+
+    fn sort_by(&self) -> Option<&str> {
+        self.sort_by.as_deref()
+    }
+
+    fn reverse_sort(&self) -> Option<bool> {
+        self.reverse_sort
+    }
+}
+
+impl Paginatable for ResourceRequirementsModel {
+    type ListError = apis::default_api::ListResourceRequirementsError;
+    type Params = ResourceRequirementsListParams;
+
+    fn fetch_page(
+        config: &apis::configuration::Configuration,
+        params: &Self::Params,
+        limit: i64,
+    ) -> Result<PaginatedResponse<Self>, apis::Error<Self::ListError>> {
         let response = apis::default_api::list_resource_requirements(
-            &self.config,
-            self.workflow_id,
-            self.params.job_id,
-            Some(self.params.offset),
-            Some(page_limit),
-            self.params.sort_by.as_deref(),
-            self.params.reverse_sort,
-            self.params.name.as_deref(),
-            self.params.memory.as_deref(),
-            self.params.num_cpus,
-            self.params.num_gpus,
-            self.params.num_nodes,
-            self.params.runtime.as_deref(),
+            config,
+            params.workflow_id,
+            params.job_id,
+            Some(params.offset),
+            Some(limit),
+            params.sort_by.as_deref(),
+            params.reverse_sort,
+            params.name.as_deref(),
+            params.memory.as_deref(),
+            params.num_cpus,
+            params.num_gpus,
+            params.num_nodes,
+            params.runtime.as_deref(),
         )?;
 
-        if let Some(items) = response.items {
-            let items_to_take = if self.remaining_limit == i64::MAX {
-                items.len()
-            } else {
-                std::cmp::min(items.len() as i64, self.remaining_limit) as usize
-            };
-            let taken_items: Vec<ResourceRequirementsModel> =
-                items.into_iter().take(items_to_take).collect();
-            if self.remaining_limit != i64::MAX {
-                self.remaining_limit -= taken_items.len() as i64;
-            }
-            self.params.offset += taken_items.len() as i64;
-            self.current_page = taken_items.into_iter();
-
-            if !response.has_more || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0)
-            {
-                self.finished = true;
-            }
-            Ok(true)
-        } else {
-            self.finished = true;
-            Ok(false)
-        }
+        Ok(PaginatedResponse {
+            items: response.items,
+            has_more: response.has_more,
+        })
     }
 }
 
-impl Iterator for ResourceRequirementsIterator {
-    type Item = Result<
-        ResourceRequirementsModel,
-        apis::Error<apis::default_api::ListResourceRequirementsError>,
-    >;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(item) = self.current_page.next() {
-            return Some(Ok(item));
-        }
-
-        if !self.finished {
-            match self.fetch_next_page() {
-                Ok(true) => self.current_page.next().map(Ok),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            None
-        }
-    }
-}
+/// Type alias for the resource requirements iterator
+pub type ResourceRequirementsIterator = PaginatedIterator<ResourceRequirementsModel>;
 
 /// Create a lazy iterator for resource requirements that fetches pages on-demand.
 ///
-/// This is the main API function for iterating over resource requirements. It provides a simple,
-/// clean interface that handles all the API call details internally.
-///
-/// This is memory efficient as it only loads one page at a time.
-/// Use this when you want to process items one by one without
-/// loading all items into memory at once.
-///
 /// # Arguments
-/// * `config` - API configuration containing base URL and authentication
-/// * `workflow_id` - ID of the workflow to list resource requirements from  
+/// * `config` - API configuration
+/// * `workflow_id` - ID of the workflow to list resource requirements from
 /// * `params` - ResourceRequirementsListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// An iterator that yields `Result<ResourceRequirementsModel, Error>` items
-///
 pub fn iter_resource_requirements(
     config: &apis::configuration::Configuration,
     workflow_id: i64,
     params: ResourceRequirementsListParams,
 ) -> ResourceRequirementsIterator {
-    ResourceRequirementsIterator::new(config.clone(), workflow_id, params, None)
+    let mut params = params;
+    params.workflow_id = workflow_id;
+    PaginatedIterator::new(config.clone(), params, None)
 }
 
 /// Collect all resource requirements into a vector using lazy iteration internally.
 ///
-/// This function uses `iter_resource_requirements` internally and collects all results.
-/// Use this when you need all items in memory at once for batch processing
-/// or when you need to know the total count before processing.
-///
 /// # Arguments
-/// * `config` - API configuration containing base URL and authentication
+/// * `config` - API configuration
 /// * `workflow_id` - ID of the workflow to list resource requirements from
 /// * `params` - ResourceRequirementsListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// `Result<Vec<ResourceRequirementsModel>, Error>` containing all resource requirements or an error
-///
 pub fn paginate_resource_requirements(
     config: &apis::configuration::Configuration,
     workflow_id: i64,

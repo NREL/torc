@@ -3,8 +3,9 @@ use clap::Subcommand;
 use log::{debug, error, info, warn};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::collections::HashMap;
+
+use super::output::{print_if_json, print_json};
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -591,8 +592,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 
             match default_api::create_slurm_scheduler(config, scheduler) {
                 Ok(created) => {
-                    if format == "json" {
-                        println!("{}", serde_json::to_string_pretty(&created).unwrap());
+                    if print_if_json(format, &created, "Slurm scheduler") {
+                        // JSON was printed
                     } else {
                         eprintln!(
                             "Added Slurm configuration '{}' (ID: {}) to workflow {}",
@@ -679,8 +680,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 
             match default_api::update_slurm_scheduler(config, *scheduler_id, scheduler) {
                 Ok(updated) => {
-                    if format == "json" {
-                        println!("{}", serde_json::to_string_pretty(&updated).unwrap());
+                    if print_if_json(format, &updated, "Slurm scheduler") {
+                        // JSON was printed
                     } else {
                         eprintln!("Updated Slurm configuration {}", scheduler_id);
                     }
@@ -712,8 +713,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                     .with_limit(*limit),
             ) {
                 Ok(schedulers) => {
-                    if format == "json" {
-                        println!("{}", serde_json::to_string_pretty(&schedulers).unwrap());
+                    if print_if_json(format, &schedulers, "Slurm schedulers") {
+                        // JSON was printed
                     } else {
                         let rows: Vec<SlurmSchedulerTableRow> = schedulers
                             .iter()
@@ -740,14 +741,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
         }
         SlurmCommands::Get { id } => match default_api::get_slurm_scheduler(config, *id) {
             Ok(scheduler) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&scheduler) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing Slurm config to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &scheduler, "Slurm scheduler") {
+                    // JSON was printed
                 } else {
                     eprintln!("Slurm Config ID {}:", id);
                     eprintln!("  Name: {}", scheduler.name.unwrap_or_default());
@@ -783,14 +778,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
         SlurmCommands::Delete { id } => {
             match default_api::delete_slurm_scheduler(config, *id, None) {
                 Ok(deleted_scheduler) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&deleted_scheduler) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing Slurm config to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &deleted_scheduler, "Slurm scheduler") {
+                        // JSON was printed
                     } else {
                         eprintln!("Successfully deleted Slurm config ID {}", id);
                         eprintln!("  Name: {}", deleted_scheduler.name.unwrap_or_default());
@@ -1619,9 +1608,8 @@ pub fn parse_slurm_logs(
 
     if valid_slurm_job_ids.is_empty() {
         if format == "json" {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({
+            print_json(
+                &serde_json::json!({
                     "workflow_id": workflow_id,
                     "output_dir": output_dir.display().to_string(),
                     "message": "No Slurm scheduled compute nodes found for this workflow",
@@ -1629,8 +1617,8 @@ pub fn parse_slurm_logs(
                     "errors": 0,
                     "warnings": 0,
                     "issues": []
-                }))
-                .unwrap()
+                }),
+                "Slurm parse logs",
             );
         } else {
             println!(
@@ -1758,7 +1746,7 @@ pub fn parse_slurm_logs(
             "warnings": all_errors.iter().filter(|e| e.severity == "warning").count(),
             "issues": all_errors,
         });
-        println!("{}", serde_json::to_string_pretty(&output).unwrap());
+        print_json(&output, "Slurm parse logs");
     } else if all_errors.is_empty() {
         println!(
             "No issues found in Slurm log files for workflow {} (scanned {} file(s) in {})",
@@ -2055,14 +2043,13 @@ pub fn run_sacct_for_workflow(
 
     if nodes.is_empty() {
         if format == "json" {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({
+            print_json(
+                &serde_json::json!({
                     "workflow_id": workflow_id,
                     "message": "No Slurm scheduled compute nodes found",
                     "summary": []
-                }))
-                .unwrap()
+                }),
+                "Slurm sacct",
             );
         } else {
             println!(
@@ -2152,7 +2139,7 @@ pub fn run_sacct_for_workflow(
             "summary": all_summary_rows,
             "errors": errors,
         });
-        println!("{}", serde_json::to_string_pretty(&output).unwrap());
+        print_json(&output, "Slurm sacct");
     } else if all_summary_rows.is_empty() && errors.is_empty() {
         println!(
             "No sacct data available for workflow {} (checked {} Slurm job(s))",
@@ -2286,7 +2273,7 @@ fn handle_generate(
     } else {
         // Print to stdout
         if format == "json" {
-            println!("{}", serde_json::to_string_pretty(&spec).unwrap());
+            print_json(&spec, "workflow spec");
         } else {
             println!("{}", output_content);
 
@@ -2409,9 +2396,8 @@ fn handle_regenerate(
 
     if pending_jobs.is_empty() {
         if format == "json" {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&RegenerateResult {
+            print_json(
+                &RegenerateResult {
                     workflow_id,
                     pending_jobs: 0,
                     schedulers_created: Vec::new(),
@@ -2420,8 +2406,8 @@ fn handle_regenerate(
                     allocations_deferred: 0,
                     warnings: vec!["No pending jobs found".to_string()],
                     submitted: false,
-                })
-                .unwrap()
+                },
+                "regenerate result",
             );
         } else {
             println!(
@@ -2556,9 +2542,8 @@ fn handle_regenerate(
 
     if plan.schedulers.is_empty() {
         if format == "json" {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&RegenerateResult {
+            print_json(
+                &RegenerateResult {
                     workflow_id,
                     pending_jobs: pending_jobs.len(),
                     schedulers_created: Vec::new(),
@@ -2567,8 +2552,8 @@ fn handle_regenerate(
                     allocations_deferred: 0,
                     warnings,
                     submitted: false,
-                })
-                .unwrap()
+                },
+                "regenerate result",
             );
         } else {
             println!("No pending jobs with resource requirements found");
@@ -2795,7 +2780,7 @@ fn handle_regenerate(
     };
 
     if format == "json" {
-        println!("{}", serde_json::to_string_pretty(&result).unwrap());
+        print_json(&result, "regenerate result");
     } else {
         println!("Regenerated Slurm schedulers for workflow {}", workflow_id);
         println!();

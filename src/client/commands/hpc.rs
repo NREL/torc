@@ -3,8 +3,9 @@
 //! Commands for listing, detecting, and querying HPC system profiles.
 
 use clap::Subcommand;
-use serde_json;
 use tabled::Tabled;
+
+use super::output::print_json;
 
 use crate::client::commands::slurm::{parse_memory_mb, parse_walltime_secs};
 use crate::client::hpc::{HpcDetection, HpcPartition, HpcProfile, HpcProfileRegistry};
@@ -231,7 +232,7 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
                         })
                     })
                     .collect();
-                println!("{}", serde_json::to_string_pretty(&json_output).unwrap());
+                print_json(&json_output, "HPC profiles");
             } else {
                 println!("Known HPC profiles:\n");
                 display_table_with_count(&rows, "profiles");
@@ -241,15 +242,14 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
         HpcCommands::Detect => {
             if let Some(profile) = registry.detect() {
                 if format == "json" {
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&serde_json::json!({
+                    print_json(
+                        &serde_json::json!({
                             "detected": true,
                             "name": profile.name,
                             "display_name": profile.display_name,
                             "description": profile.description,
-                        }))
-                        .unwrap()
+                        }),
+                        "HPC detection",
                     );
                 } else {
                     println!(
@@ -277,13 +277,12 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
                     }
                 }
             } else if format == "json" {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&serde_json::json!({
+                print_json(
+                    &serde_json::json!({
                         "detected": false,
                         "message": "No known HPC system detected",
-                    }))
-                    .unwrap()
+                    }),
+                    "HPC detection",
                 );
             } else {
                 println!("No known HPC system detected.");
@@ -297,7 +296,7 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
         HpcCommands::Show { name } => {
             if let Some(profile) = registry.get(name) {
                 if format == "json" {
-                    println!("{}", serde_json::to_string_pretty(&profile).unwrap());
+                    print_json(&profile, "HPC profile");
                 } else {
                     println!("HPC Profile: {} ({})", profile.display_name, profile.name);
                     println!();
@@ -403,7 +402,7 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
             }
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&partitions).unwrap());
+                print_json(&partitions, "partitions");
             } else {
                 println!(
                     "Partitions for {} ({}):\n",
@@ -498,7 +497,7 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
                     "matching_partitions": matching,
                     "best_partition": profile.find_best_partition(*cpus, memory_mb, walltime_secs, *gpus),
                 });
-                println!("{}", serde_json::to_string_pretty(&output).unwrap());
+                print_json(&output, "partition match");
             } else {
                 println!("Requirements:");
                 println!("  CPUs: {}", cpus);

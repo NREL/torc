@@ -1,37 +1,47 @@
 //! Slurm schedulers pagination functionality.
 //!
-//! This module provides lazy iteration and vector collection support for slurm schedulers.
-//! It includes both simple iterators that work with the real API and mock iterators
-//! for testing purposes.
+//! This module provides lazy iteration and vector collection support for slurm schedulers
+//! using the generic pagination framework.
 
 use crate::client::apis;
-use crate::models::*;
+use crate::client::commands::pagination::base::{
+    Paginatable, PaginatedIterator, PaginatedResponse, PaginationParams,
+};
+use crate::models::SlurmSchedulerModel;
 
 /// Parameters for listing slurm schedulers with default values and builder methods.
-///
-/// This struct provides a clean way to specify filtering and pagination
-/// parameters for slurm scheduler queries. All fields have sensible defaults:
-/// - `offset` defaults to 0 (start from beginning)
-/// - All other fields default to `None` (no filtering)
-///
 #[derive(Debug, Clone, Default)]
 pub struct SlurmSchedulersListParams {
+    /// Workflow ID to list slurm schedulers from
+    pub workflow_id: i64,
+    /// Pagination offset
     pub offset: i64,
+    /// Maximum number of records to return
     pub limit: Option<i64>,
+    /// Field to sort by
     pub sort_by: Option<String>,
+    /// Reverse sort order
     pub reverse_sort: Option<bool>,
+    /// Filter by name
     pub name: Option<String>,
+    /// Filter by account
     pub account: Option<String>,
+    /// Filter by gres
     pub gres: Option<String>,
+    /// Filter by mem
     pub mem: Option<String>,
+    /// Filter by nodes
     pub nodes: Option<i64>,
+    /// Filter by partition
     pub partition: Option<String>,
+    /// Filter by qos
     pub qos: Option<String>,
+    /// Filter by tmp
     pub tmp: Option<String>,
+    /// Filter by walltime
     pub walltime: Option<String>,
 }
 
-// Builder methods for SlurmSchedulersListParams
 impl SlurmSchedulersListParams {
     pub fn new() -> Self {
         Self::default()
@@ -56,150 +66,110 @@ impl SlurmSchedulersListParams {
         self.reverse_sort = Some(reverse);
         self
     }
-}
 
-/// Iterator for slurm schedulers with lazy pagination
-pub struct SlurmSchedulersIterator {
-    config: apis::configuration::Configuration,
-    workflow_id: i64,
-    params: SlurmSchedulersListParams,
-    remaining_limit: i64,
-    initial_limit: i64,
-    current_page: std::vec::IntoIter<SlurmSchedulerModel>,
-    finished: bool,
-}
-
-impl SlurmSchedulersIterator {
-    pub fn new(
-        config: apis::configuration::Configuration,
-        workflow_id: i64,
-        params: SlurmSchedulersListParams,
-        initial_limit: Option<i64>,
-    ) -> Self {
-        let remaining_limit = params.limit.unwrap_or(i64::MAX);
-        Self {
-            config,
-            workflow_id,
-            params,
-            remaining_limit,
-            initial_limit: initial_limit.unwrap_or(1000),
-            current_page: Vec::new().into_iter(),
-            finished: false,
-        }
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
     }
 
-    fn fetch_next_page(
-        &mut self,
-    ) -> Result<bool, apis::Error<apis::default_api::ListSlurmSchedulersError>> {
-        if self.finished || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0) {
-            return Ok(false);
-        }
+    pub fn with_account(mut self, account: String) -> Self {
+        self.account = Some(account);
+        self
+    }
 
-        let page_limit = std::cmp::min(self.remaining_limit, self.initial_limit);
+    pub fn with_partition(mut self, partition: String) -> Self {
+        self.partition = Some(partition);
+        self
+    }
+}
+
+impl PaginationParams for SlurmSchedulersListParams {
+    fn offset(&self) -> i64 {
+        self.offset
+    }
+
+    fn set_offset(&mut self, offset: i64) {
+        self.offset = offset;
+    }
+
+    fn limit(&self) -> Option<i64> {
+        self.limit
+    }
+
+    fn sort_by(&self) -> Option<&str> {
+        self.sort_by.as_deref()
+    }
+
+    fn reverse_sort(&self) -> Option<bool> {
+        self.reverse_sort
+    }
+}
+
+impl Paginatable for SlurmSchedulerModel {
+    type ListError = apis::default_api::ListSlurmSchedulersError;
+    type Params = SlurmSchedulersListParams;
+
+    fn fetch_page(
+        config: &apis::configuration::Configuration,
+        params: &Self::Params,
+        limit: i64,
+    ) -> Result<PaginatedResponse<Self>, apis::Error<Self::ListError>> {
         let response = apis::default_api::list_slurm_schedulers(
-            &self.config,
-            self.workflow_id,
-            Some(self.params.offset),
-            Some(page_limit),
-            self.params.sort_by.as_deref(),
-            self.params.reverse_sort,
-            self.params.name.as_deref(),
-            self.params.account.as_deref(),
-            self.params.gres.as_deref(),
-            self.params.mem.as_deref(),
-            self.params.nodes,
-            self.params.partition.as_deref(),
-            self.params.qos.as_deref(),
-            self.params.tmp.as_deref(),
-            self.params.walltime.as_deref(),
+            config,
+            params.workflow_id,
+            Some(params.offset),
+            Some(limit),
+            params.sort_by.as_deref(),
+            params.reverse_sort,
+            params.name.as_deref(),
+            params.account.as_deref(),
+            params.gres.as_deref(),
+            params.mem.as_deref(),
+            params.nodes,
+            params.partition.as_deref(),
+            params.qos.as_deref(),
+            params.tmp.as_deref(),
+            params.walltime.as_deref(),
         )?;
 
-        if let Some(items) = response.items {
-            let items_to_take = if self.remaining_limit == i64::MAX {
-                items.len()
-            } else {
-                std::cmp::min(items.len() as i64, self.remaining_limit) as usize
-            };
-            let taken_items: Vec<SlurmSchedulerModel> =
-                items.into_iter().take(items_to_take).collect();
-            if self.remaining_limit != i64::MAX {
-                self.remaining_limit -= taken_items.len() as i64;
-            }
-            self.params.offset += taken_items.len() as i64;
-            self.current_page = taken_items.into_iter();
-
-            if !response.has_more || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0)
-            {
-                self.finished = true;
-            }
-            Ok(true)
-        } else {
-            self.finished = true;
-            Ok(false)
-        }
+        Ok(PaginatedResponse {
+            items: response.items,
+            has_more: response.has_more,
+        })
     }
 }
 
-impl Iterator for SlurmSchedulersIterator {
-    type Item =
-        Result<SlurmSchedulerModel, apis::Error<apis::default_api::ListSlurmSchedulersError>>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(item) = self.current_page.next() {
-            return Some(Ok(item));
-        }
-
-        if !self.finished {
-            match self.fetch_next_page() {
-                Ok(true) => self.current_page.next().map(Ok),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            None
-        }
-    }
-}
+/// Type alias for the slurm schedulers iterator
+pub type SlurmSchedulersIterator = PaginatedIterator<SlurmSchedulerModel>;
 
 /// Create a lazy iterator for slurm schedulers that fetches pages on-demand.
 ///
-/// This is the main API function for iterating over slurm schedulers. It provides a simple,
-/// clean interface that handles all the API call details internally.
-///
-/// This is memory efficient as it only loads one page at a time.
-/// Use this when you want to process items one by one without
-/// loading all items into memory at once.
-///
 /// # Arguments
-/// * `config` - API configuration containing base URL and authentication
+/// * `config` - API configuration
 /// * `workflow_id` - ID of the workflow to list slurm schedulers from
 /// * `params` - SlurmSchedulersListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// An iterator that yields `Result<SlurmSchedulerModel, Error>` items
-///
 pub fn iter_slurm_schedulers(
     config: &apis::configuration::Configuration,
     workflow_id: i64,
     params: SlurmSchedulersListParams,
 ) -> SlurmSchedulersIterator {
-    SlurmSchedulersIterator::new(config.clone(), workflow_id, params, None)
+    let mut params = params;
+    params.workflow_id = workflow_id;
+    PaginatedIterator::new(config.clone(), params, None)
 }
 
 /// Collect all slurm schedulers into a vector using lazy iteration internally.
 ///
-/// This function uses `iter_slurm_schedulers` internally and collects all results.
-/// Use this when you need all items in memory at once for batch processing
-/// or when you need to know the total count before processing.
-///
 /// # Arguments
-/// * `config` - API configuration containing base URL and authentication
+/// * `config` - API configuration
 /// * `workflow_id` - ID of the workflow to list slurm schedulers from
 /// * `params` - SlurmSchedulersListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// `Result<Vec<SlurmSchedulerModel>, Error>` containing all slurm schedulers or an error
-///
 pub fn paginate_slurm_schedulers(
     config: &apis::configuration::Configuration,
     workflow_id: i64,

@@ -1,5 +1,6 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::output::print_json;
 use crate::client::commands::{
     get_env_user_name, pagination, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -10,7 +11,6 @@ use crate::client::log_paths::{
 };
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
-use serde_json;
 use std::path::Path;
 use tabled::Tabled;
 
@@ -494,7 +494,7 @@ fn check_resource_utilization(
                 json_output["failed_jobs"] = serde_json::json!(failed_jobs_info);
             }
 
-            println!("{}", serde_json::to_string_pretty(&json_output).unwrap());
+            print_json(&json_output, "resource utilization");
         }
         _ => {
             if rows.is_empty() {
@@ -753,13 +753,7 @@ fn generate_results_report(
     });
 
     // Output JSON
-    match serde_json::to_string_pretty(&report) {
-        Ok(json) => println!("{}", json),
-        Err(e) => {
-            eprintln!("Error serializing report to JSON: {}", e);
-            std::process::exit(1);
-        }
-    }
+    print_json(&report, "results report");
 }
 
 /// Generate a summary of workflow results
@@ -795,7 +789,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
                 "is_complete": false,
                 "is_canceled": completion_status.is_canceled,
             });
-            println!("{}", serde_json::to_string_pretty(&error_response).unwrap());
+            print_json(&error_response, "workflow status");
         } else {
             eprintln!("Error: Workflow {} is not complete.", workflow_id);
             if completion_status.is_canceled {
@@ -878,13 +872,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
         });
 
-        match serde_json::to_string_pretty(&report) {
-            Ok(json) => println!("{}", json),
-            Err(e) => {
-                eprintln!("Error serializing report to JSON: {}", e);
-                std::process::exit(1);
-            }
-        }
+        print_json(&report, "workflow summary");
     } else {
         println!("Workflow Summary");
         println!("================");

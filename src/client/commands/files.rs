@@ -1,11 +1,11 @@
 use chrono::DateTime;
 use clap::Subcommand;
-use serde_json;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
 use crate::client::commands::{
+    output::{print_if_json, print_json_wrapped},
     pagination::{self, FileListParams},
     print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -122,14 +122,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
             match default_api::create_file(config, file) {
                 Ok(created_file) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_file) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing file to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_file, "file") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created file:");
                         println!("  ID: {}", created_file.id.unwrap_or(-1));
@@ -171,13 +165,7 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
             match pagination::paginate_files(config, selected_workflow_id as i64, params) {
                 Ok(files) => {
                     if format == "json" {
-                        match pagination::display_json_results("files", &files) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing files to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json_wrapped("files", &files, "files");
                     } else if files.is_empty() {
                         println!("No files found for workflow ID: {}", selected_workflow_id);
                     } else {
@@ -202,14 +190,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
         }
         FileCommands::Get { id } => match default_api::get_file(config, *id) {
             Ok(file) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&file) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing file to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &file, "file") {
+                    // JSON was printed
                 } else {
                     println!("File ID {}:", id);
                     println!("  Name: {}", file.name);
@@ -236,14 +218,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
                     match default_api::update_file(config, *id, file) {
                         Ok(updated_file) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&updated_file) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing file to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &updated_file, "file") {
+                                // JSON was printed
                             } else {
                                 println!("Successfully updated file:");
                                 println!("  ID: {}", updated_file.id.unwrap_or(-1));
@@ -266,14 +242,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
         }
         FileCommands::Delete { id } => match default_api::delete_file(config, *id, None) {
             Ok(removed_file) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_file) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing file to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_file, "file") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed file:");
                     println!("  ID: {}", removed_file.id.unwrap_or(-1));
@@ -295,17 +265,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
             match default_api::list_required_existing_files(config, selected_workflow_id) {
                 Ok(response) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&response) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!(
-                                    "Error serializing required existing files to JSON: {}",
-                                    e
-                                );
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &response, "required existing files") {
+                        // JSON was printed
                     } else if response.files.is_empty() {
                         println!(
                             "No missing required files found for workflow ID: {}",

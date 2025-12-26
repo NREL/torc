@@ -1,11 +1,11 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::print_if_json;
 use crate::client::commands::{
     pagination, print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -140,14 +140,8 @@ pub fn handle_resource_requirements_commands(
 
             match default_api::create_resource_requirements(config, req) {
                 Ok(created_req) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_req) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing resource requirements to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_req, "resource requirements") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created resource requirements:");
                         println!("  ID: {}", created_req.id.unwrap_or(-1));
@@ -237,14 +231,8 @@ pub fn handle_resource_requirements_commands(
         ResourceRequirementsCommands::Get { id } => {
             match default_api::get_resource_requirements(config, *id) {
                 Ok(req) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&req) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing resource requirements to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &req, "resource requirements") {
+                        // JSON was printed
                     } else {
                         println!("Resource requirements ID {}:", id);
                         println!("  Workflow ID: {}", req.workflow_id);
@@ -296,17 +284,8 @@ pub fn handle_resource_requirements_commands(
 
                     match default_api::update_resource_requirements(config, *id, req) {
                         Ok(updated_req) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&updated_req) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!(
-                                            "Error serializing resource requirements to JSON: {}",
-                                            e
-                                        );
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &updated_req, "resource requirements") {
+                                // JSON was printed
                             } else {
                                 println!("Successfully updated resource requirements:");
                                 println!("  ID: {}", updated_req.id.unwrap_or(-1));
@@ -334,14 +313,8 @@ pub fn handle_resource_requirements_commands(
         ResourceRequirementsCommands::Delete { id } => {
             match default_api::delete_resource_requirements(config, *id, None) {
                 Ok(removed_req) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&removed_req) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing resource requirements to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &removed_req, "resource requirements") {
+                        // JSON was printed
                     } else {
                         println!("Successfully removed resource requirements:");
                         println!("  ID: {}", removed_req.id.unwrap_or(-1));
