@@ -113,8 +113,8 @@ flowchart LR
     end
 
     subgraph "Recovery Actions"
-        RA[on_jobs_ready: schedule_nodes<br/>job_ids: [A, B]<br/>is_recovery: true]
-        RC[on_jobs_ready: schedule_nodes<br/>job_ids: [C]<br/>is_recovery: true]
+        RA["on_jobs_ready: schedule_nodes<br/>job_ids: (A, B)<br/>is_recovery: true"]
+        RC["on_jobs_ready: schedule_nodes<br/>job_ids: (C)<br/>is_recovery: true"]
     end
 ```
 

@@ -55,12 +55,12 @@ Workflow ID: 42
 Name: data_processing_pipeline
 User: jsmith
 
-Job Status:
-  Total Jobs: 100
-  Completed:  95 ✓
-  Failed:     5 ✗
+Job Status (total: 100):
+  Completed:     95 ✓
+  Failed:        5 ✗
 
 Total Execution Time: 2h 30m 15s
+Walltime:             3h 15m 42s
 ```
 
 If all jobs succeeded:
@@ -73,15 +73,15 @@ Workflow ID: 42
 Name: simulation_run
 User: jsmith
 
-Job Status:
-  Total Jobs: 50
-  Completed:  50 ✓
-  Failed:     0
+Job Status (total: 50):
+  Completed:     50 ✓
 
 Total Execution Time: 45m 30s
 
 ✓ All jobs completed successfully!
 ```
+
+Only non-zero status counts are displayed.
 
 For JSON output (useful for scripting):
 
@@ -94,14 +94,23 @@ torc reports summary <workflow_id> -f json
   "workflow_id": 42,
   "workflow_name": "data_processing_pipeline",
   "workflow_user": "jsmith",
-  "is_complete": true,
   "total_jobs": 100,
-  "completed_jobs": 95,
-  "failed_jobs": 5,
-  "canceled_jobs": 0,
-  "other_jobs": 0,
+  "jobs_by_status": {
+    "uninitialized": 0,
+    "blocked": 0,
+    "ready": 0,
+    "pending": 0,
+    "running": 0,
+    "completed": 95,
+    "failed": 5,
+    "canceled": 0,
+    "terminated": 0,
+    "disabled": 0
+  },
   "total_exec_time_minutes": 150.25,
-  "total_exec_time_formatted": "2h 30m 15s"
+  "total_exec_time_formatted": "2h 30m 15s",
+  "walltime_seconds": 11742.0,
+  "walltime_formatted": "3h 15m 42s"
 }
 ```
 

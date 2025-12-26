@@ -1,34 +1,120 @@
 # Workflow Reinitialization
 
-Reinitialization allows workflows to be rerun when inputs change.
+When you modify input files or configuration after a workflow has run, you need a way to re-execute
+only the affected jobs. Reinitialization handles this by detecting what changed and marking the
+appropriate jobs for re-execution.
 
-## Reinitialize Process
+## When to Use Reinitialization
 
-1. **Bump run_id** - Increments workflow run counter.
-2. **Reset workflow status** - Clears previous run state.
-3. **Process changed files** - Detects file modifications via `st_mtime`.
-4. **Process changed user_data** - Computes input hashes and detects changes.
-5. **Mark jobs for rerun** - Sets affected jobs to `uninitialized`.
-6. **Re-initialize jobs** - Re-evaluates dependencies and marks jobs `ready`/`blocked`.
+Use `torc workflows reinitialize` when:
 
-## Input Change Detection
+- **Input files changed** — You modified an input file and want dependent jobs to rerun
+- **Configuration updated** — You changed user_data parameters
+- **Output files missing** — Output files were deleted and need regeneration
+- **Recovering from failures** — You fixed an issue and want to retry failed jobs
+- **Iterative development** — You're refining a workflow and need quick iteration
 
-The `process_changed_job_inputs` endpoint implements hash-based change detection:
+## Basic Usage
 
-1. For each job, compute SHA256 hash of all input parameters. **Note**: files are tracked by
-   modification times, not hashes. User data records are hashed.
-2. Compare to stored hash in the database.
-3. If hash differs, mark job as `uninitialized`.
-4. All updates happen in a single database transaction (all-or-none).
+```bash
+# Preview what would change (recommended first step)
+torc workflows reinitialize <workflow_id> --dry-run
 
-After jobs are marked `uninitialized`, calling `initialize_jobs` re-evaluates the dependency graph:
+# Reinitialize the workflow
+torc workflows reinitialize <workflow_id>
 
-- Jobs with satisfied dependencies → `ready`
-- Jobs waiting on dependencies → `blocked`
+# Force reinitialization even with warnings
+torc workflows reinitialize <workflow_id> --force
+```
 
-## Use Cases
+## How Change Detection Works
 
-- **Development iteration** - Modify input files and re-run affected jobs
-- **Parameter updates** - Change configuration and re-execute
-- **Failed job recovery** - Fix issues and re-run without starting from scratch
-- **Incremental computation** - Only re-run jobs affected by changes
+Reinitialization detects changes through three mechanisms:
+
+### 1. File Modification Times
+
+For files tracked in the workflow, Torc compares the current `st_mtime` (modification time) against
+the stored value. If a file was modified since the last run, jobs that use it as input are marked
+for re-execution.
+
+```bash
+# Modify an input file
+echo "new data" > input.json
+
+# Reinitialize detects the change
+torc workflows reinitialize <workflow_id>
+# Output: Reset 3 jobs due to changed inputs
+```
+
+### 2. User Data Hashing
+
+For `user_data` records, Torc computes SHA256 hashes of input values. If the hash differs from the
+stored value, the job is marked for re-execution.
+
+### 3. Missing Output Files
+
+If a job's output file no longer exists on disk, the job is marked for re-execution regardless of
+whether inputs changed.
+
+## The Reinitialization Process
+
+When you run `reinitialize`, Torc performs these steps:
+
+1. **Bump run_id** — Increments the workflow's run counter for tracking
+2. **Reset workflow status** — Clears the previous run's completion state
+3. **Check file modifications** — Compares current `st_mtime` values to stored values
+4. **Check missing outputs** — Identifies jobs whose output files no longer exist
+5. **Check user_data changes** — Computes and compares input hashes
+6. **Mark affected jobs** — Sets jobs needing re-execution to `uninitialized`
+7. **Re-evaluate dependencies** — Runs `initialize_jobs` to set jobs to `ready` or `blocked`
+
+## Dependency Propagation
+
+When a job is marked for re-execution, all downstream jobs that depend on its outputs are also
+marked. This ensures the entire dependency chain is re-executed:
+
+```
+preprocess (input changed) → marked for rerun
+    ↓
+process (depends on preprocess output) → also marked
+    ↓
+postprocess (depends on process output) → also marked
+```
+
+## Dry Run Mode
+
+Always use `--dry-run` first to preview changes without modifying anything:
+
+```bash
+torc workflows reinitialize <workflow_id> --dry-run
+```
+
+Example output:
+
+```
+Dry run: 5 jobs would be reset due to changed inputs
+  - preprocess
+  - analyze_batch_1
+  - analyze_batch_2
+  - merge_results
+  - generate_report
+```
+
+## Combining with Reset
+
+For more control, you can reset specific job statuses first, then reinitialize:
+
+```bash
+# Reset only failed jobs, then reinitialize
+torc workflows reset-status <workflow_id> --failed-only --reinitialize
+```
+
+## Comparison with Full Reset
+
+| Scenario                 | Use `reinitialize`  | Use `reset-status`    |
+| ------------------------ | ------------------- | --------------------- |
+| Input file changed       | Yes                 | No                    |
+| Want to rerun everything | No                  | Yes                   |
+| Retry failed jobs only   | No                  | Yes (`--failed-only`) |
+| Iterative development    | Yes                 | Depends               |
+| Changed workflow spec    | Create new workflow | Create new workflow   |
