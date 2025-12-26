@@ -508,3 +508,171 @@ fn test_worker_with_ipv6_addresses(start_server: &ServerProcess) {
         default_api::list_remote_workers(config, workflow_id).expect("Failed to list workers");
     assert_eq!(listed.len(), 4);
 }
+
+// ============================================================================
+// Worker File Parsing Tests (Unit Tests)
+// ============================================================================
+
+use torc::client::remote::parse_worker_content;
+
+fn parse_test(content: &str) -> Result<Vec<torc::client::remote::WorkerEntry>, String> {
+    parse_worker_content(content, "test.txt")
+}
+
+#[rstest]
+fn test_parse_simple_hostname() {
+    let workers = parse_test("worker1.example.com").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "worker1.example.com");
+    assert_eq!(workers[0].user, None);
+    assert_eq!(workers[0].port, None);
+}
+
+#[rstest]
+fn test_parse_with_user() {
+    let workers = parse_test("alice@worker1.example.com").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "worker1.example.com");
+    assert_eq!(workers[0].user, Some("alice".to_string()));
+    assert_eq!(workers[0].port, None);
+}
+
+#[rstest]
+fn test_parse_with_port() {
+    let workers = parse_test("worker1.example.com:2222").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "worker1.example.com");
+    assert_eq!(workers[0].user, None);
+    assert_eq!(workers[0].port, Some(2222));
+}
+
+#[rstest]
+fn test_parse_full_format() {
+    let workers = parse_test("alice@worker1.example.com:2222").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "worker1.example.com");
+    assert_eq!(workers[0].user, Some("alice".to_string()));
+    assert_eq!(workers[0].port, Some(2222));
+}
+
+#[rstest]
+fn test_parse_ipv4() {
+    let workers = parse_test("192.168.1.10").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "192.168.1.10");
+}
+
+#[rstest]
+fn test_parse_ipv4_with_port() {
+    let workers = parse_test("192.168.1.10:22").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "192.168.1.10");
+    assert_eq!(workers[0].port, Some(22));
+}
+
+#[rstest]
+fn test_parse_ipv6_bracketed() {
+    let workers = parse_test("[::1]").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "::1");
+    assert_eq!(workers[0].port, None);
+}
+
+#[rstest]
+fn test_parse_ipv6_bracketed_with_port() {
+    let workers = parse_test("[::1]:2222").unwrap();
+    assert_eq!(workers.len(), 1);
+    assert_eq!(workers[0].host, "::1");
+    assert_eq!(workers[0].port, Some(2222));
+}
+
+#[rstest]
+fn test_parse_comments_and_blank_lines() {
+    let content = r#"
+# This is a comment
+worker1.example.com
+
+# Another comment
+worker2.example.com
+"#;
+    let workers = parse_test(content).unwrap();
+    assert_eq!(workers.len(), 2);
+    assert_eq!(workers[0].host, "worker1.example.com");
+    assert_eq!(workers[1].host, "worker2.example.com");
+}
+
+#[rstest]
+fn test_parse_multiple_workers() {
+    let content = r#"
+worker1.example.com
+alice@worker2.example.com:2222
+192.168.1.10
+"#;
+    let workers = parse_test(content).unwrap();
+    assert_eq!(workers.len(), 3);
+}
+
+#[rstest]
+fn test_parse_empty_file() {
+    let result = parse_test("");
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("no valid entries"));
+}
+
+#[rstest]
+fn test_parse_only_comments() {
+    let content = r#"
+# Comment 1
+# Comment 2
+"#;
+    let result = parse_test(content);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("no valid entries"));
+}
+
+#[rstest]
+fn test_parse_duplicate_host() {
+    let content = r#"
+worker1.example.com
+alice@worker1.example.com:2222
+"#;
+    let result = parse_test(content);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Duplicate host"));
+}
+
+#[rstest]
+fn test_parse_empty_user() {
+    let result = parse_test("@worker1.example.com");
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Empty username"));
+}
+
+#[rstest]
+fn test_parse_empty_host() {
+    let result = parse_test("alice@");
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Empty hostname"));
+}
+
+#[rstest]
+fn test_parse_invalid_port() {
+    let result = parse_test("worker1.example.com:abc");
+    // This should be treated as part of the hostname since it's not numeric
+    let workers = result.unwrap();
+    assert_eq!(workers[0].host, "worker1.example.com:abc");
+}
+
+#[rstest]
+fn test_parse_port_out_of_range() {
+    let result = parse_test("worker1.example.com:99999");
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("Invalid port"));
+}
+
+#[rstest]
+fn test_parse_whitespace_trimming() {
+    let content = "  worker1.example.com  ";
+    let workers = parse_test(content).unwrap();
+    assert_eq!(workers[0].host, "worker1.example.com");
+}

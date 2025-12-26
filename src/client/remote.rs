@@ -32,4 +32,4 @@ pub use ssh::{
     scp_download, ssh_execute, ssh_execute_capture, verify_all_versions, verify_version,
 };
 pub use types::{RemoteOperationResult, RemoteWorkerState, WorkerEntry};
-pub use worker_file::parse_worker_file;
+pub use worker_file::{parse_worker_content, parse_worker_file};
