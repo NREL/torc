@@ -22,6 +22,7 @@ pub mod hpc;
 pub mod job_runner;
 pub mod log_paths;
 pub mod parameter_expansion;
+pub mod remote;
 pub mod resource_monitor;
 pub mod scheduler_plan;
 pub mod utils;

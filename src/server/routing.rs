@@ -23,27 +23,28 @@ use crate::server::api_types::{
     Api, CancelWorkflowResponse, ClaimActionResponse, ClaimJobsBasedOnResources,
     ClaimNextJobsResponse, CompleteJobResponse, CreateComputeNodeResponse, CreateEventResponse,
     CreateFileResponse, CreateJobResponse, CreateJobsResponse, CreateLocalSchedulerResponse,
-    CreateResourceRequirementsResponse, CreateResultResponse, CreateScheduledComputeNodeResponse,
-    CreateSlurmSchedulerResponse, CreateUserDataResponse, CreateWorkflowActionResponse,
-    CreateWorkflowResponse, DeleteAllResourceRequirementsResponse, DeleteAllUserDataResponse,
-    DeleteComputeNodeResponse, DeleteComputeNodesResponse, DeleteEventResponse,
-    DeleteEventsResponse, DeleteFileResponse, DeleteFilesResponse, DeleteJobResponse,
-    DeleteJobsResponse, DeleteLocalSchedulerResponse, DeleteLocalSchedulersResponse,
-    DeleteResourceRequirementsResponse, DeleteResultResponse, DeleteResultsResponse,
-    DeleteScheduledComputeNodeResponse, DeleteScheduledComputeNodesResponse,
-    DeleteSlurmSchedulerResponse, DeleteSlurmSchedulersResponse, DeleteUserDataResponse,
-    DeleteWorkflowResponse, GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse,
-    GetFileResponse, GetJobResponse, GetLocalSchedulerResponse, GetPendingActionsResponse,
-    GetReadyJobRequirementsResponse, GetResourceRequirementsResponse, GetResultResponse,
-    GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse, GetUserDataResponse,
-    GetVersionResponse, GetWorkflowActionsResponse, GetWorkflowResponse, GetWorkflowStatusResponse,
-    InitializeJobsResponse, IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse,
-    ListComputeNodesResponse, ListEventsResponse, ListFilesResponse, ListJobDependenciesResponse,
+    CreateRemoteWorkersResponse, CreateResourceRequirementsResponse, CreateResultResponse,
+    CreateScheduledComputeNodeResponse, CreateSlurmSchedulerResponse, CreateUserDataResponse,
+    CreateWorkflowActionResponse, CreateWorkflowResponse, DeleteAllResourceRequirementsResponse,
+    DeleteAllUserDataResponse, DeleteComputeNodeResponse, DeleteComputeNodesResponse,
+    DeleteEventResponse, DeleteEventsResponse, DeleteFileResponse, DeleteFilesResponse,
+    DeleteJobResponse, DeleteJobsResponse, DeleteLocalSchedulerResponse,
+    DeleteLocalSchedulersResponse, DeleteRemoteWorkerResponse, DeleteResourceRequirementsResponse,
+    DeleteResultResponse, DeleteResultsResponse, DeleteScheduledComputeNodeResponse,
+    DeleteScheduledComputeNodesResponse, DeleteSlurmSchedulerResponse,
+    DeleteSlurmSchedulersResponse, DeleteUserDataResponse, DeleteWorkflowResponse,
+    GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse, GetFileResponse, GetJobResponse,
+    GetLocalSchedulerResponse, GetPendingActionsResponse, GetReadyJobRequirementsResponse,
+    GetResourceRequirementsResponse, GetResultResponse, GetScheduledComputeNodeResponse,
+    GetSlurmSchedulerResponse, GetUserDataResponse, GetVersionResponse, GetWorkflowActionsResponse,
+    GetWorkflowResponse, GetWorkflowStatusResponse, InitializeJobsResponse,
+    IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse, ListComputeNodesResponse,
+    ListEventsResponse, ListFilesResponse, ListJobDependenciesResponse,
     ListJobFileRelationshipsResponse, ListJobIdsResponse, ListJobUserDataRelationshipsResponse,
     ListJobsResponse, ListLocalSchedulersResponse, ListMissingUserDataResponse,
-    ListRequiredExistingFilesResponse, ListResourceRequirementsResponse, ListResultsResponse,
-    ListScheduledComputeNodesResponse, ListSlurmSchedulersResponse, ListUserDataResponse,
-    ListWorkflowsResponse, ManageStatusChangeResponse, PingResponse,
+    ListRemoteWorkersResponse, ListRequiredExistingFilesResponse, ListResourceRequirementsResponse,
+    ListResultsResponse, ListScheduledComputeNodesResponse, ListSlurmSchedulersResponse,
+    ListUserDataResponse, ListWorkflowsResponse, ManageStatusChangeResponse, PingResponse,
     ProcessChangedJobInputsResponse, ResetJobStatusResponse, ResetWorkflowStatusResponse,
     StartJobResponse, UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse,
     UpdateJobResponse, UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse,
@@ -107,7 +108,9 @@ mod paths {
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_user_data_relationships$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$",
-            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers/(?P<worker>[^/?#]*)$"
         ])
         .expect("Unable to create global regex set");
     }
@@ -410,6 +413,22 @@ mod paths {
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
             )
             .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_REMOTE_WORKERS: usize = 52;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_REMOTE_WORKERS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers$")
+                .expect("Unable to create regex for WORKFLOWS_ID_REMOTE_WORKERS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER: usize = 53;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_REMOTE_WORKERS_WORKER: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers/(?P<worker>[^/?#]*)$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_REMOTE_WORKERS_WORKER");
     }
 }
 
@@ -8955,6 +8974,317 @@ where
                     }
                 }
 
+                // CreateRemoteWorkers - POST /workflows/{id}/remote_workers
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_REMOTE_WORKERS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters - expecting a list of worker strings
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let param_workers: Vec<String> = if !body.is_empty() {
+                                match serde_json::from_slice(&*body) {
+                                    Ok(param_workers) => param_workers,
+                                    Err(e) => return Ok(Response::builder()
+                                                    .status(StatusCode::BAD_REQUEST)
+                                                    .body(Body::from(format!("Couldn't parse body parameter workers - doesn't match schema: {}", e)))
+                                                    .expect("Unable to create Bad Request response for invalid body parameter workers due to schema")),
+                                }
+                            } else {
+                                return Ok(Response::builder()
+                                    .status(StatusCode::BAD_REQUEST)
+                                    .body(Body::from("Missing required body parameter workers"))
+                                    .expect("Unable to create Bad Request response for missing body parameter workers"));
+                            };
+
+                            let result = api_impl
+                                .create_remote_workers(param_workflow_id, param_workers, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateRemoteWorkersResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(201)
+                                            .expect("Unable to turn 201 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateRemoteWorkersResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateRemoteWorkersResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!(
+                                "Couldn't read body parameter workers: {}",
+                                e
+                            )))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // ListRemoteWorkers - GET /workflows/{id}/remote_workers
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_REMOTE_WORKERS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl
+                        .list_remote_workers(param_workflow_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListRemoteWorkersResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListRemoteWorkersResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListRemoteWorkersResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // DeleteRemoteWorker - DELETE /workflows/{id}/remote_workers/{worker}
+                hyper::Method::DELETE
+                    if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS_WORKER
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_REMOTE_WORKERS_WORKER in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_REMOTE_WORKERS_WORKER.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                    };
+
+                    let param_worker = match percent_encoding::percent_decode(
+                        path_params["worker"].as_bytes(),
+                    )
+                    .decode_utf8()
+                    {
+                        Ok(param_worker) => param_worker.to_string(),
+                        Err(_) => return Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!(
+                                "Couldn't percent-decode path parameter as UTF-8: {}",
+                                &path_params["worker"]
+                            )))
+                            .expect(
+                                "Unable to create Bad Request response for invalid percent decode",
+                            )),
+                    };
+
+                    let result = api_impl
+                        .delete_remote_worker(param_workflow_id, param_worker, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                DeleteRemoteWorkerResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                DeleteRemoteWorkerResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                DeleteRemoteWorkerResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
                 // ListMissingUserData - GET /workflows/{id}/missing_user_data
                 hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_MISSING_USER_DATA) => {
                     // Path parameters
@@ -13913,6 +14243,10 @@ where
                 _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => method_not_allowed(),
                 _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_STATUS) => method_not_allowed(),
                 _ if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER) => {
+                    method_not_allowed()
+                }
                 // Serve dashboard for non-API routes, 404 otherwise
                 _ => {
                     // Try to serve dashboard assets for non-API paths
@@ -14183,6 +14517,10 @@ impl<T> RequestParser<T> for ApiRequestParser {
             hyper::Method::DELETE if path.matched(paths::ID_USER_DATA_ID) => Some("DeleteUserData"),
             // DeleteWorkflow - DELETE /workflows/{id}
             hyper::Method::DELETE if path.matched(paths::ID_WORKFLOWS_ID) => Some("DeleteWorkflow"),
+            // DeleteRemoteWorker - DELETE /workflows/{id}/remote_workers/{worker}
+            hyper::Method::DELETE if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER) => {
+                Some("DeleteRemoteWorker")
+            }
             // ResetJobStatus - POST /workflows/{id}/reset_job_status
             hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => {
                 Some("ResetJobStatus")

@@ -27,6 +27,7 @@ use torc::server::api::ComputeNodesApi;
 use torc::server::api::EventsApi;
 use torc::server::api::FilesApi;
 use torc::server::api::JobsApi;
+use torc::server::api::RemoteWorkersApi;
 use torc::server::api::ResourceRequirementsApi;
 use torc::server::api::ResultsApi;
 use torc::server::api::SchedulersApi;
@@ -519,6 +520,7 @@ pub struct Server<C> {
     events_api: EventsApiImpl,
     files_api: FilesApiImpl,
     jobs_api: JobsApiImpl,
+    remote_workers_api: RemoteWorkersApiImpl,
     resource_requirements_api: ResourceRequirementsApiImpl,
     results_api: ResultsApiImpl,
     schedulers_api: SchedulersApiImpl,
@@ -545,6 +547,7 @@ impl<C> Server<C> {
             events_api: EventsApiImpl::new(api_context.clone()),
             files_api: FilesApiImpl::new(api_context.clone()),
             jobs_api: JobsApiImpl::new(api_context.clone()),
+            remote_workers_api: RemoteWorkersApiImpl::new(api_context.clone()),
             resource_requirements_api: ResourceRequirementsApiImpl::new(api_context.clone()),
             results_api: ResultsApiImpl::new(api_context.clone()),
             schedulers_api: SchedulersApiImpl::new(api_context.clone()),
@@ -1917,8 +1920,8 @@ use torc::time_utils::duration_string_to_seconds;
 // Import the API implementations from torc library
 use torc::server::api::{
     ApiContext, ComputeNodesApiImpl, EventsApiImpl, FilesApiImpl, JobsApiImpl,
-    ResourceRequirementsApiImpl, ResultsApiImpl, SchedulersApiImpl, UserDataApiImpl,
-    WorkflowActionsApiImpl, WorkflowsApiImpl,
+    RemoteWorkersApiImpl, ResourceRequirementsApiImpl, ResultsApiImpl, SchedulersApiImpl,
+    UserDataApiImpl, WorkflowActionsApiImpl, WorkflowsApiImpl,
 };
 
 #[async_trait]
@@ -2202,6 +2205,41 @@ where
 
         self.schedulers_api
             .create_slurm_scheduler(body, context)
+            .await
+    }
+
+    /// Store remote workers for a workflow.
+    async fn create_remote_workers(
+        &self,
+        workflow_id: i64,
+        workers: Vec<String>,
+        context: &C,
+    ) -> Result<CreateRemoteWorkersResponse, ApiError> {
+        self.remote_workers_api
+            .create_remote_workers(workflow_id, workers, context)
+            .await
+    }
+
+    /// List remote workers for a workflow.
+    async fn list_remote_workers(
+        &self,
+        workflow_id: i64,
+        context: &C,
+    ) -> Result<ListRemoteWorkersResponse, ApiError> {
+        self.remote_workers_api
+            .list_remote_workers(workflow_id, context)
+            .await
+    }
+
+    /// Delete a remote worker from a workflow.
+    async fn delete_remote_worker(
+        &self,
+        workflow_id: i64,
+        worker: String,
+        context: &C,
+    ) -> Result<DeleteRemoteWorkerResponse, ApiError> {
+        self.remote_workers_api
+            .delete_remote_worker(workflow_id, worker, context)
             .await
     }
 
@@ -4144,64 +4182,8 @@ where
             }
         };
 
-        // Handle completion and uninitialization side effects
-        let is_current_complete = current_status.is_complete();
-        let is_new_complete = status.is_complete();
-
-        if !is_current_complete && is_new_complete {
-            // Current status is not complete and new status is complete
-            // Check that a job result record exists and get the return_code
-            let return_code = match sqlx::query!(
-                "SELECT return_code FROM result WHERE job_id = ? AND run_id = ?",
-                id,
-                run_id
-            )
-            .fetch_optional(self.pool.as_ref())
-            .await
-            {
-                Ok(Some(row)) => row.return_code,
-                Ok(None) => {
-                    error!(
-                        "manage_status_change: no result found for completion status change, job_id={}, run_id={}, status={}",
-                        id, run_id, status
-                    );
-                    let error_response = models::ErrorResponse::new(serde_json::json!({
-                        "message": format!(
-                            "No result found for job ID {} and run_id {} when transitioning to completion status '{}'",
-                            id, run_id, status
-                        )
-                    }));
-                    return Ok(
-                        ManageStatusChangeResponse::UnprocessableContentErrorResponse(
-                            error_response,
-                        ),
-                    );
-                }
-                Err(e) => {
-                    error!("Database error checking for result: {}", e);
-                    let error_response = models::ErrorResponse::new(serde_json::json!({
-                        "message": "Database error"
-                    }));
-                    return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
-                        error_response,
-                    ));
-                }
-            };
-
-            // Update all blocked jobs as a result of the completion
-            if let Err(e) = self
-                .unblock_jobs_waiting_for(id, job.workflow_id, return_code)
-                .await
-            {
-                error!("Failed to unblock jobs waiting for job {}: {}", id, e);
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": "Failed to update blocked jobs"
-                }));
-                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
-                    error_response,
-                ));
-            }
-        } else if is_current_complete && status == models::JobStatus::Uninitialized {
+        // Handle reversion from complete to uninitialized
+        if current_status.is_complete() && status == models::JobStatus::Uninitialized {
             // Current status is complete and new status is Uninitialized
             // Change all downstream jobs accordingly - jobs blocked by this job that are "done"
             // should also be changed to JobStatus::Uninitialized

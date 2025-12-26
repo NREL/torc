@@ -1,7 +1,8 @@
 # Tutorial: Automatic Failure Recovery
 
 This tutorial shows how to use `torc watch` with automatic recovery to handle workflow failures
-without manual intervention.
+without manual intervention. This tutorial shows how to use `torc watch` with automatic recovery to
+handle workflow failures without manual intervention.
 
 ## Learning Objectives
 
@@ -54,7 +55,6 @@ torc watch 42 --recover \
   --memory-multiplier 2.0 \   # Memory increase factor (default: 1.5)
   --runtime-multiplier 2.0 \  # Runtime increase factor (default: 1.5)
   --retry-unknown \           # Also retry jobs with unknown failures (default: skip)
-  --recovery-hook "bash fix.sh" \  # Custom recovery script for unknown failures
   --recovery-hook "bash fix.sh" \  # Custom recovery script for unknown failures
   --poll-interval 120 \       # Seconds between status checks (default: 60)
   --output-dir /scratch/output \

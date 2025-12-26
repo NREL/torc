@@ -144,7 +144,7 @@ cargo run -p torc-server -- run
 Server will start on `http://localhost:8080`.
 
 When running small workflows for testing and demonstration purposes, we recommend setting this
-option so that the server detects job completions faster than the default value of 60 seconds.
+option so that the server detects job completions faster than the default value of 30 seconds.
 
 ```bash
 ./target/release/torc-server run --completion-check-interval-secs 5

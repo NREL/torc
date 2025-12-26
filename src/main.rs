@@ -10,6 +10,7 @@ use torc::client::commands::files::handle_file_commands;
 use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
+use torc::client::commands::remote::handle_remote_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
 use torc::client::commands::results::handle_result_commands;
@@ -499,6 +500,9 @@ fn main() {
         }
         Commands::Slurm { command } => {
             handle_slurm_commands(&config, command, &format);
+        }
+        Commands::Remote { command } => {
+            handle_remote_commands(&config, command);
         }
         Commands::ScheduledComputeNodes { command } => {
             handle_scheduled_compute_node_commands(&config, command, &format);

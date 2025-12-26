@@ -68,6 +68,7 @@ __all__ = [
     "LocalSchedulerModel",
     "NotFoundErrorResponse",
     "ProcessChangedJobInputsResponse",
+    "RemoteWorkerModel",
     "ResourceRequirementsModel",
     "ResultModel",
     "ScheduledComputeNodesModel",
@@ -133,6 +134,7 @@ from torc.openapi_client.models.list_workflows_response import ListWorkflowsResp
 from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel as LocalSchedulerModel
 from torc.openapi_client.models.not_found_error_response import NotFoundErrorResponse as NotFoundErrorResponse
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse as ProcessChangedJobInputsResponse
+from torc.openapi_client.models.remote_worker_model import RemoteWorkerModel as RemoteWorkerModel
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel as ResourceRequirementsModel
 from torc.openapi_client.models.result_model import ResultModel as ResultModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel as ScheduledComputeNodesModel

@@ -23,8 +23,8 @@
     - user::String : User that created the workflow
     - description::String : Description of the workflow
     - timestamp::String : Timestamp of workflow creation
-    - compute_node_expiration_buffer_seconds::Int64 : Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 60 seconds.
-    - compute_node_wait_for_new_jobs_seconds::Int64 : Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
+    - compute_node_expiration_buffer_seconds::Int64 : Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 90 seconds.
+    - compute_node_wait_for_new_jobs_seconds::Int64 : Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete. Default must be &gt;&#x3D; completion_check_interval_secs + job_completion_poll_interval to avoid exiting before dependent jobs are unblocked.
     - compute_node_ignore_workflow_completion::Bool : Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     - compute_node_wait_for_healthy_database_minutes::Int64 : Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
     - jobs_sort_method::JobsSortMethod

@@ -2197,8 +2197,8 @@ fn handle_generate(
     let profile = match profile {
         Some(p) => p,
         None => {
-            if profile_name.is_some() {
-                eprintln!("Unknown HPC profile: {}", profile_name.unwrap());
+            if let Some(name) = profile_name {
+                eprintln!("Unknown HPC profile: {}", name);
             } else {
                 eprintln!("No HPC profile specified and no system detected.");
                 eprintln!("Use --profile <name> or run on an HPC system.");
@@ -2363,8 +2363,8 @@ fn handle_regenerate(
     let profile = match profile {
         Some(p) => p,
         None => {
-            if profile_name.is_some() {
-                eprintln!("Unknown HPC profile: {}", profile_name.unwrap());
+            if let Some(name) = profile_name {
+                eprintln!("Unknown HPC profile: {}", name);
             } else {
                 eprintln!("No HPC profile specified and no system detected.");
                 eprintln!("Use --profile <name> or run on an HPC system.");

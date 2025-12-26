@@ -2183,8 +2183,8 @@ fn handle_create_slurm(
     let profile = match profile {
         Some(p) => p,
         None => {
-            if hpc_profile.is_some() {
-                eprintln!("Unknown HPC profile: {}", hpc_profile.unwrap());
+            if let Some(name) = hpc_profile {
+                eprintln!("Unknown HPC profile: {}", name);
             } else {
                 eprintln!("No HPC profile specified and no system detected.");
                 eprintln!("Use --hpc-profile <name> to specify a profile.");
