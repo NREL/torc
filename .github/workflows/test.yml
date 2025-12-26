@@ -88,6 +88,24 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
+      # Clean up intermediate build artifacts to free disk space for Julia
+      # Keep only the binaries needed to run the server
+      - name: Clean up build artifacts
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "Disk space before cleanup:"
+          df -h .
+          # Remove intermediate build artifacts but keep binaries
+          rm -rf target/debug/deps
+          rm -rf target/debug/incremental
+          rm -rf target/debug/build
+          rm -rf target/debug/.fingerprint
+          rm -rf target/debug/examples
+          # Also clean up cargo cache
+          rm -rf ~/.cargo/registry/cache
+          echo "Disk space after cleanup:"
+          df -h .
+
       # Python and Julia client tests (Unix only for now)
       - name: Setup Python
         if: matrix.os == 'ubuntu-latest'
