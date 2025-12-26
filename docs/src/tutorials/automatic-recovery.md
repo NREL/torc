@@ -1,7 +1,8 @@
 # Tutorial: Automatic Failure Recovery
 
 This tutorial shows how to use `torc watch` with automatic recovery to handle workflow failures
-without manual intervention.
+without manual intervention. This tutorial shows how to use `torc watch` with automatic recovery to
+handle workflow failures without manual intervention.
 
 ## Learning Objectives
 

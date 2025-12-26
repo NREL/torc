@@ -1,7 +1,7 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
-use crate::client::commands::output::{print_if_json, print_json};
+use crate::client::commands::output::{print_if_json, print_wrapped_if_json};
 use crate::client::commands::pagination::{ComputeNodeListParams, paginate_compute_nodes};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
@@ -163,12 +163,8 @@ pub fn handle_compute_node_commands(
 
             match paginate_compute_nodes(config, selected_workflow_id, params) {
                 Ok(nodes) => {
-                    if format == "json" {
-                        let json_output = serde_json::json!({
-                            "items": nodes,
-                            "total_count": nodes.len(),
-                        });
-                        print_json(&json_output, "compute nodes");
+                    if print_wrapped_if_json(format, "compute_nodes", &nodes, "compute_nodes") {
+                        // JSON was printed
                     } else if nodes.is_empty() {
                         println!(
                             "No compute nodes found for workflow {}",

@@ -5,7 +5,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::output::{print_if_json, print_json};
+use super::output::{print_if_json, print_json, print_wrapped_if_json};
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -713,7 +713,12 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                     .with_limit(*limit),
             ) {
                 Ok(schedulers) => {
-                    if print_if_json(format, &schedulers, "Slurm schedulers") {
+                    if print_wrapped_if_json(
+                        format,
+                        "slurm_schedulers",
+                        &schedulers,
+                        "Slurm schedulers",
+                    ) {
                         // JSON was printed
                     } else {
                         let rows: Vec<SlurmSchedulerTableRow> = schedulers

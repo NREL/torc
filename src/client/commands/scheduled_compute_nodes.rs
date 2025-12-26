@@ -1,7 +1,7 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
-use crate::client::commands::output::{print_if_json, print_json};
+use crate::client::commands::output::{print_if_json, print_json, print_wrapped_if_json};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
@@ -139,12 +139,13 @@ pub fn handle_scheduled_compute_node_commands(
                 Ok(response) => {
                     let nodes = response.items.unwrap_or_default();
 
-                    if format == "json" {
-                        let json_output = serde_json::json!({
-                            "items": nodes,
-                            "total_count": response.total_count,
-                        });
-                        print_json(&json_output, "scheduled compute nodes");
+                    if print_wrapped_if_json(
+                        format,
+                        "scheduled_compute_nodes",
+                        &nodes,
+                        "scheduled compute nodes",
+                    ) {
+                        // JSON was printed
                     } else if nodes.is_empty() {
                         println!(
                             "No scheduled compute nodes found for workflow {}",
