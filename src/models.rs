@@ -3139,11 +3139,22 @@ impl std::convert::TryFrom<hyper::header::HeaderValue> for header::IntoHeaderVal
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    Hash,
+    Default,
 )]
 #[cfg_attr(feature = "conversion", derive(frunk_enum_derive::LabelledGenericEnum))]
 pub enum JobStatus {
     #[serde(rename = "uninitialized")]
+    #[default]
     Uninitialized,
     #[serde(rename = "blocked")]
     Blocked,
@@ -3179,12 +3190,6 @@ impl std::fmt::Display for JobStatus {
             JobStatus::Terminated => write!(f, "terminated"),
             JobStatus::Disabled => write!(f, "disabled"),
         }
-    }
-}
-
-impl Default for JobStatus {
-    fn default() -> JobStatus {
-        Self::Uninitialized
     }
 }
 
@@ -7488,7 +7493,17 @@ impl std::convert::TryFrom<hyper::header::HeaderValue>
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    Hash,
+    Default,
 )]
 #[cfg_attr(feature = "conversion", derive(frunk_enum_derive::LabelledGenericEnum))]
 pub enum ClaimJobsSortMethod {
@@ -7497,6 +7512,7 @@ pub enum ClaimJobsSortMethod {
     #[serde(rename = "gpus_memory_runtime")]
     GpusMemoryRuntime,
     #[serde(rename = "none")]
+    #[default]
     None,
 }
 
@@ -7507,12 +7523,6 @@ impl std::fmt::Display for ClaimJobsSortMethod {
             ClaimJobsSortMethod::GpusMemoryRuntime => write!(f, "gpus_memory_runtime"),
             ClaimJobsSortMethod::None => write!(f, "none"),
         }
-    }
-}
-
-impl Default for ClaimJobsSortMethod {
-    fn default() -> ClaimJobsSortMethod {
-        Self::None
     }
 }
 
