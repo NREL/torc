@@ -149,6 +149,8 @@ pub struct JobRunner {
     had_failures: bool,
     /// Tracks whether any job was terminated during this run
     had_terminations: bool,
+    /// When this job runner started (for calculating duration_seconds)
+    start_instant: Instant,
 }
 
 impl JobRunner {
@@ -246,6 +248,7 @@ impl JobRunner {
             last_job_claimed_time: None,
             had_failures: false,
             had_terminations: false,
+            start_instant: Instant::now(),
         }
     }
 
@@ -465,6 +468,9 @@ impl JobRunner {
             monitor.shutdown();
         }
 
+        // Deactivate compute node and set duration
+        self.deactivate_compute_node();
+
         info!(
             "Job runner completed for workflow ID: {} (had_failures={}, had_terminations={})",
             self.workflow_id, self.had_failures, self.had_terminations
@@ -473,6 +479,34 @@ impl JobRunner {
             had_failures: self.had_failures,
             had_terminations: self.had_terminations,
         })
+    }
+
+    /// Deactivate the compute node and set its duration.
+    fn deactivate_compute_node(&self) {
+        let duration_seconds = self.start_instant.elapsed().as_secs_f64();
+        info!(
+            "Deactivating compute node {} (duration: {:.1}s)",
+            self.compute_node_id, duration_seconds
+        );
+
+        let mut update_model = crate::models::ComputeNodeModel::new(
+            self.workflow_id,
+            String::new(), // hostname not needed for update
+            0,             // pid not needed for update
+            String::new(), // start_time not needed for update
+            0,             // num_cpus not needed for update
+            0.0,           // memory_gb not needed for update
+            0,             // num_gpus not needed for update
+            1,             // num_nodes not needed for update
+            String::new(), // compute_node_type not needed for update
+            None,          // scheduler_config_id not needed for update
+        );
+        update_model.is_active = Some(false);
+        update_model.duration_seconds = Some(duration_seconds);
+
+        if let Err(e) = default_api::update_compute_node(&self.config, self.compute_node_id, update_model) {
+            error!("Failed to deactivate compute node {}: {}", self.compute_node_id, e);
+        }
     }
 
     /// Cancel all running jobs and handle completions.

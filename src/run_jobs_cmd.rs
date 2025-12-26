@@ -233,21 +233,21 @@ pub fn run(args: &Args) {
     let pid = 1; // TODO
     let unique_label = format!("{}_{}_{}", hostname, workflow_id, run_id);
 
-    let compute_node = match default_api::create_compute_node(
-        &config,
-        models::ComputeNodeModel::new(
-            workflow_id,
-            hostname.clone(),
-            pid,
-            Utc::now().to_rfc3339(),
-            resources.num_cpus,
-            resources.memory_gb,
-            resources.num_gpus,
-            resources.num_nodes,
-            "local".to_string(),
-            None,
-        ),
-    ) {
+    let mut compute_node_model = models::ComputeNodeModel::new(
+        workflow_id,
+        hostname.clone(),
+        pid,
+        Utc::now().to_rfc3339(),
+        resources.num_cpus,
+        resources.memory_gb,
+        resources.num_gpus,
+        resources.num_nodes,
+        "local".to_string(),
+        None,
+    );
+    compute_node_model.is_active = Some(true);
+
+    let compute_node = match default_api::create_compute_node(&config, compute_node_model) {
         Ok(node) => node,
         Err(e) => {
             error!("Error creating compute node: {}", e);
