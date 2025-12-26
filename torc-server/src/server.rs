@@ -276,8 +276,56 @@ where
     Ok(())
 }
 
+/// Check if an error is a SQLite database lock error
+fn is_database_lock_error(error: &ApiError) -> bool {
+    let error_str = error.0.to_lowercase();
+    error_str.contains("database is locked")
+        || error_str.contains("database is busy")
+        || error_str.contains("sqlite_busy")
+}
+
 /// Process all pending unblocks for a specific workflow
 async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> Result<(), ApiError>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    // Retry logic for database lock contention
+    const MAX_RETRIES: u32 = 3;
+    const RETRY_DELAY_MS: u64 = 1000;
+
+    let mut last_error: Option<ApiError> = None;
+
+    for attempt in 0..MAX_RETRIES {
+        match process_workflow_unblocks_inner(server, workflow_id).await {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                if is_database_lock_error(&e) && attempt < MAX_RETRIES - 1 {
+                    debug!(
+                        "Database locked for workflow {}, retrying in {}ms (attempt {}/{})",
+                        workflow_id,
+                        RETRY_DELAY_MS,
+                        attempt + 1,
+                        MAX_RETRIES
+                    );
+                    last_error = Some(e);
+                    tokio::time::sleep(tokio::time::Duration::from_millis(RETRY_DELAY_MS)).await;
+                    continue;
+                }
+                // Non-retryable error or final attempt
+                return Err(e);
+            }
+        }
+    }
+
+    // If we exhausted all retries, return the last error
+    Err(last_error.unwrap_or_else(|| ApiError("Unknown error in retry loop".to_string())))
+}
+
+/// Inner implementation of process_workflow_unblocks (for retry logic)
+async fn process_workflow_unblocks_inner<C>(
+    server: &Server<C>,
+    workflow_id: i64,
+) -> Result<(), ApiError>
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
@@ -3189,14 +3237,16 @@ where
         body: models::ComputeNodesResources,
         limit: i64,
         sort_method: Option<models::ClaimJobsSortMethod>,
+        strict_scheduler_match: Option<bool>,
         context: &C,
     ) -> Result<ClaimJobsBasedOnResources, ApiError> {
         debug!(
-            "claim_jobs_based_on_resources({}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "claim_jobs_based_on_resources({}, {:?}, {:?}, {:?}, strict_scheduler_match={:?}) - X-Span-ID: {:?}",
             id,
             body,
             sort_method,
             limit,
+            strict_scheduler_match,
             context.get().0.clone()
         );
         let status = match self.get_workflow_status(id, context).await {
@@ -3222,8 +3272,15 @@ where
             ));
         }
 
-        self.prepare_ready_jobs(id, body, sort_method, limit, context)
-            .await
+        self.prepare_ready_jobs(
+            id,
+            body,
+            sort_method,
+            limit,
+            strict_scheduler_match,
+            context,
+        )
+        .await
     }
 
     /// Return user-requested number of jobs that are ready for submission. Sets status to pending.
@@ -4286,8 +4343,10 @@ where
         resources: models::ComputeNodesResources,
         sort_method: Option<models::ClaimJobsSortMethod>,
         limit: i64,
+        strict_scheduler_match: Option<bool>,
         context: &C,
     ) -> Result<ClaimJobsBasedOnResources, ApiError> {
+        let strict_scheduler_match = strict_scheduler_match.unwrap_or(false);
         // Use BEGIN IMMEDIATE TRANSACTION to acquire a database write lock.
         // This ensures thread safety at the database level for the entire job selection process.
         // The IMMEDIATE mode acquires a reserved lock immediately, preventing other writers
@@ -4380,7 +4439,8 @@ where
             }
         };
 
-        let query = format!(
+        // Query with scheduler filter
+        let query_with_scheduler = format!(
             r#"
             SELECT
                 job.workflow_id,
@@ -4413,7 +4473,8 @@ where
             order_by_clause
         );
 
-        let rows = sqlx::query(&query)
+        // First try with scheduler filter
+        let mut rows = sqlx::query(&query_with_scheduler)
             .bind(workflow_id)
             .bind(ready_status)
             .bind(memory_bytes)
@@ -4429,6 +4490,71 @@ where
                 error!("Database error in get_ready_jobs: {}", e);
                 ApiError("Database error".to_string())
             })?;
+
+        // If no jobs found with scheduler filter and strict_scheduler_match is false,
+        // retry without the scheduler filter
+        if rows.is_empty() && !strict_scheduler_match {
+            // Query without scheduler filter
+            let query_without_scheduler = format!(
+                r#"
+                SELECT
+                    job.workflow_id,
+                    job.id AS job_id,
+                    job.name,
+                    job.command,
+                    job.invocation_script,
+                    job.status,
+                    job.cancel_on_blocking_job_failure,
+                    job.supports_termination,
+                    rr.id AS resource_requirements_id,
+                    rr.memory_bytes,
+                    rr.num_cpus,
+                    rr.num_gpus,
+                    rr.num_nodes,
+                    rr.runtime_s
+                FROM job
+                JOIN resource_requirements rr ON job.resource_requirements_id = rr.id
+                WHERE job.workflow_id = $1
+                AND job.status = $2
+                AND rr.memory_bytes <= $3
+                AND rr.num_cpus <= $4
+                AND rr.num_gpus <= $5
+                AND rr.num_nodes <= $6
+                AND rr.runtime_s <= $7
+                {}
+                LIMIT $8
+                "#,
+                order_by_clause
+            );
+
+            rows = sqlx::query(&query_without_scheduler)
+                .bind(workflow_id)
+                .bind(ready_status)
+                .bind(memory_bytes)
+                .bind(resources.num_cpus)
+                .bind(resources.num_gpus)
+                .bind(resources.num_nodes)
+                .bind(time_limit_seconds)
+                .bind(limit)
+                .fetch_all(&mut *conn)
+                .await
+                .map_err(|e| {
+                    error!(
+                        "Database error in get_ready_jobs (no scheduler filter): {}",
+                        e
+                    );
+                    ApiError("Database error".to_string())
+                })?;
+
+            if !rows.is_empty() {
+                info!(
+                    "Worker with scheduler_config_id={:?} found {} ready jobs after removing scheduler filter \
+                     (strict_scheduler_match=false).",
+                    resources.scheduler_config_id,
+                    rows.len()
+                );
+            }
+        }
 
         // Track consumed resources
         let mut consumed_memory_bytes = 0i64;

@@ -460,7 +460,7 @@ fn verify_many_jobs_completion(
     }
 }
 
-/// Test workflow restart after a job failure.
+/// Test workflow reinitialization after a job failure.
 ///
 /// This test creates a three-stage workflow:
 /// - Stage 1: One job (setup)
@@ -472,7 +472,7 @@ fn verify_many_jobs_completion(
 /// 2. After reset-status --failed-only: work_fail becomes ready, finalize becomes blocked
 /// 3. Second run (with flag file removed): all jobs complete with return code 0
 #[rstest]
-fn test_workflow_restart_after_failure(start_server: &ServerProcess) {
+fn test_workflow_reinitialization_after_failure(start_server: &ServerProcess) {
     assert!(start_server.child.id() > 0);
     let config = &start_server.config;
 
@@ -675,7 +675,7 @@ resource_requirements:
         "work_fail should have return code 1"
     );
 
-    // === Reset status with --failed-only and --restart ===
+    // === Reset status with --failed-only and --reinitialize ===
 
     run_cli_command(
         &[
@@ -683,7 +683,7 @@ resource_requirements:
             "reset-status",
             &workflow_id.to_string(),
             "--failed-only",
-            "--restart",
+            "--reinitialize",
             "--no-prompts",
         ],
         start_server,

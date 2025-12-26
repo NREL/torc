@@ -190,6 +190,21 @@ pub enum Commands {
         #[arg(long)]
         retry_unknown: bool,
 
+        /// Custom recovery hook command for unknown failures
+        ///
+        /// When jobs fail with unknown causes (not OOM or timeout), this command
+        /// is executed before resetting jobs for retry. Use this to run custom
+        /// recovery logic, such as adjusting Spark cluster sizes or fixing
+        /// configuration issues.
+        ///
+        /// The workflow ID is passed as both an argument and environment variable:
+        /// - Argument: `<command> <workflow_id>`
+        /// - Environment: `TORC_WORKFLOW_ID=<workflow_id>`
+        ///
+        /// Example: --recovery-hook "bash fix-spark-cluster.sh"
+        #[arg(long)]
+        recovery_hook: Option<String>,
+
         /// Output directory for job files
         #[arg(short, long, default_value = "output")]
         output_dir: PathBuf,

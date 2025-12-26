@@ -85,11 +85,12 @@ const _returntypes_claim_jobs_based_on_resources_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing)
+function _oacinternal_claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, strict_scheduler_match=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_claim_jobs_based_on_resources_DefaultApi, "/workflows/{id}/claim_jobs_based_on_resources/{limit}", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
     OpenAPI.Clients.set_param(_ctx.path, "limit", limit)  # type Int64
     OpenAPI.Clients.set_param(_ctx.query, "sort_method", sort_method; style="form", is_explode=true)  # type JobsSortMethod
+    OpenAPI.Clients.set_param(_ctx.query, "strict_scheduler_match", strict_scheduler_match; style="form", is_explode=true)  # type Bool
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
     return _ctx
@@ -104,16 +105,17 @@ Params:
 - limit::Int64 (required)
 - body::ComputeNodesResources (required)
 - sort_method::JobsSortMethod
+- strict_scheduler_match::Bool
 
 Return: ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse
 """
-function claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, _mediaType=_mediaType)
+function claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, strict_scheduler_match=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, strict_scheduler_match=strict_scheduler_match, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, _mediaType=_mediaType)
+function claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, strict_scheduler_match=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, strict_scheduler_match=strict_scheduler_match, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2224,7 +2226,7 @@ const _returntypes_list_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing)
+function _oacinternal_list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, active_compute_node_id=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_jobs_DefaultApi, "/jobs", [])
     OpenAPI.Clients.set_param(_ctx.query, "workflow_id", workflow_id; style="simple", is_explode=false)  # type Int64
     OpenAPI.Clients.set_param(_ctx.query, "status", status; style="simple", is_explode=false)  # type JobStatus
@@ -2235,6 +2237,7 @@ function _oacinternal_list_jobs(_api::DefaultApi, workflow_id::Int64; status=not
     OpenAPI.Clients.set_param(_ctx.query, "sort_by", sort_by; style="form", is_explode=true)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "reverse_sort", reverse_sort; style="form", is_explode=true)  # type Bool
     OpenAPI.Clients.set_param(_ctx.query, "include_relationships", include_relationships; style="form", is_explode=true)  # type Bool
+    OpenAPI.Clients.set_param(_ctx.query, "active_compute_node_id", active_compute_node_id; style="simple", is_explode=false)  # type Int64
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
     return _ctx
@@ -2254,16 +2257,17 @@ Params:
 - sort_by::String
 - reverse_sort::Bool
 - include_relationships::Bool
+- active_compute_node_id::Int64
 
 Return: ListJobsResponse, OpenAPI.Clients.ApiResponse
 """
-function list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_jobs(_api, workflow_id; status=status, needs_file_id=needs_file_id, upstream_job_id=upstream_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, include_relationships=include_relationships, _mediaType=_mediaType)
+function list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, active_compute_node_id=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_jobs(_api, workflow_id; status=status, needs_file_id=needs_file_id, upstream_job_id=upstream_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, include_relationships=include_relationships, active_compute_node_id=active_compute_node_id, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_jobs(_api, workflow_id; status=status, needs_file_id=needs_file_id, upstream_job_id=upstream_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, include_relationships=include_relationships, _mediaType=_mediaType)
+function list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, active_compute_node_id=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_jobs(_api, workflow_id; status=status, needs_file_id=needs_file_id, upstream_job_id=upstream_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, include_relationships=include_relationships, active_compute_node_id=active_compute_node_id, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 

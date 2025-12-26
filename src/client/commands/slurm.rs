@@ -1210,7 +1210,7 @@ pub fn schedule_slurm_nodes(
     std::fs::create_dir_all(output)?;
 
     for job_num in 1..num_hpc_jobs + 1 {
-        let job_name = format!("{}_{}", job_prefix, job_num);
+        let job_name = format!("{}_{}_{}", job_prefix, scheduler_config_id, job_num);
         let script_path = format!("{}/{}.sh", output, job_name);
 
         if let Err(e) = slurm_interface.create_submission_script(
@@ -2903,6 +2903,9 @@ fn handle_regenerate(
             if let Some(job_id) = job.id {
                 let mut updated_job = (*job).clone();
                 updated_job.scheduler_id = Some(scheduler_id);
+                // Clear status so server ignores it during comparison
+                // (avoids 422 errors if status changed since job was fetched)
+                updated_job.status = None;
                 if let Err(e) = default_api::update_job(config, job_id, updated_job) {
                     warnings.push(format!(
                         "Failed to update job {} with scheduler: {}",

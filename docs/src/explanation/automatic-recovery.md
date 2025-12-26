@@ -137,7 +137,6 @@ The Torc MCP server provides tools for AI-assisted investigation:
 | `get_job_logs` | Read stdout/stderr logs |
 | `check_resource_utilization` | Detailed resource analysis |
 | `update_job_resources` | Manually adjust resources |
-| `restart_jobs` | Reset and restart jobs |
 | `resubmit_workflow` | Regenerate Slurm schedulers |
 
 ## Comparison
@@ -167,7 +166,7 @@ Main loop:
    - Run `torc reports check-resource-utilization --include-failed`
    - Parse results for `likely_oom` and `likely_timeout` flags
    - Update resource requirements via API
-   - Run `torc workflows reset-status --failed-only --restart`
+   - Run `torc workflows reset-status --failed-only --reinitialize`
    - Run `torc slurm regenerate --submit`
    - Increment retry counter
    - Resume polling

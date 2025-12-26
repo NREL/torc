@@ -74,15 +74,25 @@ use std::time::{Duration, Instant};
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::async_cli_command::AsyncCliCommand;
+use crate::client::commands::watch::format_duration_iso8601;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
 use crate::config::TorcConfig;
 use crate::models::{
-    ClaimJobsSortMethod, ComputeNodesResources, ResourceRequirementsModel, ResultModel,
+    ClaimJobsSortMethod, ComputeNodesResources, JobStatus, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
 };
 
 const GB: i64 = 1024 * 1024 * 1024;
+
+/// Result of running the job worker, indicating whether any jobs failed or were terminated.
+#[derive(Debug, Default, Clone)]
+pub struct WorkerResult {
+    /// True if any job failed during execution
+    pub had_failures: bool,
+    /// True if any job was terminated (e.g., due to SIGTERM or time limit)
+    pub had_terminations: bool,
+}
 
 // Cache for memory string to GB conversions
 thread_local! {
@@ -135,6 +145,10 @@ pub struct JobRunner {
     /// Uses std::time::Instant instead of wall clock time to avoid issues with
     /// NTP clock adjustments that could cause premature idle timeout exits.
     last_job_claimed_time: Option<Instant>,
+    /// Tracks whether any job failed during this run
+    had_failures: bool,
+    /// Tracks whether any job was terminated during this run
+    had_terminations: bool,
 }
 
 impl JobRunner {
@@ -229,6 +243,8 @@ impl JobRunner {
             resource_monitor,
             termination_requested: Arc::new(AtomicBool::new(false)),
             last_job_claimed_time: None,
+            had_failures: false,
+            had_terminations: false,
         }
     }
 
@@ -275,7 +291,7 @@ impl JobRunner {
         self.termination_requested.store(true, Ordering::SeqCst);
     }
 
-    pub fn run_worker(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run_worker(&mut self) -> Result<WorkerResult, Box<dyn std::error::Error>> {
         let version = env!("CARGO_PKG_VERSION");
         let hostname = hostname::get()
             .expect("Failed to get hostname")
@@ -293,10 +309,20 @@ impl JobRunner {
             info!("Created output directory: {}", self.output_dir.display());
         }
 
-        info!("Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?}
-            job_completion_poll_interval={}s max_parallel_jobs={:?}",
-            version, self.workflow_id, hostname, self.output_dir.display(), self.resources,
-            self.rules, self.job_completion_poll_interval, self.max_parallel_jobs);
+        info!(
+            "Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?} \
+            job_completion_poll_interval={}s max_parallel_jobs={:?} end_time={:?} strict_scheduler_match={}",
+            version,
+            self.workflow_id,
+            hostname,
+            self.output_dir.display(),
+            self.resources,
+            self.rules,
+            self.job_completion_poll_interval,
+            self.max_parallel_jobs,
+            self.end_time,
+            self.torc_config.client.slurm.strict_scheduler_match
+        );
 
         // Check for and execute on_workflow_start and on_worker_start actions before entering main loop
         self.execute_workflow_start_actions();
@@ -410,8 +436,14 @@ impl JobRunner {
             monitor.shutdown();
         }
 
-        info!("Job runner completed for workflow ID: {}", self.workflow_id);
-        Ok(())
+        info!(
+            "Job runner completed for workflow ID: {} (had_failures={}, had_terminations={})",
+            self.workflow_id, self.had_failures, self.had_terminations
+        );
+        Ok(WorkerResult {
+            had_failures: self.had_failures,
+            had_terminations: self.had_terminations,
+        })
     }
 
     /// Cancel all running jobs and handle completions.
@@ -699,6 +731,13 @@ impl JobRunner {
     }
 
     fn handle_job_completion(&mut self, job_id: i64, result: ResultModel) {
+        // Track failures and terminations
+        match result.status {
+            JobStatus::Failed => self.had_failures = true,
+            JobStatus::Terminated => self.had_terminations = true,
+            _ => {}
+        }
+
         match utils::send_with_retries(
             &self.config,
             || {
@@ -713,7 +752,10 @@ impl JobRunner {
             self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(_) => {
-                info!("Successfully completed job {}", job_id);
+                info!(
+                    "Successfully completed job {} with status {:?}",
+                    job_id, result.status
+                );
                 if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
                     self.increment_resources(&job_rr);
                 }
@@ -747,8 +789,34 @@ impl JobRunner {
         assert!(self.resources.num_gpus <= self.orig_resources.num_gpus);
     }
 
+    /// Update the time_limit in resources based on remaining time until end_time.
+    /// This ensures the server only returns jobs whose runtime fits within the remaining allocation time.
+    fn update_remaining_time_limit(&mut self) {
+        if let Some(end_time) = self.end_time {
+            let now = Utc::now();
+            if end_time > now {
+                let remaining_seconds = (end_time - now).num_seconds() as u64;
+                let time_limit = format_duration_iso8601(remaining_seconds);
+                debug!(
+                    "Updating time_limit to {} ({} seconds remaining)",
+                    time_limit, remaining_seconds
+                );
+                self.resources.time_limit = Some(time_limit);
+            } else {
+                // End time has passed - set to minimum
+                debug!("End time has passed, setting time_limit to PT1M");
+                self.resources.time_limit = Some("PT1M".to_string());
+            }
+        }
+        // If end_time is None, leave time_limit as-is (unlimited)
+    }
+
     fn run_ready_jobs_based_on_resources(&mut self) {
+        // Update time_limit based on remaining allocation time before claiming jobs
+        self.update_remaining_time_limit();
+
         let limit = self.resources.num_cpus;
+        let strict_scheduler_match = self.torc_config.client.slurm.strict_scheduler_match;
         match utils::send_with_retries(
             &self.config,
             || {
@@ -758,6 +826,7 @@ impl JobRunner {
                     &self.resources,
                     limit,
                     Some(self.rules.jobs_sort_method),
+                    Some(strict_scheduler_match),
                 )
             },
             self.rules.compute_node_wait_for_healthy_database_minutes,
@@ -858,6 +927,7 @@ impl JobRunner {
                             &self.resources,
                             limit,
                             Some(self.rules.jobs_sort_method),
+                            Some(strict_scheduler_match),
                         )
                     },
                     self.rules.compute_node_wait_for_healthy_database_minutes,
@@ -877,6 +947,7 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
+        // TODO: account for time limit
         let limit = self
             .max_parallel_jobs
             .expect("max_parallel_jobs must be set")

@@ -276,8 +276,11 @@ pub fn run(args: &Args) {
     );
 
     match job_runner.run_worker() {
-        Ok(()) => {
-            info!("Job runner completed successfully");
+        Ok(result) => {
+            info!(
+                "Job runner completed successfully (had_failures={}, had_terminations={})",
+                result.had_failures, result.had_terminations
+            );
         }
         Err(e) => {
             error!("Job runner failed: {}", e);

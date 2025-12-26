@@ -131,8 +131,14 @@ fn execute_workflow_with_job(
 
     // Prepare jobs for submission
     let resources = models::ComputeNodesResources::new(36, 100.0, 0, 1);
-    let result =
-        default_api::claim_jobs_based_on_resources(config, workflow_id, &resources, 10, None)?;
+    let result = default_api::claim_jobs_based_on_resources(
+        config,
+        workflow_id,
+        &resources,
+        10,
+        None,
+        None,
+    )?;
     let returned_jobs = result.jobs.expect("Server must return jobs array");
 
     // Verify the job was returned with correct status
@@ -779,9 +785,15 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
 
     // Prepare jobs for submission
     let resources = models::ComputeNodesResources::new(36, 100.0, 0, 1);
-    let result =
-        default_api::claim_jobs_based_on_resources(&config, workflow_id, &resources, 10, None)
-            .expect("Failed to prepare jobs for submission");
+    let result = default_api::claim_jobs_based_on_resources(
+        &config,
+        workflow_id,
+        &resources,
+        10,
+        None,
+        None,
+    )
+    .expect("Failed to prepare jobs for submission");
     let returned_jobs = result.jobs.expect("Server must return jobs array");
 
     // Both jobs should be returned
@@ -985,9 +997,15 @@ fn test_update_jobs_on_file_change_with_canceled_jobs(start_server: &ServerProce
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
     let resources = models::ComputeNodesResources::new(36, 100.0, 0, 1);
-    let result =
-        default_api::claim_jobs_based_on_resources(&config, workflow_id, &resources, 10, None)
-            .expect("Failed to claim jobs");
+    let result = default_api::claim_jobs_based_on_resources(
+        &config,
+        workflow_id,
+        &resources,
+        10,
+        None,
+        None,
+    )
+    .expect("Failed to claim jobs");
     let returned_jobs = result.jobs.expect("Server must return jobs array");
     assert_eq!(returned_jobs.len(), 1, "Should return exactly 1 job");
 
@@ -1076,9 +1094,15 @@ fn test_process_changed_files_end_to_end(start_server: &ServerProcess) {
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
     let resources = models::ComputeNodesResources::new(36, 100.0, 0, 1);
-    let result =
-        default_api::claim_jobs_based_on_resources(&config, workflow_id, &resources, 10, None)
-            .expect("claim_jobs_based_on_resources should succeed");
+    let result = default_api::claim_jobs_based_on_resources(
+        &config,
+        workflow_id,
+        &resources,
+        10,
+        None,
+        None,
+    )
+    .expect("claim_jobs_based_on_resources should succeed");
     let returned_jobs = result.jobs.expect("Server must return jobs array");
     assert_eq!(
         returned_jobs.len(),

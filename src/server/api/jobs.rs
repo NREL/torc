@@ -394,9 +394,10 @@ impl JobsApiImpl {
         let canceled_status = JobStatus::Canceled.to_int();
         let terminated_status = JobStatus::Terminated.to_int();
 
-        // First, get the list of failed jobs that will be reset
-        // Query workflow_result to get the current result for each job
-        // Only consider jobs with completion statuses (Completed, Failed, Canceled, Terminated)
+        // Get the list of jobs that actually failed (have a result with non-zero return code).
+        // Canceled/terminated jobs that never ran are NOT included here - they will be
+        // handled by reinitialize_jobs which uses a recursive CTE to find all jobs
+        // blocked by the reset jobs and transitions them appropriately.
         let failed_jobs = match sqlx::query!(
             r#"
             SELECT j.id, j.status
@@ -404,8 +405,8 @@ impl JobsApiImpl {
             JOIN workflow_result wr ON j.id = wr.job_id AND j.workflow_id = wr.workflow_id
             JOIN result r ON wr.result_id = r.id
             WHERE j.workflow_id = $1
-              AND r.return_code != 0
               AND j.status IN ($2, $3, $4, $5)
+              AND r.return_code != 0
             "#,
             workflow_id,
             completed_status,
@@ -1496,22 +1497,91 @@ where
             Err(e) => return Err(e),
         };
 
-        // Restriction 1: Updating is only allowed if the job status is Uninitialized
-        if let Some(ref status) = existing_job.status {
-            if *status != JobStatus::Uninitialized {
+        // Check if job has a status
+        let existing_status = match existing_job.status {
+            Some(ref status) => status.clone(),
+            None => {
                 let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": format!(
-                        "Cannot update job when status is '{}' - updates are only allowed when status is 'uninitialized'",
-                        status
-                    )
+                    "message": "Cannot update job - job has no status set"
                 }));
                 return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
                     error_response,
                 ));
             }
-        } else {
+        };
+
+        // Determine if we're only updating fields that are allowed at any time
+        // (scheduler_id and resource_requirements_id can be updated regardless of status)
+        // All fields are checked by comparing to existing values, since the client may
+        // send the full job object with only scheduler_id/resource_requirements_id changed
+        // Note: If body field is None, we treat it as "not changing" that field
+        let name_changed = body.name != existing_job.name;
+        let command_changed = body.command != existing_job.command;
+        // Treat None as "not changing" - only compare if body.status is Some
+        let status_changed = body.status.is_some() && body.status != existing_job.status;
+        let input_file_ids_changed =
+            body.input_file_ids.is_some() && body.input_file_ids != existing_job.input_file_ids;
+        let output_file_ids_changed =
+            body.output_file_ids.is_some() && body.output_file_ids != existing_job.output_file_ids;
+        let input_user_data_ids_changed = body.input_user_data_ids.is_some()
+            && body.input_user_data_ids != existing_job.input_user_data_ids;
+        let output_user_data_ids_changed = body.output_user_data_ids.is_some()
+            && body.output_user_data_ids != existing_job.output_user_data_ids;
+        let depends_on_job_ids_changed = body.depends_on_job_ids.is_some()
+            && body.depends_on_job_ids != existing_job.depends_on_job_ids;
+
+        let has_restricted_updates = name_changed
+            || command_changed
+            || status_changed
+            || input_file_ids_changed
+            || output_file_ids_changed
+            || input_user_data_ids_changed
+            || output_user_data_ids_changed
+            || depends_on_job_ids_changed;
+        let only_updating_always_allowed_fields = !has_restricted_updates;
+
+        // Restriction 1: Most updates are only allowed if the job status is Uninitialized
+        // Exception: scheduler_id and resource_requirements_id can be updated at any time
+        if existing_status != JobStatus::Uninitialized && !only_updating_always_allowed_fields {
+            // Build detailed error message showing which fields changed
+            let mut changed_fields = Vec::new();
+            if name_changed {
+                changed_fields.push(format!("name: '{}' -> '{}'", existing_job.name, body.name));
+            }
+            if command_changed {
+                changed_fields.push("command".to_string());
+            }
+            if status_changed {
+                changed_fields.push(format!(
+                    "status: {:?} -> {:?}",
+                    existing_job.status, body.status
+                ));
+            }
+            if input_file_ids_changed {
+                changed_fields.push("input_file_ids".to_string());
+            }
+            if output_file_ids_changed {
+                changed_fields.push("output_file_ids".to_string());
+            }
+            if input_user_data_ids_changed {
+                changed_fields.push("input_user_data_ids".to_string());
+            }
+            if output_user_data_ids_changed {
+                changed_fields.push("output_user_data_ids".to_string());
+            }
+            if depends_on_job_ids_changed {
+                changed_fields.push("depends_on_job_ids".to_string());
+            }
+
             let error_response = models::ErrorResponse::new(serde_json::json!({
-                "message": "Cannot update job - job has no status set"
+                "message": format!(
+                    "Cannot update job {} when status is '{}' - most updates are only allowed when status is 'uninitialized'. \
+                     Only scheduler_id and resource_requirements_id can be updated at any time. \
+                     Changed fields: [{}]",
+                    id,
+                    existing_status,
+                    changed_fields.join(", ")
+                )
             }));
             return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
                 error_response,
