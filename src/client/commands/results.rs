@@ -1,7 +1,7 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
-use crate::client::commands::output::print_if_json;
+use crate::client::commands::output::{print_if_json, print_wrapped_if_json};
 use crate::client::commands::{
     pagination, print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
@@ -233,14 +233,8 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                         results.retain(|r| r.return_code != 0);
                     }
 
-                    if format == "json" {
-                        match pagination::display_json_results("results", &results) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing results to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_wrapped_if_json(format, "results", &results, "results") {
+                        // JSON was printed
                     } else if results.is_empty() {
                         if let Some(jid) = job_id {
                             println!(

@@ -504,8 +504,13 @@ impl JobRunner {
         update_model.is_active = Some(false);
         update_model.duration_seconds = Some(duration_seconds);
 
-        if let Err(e) = default_api::update_compute_node(&self.config, self.compute_node_id, update_model) {
-            error!("Failed to deactivate compute node {}: {}", self.compute_node_id, e);
+        if let Err(e) =
+            default_api::update_compute_node(&self.config, self.compute_node_id, update_model)
+        {
+            error!(
+                "Failed to deactivate compute node {}: {}",
+                self.compute_node_id, e
+            );
         }
     }
 

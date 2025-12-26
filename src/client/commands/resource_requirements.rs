@@ -1,7 +1,7 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
-use crate::client::commands::output::print_if_json;
+use crate::client::commands::output::{print_if_json, print_wrapped_if_json};
 use crate::client::commands::{
     pagination, print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
@@ -186,17 +186,13 @@ pub fn handle_resource_requirements_commands(
                 params,
             ) {
                 Ok(requirements) => {
-                    if format == "json" {
-                        match pagination::display_json_results(
-                            "resource_requirements",
-                            &requirements,
-                        ) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing resource requirements to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_wrapped_if_json(
+                        format,
+                        "resource_requirements",
+                        &requirements,
+                        "resource requirements",
+                    ) {
+                        // JSON was printed
                     } else if requirements.is_empty() {
                         println!(
                             "No resource requirements found for workflow ID: {}",

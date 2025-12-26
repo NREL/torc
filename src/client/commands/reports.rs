@@ -865,9 +865,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         }
 
         match (min_start, max_end) {
-            (Some(start), Some(end)) => {
-                Some((end - start).num_milliseconds() as f64 / 1000.0)
-            }
+            (Some(start), Some(end)) => Some((end - start).num_milliseconds() as f64 / 1000.0),
             _ => None,
         }
     };
