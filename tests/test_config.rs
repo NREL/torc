@@ -43,7 +43,7 @@ fn test_server_config_defaults() {
     assert!(config.database.is_none());
     assert!(config.auth_file.is_none());
     assert!(!config.require_auth);
-    assert_eq!(config.completion_check_interval_secs, 60.0);
+    assert_eq!(config.completion_check_interval_secs, 30.0);
 }
 
 #[rstest]

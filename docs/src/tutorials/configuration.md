@@ -260,7 +260,7 @@ threads = 8
 database = "/var/lib/torc/production.db"
 require_auth = true
 auth_file = "/etc/torc/htpasswd"
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 log_level = "info"
 
 [server.logging]

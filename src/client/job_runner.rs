@@ -1540,7 +1540,14 @@ impl JobRunner {
 struct ComputeNodeRules {
     /// Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.
     pub compute_node_expiration_buffer_seconds: i64,
-    /// Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
+    /// Inform all compute nodes to wait for new jobs for this time period before exiting.
+    /// Does not apply if the workflow is complete.
+    ///
+    /// The default value must satisfy:
+    ///   compute_node_wait_for_new_jobs_seconds >= completion_check_interval_secs + job_completion_poll_interval
+    /// This ensures the worker doesn't exit before the server's background unblock task runs
+    /// and the worker polls for newly-ready jobs. With defaults of 30s for each interval,
+    /// the minimum safe value is 60s. We use 90s to provide a safety buffer.
     pub compute_node_wait_for_new_jobs_seconds: u64,
     /// Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     pub compute_node_ignore_workflow_completion: bool,
@@ -1561,7 +1568,7 @@ impl ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
                 .unwrap_or(60),
             compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
-                .unwrap_or(60) as u64,
+                .unwrap_or(90) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:

@@ -161,7 +161,7 @@ Settings for `torc-server`.
 | `database`                       | string | (none)      | SQLite database path (falls back to `DATABASE_URL` env) |
 | `auth_file`                      | string | (none)      | Path to htpasswd file                                   |
 | `require_auth`                   | bool   | `false`     | Require authentication for all requests                 |
-| `completion_check_interval_secs` | float  | `60.0`      | Background job processing interval                      |
+| `completion_check_interval_secs` | float  | `30.0`      | Background job processing interval                      |
 
 ### `[server.logging]` Section
 
@@ -180,7 +180,7 @@ threads = 4
 database = "/var/lib/torc/torc.db"
 auth_file = "/etc/torc/htpasswd"
 require_auth = true
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 log_level = "info"
 https = false
 
@@ -306,7 +306,7 @@ port = 8080
 threads = 4
 database = "/var/lib/torc/torc.db"
 require_auth = false
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 
 [server.logging]
 log_dir = "/var/log/torc"

@@ -49,7 +49,7 @@ impl Default for ServerConfig {
             database: None,
             auth_file: None,
             require_auth: false,
-            completion_check_interval_secs: 60.0,
+            completion_check_interval_secs: 30.0,
             logging: ServerLoggingConfig::default(),
         }
     }
@@ -81,7 +81,7 @@ mod tests {
         assert_eq!(config.threads, 1);
         assert!(config.database.is_none());
         assert!(!config.require_auth);
-        assert_eq!(config.completion_check_interval_secs, 60.0);
+        assert_eq!(config.completion_check_interval_secs, 30.0);
     }
 
     #[test]

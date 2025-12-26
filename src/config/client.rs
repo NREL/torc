@@ -107,7 +107,7 @@ pub struct ClientSlurmConfig {
 impl Default for ClientSlurmConfig {
     fn default() -> Self {
         Self {
-            poll_interval: 60,
+            poll_interval: 30,
             keep_submission_scripts: false,
             strict_scheduler_match: false,
         }

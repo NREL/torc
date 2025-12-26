@@ -211,7 +211,7 @@ output_dir = "output"
 
 [client.slurm]
 # Poll interval in seconds for Slurm job runners
-poll_interval = 60
+poll_interval = 30
 
 # Keep submission scripts after job submission (useful for debugging)
 keep_submission_scripts = false
@@ -263,7 +263,7 @@ https = false
 require_auth = false
 
 # Interval for background job completion processing (seconds)
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 
 # Log level: error, warn, info, debug, trace
 log_level = "info"
