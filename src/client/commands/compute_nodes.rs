@@ -2,6 +2,7 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
 use crate::client::commands::output::{print_if_json, print_json};
+use crate::client::commands::pagination::{ComputeNodeListParams, paginate_compute_nodes};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
@@ -146,24 +147,26 @@ pub fn handle_compute_node_commands(
                 },
             };
 
-            match default_api::list_compute_nodes(
-                config,
-                selected_workflow_id,
-                Some(*offset),
-                Some(*limit),
-                sort_by.as_deref(),
-                Some(*reverse_sort),
-                None, // hostname filter
-                None, // is_active filter
-                *scheduled_compute_node,
-            ) {
-                Ok(response) => {
-                    let nodes = response.items.unwrap_or_default();
+            let mut params = ComputeNodeListParams::new()
+                .with_offset(*offset)
+                .with_limit(*limit);
 
+            if let Some(sort) = sort_by {
+                params = params.with_sort_by(sort.clone());
+            }
+            if *reverse_sort {
+                params = params.with_reverse_sort(true);
+            }
+            if let Some(scn_id) = scheduled_compute_node {
+                params = params.with_scheduled_compute_node_id(*scn_id);
+            }
+
+            match paginate_compute_nodes(config, selected_workflow_id, params) {
+                Ok(nodes) => {
                     if format == "json" {
                         let json_output = serde_json::json!({
                             "items": nodes,
-                            "total_count": response.total_count,
+                            "total_count": nodes.len(),
                         });
                         print_json(&json_output, "compute nodes");
                     } else if nodes.is_empty() {
@@ -175,13 +178,6 @@ pub fn handle_compute_node_commands(
                         let rows: Vec<ComputeNodeTableRow> =
                             nodes.iter().map(|n| n.into()).collect();
                         display_table_with_count(&rows, "compute nodes");
-                        if response.total_count as usize > nodes.len() {
-                            println!(
-                                "\nShowing {} of {} total compute nodes",
-                                nodes.len(),
-                                response.total_count
-                            );
-                        }
                     }
                 }
                 Err(e) => {

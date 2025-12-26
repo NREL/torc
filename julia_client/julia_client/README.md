@@ -32,6 +32,7 @@ Class | Method
 *DefaultApi* | [**create_job**](docs/DefaultApi.md#create_job)<br/>**POST** /jobs<br/>Store a job.
 *DefaultApi* | [**create_jobs**](docs/DefaultApi.md#create_jobs)<br/>**POST** /bulk_jobs<br/>Create jobs in bulk. Recommended max job count of 10,000.
 *DefaultApi* | [**create_local_scheduler**](docs/DefaultApi.md#create_local_scheduler)<br/>**POST** /local_schedulers<br/>Store a local scheduler.
+*DefaultApi* | [**create_remote_workers**](docs/DefaultApi.md#create_remote_workers)<br/>**POST** /workflows/{id}/remote_workers<br/>Store remote workers for a workflow.
 *DefaultApi* | [**create_resource_requirements**](docs/DefaultApi.md#create_resource_requirements)<br/>**POST** /resource_requirements<br/>Store one resource requirements record.
 *DefaultApi* | [**create_result**](docs/DefaultApi.md#create_result)<br/>**POST** /results<br/>Store a job result.
 *DefaultApi* | [**create_scheduled_compute_node**](docs/DefaultApi.md#create_scheduled_compute_node)<br/>**POST** /scheduled_compute_nodes<br/>Store a scheduled compute node.
@@ -50,6 +51,7 @@ Class | Method
 *DefaultApi* | [**delete_jobs**](docs/DefaultApi.md#delete_jobs)<br/>**DELETE** /jobs<br/>Delete all jobs for one workflow.
 *DefaultApi* | [**delete_local_scheduler**](docs/DefaultApi.md#delete_local_scheduler)<br/>**DELETE** /local_schedulers/{id}<br/>Delete a local scheduler.
 *DefaultApi* | [**delete_local_schedulers**](docs/DefaultApi.md#delete_local_schedulers)<br/>**DELETE** /local_schedulers<br/>Delete all local schedulers for one workflow.
+*DefaultApi* | [**delete_remote_worker**](docs/DefaultApi.md#delete_remote_worker)<br/>**DELETE** /workflows/{id}/remote_workers/{worker}<br/>Delete a remote worker from a workflow.
 *DefaultApi* | [**delete_resource_requirement**](docs/DefaultApi.md#delete_resource_requirement)<br/>**DELETE** /resource_requirements/{id}<br/>Delete a resource requirements record.
 *DefaultApi* | [**delete_resource_requirements**](docs/DefaultApi.md#delete_resource_requirements)<br/>**DELETE** /resource_requirements<br/>Delete all resource requirements records for one workflow.
 *DefaultApi* | [**delete_result**](docs/DefaultApi.md#delete_result)<br/>**DELETE** /results/{id}<br/>Delete a job result.
@@ -90,6 +92,7 @@ Class | Method
 *DefaultApi* | [**list_jobs**](docs/DefaultApi.md#list_jobs)<br/>**GET** /jobs<br/>Retrieve all jobs for one workflow.
 *DefaultApi* | [**list_local_schedulers**](docs/DefaultApi.md#list_local_schedulers)<br/>**GET** /local_schedulers<br/>Retrieve local schedulers for one workflow.
 *DefaultApi* | [**list_missing_user_data**](docs/DefaultApi.md#list_missing_user_data)<br/>**GET** /workflows/{id}/missing_user_data<br/>List missing user data that should exist.
+*DefaultApi* | [**list_remote_workers**](docs/DefaultApi.md#list_remote_workers)<br/>**GET** /workflows/{id}/remote_workers<br/>List all remote workers for a workflow.
 *DefaultApi* | [**list_required_existing_files**](docs/DefaultApi.md#list_required_existing_files)<br/>**GET** /workflows/{id}/required_existing_files<br/>List files that must exist.
 *DefaultApi* | [**list_resource_requirements**](docs/DefaultApi.md#list_resource_requirements)<br/>**GET** /resource_requirements<br/>Retrieve all resource requirements records for one workflow.
 *DefaultApi* | [**list_results**](docs/DefaultApi.md#list_results)<br/>**GET** /results<br/>Retrieve all job results for one workflow.
@@ -159,6 +162,7 @@ Class | Method
  - [LocalSchedulerModel](docs/LocalSchedulerModel.md)
  - [NotFoundErrorResponse](docs/NotFoundErrorResponse.md)
  - [ProcessChangedJobInputsResponse](docs/ProcessChangedJobInputsResponse.md)
+ - [RemoteWorkerModel](docs/RemoteWorkerModel.md)
  - [ResourceRequirementsModel](docs/ResourceRequirementsModel.md)
  - [ResultModel](docs/ResultModel.md)
  - [ScheduledComputeNodesModel](docs/ScheduledComputeNodesModel.md)

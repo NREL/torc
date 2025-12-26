@@ -7,6 +7,7 @@ pub mod job_dependencies;
 pub mod jobs;
 pub mod output;
 pub mod pagination;
+pub mod remote;
 pub mod reports;
 pub mod resource_requirements;
 pub mod results;

@@ -15,6 +15,7 @@ Method | HTTP request | Description
 [**create_job**](DefaultApi.md#create_job) | **POST** /jobs | Store a job.
 [**create_jobs**](DefaultApi.md#create_jobs) | **POST** /bulk_jobs | Create jobs in bulk. Recommended max job count of 10,000.
 [**create_local_scheduler**](DefaultApi.md#create_local_scheduler) | **POST** /local_schedulers | Store a local scheduler.
+[**create_remote_workers**](DefaultApi.md#create_remote_workers) | **POST** /workflows/{id}/remote_workers | Store remote workers for a workflow.
 [**create_resource_requirements**](DefaultApi.md#create_resource_requirements) | **POST** /resource_requirements | Store one resource requirements record.
 [**create_result**](DefaultApi.md#create_result) | **POST** /results | Store a job result.
 [**create_scheduled_compute_node**](DefaultApi.md#create_scheduled_compute_node) | **POST** /scheduled_compute_nodes | Store a scheduled compute node.
@@ -33,6 +34,7 @@ Method | HTTP request | Description
 [**delete_jobs**](DefaultApi.md#delete_jobs) | **DELETE** /jobs | Delete all jobs for one workflow.
 [**delete_local_scheduler**](DefaultApi.md#delete_local_scheduler) | **DELETE** /local_schedulers/{id} | Delete a local scheduler.
 [**delete_local_schedulers**](DefaultApi.md#delete_local_schedulers) | **DELETE** /local_schedulers | Delete all local schedulers for one workflow.
+[**delete_remote_worker**](DefaultApi.md#delete_remote_worker) | **DELETE** /workflows/{id}/remote_workers/{worker} | Delete a remote worker from a workflow.
 [**delete_resource_requirement**](DefaultApi.md#delete_resource_requirement) | **DELETE** /resource_requirements/{id} | Delete a resource requirements record.
 [**delete_resource_requirements**](DefaultApi.md#delete_resource_requirements) | **DELETE** /resource_requirements | Delete all resource requirements records for one workflow.
 [**delete_result**](DefaultApi.md#delete_result) | **DELETE** /results/{id} | Delete a job result.
@@ -73,6 +75,7 @@ Method | HTTP request | Description
 [**list_jobs**](DefaultApi.md#list_jobs) | **GET** /jobs | Retrieve all jobs for one workflow.
 [**list_local_schedulers**](DefaultApi.md#list_local_schedulers) | **GET** /local_schedulers | Retrieve local schedulers for one workflow.
 [**list_missing_user_data**](DefaultApi.md#list_missing_user_data) | **GET** /workflows/{id}/missing_user_data | List missing user data that should exist.
+[**list_remote_workers**](DefaultApi.md#list_remote_workers) | **GET** /workflows/{id}/remote_workers | List all remote workers for a workflow.
 [**list_required_existing_files**](DefaultApi.md#list_required_existing_files) | **GET** /workflows/{id}/required_existing_files | List files that must exist.
 [**list_resource_requirements**](DefaultApi.md#list_resource_requirements) | **GET** /resource_requirements | Retrieve all resource requirements records for one workflow.
 [**list_results**](DefaultApi.md#list_results) | **GET** /results | Retrieve all job results for one workflow.
@@ -445,6 +448,37 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**LocalSchedulerModel**](LocalSchedulerModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **create_remote_workers**
+> create_remote_workers(_api::DefaultApi, id::Int64, workers::Vector{String}; _mediaType=nothing) -> Vector{RemoteWorkerModel}, OpenAPI.Clients.ApiResponse <br/>
+> create_remote_workers(_api::DefaultApi, response_stream::Channel, id::Int64, workers::Vector{String}; _mediaType=nothing) -> Channel{ Vector{RemoteWorkerModel} }, OpenAPI.Clients.ApiResponse
+
+Store remote workers for a workflow.
+
+Store remote workers for a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+**workers** | [**Vector{String}**](String.md) | List of remote workers to add |
+
+### Return type
+
+[**Vector{RemoteWorkerModel}**](RemoteWorkerModel.md)
 
 ### Authorization
 
@@ -1067,6 +1101,37 @@ No authorization required
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **delete_remote_worker**
+> delete_remote_worker(_api::DefaultApi, id::Int64, worker::String; _mediaType=nothing) -> RemoteWorkerModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_remote_worker(_api::DefaultApi, response_stream::Channel, id::Int64, worker::String; _mediaType=nothing) -> Channel{ RemoteWorkerModel }, OpenAPI.Clients.ApiResponse
+
+Delete a remote worker from a workflow.
+
+Delete a remote worker from a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+**worker** | **String** | Worker address (URL-encoded) |
+
+### Return type
+
+[**RemoteWorkerModel**](RemoteWorkerModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -2417,6 +2482,36 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListMissingUserDataResponse**](ListMissingUserDataResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **list_remote_workers**
+> list_remote_workers(_api::DefaultApi, id::Int64; _mediaType=nothing) -> Vector{RemoteWorkerModel}, OpenAPI.Clients.ApiResponse <br/>
+> list_remote_workers(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ Vector{RemoteWorkerModel} }, OpenAPI.Clients.ApiResponse
+
+List all remote workers for a workflow.
+
+List all remote workers for a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+
+### Return type
+
+[**Vector{RemoteWorkerModel}**](RemoteWorkerModel.md)
 
 ### Authorization
 

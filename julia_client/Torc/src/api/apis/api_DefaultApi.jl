@@ -377,6 +377,40 @@ function create_local_scheduler(_api::DefaultApi, response_stream::Channel, body
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_create_remote_workers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Vector{RemoteWorkerModel},
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_create_remote_workers(_api::DefaultApi, id::Int64, workers::Vector{String}; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_create_remote_workers_DefaultApi, "/workflows/{id}/remote_workers", [], workers)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Store remote workers for a workflow.
+
+Store remote workers for a workflow.
+
+Params:
+- id::Int64 (required)
+- workers::Vector{String} (required)
+
+Return: Vector{RemoteWorkerModel}, OpenAPI.Clients.ApiResponse
+"""
+function create_remote_workers(_api::DefaultApi, id::Int64, workers::Vector{String}; _mediaType=nothing)
+    _ctx = _oacinternal_create_remote_workers(_api, id, workers; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function create_remote_workers(_api::DefaultApi, response_stream::Channel, id::Int64, workers::Vector{String}; _mediaType=nothing)
+    _ctx = _oacinternal_create_remote_workers(_api, id, workers; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_create_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -961,6 +995,41 @@ end
 
 function delete_local_schedulers(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_delete_local_schedulers(_api, workflow_id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_remote_worker_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => RemoteWorkerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_remote_worker(_api::DefaultApi, id::Int64, worker::String; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_remote_worker_DefaultApi, "/workflows/{id}/remote_workers/{worker}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "worker", worker)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a remote worker from a workflow.
+
+Delete a remote worker from a workflow.
+
+Params:
+- id::Int64 (required)
+- worker::String (required)
+
+Return: RemoteWorkerModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_remote_worker(_api::DefaultApi, id::Int64, worker::String; _mediaType=nothing)
+    _ctx = _oacinternal_delete_remote_worker(_api, id, worker; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_remote_worker(_api::DefaultApi, response_stream::Channel, id::Int64, worker::String; _mediaType=nothing)
+    _ctx = _oacinternal_delete_remote_worker(_api, id, worker; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2347,6 +2416,39 @@ function list_missing_user_data(_api::DefaultApi, response_stream::Channel, id::
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_list_remote_workers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Vector{RemoteWorkerModel},
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_remote_workers(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_remote_workers_DefaultApi, "/workflows/{id}/remote_workers", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List all remote workers for a workflow.
+
+List all remote workers for a workflow.
+
+Params:
+- id::Int64 (required)
+
+Return: Vector{RemoteWorkerModel}, OpenAPI.Clients.ApiResponse
+"""
+function list_remote_workers(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_list_remote_workers(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_remote_workers(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_list_remote_workers(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_list_required_existing_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListRequiredExistingFilesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -3300,6 +3402,7 @@ export create_file
 export create_job
 export create_jobs
 export create_local_scheduler
+export create_remote_workers
 export create_resource_requirements
 export create_result
 export create_scheduled_compute_node
@@ -3318,6 +3421,7 @@ export delete_job
 export delete_jobs
 export delete_local_scheduler
 export delete_local_schedulers
+export delete_remote_worker
 export delete_resource_requirement
 export delete_resource_requirements
 export delete_result
@@ -3358,6 +3462,7 @@ export list_job_user_data_relationships
 export list_jobs
 export list_local_schedulers
 export list_missing_user_data
+export list_remote_workers
 export list_required_existing_files
 export list_resource_requirements
 export list_results

@@ -3955,6 +3955,133 @@ paths:
       summary: Atomically claim a workflow action.
       tags: []
       x-codegen-request-body-name: body
+  /workflows/{id}/remote_workers:
+    post:
+      description: Store remote workers for a workflow.
+      operationId: create_remote_workers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              description: List of remote worker addresses
+        description: List of remote workers to add
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/remote_worker_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Workflow not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store remote workers for a workflow.
+      tags: []
+      x-codegen-request-body-name: workers
+    get:
+      description: List all remote workers for a workflow.
+      operationId: list_remote_workers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/remote_worker_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Workflow not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List all remote workers for a workflow.
+      tags: []
+  /workflows/{id}/remote_workers/{worker}:
+    delete:
+      description: Delete a remote worker from a workflow.
+      operationId: delete_remote_worker
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Worker address (URL-encoded)
+        explode: false
+        in: path
+        name: worker
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/remote_worker_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Workflow or worker not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a remote worker from a workflow.
+      tags: []
 components:
   schemas:
     compute_node_model:
@@ -4454,6 +4581,21 @@ components:
       required:
       - workflow_id
       - name
+    remote_worker_model:
+      description: A remote worker associated with a workflow
+      example:
+        worker: "user@hostname:22"
+        workflow_id: 1
+      properties:
+        worker:
+          description: Worker address in format [user@]hostname[:port]
+          type: string
+        workflow_id:
+          description: ID of the workflow this worker is associated with
+          type: integer
+      required:
+      - worker
+      - workflow_id
     workflow_model:
       example:
         status_id: 1

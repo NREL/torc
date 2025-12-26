@@ -14,168 +14,120 @@ This document contains the help content for the `torc` command-line program.
 
 **Command Overview:**
 
-- [CLI Reference](#cli-reference)
-- [Command-Line Help for `torc`](#command-line-help-for-torc)
-  - [`torc`](#torc) - [**Subcommands:**](#subcommands) - [**Options:**](#options)
-  - [`torc run`](#torc-run) - [**Arguments:**](#arguments) - [**Options:**](#options-1)
-  - [`torc submit`](#torc-submit) - [**Arguments:**](#arguments-1) - [**Options:**](#options-2)
-  - [`torc submit-slurm`](#torc-submit-slurm) - [**Arguments:**](#arguments-2) -
-    [**Options:**](#options-3)
-  - [`torc watch`](#torc-watch) - [**Arguments:**](#arguments-3) - [**Options:**](#options-4)
-  - [`torc workflows`](#torc-workflows) - [**Subcommands:**](#subcommands-1)
-  - [`torc workflows create`](#torc-workflows-create) - [**Arguments:**](#arguments-4) -
-    [**Options:**](#options-5)
-  - [`torc workflows create-slurm`](#torc-workflows-create-slurm) - [**Arguments:**](#arguments-5) -
-    [**Options:**](#options-6)
-  - [`torc workflows new`](#torc-workflows-new) - [**Options:**](#options-7)
-  - [`torc workflows list`](#torc-workflows-list) - [**Options:**](#options-8)
-  - [`torc workflows get`](#torc-workflows-get) - [**Arguments:**](#arguments-6) -
-    [**Options:**](#options-9)
-  - [`torc workflows update`](#torc-workflows-update) - [**Arguments:**](#arguments-7) -
-    [**Options:**](#options-10)
-  - [`torc workflows cancel`](#torc-workflows-cancel) - [**Arguments:**](#arguments-8)
-  - [`torc workflows delete`](#torc-workflows-delete) - [**Arguments:**](#arguments-9) -
-    [**Options:**](#options-11)
-  - [`torc workflows archive`](#torc-workflows-archive) - [**Arguments:**](#arguments-10)
-  - [`torc workflows submit`](#torc-workflows-submit) - [**Arguments:**](#arguments-11) -
-    [**Options:**](#options-12)
-  - [`torc workflows run`](#torc-workflows-run) - [**Arguments:**](#arguments-12) -
-    [**Options:**](#options-13)
-  - [`torc workflows initialize`](#torc-workflows-initialize) - [**Arguments:**](#arguments-13) -
-    [**Options:**](#options-14)
-  - [`torc workflows reinitialize`](#torc-workflows-reinitialize) - [**Arguments:**](#arguments-14)
-    - [**Options:**](#options-15)
-  - [`torc workflows status`](#torc-workflows-status) - [**Arguments:**](#arguments-15) -
-    [**Options:**](#options-16)
-  - [`torc workflows reset-status`](#torc-workflows-reset-status) - [**Arguments:**](#arguments-16)
-    - [**Options:**](#options-17)
-  - [`torc workflows execution-plan`](#torc-workflows-execution-plan) -
-    [**Arguments:**](#arguments-17)
-  - [`torc workflows list-actions`](#torc-workflows-list-actions) - [**Arguments:**](#arguments-18)
-    - [**Options:**](#options-18)
-  - [`torc workflows is-complete`](#torc-workflows-is-complete) - [**Arguments:**](#arguments-19)
-  - [`torc compute-nodes`](#torc-compute-nodes) - [**Subcommands:**](#subcommands-2)
-  - [`torc compute-nodes get`](#torc-compute-nodes-get) - [**Arguments:**](#arguments-20)
-  - [`torc compute-nodes list`](#torc-compute-nodes-list) - [**Arguments:**](#arguments-21) -
-    [**Options:**](#options-19)
-  - [`torc files`](#torc-files) - [**Subcommands:**](#subcommands-3)
-  - [`torc files create`](#torc-files-create) - [**Arguments:**](#arguments-22) -
-    [**Options:**](#options-20)
-  - [`torc files list`](#torc-files-list) - [**Arguments:**](#arguments-23) -
-    [**Options:**](#options-21)
-  - [`torc files get`](#torc-files-get) - [**Arguments:**](#arguments-24)
-  - [`torc files update`](#torc-files-update) - [**Arguments:**](#arguments-25) -
-    [**Options:**](#options-22)
-  - [`torc files delete`](#torc-files-delete) - [**Arguments:**](#arguments-26)
-  - [`torc files list-required-existing`](#torc-files-list-required-existing) -
-    [**Arguments:**](#arguments-27)
-  - [`torc jobs`](#torc-jobs) - [**Subcommands:**](#subcommands-4)
-  - [`torc jobs create`](#torc-jobs-create) - [**Arguments:**](#arguments-28) -
-    [**Options:**](#options-23)
-  - [`torc jobs create-from-file`](#torc-jobs-create-from-file) - [**Arguments:**](#arguments-29) -
-    [**Options:**](#options-24)
-  - [`torc jobs list`](#torc-jobs-list) - [**Arguments:**](#arguments-30) -
-    [**Options:**](#options-25)
-  - [`torc jobs get`](#torc-jobs-get) - [**Arguments:**](#arguments-31)
-  - [`torc jobs update`](#torc-jobs-update) - [**Arguments:**](#arguments-32) -
-    [**Options:**](#options-26)
-  - [`torc jobs delete`](#torc-jobs-delete) - [**Arguments:**](#arguments-33)
-  - [`torc jobs delete-all`](#torc-jobs-delete-all) - [**Arguments:**](#arguments-34)
-  - [`torc jobs list-resource-requirements`](#torc-jobs-list-resource-requirements) -
-    [**Arguments:**](#arguments-35) - [**Options:**](#options-27)
-  - [`torc job-dependencies`](#torc-job-dependencies) - [**Subcommands:**](#subcommands-5)
-  - [`torc job-dependencies job-job`](#torc-job-dependencies-job-job) -
-    [**Arguments:**](#arguments-36) - [**Options:**](#options-28)
-  - [`torc job-dependencies job-file`](#torc-job-dependencies-job-file) -
-    [**Arguments:**](#arguments-37) - [**Options:**](#options-29)
-  - [`torc job-dependencies job-user-data`](#torc-job-dependencies-job-user-data) -
-    [**Arguments:**](#arguments-38) - [**Options:**](#options-30)
-  - [`torc resource-requirements`](#torc-resource-requirements) - [**Subcommands:**](#subcommands-6)
-  - [`torc resource-requirements create`](#torc-resource-requirements-create) -
-    [**Arguments:**](#arguments-39) - [**Options:**](#options-31)
-  - [`torc resource-requirements list`](#torc-resource-requirements-list) -
-    [**Arguments:**](#arguments-40) - [**Options:**](#options-32)
-  - [`torc resource-requirements get`](#torc-resource-requirements-get) -
-    [**Arguments:**](#arguments-41)
-  - [`torc resource-requirements update`](#torc-resource-requirements-update) -
-    [**Arguments:**](#arguments-42) - [**Options:**](#options-33)
-  - [`torc resource-requirements delete`](#torc-resource-requirements-delete) -
-    [**Arguments:**](#arguments-43)
-  - [`torc events`](#torc-events) - [**Subcommands:**](#subcommands-7)
-  - [`torc events create`](#torc-events-create) - [**Arguments:**](#arguments-44) -
-    [**Options:**](#options-34)
-  - [`torc events list`](#torc-events-list) - [**Arguments:**](#arguments-45) -
-    [**Options:**](#options-35)
-  - [`torc events monitor`](#torc-events-monitor) - [**Arguments:**](#arguments-46) -
-    [**Options:**](#options-36)
-  - [`torc events get-latest-event`](#torc-events-get-latest-event) -
-    [**Arguments:**](#arguments-47)
-  - [`torc events delete`](#torc-events-delete) - [**Arguments:**](#arguments-48)
-  - [`torc results`](#torc-results) - [**Subcommands:**](#subcommands-8)
-  - [`torc results list`](#torc-results-list) - [**Arguments:**](#arguments-49) -
-    [**Options:**](#options-37)
-  - [`torc results get`](#torc-results-get) - [**Arguments:**](#arguments-50)
-  - [`torc results delete`](#torc-results-delete) - [**Arguments:**](#arguments-51)
-  - [`torc user-data`](#torc-user-data) - [**Subcommands:**](#subcommands-9)
-  - [`torc user-data create`](#torc-user-data-create) - [**Arguments:**](#arguments-52) -
-    [**Options:**](#options-38)
-  - [`torc user-data list`](#torc-user-data-list) - [**Arguments:**](#arguments-53) -
-    [**Options:**](#options-39)
-  - [`torc user-data get`](#torc-user-data-get) - [**Arguments:**](#arguments-54)
-  - [`torc user-data update`](#torc-user-data-update) - [**Arguments:**](#arguments-55) -
-    [**Options:**](#options-40)
-  - [`torc user-data delete`](#torc-user-data-delete) - [**Arguments:**](#arguments-56)
-  - [`torc user-data delete-all`](#torc-user-data-delete-all) - [**Arguments:**](#arguments-57)
-  - [`torc user-data list-missing`](#torc-user-data-list-missing) - [**Arguments:**](#arguments-58)
-  - [`torc slurm`](#torc-slurm) - [**Subcommands:**](#subcommands-10)
-  - [`torc slurm create`](#torc-slurm-create) - [**Arguments:**](#arguments-59) -
-    [**Options:**](#options-41)
-  - [`torc slurm update`](#torc-slurm-update) - [**Arguments:**](#arguments-60) -
-    [**Options:**](#options-42)
-  - [`torc slurm list`](#torc-slurm-list) - [**Arguments:**](#arguments-61) -
-    [**Options:**](#options-43)
-  - [`torc slurm get`](#torc-slurm-get) - [**Arguments:**](#arguments-62)
-  - [`torc slurm delete`](#torc-slurm-delete) - [**Arguments:**](#arguments-63)
-  - [`torc slurm schedule-nodes`](#torc-slurm-schedule-nodes) - [**Arguments:**](#arguments-64) -
-    [**Options:**](#options-44)
-  - [`torc slurm parse-logs`](#torc-slurm-parse-logs) - [**Arguments:**](#arguments-65) -
-    [**Options:**](#options-45)
-  - [`torc slurm sacct`](#torc-slurm-sacct) - [**Arguments:**](#arguments-66) -
-    [**Options:**](#options-46)
-  - [`torc slurm generate`](#torc-slurm-generate) - [**Arguments:**](#arguments-67) -
-    [**Options:**](#options-47)
-  - [`torc slurm regenerate`](#torc-slurm-regenerate) - [**Arguments:**](#arguments-68) -
-    [**Options:**](#options-48)
-  - [`torc scheduled-compute-nodes`](#torc-scheduled-compute-nodes) -
-    [**Subcommands:**](#subcommands-11)
-  - [`torc scheduled-compute-nodes get`](#torc-scheduled-compute-nodes-get) -
-    [**Arguments:**](#arguments-69)
-  - [`torc scheduled-compute-nodes list`](#torc-scheduled-compute-nodes-list) -
-    [**Arguments:**](#arguments-70) - [**Options:**](#options-49)
-  - [`torc scheduled-compute-nodes list-jobs`](#torc-scheduled-compute-nodes-list-jobs) -
-    [**Arguments:**](#arguments-71)
-  - [`torc hpc`](#torc-hpc) - [**Subcommands:**](#subcommands-12)
-  - [`torc hpc list`](#torc-hpc-list)
-  - [`torc hpc detect`](#torc-hpc-detect)
-  - [`torc hpc show`](#torc-hpc-show) - [**Arguments:**](#arguments-72)
-  - [`torc hpc partitions`](#torc-hpc-partitions) - [**Arguments:**](#arguments-73) -
-    [**Options:**](#options-50)
-  - [`torc hpc match`](#torc-hpc-match) - [**Options:**](#options-51)
-  - [`torc reports`](#torc-reports) - [**Subcommands:**](#subcommands-13)
-  - [`torc reports check-resource-utilization`](#torc-reports-check-resource-utilization) -
-    [**Arguments:**](#arguments-74) - [**Options:**](#options-52)
-  - [`torc reports results`](#torc-reports-results) - [**Arguments:**](#arguments-75) -
-    [**Options:**](#options-53)
-  - [`torc reports summary`](#torc-reports-summary) - [**Arguments:**](#arguments-76)
-  - [`torc config`](#torc-config) - [**Subcommands:**](#subcommands-14)
-  - [`torc config show`](#torc-config-show) - [**Options:**](#options-54)
-  - [`torc config paths`](#torc-config-paths)
-  - [`torc config init`](#torc-config-init) - [**Options:**](#options-55)
-  - [`torc config validate`](#torc-config-validate)
-  - [`torc tui`](#torc-tui) - [**Options:**](#options-56)
-  - [`torc plot-resources`](#torc-plot-resources) - [**Arguments:**](#arguments-77) -
-    [**Options:**](#options-57)
-  - [`torc completions`](#torc-completions) - [**Arguments:**](#arguments-78)
+- [`torc`↴](#torc)
+- [`torc run`↴](#torc-run)
+- [`torc submit`↴](#torc-submit)
+- [`torc submit-slurm`↴](#torc-submit-slurm)
+- [`torc watch`↴](#torc-watch)
+- [`torc workflows`↴](#torc-workflows)
+- [`torc workflows create`↴](#torc-workflows-create)
+- [`torc workflows create-slurm`↴](#torc-workflows-create-slurm)
+- [`torc workflows new`↴](#torc-workflows-new)
+- [`torc workflows list`↴](#torc-workflows-list)
+- [`torc workflows get`↴](#torc-workflows-get)
+- [`torc workflows update`↴](#torc-workflows-update)
+- [`torc workflows cancel`↴](#torc-workflows-cancel)
+- [`torc workflows delete`↴](#torc-workflows-delete)
+- [`torc workflows archive`↴](#torc-workflows-archive)
+- [`torc workflows submit`↴](#torc-workflows-submit)
+- [`torc workflows run`↴](#torc-workflows-run)
+- [`torc workflows initialize`↴](#torc-workflows-initialize)
+- [`torc workflows reinitialize`↴](#torc-workflows-reinitialize)
+- [`torc workflows status`↴](#torc-workflows-status)
+- [`torc workflows reset-status`↴](#torc-workflows-reset-status)
+- [`torc workflows execution-plan`↴](#torc-workflows-execution-plan)
+- [`torc workflows list-actions`↴](#torc-workflows-list-actions)
+- [`torc workflows is-complete`↴](#torc-workflows-is-complete)
+- [`torc compute-nodes`↴](#torc-compute-nodes)
+- [`torc compute-nodes get`↴](#torc-compute-nodes-get)
+- [`torc compute-nodes list`↴](#torc-compute-nodes-list)
+- [`torc files`↴](#torc-files)
+- [`torc files create`↴](#torc-files-create)
+- [`torc files list`↴](#torc-files-list)
+- [`torc files get`↴](#torc-files-get)
+- [`torc files update`↴](#torc-files-update)
+- [`torc files delete`↴](#torc-files-delete)
+- [`torc files list-required-existing`↴](#torc-files-list-required-existing)
+- [`torc jobs`↴](#torc-jobs)
+- [`torc jobs create`↴](#torc-jobs-create)
+- [`torc jobs create-from-file`↴](#torc-jobs-create-from-file)
+- [`torc jobs list`↴](#torc-jobs-list)
+- [`torc jobs get`↴](#torc-jobs-get)
+- [`torc jobs update`↴](#torc-jobs-update)
+- [`torc jobs delete`↴](#torc-jobs-delete)
+- [`torc jobs delete-all`↴](#torc-jobs-delete-all)
+- [`torc jobs list-resource-requirements`↴](#torc-jobs-list-resource-requirements)
+- [`torc job-dependencies`↴](#torc-job-dependencies)
+- [`torc job-dependencies job-job`↴](#torc-job-dependencies-job-job)
+- [`torc job-dependencies job-file`↴](#torc-job-dependencies-job-file)
+- [`torc job-dependencies job-user-data`↴](#torc-job-dependencies-job-user-data)
+- [`torc resource-requirements`↴](#torc-resource-requirements)
+- [`torc resource-requirements create`↴](#torc-resource-requirements-create)
+- [`torc resource-requirements list`↴](#torc-resource-requirements-list)
+- [`torc resource-requirements get`↴](#torc-resource-requirements-get)
+- [`torc resource-requirements update`↴](#torc-resource-requirements-update)
+- [`torc resource-requirements delete`↴](#torc-resource-requirements-delete)
+- [`torc events`↴](#torc-events)
+- [`torc events create`↴](#torc-events-create)
+- [`torc events list`↴](#torc-events-list)
+- [`torc events monitor`↴](#torc-events-monitor)
+- [`torc events get-latest-event`↴](#torc-events-get-latest-event)
+- [`torc events delete`↴](#torc-events-delete)
+- [`torc results`↴](#torc-results)
+- [`torc results list`↴](#torc-results-list)
+- [`torc results get`↴](#torc-results-get)
+- [`torc results delete`↴](#torc-results-delete)
+- [`torc user-data`↴](#torc-user-data)
+- [`torc user-data create`↴](#torc-user-data-create)
+- [`torc user-data list`↴](#torc-user-data-list)
+- [`torc user-data get`↴](#torc-user-data-get)
+- [`torc user-data update`↴](#torc-user-data-update)
+- [`torc user-data delete`↴](#torc-user-data-delete)
+- [`torc user-data delete-all`↴](#torc-user-data-delete-all)
+- [`torc user-data list-missing`↴](#torc-user-data-list-missing)
+- [`torc slurm`↴](#torc-slurm)
+- [`torc slurm create`↴](#torc-slurm-create)
+- [`torc slurm update`↴](#torc-slurm-update)
+- [`torc slurm list`↴](#torc-slurm-list)
+- [`torc slurm get`↴](#torc-slurm-get)
+- [`torc slurm delete`↴](#torc-slurm-delete)
+- [`torc slurm schedule-nodes`↴](#torc-slurm-schedule-nodes)
+- [`torc slurm parse-logs`↴](#torc-slurm-parse-logs)
+- [`torc slurm sacct`↴](#torc-slurm-sacct)
+- [`torc slurm generate`↴](#torc-slurm-generate)
+- [`torc slurm regenerate`↴](#torc-slurm-regenerate)
+- [`torc remote`↴](#torc-remote)
+- [`torc remote add-workers`↴](#torc-remote-add-workers)
+- [`torc remote add-workers-from-file`↴](#torc-remote-add-workers-from-file)
+- [`torc remote remove-worker`↴](#torc-remote-remove-worker)
+- [`torc remote list-workers`↴](#torc-remote-list-workers)
+- [`torc remote run`↴](#torc-remote-run)
+- [`torc remote status`↴](#torc-remote-status)
+- [`torc remote stop`↴](#torc-remote-stop)
+- [`torc remote collect-logs`↴](#torc-remote-collect-logs)
+- [`torc remote delete-logs`↴](#torc-remote-delete-logs)
+- [`torc scheduled-compute-nodes`↴](#torc-scheduled-compute-nodes)
+- [`torc scheduled-compute-nodes get`↴](#torc-scheduled-compute-nodes-get)
+- [`torc scheduled-compute-nodes list`↴](#torc-scheduled-compute-nodes-list)
+- [`torc scheduled-compute-nodes list-jobs`↴](#torc-scheduled-compute-nodes-list-jobs)
+- [`torc hpc`↴](#torc-hpc)
+- [`torc hpc list`↴](#torc-hpc-list)
+- [`torc hpc detect`↴](#torc-hpc-detect)
+- [`torc hpc show`↴](#torc-hpc-show)
+- [`torc hpc partitions`↴](#torc-hpc-partitions)
+- [`torc hpc match`↴](#torc-hpc-match)
+- [`torc reports`↴](#torc-reports)
+- [`torc reports check-resource-utilization`↴](#torc-reports-check-resource-utilization)
+- [`torc reports results`↴](#torc-reports-results)
+- [`torc reports summary`↴](#torc-reports-summary)
+- [`torc config`↴](#torc-config)
+- [`torc config show`↴](#torc-config-show)
+- [`torc config paths`↴](#torc-config-paths)
+- [`torc config init`↴](#torc-config-init)
+- [`torc config validate`↴](#torc-config-validate)
+- [`torc tui`↴](#torc-tui)
+- [`torc plot-resources`↴](#torc-plot-resources)
+- [`torc completions`↴](#torc-completions)
 
 ## `torc`
 
@@ -200,6 +152,7 @@ Torc workflow orchestration system
 - `results` — Result management commands
 - `user-data` — User data management commands
 - `slurm` — Slurm scheduler commands
+- `remote` — Remote worker execution commands (SSH-based distributed execution)
 - `scheduled-compute-nodes` — Scheduled compute node management commands
 - `hpc` — HPC system profiles and partition information
 - `reports` — Generate reports and analytics
@@ -1700,6 +1653,194 @@ regenerate schedulers to submit new allocations.
 - `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds (used when submitting)
 
   Default value: `60`
+
+## `torc remote`
+
+Remote worker execution commands (SSH-based distributed execution)
+
+**Usage:** `torc remote <COMMAND>`
+
+###### **Subcommands:**
+
+- `add-workers` — Add one or more remote workers to a workflow
+- `add-workers-from-file` — Add remote workers to a workflow from a file
+- `remove-worker` — Remove a remote worker from a workflow
+- `list-workers` — List remote workers stored in the database for a workflow
+- `run` — Run workers on remote machines via SSH
+- `status` — Check status of remote workers
+- `stop` — Stop workers on remote machines
+- `collect-logs` — Collect logs from remote workers
+- `delete-logs` — Delete logs from remote workers
+
+## `torc remote add-workers`
+
+Add one or more remote workers to a workflow
+
+Workers are stored in the database and used by subsequent commands. Format: [user@]hostname[:port]
+
+**Usage:** `torc remote add-workers <WORKFLOW_ID> <WORKERS>...`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID
+- `<WORKERS>` — Worker addresses (format: [user@]hostname[:port])
+
+## `torc remote add-workers-from-file`
+
+Add remote workers to a workflow from a file
+
+Each line in the file should be a worker address. Lines starting with # are comments.
+
+**Usage:** `torc remote add-workers-from-file <WORKER_FILE> [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKER_FILE>` — Path to worker file listing remote machines
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+## `torc remote remove-worker`
+
+Remove a remote worker from a workflow
+
+**Usage:** `torc remote remove-worker <WORKER> [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKER>` — Worker address to remove
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+## `torc remote list-workers`
+
+List remote workers stored in the database for a workflow
+
+**Usage:** `torc remote list-workers [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+## `torc remote run`
+
+Run workers on remote machines via SSH
+
+SSH into each stored worker and start a torc worker process. Workers run detached (via nohup) and
+survive SSH disconnection. Use add-workers first, or provide --workers to add and run in one step.
+
+**Usage:** `torc remote run [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID to run (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `-w`, `--workers <WORKERS>` — Path to worker file (optional - adds workers before running)
+- `-o`, `--output-dir <OUTPUT_DIR>` — Output directory on remote machines (relative to home)
+
+  Default value: `torc_output`
+- `--max-parallel-ssh <MAX_PARALLEL_SSH>` — Maximum parallel SSH connections
+
+  Default value: `10`
+- `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds for workers
+
+  Default value: `5.0`
+- `--max-parallel-jobs <MAX_PARALLEL_JOBS>` — Maximum number of parallel jobs per worker
+- `--num-cpus <NUM_CPUS>` — Number of CPUs per worker (auto-detect if not specified)
+- `--memory-gb <MEMORY_GB>` — Memory in GB per worker (auto-detect if not specified)
+- `--num-gpus <NUM_GPUS>` — Number of GPUs per worker (auto-detect if not specified)
+- `--skip-version-check` — Skip version check (not recommended)
+
+  Default value: `false`
+
+## `torc remote status`
+
+Check status of remote workers
+
+**Usage:** `torc remote status [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `--output-dir <OUTPUT_DIR>` — Remote output directory (must match what was used in run)
+
+  Default value: `torc_output`
+- `--max-parallel-ssh <MAX_PARALLEL_SSH>` — Maximum parallel SSH connections
+
+  Default value: `10`
+
+## `torc remote stop`
+
+Stop workers on remote machines
+
+**Usage:** `torc remote stop [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `--output-dir <OUTPUT_DIR>` — Remote output directory (must match what was used in run)
+
+  Default value: `torc_output`
+- `--max-parallel-ssh <MAX_PARALLEL_SSH>` — Maximum parallel SSH connections
+
+  Default value: `10`
+- `--force` — Force kill (SIGKILL instead of SIGTERM)
+
+  Default value: `false`
+
+## `torc remote collect-logs`
+
+Collect logs from remote workers
+
+**Usage:** `torc remote collect-logs [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `-l`, `--local-output-dir <LOCAL_OUTPUT_DIR>` — Local directory to save collected logs
+
+  Default value: `remote_logs`
+- `--remote-output-dir <REMOTE_OUTPUT_DIR>` — Remote output directory (must match what was used in
+  run)
+
+  Default value: `torc_output`
+- `--max-parallel-ssh <MAX_PARALLEL_SSH>` — Maximum parallel SSH connections
+
+  Default value: `10`
+- `--delete` — Delete remote logs after successful collection
+
+  Default value: `false`
+
+## `torc remote delete-logs`
+
+Delete logs from remote workers
+
+Removes the output directory from all remote workers. Use collect-logs --delete to safely collect
+before deleting.
+
+**Usage:** `torc remote delete-logs [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — Workflow ID (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `--remote-output-dir <REMOTE_OUTPUT_DIR>` — Remote output directory to delete (must match what was
+  used in run)
+
+  Default value: `torc_output`
+- `--max-parallel-ssh <MAX_PARALLEL_SSH>` — Maximum parallel SSH connections
+
+  Default value: `10`
 
 ## `torc scheduled-compute-nodes`
 

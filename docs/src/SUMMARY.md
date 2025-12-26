@@ -9,6 +9,7 @@
   - [Quick Start](./quick-start.md)
     - [Quick Start (Local)](./quick-start-local.md)
     - [Quick Start (HPC)](./quick-start-hpc.md)
+    - [Quick Start (Remote Workers)](./quick-start-remote.md)
 
 # Understanding Torc
 
@@ -38,6 +39,7 @@
 - [How-To](./how-to/README.md)
   - [Configuration Files](./how-to/configuration-files.md)
   - [Creating Workflows](./how-to/creating-workflows.md)
+  - [Remote Workers](./how-to/remote-workers.md)
   - [Working with Slurm](./how-to/slurm.md)
   - [HPC Profiles](./how-to/hpc-profiles.md)
   - [Job Checkpointing](./how-to/checkpointing.md)

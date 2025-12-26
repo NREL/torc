@@ -922,6 +922,39 @@ pub enum DeleteScheduledComputeNodeResponse {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
+pub enum CreateRemoteWorkersResponse {
+    /// Successful response
+    SuccessfulResponse(Vec<models::RemoteWorkerModel>),
+    /// Not found error response (workflow not found)
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListRemoteWorkersResponse {
+    /// Successful response
+    SuccessfulResponse(Vec<models::RemoteWorkerModel>),
+    /// Not found error response (workflow not found)
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum DeleteRemoteWorkerResponse {
+    /// Successful response
+    SuccessfulResponse(models::RemoteWorkerModel),
+    /// Not found error response (workflow or worker not found)
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
 pub enum DeleteSlurmSchedulerResponse {
     /// Successful response
     SuccessfulResponse(models::SlurmSchedulerModel),
@@ -1107,6 +1140,29 @@ pub trait Api<C: Send + Sync> {
         body: models::SlurmSchedulerModel,
         context: &C,
     ) -> Result<CreateSlurmSchedulerResponse, ApiError>;
+
+    /// Store remote workers for a workflow.
+    async fn create_remote_workers(
+        &self,
+        workflow_id: i64,
+        workers: Vec<String>,
+        context: &C,
+    ) -> Result<CreateRemoteWorkersResponse, ApiError>;
+
+    /// List remote workers for a workflow.
+    async fn list_remote_workers(
+        &self,
+        workflow_id: i64,
+        context: &C,
+    ) -> Result<ListRemoteWorkersResponse, ApiError>;
+
+    /// Delete a remote worker from a workflow.
+    async fn delete_remote_worker(
+        &self,
+        workflow_id: i64,
+        worker: String,
+        context: &C,
+    ) -> Result<DeleteRemoteWorkerResponse, ApiError>;
 
     /// Store a user data record.
     async fn create_user_data(

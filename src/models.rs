@@ -10655,3 +10655,27 @@ impl WorkflowActionModel {
 fn default_required_triggers() -> i64 {
     1
 }
+
+/// Data model for remote workers associated with a workflow.
+/// Remote workers are immutable after creation.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct RemoteWorkerModel {
+    /// Worker identifier (format: [user@]hostname[:port])
+    #[serde(rename = "worker")]
+    pub worker: String,
+
+    /// Database ID of the workflow this worker is associated with
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+}
+
+impl RemoteWorkerModel {
+    #[allow(clippy::new_without_default)]
+    pub fn new(worker: String, workflow_id: i64) -> RemoteWorkerModel {
+        RemoteWorkerModel {
+            worker,
+            workflow_id,
+        }
+    }
+}

@@ -11,6 +11,7 @@ use crate::client::log_paths::{
 };
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
+use chrono::{DateTime, FixedOffset};
 use std::path::Path;
 use tabled::Tabled;
 
@@ -771,36 +772,6 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         },
     };
 
-    // Check if workflow is complete
-    let completion_status = match default_api::is_workflow_complete(config, workflow_id) {
-        Ok(status) => status,
-        Err(e) => {
-            print_error("checking workflow completion", &e);
-            std::process::exit(1);
-        }
-    };
-
-    if !completion_status.is_complete {
-        if format == "json" {
-            let error_response = serde_json::json!({
-                "status": "error",
-                "message": "Workflow is not complete",
-                "workflow_id": workflow_id,
-                "is_complete": false,
-                "is_canceled": completion_status.is_canceled,
-            });
-            print_json(&error_response, "workflow status");
-        } else {
-            eprintln!("Error: Workflow {} is not complete.", workflow_id);
-            if completion_status.is_canceled {
-                eprintln!("The workflow was canceled.");
-            } else {
-                eprintln!("Wait for the workflow to finish before generating a summary.");
-            }
-        }
-        std::process::exit(1);
-    }
-
     // Fetch workflow info
     let workflow = match default_api::get_workflow(config, workflow_id) {
         Ok(wf) => wf,
@@ -823,19 +794,30 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     let total_jobs = jobs.len();
 
     // Count jobs by status
+    let mut uninitialized_count = 0;
+    let mut blocked_count = 0;
+    let mut ready_count = 0;
+    let mut pending_count = 0;
+    let mut running_count = 0;
     let mut completed_count = 0;
     let mut failed_count = 0;
     let mut canceled_count = 0;
     let mut terminated_count = 0;
-    let mut other_count = 0;
+    let mut disabled_count = 0;
 
     for job in &jobs {
         match job.status {
+            Some(models::JobStatus::Uninitialized) => uninitialized_count += 1,
+            Some(models::JobStatus::Blocked) => blocked_count += 1,
+            Some(models::JobStatus::Ready) => ready_count += 1,
+            Some(models::JobStatus::Pending) => pending_count += 1,
+            Some(models::JobStatus::Running) => running_count += 1,
             Some(models::JobStatus::Completed) => completed_count += 1,
             Some(models::JobStatus::Failed) => failed_count += 1,
             Some(models::JobStatus::Canceled) => canceled_count += 1,
             Some(models::JobStatus::Terminated) => terminated_count += 1,
-            _ => other_count += 1,
+            Some(models::JobStatus::Disabled) => disabled_count += 1,
+            None => {}
         }
     }
 
@@ -855,22 +837,66 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     // Calculate total execution time
     let total_exec_time_minutes: f64 = results.iter().map(|r| r.exec_time_minutes).sum();
 
+    // Calculate walltime (elapsed time from first job start to last job completion)
+    let walltime_seconds: Option<f64> = {
+        let mut min_start: Option<DateTime<FixedOffset>> = None;
+        let mut max_end: Option<DateTime<FixedOffset>> = None;
+
+        for result in &results {
+            if let Ok(completion_time) = DateTime::parse_from_rfc3339(&result.completion_time) {
+                // Calculate start time by subtracting execution time from completion time
+                let exec_duration = chrono::Duration::milliseconds(
+                    (result.exec_time_minutes * 60.0 * 1000.0) as i64,
+                );
+                let start_time = completion_time - exec_duration;
+
+                min_start = Some(match min_start {
+                    Some(current_min) if start_time < current_min => start_time,
+                    Some(current_min) => current_min,
+                    None => start_time,
+                });
+
+                max_end = Some(match max_end {
+                    Some(current_max) if completion_time > current_max => completion_time,
+                    Some(current_max) => current_max,
+                    None => completion_time,
+                });
+            }
+        }
+
+        match (min_start, max_end) {
+            (Some(start), Some(end)) => Some((end - start).num_milliseconds() as f64 / 1000.0),
+            _ => None,
+        }
+    };
+
     // Output results
     if format == "json" {
-        let report = serde_json::json!({
+        let mut report = serde_json::json!({
             "workflow_id": workflow_id,
             "workflow_name": workflow.name,
             "workflow_user": workflow.user,
-            "is_complete": true,
             "total_jobs": total_jobs,
-            "completed_jobs": completed_count,
-            "failed_jobs": failed_count,
-            "canceled_jobs": canceled_count,
-            "terminated_jobs": terminated_count,
-            "other_jobs": other_count,
+            "jobs_by_status": {
+                "uninitialized": uninitialized_count,
+                "blocked": blocked_count,
+                "ready": ready_count,
+                "pending": pending_count,
+                "running": running_count,
+                "completed": completed_count,
+                "failed": failed_count,
+                "canceled": canceled_count,
+                "terminated": terminated_count,
+                "disabled": disabled_count,
+            },
             "total_exec_time_minutes": total_exec_time_minutes,
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
         });
+
+        if let Some(walltime) = walltime_seconds {
+            report["walltime_seconds"] = serde_json::json!(walltime);
+            report["walltime_formatted"] = serde_json::json!(format_duration(walltime));
+        }
 
         print_json(&report, "workflow summary");
     } else {
@@ -881,30 +907,47 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         println!("Name: {}", workflow.name);
         println!("User: {}", workflow.user);
         println!();
-        println!("Job Status:");
-        println!("  Total Jobs: {}", total_jobs);
-        println!("  Completed:  {} ✓", completed_count);
+        println!("Job Status (total: {}):", total_jobs);
+        if uninitialized_count > 0 {
+            println!("  Uninitialized: {}", uninitialized_count);
+        }
+        if blocked_count > 0 {
+            println!("  Blocked:       {}", blocked_count);
+        }
+        if ready_count > 0 {
+            println!("  Ready:         {}", ready_count);
+        }
+        if pending_count > 0 {
+            println!("  Pending:       {}", pending_count);
+        }
+        if running_count > 0 {
+            println!("  Running:       {}", running_count);
+        }
+        if completed_count > 0 {
+            println!("  Completed:     {} ✓", completed_count);
+        }
         if failed_count > 0 {
-            println!("  Failed:     {} ✗", failed_count);
-        } else {
-            println!("  Failed:     {}", failed_count);
+            println!("  Failed:        {} ✗", failed_count);
         }
         if canceled_count > 0 {
-            println!("  Canceled:   {}", canceled_count);
+            println!("  Canceled:      {}", canceled_count);
         }
         if terminated_count > 0 {
-            println!("  Terminated: {} ✗", terminated_count);
+            println!("  Terminated:    {} ✗", terminated_count);
         }
-        if other_count > 0 {
-            println!("  Other:      {}", other_count);
+        if disabled_count > 0 {
+            println!("  Disabled:      {}", disabled_count);
         }
         println!();
         println!(
             "Total Execution Time: {}",
             format_duration(total_exec_time_minutes * 60.0)
         );
+        if let Some(walltime) = walltime_seconds {
+            println!("Walltime:             {}", format_duration(walltime));
+        }
 
-        if failed_count == 0 && canceled_count == 0 {
+        if completed_count == total_jobs {
             println!();
             println!("✓ All jobs completed successfully!");
         }

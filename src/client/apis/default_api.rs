@@ -6577,3 +6577,201 @@ pub fn claim_action(
         }))
     }
 }
+
+/// struct for typed errors of method [`create_remote_workers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CreateRemoteWorkersError {
+    Status404(models::ErrorResponse),
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`list_remote_workers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListRemoteWorkersError {
+    Status404(models::ErrorResponse),
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`delete_remote_worker`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteRemoteWorkerError {
+    Status404(models::ErrorResponse),
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// Store remote workers for a workflow.
+pub fn create_remote_workers(
+    configuration: &configuration::Configuration,
+    workflow_id: i64,
+    workers: Vec<String>,
+) -> Result<Vec<models::RemoteWorkerModel>, Error<CreateRemoteWorkersError>> {
+    let p_workflow_id = workflow_id;
+    let p_workers = workers;
+
+    let uri_str = format!(
+        "{}/workflows/{workflow_id}/remote_workers",
+        configuration.base_path,
+        workflow_id = p_workflow_id,
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_workers);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `Vec<RemoteWorkerModel>`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `Vec<RemoteWorkerModel>`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<CreateRemoteWorkersError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// List remote workers for a workflow.
+pub fn list_remote_workers(
+    configuration: &configuration::Configuration,
+    workflow_id: i64,
+) -> Result<Vec<models::RemoteWorkerModel>, Error<ListRemoteWorkersError>> {
+    let p_workflow_id = workflow_id;
+
+    let uri_str = format!(
+        "{}/workflows/{workflow_id}/remote_workers",
+        configuration.base_path,
+        workflow_id = p_workflow_id,
+    );
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `Vec<RemoteWorkerModel>`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `Vec<RemoteWorkerModel>`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<ListRemoteWorkersError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Delete a remote worker from a workflow.
+pub fn delete_remote_worker(
+    configuration: &configuration::Configuration,
+    workflow_id: i64,
+    worker: &str,
+) -> Result<models::RemoteWorkerModel, Error<DeleteRemoteWorkerError>> {
+    let p_workflow_id = workflow_id;
+    let p_worker =
+        percent_encoding::utf8_percent_encode(worker, percent_encoding::NON_ALPHANUMERIC)
+            .to_string();
+
+    let uri_str = format!(
+        "{}/workflows/{workflow_id}/remote_workers/{worker}",
+        configuration.base_path,
+        workflow_id = p_workflow_id,
+        worker = p_worker,
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `RemoteWorkerModel`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `RemoteWorkerModel`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<DeleteRemoteWorkerError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}

@@ -13,6 +13,7 @@ use crate::client::commands::files::FileCommands;
 use crate::client::commands::hpc::HpcCommands;
 use crate::client::commands::job_dependencies::JobDependencyCommands;
 use crate::client::commands::jobs::JobCommands;
+use crate::client::commands::remote::RemoteCommands;
 use crate::client::commands::reports::ReportCommands;
 use crate::client::commands::resource_requirements::ResourceRequirementsCommands;
 use crate::client::commands::results::ResultCommands;
@@ -265,6 +266,11 @@ pub enum Commands {
     Slurm {
         #[command(subcommand)]
         command: SlurmCommands,
+    },
+    /// Remote worker execution commands (SSH-based distributed execution)
+    Remote {
+        #[command(subcommand)]
+        command: RemoteCommands,
     },
     /// Scheduled compute node management commands
     ScheduledComputeNodes {
