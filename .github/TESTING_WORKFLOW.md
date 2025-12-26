@@ -15,8 +15,9 @@ git push origin v0.7.0-test1
 Go to: https://github.com/NREL/torc/actions/workflows/release.yml
 
 You should see 4 build jobs running in parallel:
+
 - ✅ Build aarch64-apple-darwin (macOS Apple Silicon)
-- ⚠️  Build x86_64-unknown-linux-musl (Linux static)
+- ⚠️ Build x86_64-unknown-linux-musl (Linux static)
 - ✅ Build x86_64-unknown-linux-gnu (Linux glibc)
 - ✅ Build x86_64-pc-windows-msvc (Windows)
 
@@ -40,6 +41,7 @@ git push origin v0.7.0-test2
 ```
 
 **If kaleido download fails:**
+
 - This is usually a transient network issue
 - Re-run the failed job from GitHub Actions UI
 
@@ -62,6 +64,7 @@ tar xzf torc-aarch64-apple-darwin.tar.gz
 ### 5. Test on different Linux distributions
 
 **Test musl binary on Alpine:**
+
 ```bash
 docker run -it --rm -v $(pwd):/workspace alpine:latest sh
 cd /workspace
@@ -69,6 +72,7 @@ cd /workspace
 ```
 
 **Test glibc binary on Ubuntu 20.04:**
+
 ```bash
 docker run -it --rm -v $(pwd):/workspace ubuntu:20.04 sh
 cd /workspace
@@ -77,6 +81,7 @@ apt-get update && apt-get install -y ca-certificates
 ```
 
 **Test glibc binary on Ubuntu 24.04:**
+
 ```bash
 docker run -it --rm -v $(pwd):/workspace ubuntu:24.04 sh
 cd /workspace
@@ -106,12 +111,14 @@ git push origin v0.7.0
 GitHub Actions has a 6-hour job limit. Our builds should complete in ~10-30 minutes per platform.
 
 If timing out:
+
 - Check if dependencies are being cached (cache hit logs)
 - Consider removing less important targets
 
 ### Wrong binaries in release
 
 Check the glob patterns in `create-release` job:
+
 ```yaml
 files: |
   artifacts/torc-aarch64-apple-darwin/*.tar.gz
@@ -129,6 +136,7 @@ files: |
 ### Testing without creating a release
 
 Use manual trigger:
+
 1. Go to Actions → "Build Release Binaries" → "Run workflow"
 2. Leave tag name empty or use "test"
 3. Artifacts will be created but no release
@@ -152,15 +160,18 @@ git push origin --delete v0.7.0-test1 v0.7.0-test2
 ### Faster builds with better caching
 
 The workflow already caches:
+
 - `~/.cargo/registry` (downloaded crates)
 - `~/.cargo/git` (git dependencies)
 - `target` (compiled artifacts)
 
 Cache is keyed by:
+
 - OS and target triple
 - Cargo.lock hash
 
 To bust cache (if needed):
+
 - Update Cargo.lock: `cargo update`
 - Or manually delete cache from GitHub UI
 
@@ -180,6 +191,7 @@ matrix:
 ## Next Steps
 
 After successful test:
+
 1. Document installation instructions for users
 2. Add checksums (sha256) to release notes
 3. Consider setting up a release schedule

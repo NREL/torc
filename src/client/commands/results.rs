@@ -1,11 +1,11 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::{print_if_json, print_wrapped_if_json};
 use crate::client::commands::{
     pagination, print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 /// Format memory bytes into a human-readable string
@@ -233,61 +233,50 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                         results.retain(|r| r.return_code != 0);
                     }
 
-                    if format == "json" {
-                        match pagination::display_json_results("results", &results) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing results to JSON: {}", e);
-                                std::process::exit(1);
-                            }
+                    if print_wrapped_if_json(format, "results", &results, "results") {
+                        // JSON was printed
+                    } else if results.is_empty() {
+                        if let Some(jid) = job_id {
+                            println!(
+                                "No results found for workflow ID {} and job ID: {}",
+                                selected_workflow_id, jid
+                            );
+                        } else {
+                            println!("No results found for workflow ID: {}", selected_workflow_id);
                         }
                     } else {
-                        if results.is_empty() {
-                            if let Some(jid) = job_id {
-                                println!(
-                                    "No results found for workflow ID {} and job ID: {}",
-                                    selected_workflow_id, jid
-                                );
-                            } else {
-                                println!(
-                                    "No results found for workflow ID: {}",
-                                    selected_workflow_id
-                                );
-                            }
+                        if let Some(jid) = job_id {
+                            println!(
+                                "Results for workflow ID {} and job ID {}:",
+                                selected_workflow_id, jid
+                            );
                         } else {
-                            if let Some(jid) = job_id {
-                                println!(
-                                    "Results for workflow ID {} and job ID {}:",
-                                    selected_workflow_id, jid
-                                );
-                            } else {
-                                println!("Results for workflow ID {}:", selected_workflow_id);
-                            }
-
-                            // Fetch job names for the workflow
-                            let job_names = get_job_name_map(config, selected_workflow_id);
-
-                            let rows: Vec<ResultTableRow> = results
-                                .iter()
-                                .map(|result| ResultTableRow {
-                                    id: result.id.unwrap_or(-1),
-                                    job_id: result.job_id,
-                                    job_name: job_names
-                                        .get(&result.job_id)
-                                        .cloned()
-                                        .unwrap_or_else(|| "-".to_string()),
-                                    workflow_id: result.workflow_id,
-                                    run_id: result.run_id,
-                                    return_code: result.return_code,
-                                    exec_time: format!("{:.2}", result.exec_time_minutes),
-                                    peak_memory: format_memory(result.peak_memory_bytes),
-                                    peak_cpu: format_cpu(result.peak_cpu_percent),
-                                    completion_time: result.completion_time.clone(),
-                                    status: format!("{:?}", result.status),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "results");
+                            println!("Results for workflow ID {}:", selected_workflow_id);
                         }
+
+                        // Fetch job names for the workflow
+                        let job_names = get_job_name_map(config, selected_workflow_id);
+
+                        let rows: Vec<ResultTableRow> = results
+                            .iter()
+                            .map(|result| ResultTableRow {
+                                id: result.id.unwrap_or(-1),
+                                job_id: result.job_id,
+                                job_name: job_names
+                                    .get(&result.job_id)
+                                    .cloned()
+                                    .unwrap_or_else(|| "-".to_string()),
+                                workflow_id: result.workflow_id,
+                                run_id: result.run_id,
+                                return_code: result.return_code,
+                                exec_time: format!("{:.2}", result.exec_time_minutes),
+                                peak_memory: format_memory(result.peak_memory_bytes),
+                                peak_cpu: format_cpu(result.peak_cpu_percent),
+                                completion_time: result.completion_time.clone(),
+                                status: format!("{:?}", result.status),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "results");
                     }
                 }
                 Err(e) => {
@@ -298,14 +287,8 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
         }
         ResultCommands::Get { id } => match default_api::get_result(config, *id) {
             Ok(result) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&result) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing result to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &result, "result") {
+                    // JSON was printed
                 } else {
                     println!("Result ID {}:", id);
                     println!("  Job ID: {}", result.job_id);
@@ -348,14 +331,8 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
         },
         ResultCommands::Delete { id } => match default_api::delete_result(config, *id, None) {
             Ok(removed_result) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_result) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing result to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_result, "result") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed result:");
                     println!("  ID: {}", removed_result.id.unwrap_or(-1));

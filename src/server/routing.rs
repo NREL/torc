@@ -3612,7 +3612,7 @@ where
                         .filter(|e| e.0 == "hostname")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_hostname = match param_hostname {
+                    let param_hostname = match param_hostname {
                         Some(param_hostname) => {
                             let param_hostname =
                                 <String as std::str::FromStr>::from_str(&param_hostname);
@@ -3631,7 +3631,7 @@ where
                         .filter(|e| e.0 == "is_active")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_is_active = match param_is_active {
+                    let param_is_active = match param_is_active {
                         Some(param_is_active) => {
                             let param_is_active =
                                 <bool as std::str::FromStr>::from_str(&param_is_active);
@@ -3674,6 +3674,8 @@ where
                             param_limit,
                             param_sort_by,
                             param_reverse_sort,
+                            param_hostname,
+                            param_is_active,
                             param_scheduled_compute_node_id,
                             &context,
                         )
@@ -4706,7 +4708,7 @@ where
                         .filter(|e| e.0 == "job_id")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_job_id = match param_job_id {
+                    let param_job_id = match param_job_id {
                         Some(param_job_id) => {
                             let param_job_id = <i64 as std::str::FromStr>::from_str(&param_job_id);
                             match param_job_id {
@@ -4816,7 +4818,7 @@ where
                         .filter(|e| e.0 == "memory")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_memory = match param_memory {
+                    let param_memory = match param_memory {
                         Some(param_memory) => {
                             let param_memory =
                                 <String as std::str::FromStr>::from_str(&param_memory);
@@ -4835,7 +4837,7 @@ where
                         .filter(|e| e.0 == "num_cpus")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_num_cpus = match param_num_cpus {
+                    let param_num_cpus = match param_num_cpus {
                         Some(param_num_cpus) => {
                             let param_num_cpus =
                                 <i64 as std::str::FromStr>::from_str(&param_num_cpus);
@@ -4854,7 +4856,7 @@ where
                         .filter(|e| e.0 == "num_gpus")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_num_gpus = match param_num_gpus {
+                    let param_num_gpus = match param_num_gpus {
                         Some(param_num_gpus) => {
                             let param_num_gpus =
                                 <i64 as std::str::FromStr>::from_str(&param_num_gpus);
@@ -4873,7 +4875,7 @@ where
                         .filter(|e| e.0 == "num_nodes")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_num_nodes = match param_num_nodes {
+                    let param_num_nodes = match param_num_nodes {
                         Some(param_num_nodes) => {
                             let param_num_nodes =
                                 <i64 as std::str::FromStr>::from_str(&param_num_nodes);
@@ -4892,7 +4894,7 @@ where
                         .filter(|e| e.0 == "runtime")
                         .map(|e| e.1.clone())
                         .next();
-                    let _param_runtime = match param_runtime {
+                    let param_runtime = match param_runtime {
                         Some(param_runtime) => {
                             let param_runtime =
                                 <i64 as std::str::FromStr>::from_str(&param_runtime);
@@ -4910,7 +4912,13 @@ where
                     let result = api_impl
                         .list_resource_requirements(
                             param_workflow_id,
+                            param_job_id,
                             param_name,
+                            param_memory,
+                            param_num_cpus,
+                            param_num_gpus,
+                            param_num_nodes,
+                            param_runtime,
                             param_skip,
                             param_limit,
                             param_sort_by,

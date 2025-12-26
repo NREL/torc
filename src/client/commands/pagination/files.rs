@@ -1,47 +1,37 @@
 //! File pagination functionality.
 //!
-//! This module provides lazy iteration and vector collection support for files.
-//! It includes both simple iterators that work with the real API and mock iterators
-//! for testing purposes.
+//! This module provides lazy iteration and vector collection support for files
+//! using the generic pagination framework.
 
 use crate::client::apis;
-use crate::models::*;
+use crate::client::commands::pagination::base::{
+    Paginatable, PaginatedIterator, PaginatedResponse, PaginationParams,
+};
+use crate::models::FileModel;
 
 /// Parameters for listing files with default values and builder methods.
-///
-/// This struct provides a clean way to specify filtering and pagination
-/// parameters for file queries. All fields have sensible defaults:
-/// - `offset` defaults to 0 (start from beginning)
-/// - All other fields default to `None` (no filtering)
-///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FileListParams {
+    /// Workflow ID to list files from
+    pub workflow_id: i64,
+    /// Filter by job ID that produced the files
     pub produced_by_job_id: Option<i64>,
+    /// Pagination offset
     pub offset: i64,
+    /// Maximum number of files to return
     pub limit: Option<i64>,
+    /// Field to sort by
     pub sort_by: Option<String>,
+    /// Reverse sort order
     pub reverse_sort: Option<bool>,
+    /// Filter by file name
     pub name: Option<String>,
+    /// Filter by file path
     pub path: Option<String>,
+    /// Filter by output status
     pub is_output: Option<bool>,
 }
 
-impl Default for FileListParams {
-    fn default() -> Self {
-        Self {
-            produced_by_job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            name: None,
-            path: None,
-            is_output: None,
-        }
-    }
-}
-
-// Builder methods for FileListParams
 impl FileListParams {
     pub fn new() -> Self {
         Self::default()
@@ -78,130 +68,82 @@ impl FileListParams {
     }
 }
 
-/// Iterator for files with lazy pagination
-pub struct FilesIterator {
-    config: apis::configuration::Configuration,
-    workflow_id: i64,
-    params: FileListParams,
-    remaining_limit: i64,
-    initial_limit: i64,
-    current_page: std::vec::IntoIter<FileModel>,
-    finished: bool,
-}
-
-impl FilesIterator {
-    pub fn new(
-        config: apis::configuration::Configuration,
-        workflow_id: i64,
-        params: FileListParams,
-        initial_limit: Option<i64>,
-    ) -> Self {
-        let remaining_limit = params.limit.unwrap_or(i64::MAX);
-        Self {
-            config,
-            workflow_id,
-            params,
-            remaining_limit,
-            initial_limit: initial_limit.unwrap_or(1000),
-            current_page: Vec::new().into_iter(),
-            finished: false,
-        }
+impl PaginationParams for FileListParams {
+    fn offset(&self) -> i64 {
+        self.offset
     }
 
-    fn fetch_next_page(&mut self) -> Result<bool, apis::Error<apis::default_api::ListFilesError>> {
-        if self.finished || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0) {
-            return Ok(false);
-        }
+    fn set_offset(&mut self, offset: i64) {
+        self.offset = offset;
+    }
 
-        let page_limit = std::cmp::min(self.remaining_limit, self.initial_limit);
+    fn limit(&self) -> Option<i64> {
+        self.limit
+    }
+
+    fn sort_by(&self) -> Option<&str> {
+        self.sort_by.as_deref()
+    }
+
+    fn reverse_sort(&self) -> Option<bool> {
+        self.reverse_sort
+    }
+}
+
+impl Paginatable for FileModel {
+    type ListError = apis::default_api::ListFilesError;
+    type Params = FileListParams;
+
+    fn fetch_page(
+        config: &apis::configuration::Configuration,
+        params: &Self::Params,
+        limit: i64,
+    ) -> Result<PaginatedResponse<Self>, apis::Error<Self::ListError>> {
         let response = apis::default_api::list_files(
-            &self.config,
-            self.workflow_id,
-            self.params.produced_by_job_id,
-            Some(self.params.offset),
-            Some(page_limit),
-            self.params.sort_by.as_deref(),
-            self.params.reverse_sort,
-            self.params.name.as_deref(),
-            self.params.path.as_deref(),
-            self.params.is_output,
+            config,
+            params.workflow_id,
+            params.produced_by_job_id,
+            Some(params.offset),
+            Some(limit),
+            params.sort_by.as_deref(),
+            params.reverse_sort,
+            params.name.as_deref(),
+            params.path.as_deref(),
+            params.is_output,
         )?;
 
-        if let Some(items) = response.items {
-            let items_to_take = if self.remaining_limit == i64::MAX {
-                items.len()
-            } else {
-                std::cmp::min(items.len() as i64, self.remaining_limit) as usize
-            };
-            let taken_items: Vec<FileModel> = items.into_iter().take(items_to_take).collect();
-            if self.remaining_limit != i64::MAX {
-                self.remaining_limit -= taken_items.len() as i64;
-            }
-            self.params.offset += taken_items.len() as i64;
-            self.current_page = taken_items.into_iter();
-
-            if !response.has_more || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0)
-            {
-                self.finished = true;
-            }
-            Ok(true)
-        } else {
-            self.finished = true;
-            Ok(false)
-        }
+        Ok(PaginatedResponse {
+            items: response.items,
+            has_more: response.has_more,
+        })
     }
 }
 
-impl Iterator for FilesIterator {
-    type Item = Result<FileModel, apis::Error<apis::default_api::ListFilesError>>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(item) = self.current_page.next() {
-            return Some(Ok(item));
-        }
-
-        if !self.finished {
-            match self.fetch_next_page() {
-                Ok(true) => self.current_page.next().map(Ok),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            None
-        }
-    }
-}
+/// Type alias for the files iterator
+pub type FilesIterator = PaginatedIterator<FileModel>;
 
 /// Create a lazy iterator for files that fetches pages on-demand.
 ///
-/// This is the main API function for iterating over files. It provides a simple,
-/// clean interface that handles all the API call details internally.
-///
 /// This is memory efficient as it only loads one page at a time.
-/// Use this when you want to process items one by one without
-/// loading all items into memory at once.
 ///
 /// # Arguments
 /// * `config` - API configuration containing base URL and authentication
-/// * `workflow_id` - ID of the workflow to list files from  
+/// * `workflow_id` - ID of the workflow to list files from
 /// * `params` - FileListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// An iterator that yields `Result<FileModel, Error>` items
-///
 pub fn iter_files(
     config: &apis::configuration::Configuration,
     workflow_id: i64,
     params: FileListParams,
 ) -> FilesIterator {
-    FilesIterator::new(config.clone(), workflow_id, params, None)
+    let mut params = params;
+    params.workflow_id = workflow_id;
+    PaginatedIterator::new(config.clone(), params, None)
 }
 
 /// Collect all files into a vector using lazy iteration internally.
-///
-/// This function uses `iter_files` internally and collects all results.
-/// Use this when you need all items in memory at once for batch processing
-/// or when you need to know the total count before processing.
 ///
 /// # Arguments
 /// * `config` - API configuration containing base URL and authentication
@@ -210,7 +152,6 @@ pub fn iter_files(
 ///
 /// # Returns
 /// `Result<Vec<FileModel>, Error>` containing all files or an error
-///
 pub fn paginate_files(
     config: &apis::configuration::Configuration,
     workflow_id: i64,

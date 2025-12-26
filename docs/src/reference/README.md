@@ -1,6 +1,7 @@
 # Reference
 
-This section provides information-oriented technical descriptions of Torc's APIs, configuration, and data formats. Use this section to look up specific details about Torc's interfaces.
+This section provides information-oriented technical descriptions of Torc's APIs, configuration, and
+data formats. Use this section to look up specific details about Torc's interfaces.
 
 **Topics covered:**
 

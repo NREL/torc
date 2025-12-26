@@ -7,12 +7,12 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
 use crate::client::commands::{
+    output::{print_if_json, print_json, print_json_wrapped},
     pagination::{self, JobListParams},
     print_error, select_workflow_interactively,
     table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -227,14 +227,8 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
 
             match default_api::create_job(config, job) {
                 Ok(created_job) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_job) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing job to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_job, "job") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created job:");
                         println!("  ID: {}", created_job.id.unwrap_or(-1));
@@ -331,29 +325,21 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             match pagination::paginate_jobs(config, selected_workflow_id as i64, params) {
                 Ok(jobs) => {
                     if format == "json" {
-                        match pagination::display_json_results("jobs", &jobs) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing jobs to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json_wrapped("jobs", &jobs, "jobs");
+                    } else if jobs.is_empty() {
+                        println!("No jobs found for workflow ID: {}", selected_workflow_id);
                     } else {
-                        if jobs.is_empty() {
-                            println!("No jobs found for workflow ID: {}", selected_workflow_id);
-                        } else {
-                            println!("Jobs for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<JobTableRow> = jobs
-                                .iter()
-                                .map(|job| JobTableRow {
-                                    id: job.id.unwrap_or(-1),
-                                    name: job.name.clone(),
-                                    status: job.status.expect("Job status is missing").to_string(),
-                                    command: job.command.clone(),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "jobs");
-                        }
+                        println!("Jobs for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<JobTableRow> = jobs
+                            .iter()
+                            .map(|job| JobTableRow {
+                                id: job.id.unwrap_or(-1),
+                                name: job.name.clone(),
+                                status: job.status.expect("Job status is missing").to_string(),
+                                command: job.command.clone(),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "jobs");
                     }
                 }
                 Err(e) => {
@@ -364,14 +350,8 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
         }
         JobCommands::Get { id } => match default_api::get_job(config, *id) {
             Ok(job) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&job) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing job to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &job, "job") {
+                    // JSON was printed
                 } else {
                     let status = job.status.expect("Job status is missing").to_string();
                     println!("Job ID {}:", id);
@@ -421,14 +401,8 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
 
                     match default_api::update_job(config, *id, job) {
                         Ok(updated_job) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&updated_job) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing job to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &updated_job, "job") {
+                                // JSON was printed
                             } else {
                                 println!("Successfully updated job:");
                                 println!("  ID: {}", updated_job.id.unwrap_or(-1));
@@ -507,12 +481,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                         "error": "One or more job IDs do not exist",
                         "missing_ids": missing_ids
                     });
-                    match serde_json::to_string_pretty(&error_result) {
-                        Ok(json) => eprintln!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing error to JSON: {}", e);
-                        }
-                    }
+                    print_json(&error_result, "error");
                 } else {
                     eprintln!("Error: The following job ID(s) do not exist:");
                     for id in &missing_ids {
@@ -539,16 +508,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             }
 
             if format == "json" {
-                let result = serde_json::json!({
-                    "jobs": deleted_jobs
-                });
-                match serde_json::to_string_pretty(&result) {
-                    Ok(json) => println!("{}", json),
-                    Err(e) => {
-                        eprintln!("Error serializing result to JSON: {}", e);
-                        std::process::exit(1);
-                    }
-                }
+                print_json_wrapped("jobs", &deleted_jobs, "jobs");
             } else {
                 println!("Successfully removed {} job(s):", deleted_jobs.len());
                 for job in &deleted_jobs {
@@ -618,26 +578,18 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     // Delete all jobs
                     match default_api::delete_jobs(config, selected_workflow_id, None) {
                         Ok(result) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&result) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing result to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &result, "result") {
+                                // JSON was printed
+                            } else if let Some(count) = result.get("count") {
+                                println!(
+                                    "Successfully deleted {} job(s) from workflow ID: {}",
+                                    count, selected_workflow_id
+                                );
                             } else {
-                                if let Some(count) = result.get("count") {
-                                    println!(
-                                        "Successfully deleted {} job(s) from workflow ID: {}",
-                                        count, selected_workflow_id
-                                    );
-                                } else {
-                                    println!(
-                                        "Successfully deleted jobs from workflow ID: {}",
-                                        selected_workflow_id
-                                    );
-                                }
+                                println!(
+                                    "Successfully deleted jobs from workflow ID: {}",
+                                    selected_workflow_id
+                                );
                             }
                         }
                         Err(e) => {
@@ -676,13 +628,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                             "workflow_id": workflow_id,
                             "jobs_created": job_count
                         });
-                        match serde_json::to_string_pretty(&json_output) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing response to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json(&json_output, "response");
                     } else {
                         println!("Successfully created {} jobs from file:", job_count);
                         println!("  File: {}", file);
@@ -723,20 +669,9 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     }),
                 };
 
-                match default_api::list_jobs(
-                    config,
-                    selected_workflow_id,
-                    None,        // status
-                    None,        // needs_file_id
-                    None,        // upstream_job_id
-                    Some(0),     // offset
-                    Some(10000), // limit
-                    None,        // sort_by
-                    None,        // reverse_sort
-                    None,        // include_relationships
-                    None,        // active_compute_node_id
-                ) {
-                    Ok(response) => response.items.unwrap_or_default(),
+                match pagination::paginate_jobs(config, selected_workflow_id, JobListParams::new())
+                {
+                    Ok(jobs) => jobs,
                     Err(e) => {
                         print_error("listing jobs", &e);
                         std::process::exit(1);
@@ -756,19 +691,16 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             // Build HashMap of unique resource_requirements_id -> ResourceRequirementsModel
             let mut rr_map: HashMap<i64, models::ResourceRequirementsModel> = HashMap::new();
             for job in &jobs {
-                if let Some(rr_id) = job.resource_requirements_id {
-                    if !rr_map.contains_key(&rr_id) {
-                        match default_api::get_resource_requirements(config, rr_id) {
-                            Ok(rr) => {
-                                rr_map.insert(rr_id, rr);
-                            }
-                            Err(e) => {
-                                print_error(
-                                    &format!("getting resource requirements {}", rr_id),
-                                    &e,
-                                );
-                                std::process::exit(1);
-                            }
+                if let Some(rr_id) = job.resource_requirements_id
+                    && let std::collections::hash_map::Entry::Vacant(e) = rr_map.entry(rr_id)
+                {
+                    match default_api::get_resource_requirements(config, rr_id) {
+                        Ok(rr) => {
+                            e.insert(rr);
+                        }
+                        Err(e) => {
+                            print_error(&format!("getting resource requirements {}", rr_id), &e);
+                            std::process::exit(1);
                         }
                     }
                 }
@@ -797,13 +729,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     })
                     .collect();
 
-                match serde_json::to_string_pretty(&output) {
-                    Ok(json) => println!("{}", json),
-                    Err(e) => {
-                        eprintln!("Error serializing JSON: {}", e);
-                        std::process::exit(1);
-                    }
-                }
+                print_json(&output, "resource requirements");
             } else {
                 // Build table rows
                 let rows: Vec<JobResourceRequirementsTableRow> = jobs

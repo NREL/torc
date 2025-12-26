@@ -1,6 +1,7 @@
 # Configuration Files Tutorial
 
-This tutorial walks you through setting up Torc configuration files to customize your workflows without specifying options on every command.
+This tutorial walks you through setting up Torc configuration files to customize your workflows
+without specifying options on every command.
 
 ## What You'll Learn
 
@@ -23,6 +24,7 @@ torc config paths
 ```
 
 Output:
+
 ```
 Configuration file paths (in priority order):
 
@@ -103,6 +105,7 @@ torc config validate
 ```
 
 Output:
+
 ```
 Validating configuration...
 
@@ -257,7 +260,7 @@ threads = 8
 database = "/var/lib/torc/production.db"
 require_auth = true
 auth_file = "/etc/torc/htpasswd"
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 log_level = "info"
 
 [server.logging]

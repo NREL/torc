@@ -1,0 +1,12 @@
+{
+  "lineWidth": 100,
+  "markdown": {
+    "lineWidth": 100,
+    "textWrap": "always"
+  },
+  "includes": ["**/*.md"],
+  "excludes": ["**/target", "**/node_modules", "**/.git", "python_client", "julia_client"],
+  "plugins": [
+    "https://plugins.dprint.dev/markdown-0.17.8.wasm"
+  ]
+}

@@ -1,49 +1,39 @@
 //! Job pagination functionality.
 //!
-//! This module provides lazy iteration and vector collection support for jobs.
-//! It includes both simple iterators that work with the real API and mock iterators
-//! for testing purposes.
+//! This module provides lazy iteration and vector collection support for jobs
+//! using the generic pagination framework.
 
 use crate::client::apis;
-use crate::models::*;
+use crate::client::commands::pagination::base::{
+    Paginatable, PaginatedIterator, PaginatedResponse, PaginationParams,
+};
+use crate::models::{JobModel, JobStatus};
 
 /// Parameters for listing jobs with default values and builder methods.
-///
-/// This struct provides a clean way to specify filtering and pagination
-/// parameters for job queries. All fields have sensible defaults:
-/// - `offset` defaults to 0 (start from beginning)
-/// - All other fields default to `None` (no filtering)
-///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct JobListParams {
+    /// Workflow ID to list jobs from
+    pub workflow_id: i64,
+    /// Filter by job status
     pub status: Option<JobStatus>,
+    /// Filter by file ID that the job needs
     pub needs_file_id: Option<i64>,
+    /// Filter by upstream job ID
     pub upstream_job_id: Option<i64>,
+    /// Pagination offset
     pub offset: i64,
+    /// Maximum number of jobs to return
     pub limit: Option<i64>,
+    /// Field to sort by
     pub sort_by: Option<String>,
+    /// Reverse sort order
     pub reverse_sort: Option<bool>,
+    /// Include job relationships in response
     pub include_relationships: Option<bool>,
+    /// Filter by active compute node ID
     pub active_compute_node_id: Option<i64>,
 }
 
-impl Default for JobListParams {
-    fn default() -> Self {
-        Self {
-            status: None,
-            needs_file_id: None,
-            upstream_job_id: None,
-            offset: 0,
-            limit: None,
-            sort_by: None,
-            reverse_sort: None,
-            include_relationships: None,
-            active_compute_node_id: None,
-        }
-    }
-}
-
-// Builder methods for JobListParams
 impl JobListParams {
     pub fn new() -> Self {
         Self::default()
@@ -88,135 +78,90 @@ impl JobListParams {
         self.include_relationships = Some(include);
         self
     }
+
+    pub fn with_active_compute_node_id(mut self, id: i64) -> Self {
+        self.active_compute_node_id = Some(id);
+        self
+    }
 }
 
-/// Iterator for jobs with lazy pagination
-pub struct JobsIterator {
-    config: apis::configuration::Configuration,
-    workflow_id: i64,
-    params: JobListParams,
-    remaining_limit: i64,
-    initial_limit: i64,
-    current_page: std::vec::IntoIter<JobModel>,
-    finished: bool,
-}
-
-impl JobsIterator {
-    pub fn new(
-        config: apis::configuration::Configuration,
-        workflow_id: i64,
-        params: JobListParams,
-        initial_limit: Option<i64>,
-    ) -> Self {
-        let remaining_limit = params.limit.unwrap_or(i64::MAX);
-        Self {
-            config,
-            workflow_id,
-            params,
-            remaining_limit,
-            initial_limit: initial_limit.unwrap_or(1000),
-            current_page: Vec::new().into_iter(),
-            finished: false,
-        }
+impl PaginationParams for JobListParams {
+    fn offset(&self) -> i64 {
+        self.offset
     }
 
-    fn fetch_next_page(&mut self) -> Result<bool, apis::Error<apis::default_api::ListJobsError>> {
-        if self.finished || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0) {
-            return Ok(false);
-        }
+    fn set_offset(&mut self, offset: i64) {
+        self.offset = offset;
+    }
 
-        let page_limit = std::cmp::min(self.remaining_limit, self.initial_limit);
+    fn limit(&self) -> Option<i64> {
+        self.limit
+    }
+
+    fn sort_by(&self) -> Option<&str> {
+        self.sort_by.as_deref()
+    }
+
+    fn reverse_sort(&self) -> Option<bool> {
+        self.reverse_sort
+    }
+}
+
+impl Paginatable for JobModel {
+    type ListError = apis::default_api::ListJobsError;
+    type Params = JobListParams;
+
+    fn fetch_page(
+        config: &apis::configuration::Configuration,
+        params: &Self::Params,
+        limit: i64,
+    ) -> Result<PaginatedResponse<Self>, apis::Error<Self::ListError>> {
         let response = apis::default_api::list_jobs(
-            &self.config,
-            self.workflow_id,
-            self.params.status,
-            self.params.needs_file_id,
-            self.params.upstream_job_id,
-            Some(self.params.offset),
-            Some(page_limit),
-            self.params.sort_by.as_deref(),
-            self.params.reverse_sort,
-            self.params.include_relationships,
-            self.params.active_compute_node_id,
+            config,
+            params.workflow_id,
+            params.status,
+            params.needs_file_id,
+            params.upstream_job_id,
+            Some(params.offset),
+            Some(limit),
+            params.sort_by.as_deref(),
+            params.reverse_sort,
+            params.include_relationships,
+            params.active_compute_node_id,
         )?;
 
-        if let Some(items) = response.items {
-            let items_to_take = if self.remaining_limit == i64::MAX {
-                items.len()
-            } else {
-                std::cmp::min(items.len() as i64, self.remaining_limit) as usize
-            };
-            let taken_items: Vec<JobModel> = items.into_iter().take(items_to_take).collect();
-            if self.remaining_limit != i64::MAX {
-                self.remaining_limit -= taken_items.len() as i64;
-            }
-            self.params.offset += taken_items.len() as i64;
-            self.current_page = taken_items.into_iter();
-
-            if !response.has_more || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0)
-            {
-                self.finished = true;
-            }
-            Ok(true)
-        } else {
-            self.finished = true;
-            Ok(false)
-        }
+        Ok(PaginatedResponse {
+            items: response.items,
+            has_more: response.has_more,
+        })
     }
 }
 
-impl Iterator for JobsIterator {
-    type Item = Result<JobModel, apis::Error<apis::default_api::ListJobsError>>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // Try to get next item from current page
-        if let Some(item) = self.current_page.next() {
-            return Some(Ok(item));
-        }
-
-        // If current page is exhausted, try to fetch next page
-        if !self.finished {
-            match self.fetch_next_page() {
-                Ok(true) => self.current_page.next().map(Ok),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            None
-        }
-    }
-}
+/// Type alias for the jobs iterator
+pub type JobsIterator = PaginatedIterator<JobModel>;
 
 /// Create a lazy iterator for jobs that fetches pages on-demand.
 ///
-/// This is the main API function for iterating over jobs. It provides a simple,
-/// clean interface that handles all the API call details internally.
-///
 /// This is memory efficient as it only loads one page at a time.
-/// Use this when you want to process items one by one without
-/// loading all items into memory at once.
 ///
 /// # Arguments
 /// * `config` - API configuration containing base URL and authentication
-/// * `workflow_id` - ID of the workflow to list jobs from  
+/// * `workflow_id` - ID of the workflow to list jobs from
 /// * `params` - JobListParams containing filter and pagination parameters
 ///
 /// # Returns
 /// An iterator that yields `Result<JobModel, Error>` items
-///
 pub fn iter_jobs(
     config: &apis::configuration::Configuration,
     workflow_id: i64,
     params: JobListParams,
 ) -> JobsIterator {
-    JobsIterator::new(config.clone(), workflow_id, params, None)
+    let mut params = params;
+    params.workflow_id = workflow_id;
+    PaginatedIterator::new(config.clone(), params, None)
 }
 
 /// Collect all jobs into a vector using lazy iteration internally.
-///
-/// This function uses `iter_jobs` internally and collects all results.
-/// Use this when you need all items in memory at once for batch processing
-/// or when you need to know the total count before processing.
 ///
 /// # Arguments
 /// * `config` - API configuration containing base URL and authentication
@@ -225,7 +170,6 @@ pub fn iter_jobs(
 ///
 /// # Returns
 /// `Result<Vec<JobModel>, Error>` containing all jobs or an error
-///
 pub fn paginate_jobs(
     config: &apis::configuration::Configuration,
     workflow_id: i64,

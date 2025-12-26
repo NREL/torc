@@ -2,11 +2,13 @@
 
 ## General Rule: All-or-None for Multiple Changes
 
-**IMPORTANT INSTRUCTION**: When performing multiple database changes in one command or operation, those changes MUST be wrapped in a transaction to ensure atomicity (all or none).
+**IMPORTANT INSTRUCTION**: When performing multiple database changes in one command or operation,
+those changes MUST be wrapped in a transaction to ensure atomicity (all or none).
 
 ## Why This Matters
 
 Database transactions ensure data consistency by guaranteeing that either:
+
 - **All** changes succeed and are committed, OR
 - **None** of the changes are applied (rollback on any failure)
 
@@ -68,13 +70,16 @@ async fn example_multiple_updates(&self, id: i64) -> Result<Response, ApiError> 
 ## Examples in Codebase
 
 ### Good Examples (Transactional)
+
 - `create_job` - Creates job and all relationships atomically
 - `create_jobs` - Bulk job creation in a single transaction
 - `initialize_jobs` - Multiple workflow initialization steps in one transaction
 - `process_changed_job_inputs` - Updates multiple job statuses atomically
 
 ### Functions That Should Use Transactions
+
 Any function that:
+
 - Updates multiple records
 - Performs cascading updates across related tables
 - Changes state that must be consistent across multiple entities
@@ -89,5 +94,6 @@ Any function that:
 5. **Single Updates**: Simple single-record updates may not need transactions (use judgment)
 
 ## Related Documentation
+
 - See `src/server/api/jobs.rs` for examples of transactional operations
 - See `torc-server/src/server.rs` for workflow initialization transaction pattern

@@ -149,9 +149,12 @@ pub struct JobRunner {
     had_failures: bool,
     /// Tracks whether any job was terminated during this run
     had_terminations: bool,
+    /// When this job runner started (for calculating duration_seconds)
+    start_instant: Instant,
 }
 
 impl JobRunner {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: Configuration,
         workflow: WorkflowModel,
@@ -245,7 +248,38 @@ impl JobRunner {
             last_job_claimed_time: None,
             had_failures: false,
             had_terminations: false,
+            start_instant: Instant::now(),
         }
+    }
+
+    /// Execute an API call with automatic retries for network errors.
+    ///
+    /// This is a convenience method that wraps [`utils::send_with_retries`] with
+    /// the JobRunner's configuration and retry settings.
+    fn send_with_retries<T, E, F>(&self, api_call: F) -> Result<T, E>
+    where
+        F: FnMut() -> Result<T, E>,
+        E: std::fmt::Display,
+    {
+        utils::send_with_retries(
+            &self.config,
+            api_call,
+            self.rules.compute_node_wait_for_healthy_database_minutes,
+        )
+    }
+
+    /// Atomically claim a workflow action for execution.
+    ///
+    /// This is a convenience method that wraps [`utils::claim_action`] with
+    /// the JobRunner's configuration and retry settings.
+    fn claim_action(&self, action_id: i64) -> Result<bool, Box<dyn std::error::Error>> {
+        utils::claim_action(
+            &self.config,
+            self.workflow_id,
+            action_id,
+            Some(self.compute_node_id),
+            self.rules.compute_node_wait_for_healthy_database_minutes,
+        )
     }
 
     /// Returns a clone of the termination flag for use with signal handlers.
@@ -329,11 +363,9 @@ impl JobRunner {
         self.execute_worker_start_actions();
 
         loop {
-            match utils::send_with_retries(
-                &self.config,
-                || default_api::is_workflow_complete(&self.config, self.workflow_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            match self.send_with_retries(|| {
+                default_api::is_workflow_complete(&self.config, self.workflow_id)
+            }) {
                 Ok(response) => {
                     if response.is_canceled {
                         info!(
@@ -436,6 +468,9 @@ impl JobRunner {
             monitor.shutdown();
         }
 
+        // Deactivate compute node and set duration
+        self.deactivate_compute_node();
+
         info!(
             "Job runner completed for workflow ID: {} (had_failures={}, had_terminations={})",
             self.workflow_id, self.had_failures, self.had_terminations
@@ -444,6 +479,39 @@ impl JobRunner {
             had_failures: self.had_failures,
             had_terminations: self.had_terminations,
         })
+    }
+
+    /// Deactivate the compute node and set its duration.
+    fn deactivate_compute_node(&self) {
+        let duration_seconds = self.start_instant.elapsed().as_secs_f64();
+        info!(
+            "Deactivating compute node {} (duration: {:.1}s)",
+            self.compute_node_id, duration_seconds
+        );
+
+        let mut update_model = crate::models::ComputeNodeModel::new(
+            self.workflow_id,
+            String::new(), // hostname not needed for update
+            0,             // pid not needed for update
+            String::new(), // start_time not needed for update
+            0,             // num_cpus not needed for update
+            0.0,           // memory_gb not needed for update
+            0,             // num_gpus not needed for update
+            1,             // num_nodes not needed for update
+            String::new(), // compute_node_type not needed for update
+            None,          // scheduler_config_id not needed for update
+        );
+        update_model.is_active = Some(false);
+        update_model.duration_seconds = Some(duration_seconds);
+
+        if let Err(e) =
+            default_api::update_compute_node(&self.config, self.compute_node_id, update_model)
+        {
+            error!(
+                "Failed to deactivate compute node {}: {}",
+                self.compute_node_id, e
+            );
+        }
     }
 
     /// Cancel all running jobs and handle completions.
@@ -593,12 +661,12 @@ impl JobRunner {
         // Second pass: validate output files and complete jobs
         for (job_id, mut result, output_file_ids) in job_results {
             // Validate output files if job completed successfully
-            if result.return_code == 0 {
-                if let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids) {
-                    error!("Output file validation failed for job {}: {}", job_id, e);
-                    // Mark job as failed
-                    result.return_code = 1;
-                }
+            if result.return_code == 0
+                && let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids)
+            {
+                error!("Output file validation failed for job {}: {}", job_id, e);
+                // Mark job as failed
+                result.return_code = 1;
             }
 
             self.handle_job_completion(job_id, result);
@@ -628,19 +696,16 @@ impl JobRunner {
 
         // Fetch file models and check existence
         for file_id in output_file_ids {
-            let file_model = match utils::send_with_retries(
-                &self.config,
-                || default_api::get_file(&self.config, *file_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
-                Ok(file) => file,
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to fetch file model for file_id {}: {}",
-                        file_id, e
-                    ));
-                }
-            };
+            let file_model =
+                match self.send_with_retries(|| default_api::get_file(&self.config, *file_id)) {
+                    Ok(file) => file,
+                    Err(e) => {
+                        return Err(format!(
+                            "Failed to fetch file model for file_id {}: {}",
+                            file_id, e
+                        ));
+                    }
+                };
 
             let file_path = Path::new(&file_model.path);
 
@@ -690,27 +755,22 @@ impl JobRunner {
 
         // Update st_mtime for all files
         for (file_id, st_mtime) in files_to_update {
-            let mut file_model = match utils::send_with_retries(
-                &self.config,
-                || default_api::get_file(&self.config, file_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
-                Ok(file) => file,
-                Err(e) => {
-                    error!(
-                        "Failed to re-fetch file model for file_id {}: {}",
-                        file_id, e
-                    );
-                    continue;
-                }
-            };
+            let mut file_model =
+                match self.send_with_retries(|| default_api::get_file(&self.config, file_id)) {
+                    Ok(file) => file,
+                    Err(e) => {
+                        error!(
+                            "Failed to re-fetch file model for file_id {}: {}",
+                            file_id, e
+                        );
+                        continue;
+                    }
+                };
 
             file_model.st_mtime = Some(st_mtime);
-            match utils::send_with_retries(
-                &self.config,
-                || default_api::update_file(&self.config, file_id, file_model.clone()),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            match self.send_with_retries(|| {
+                default_api::update_file(&self.config, file_id, file_model.clone())
+            }) {
                 Ok(_) => {
                     debug!("Updated st_mtime for file_id {} to {}", file_id, st_mtime);
                 }
@@ -738,19 +798,15 @@ impl JobRunner {
             _ => {}
         }
 
-        match utils::send_with_retries(
-            &self.config,
-            || {
-                default_api::complete_job(
-                    &self.config,
-                    job_id,
-                    result.status.clone(),
-                    result.run_id,
-                    result.clone(),
-                )
-            },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
-        ) {
+        match self.send_with_retries(|| {
+            default_api::complete_job(
+                &self.config,
+                job_id,
+                result.status,
+                result.run_id,
+                result.clone(),
+            )
+        }) {
             Ok(_) => {
                 info!(
                     "Successfully completed job {} with status {:?}",
@@ -817,20 +873,16 @@ impl JobRunner {
 
         let limit = self.resources.num_cpus;
         let strict_scheduler_match = self.torc_config.client.slurm.strict_scheduler_match;
-        match utils::send_with_retries(
-            &self.config,
-            || {
-                default_api::claim_jobs_based_on_resources(
-                    &self.config,
-                    self.workflow_id,
-                    &self.resources,
-                    limit,
-                    Some(self.rules.jobs_sort_method),
-                    Some(strict_scheduler_match),
-                )
-            },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
-        ) {
+        match self.send_with_retries(|| {
+            default_api::claim_jobs_based_on_resources(
+                &self.config,
+                self.workflow_id,
+                &self.resources,
+                limit,
+                Some(self.rules.jobs_sort_method),
+                Some(strict_scheduler_match),
+            )
+        }) {
             Ok(response) => {
                 let jobs = response.jobs.unwrap_or_default();
                 if jobs.is_empty() {
@@ -856,11 +908,9 @@ impl JobRunner {
                         .expect("Job must have a resource_requirements_id");
                     let mut async_job = AsyncCliCommand::new(job);
 
-                    let job_rr = match utils::send_with_retries(
-                        &self.config,
-                        || default_api::get_resource_requirements(&self.config, rr_id),
-                        self.rules.compute_node_wait_for_healthy_database_minutes,
-                    ) {
+                    let job_rr = match self.send_with_retries(|| {
+                        default_api::get_resource_requirements(&self.config, rr_id)
+                    }) {
                         Ok(rr) => rr,
                         Err(e) => {
                             error!(
@@ -872,19 +922,15 @@ impl JobRunner {
                     };
 
                     // Mark job as started in the database before actually starting it
-                    match utils::send_with_retries(
-                        &self.config,
-                        || {
-                            default_api::start_job(
-                                &self.config,
-                                job_id,
-                                self.run_id,
-                                self.compute_node_id,
-                                None,
-                            )
-                        },
-                        self.rules.compute_node_wait_for_healthy_database_minutes,
-                    ) {
+                    match self.send_with_retries(|| {
+                        default_api::start_job(
+                            &self.config,
+                            job_id,
+                            self.run_id,
+                            self.compute_node_id,
+                            None,
+                        )
+                    }) {
                         Ok(_) => {
                             debug!("Successfully marked job {} as started in database", job_id);
                         }
@@ -918,20 +964,16 @@ impl JobRunner {
             }
             Err(err) => {
                 error!("Failed to prepare jobs for submission: {}", err);
-                match utils::send_with_retries(
-                    &self.config,
-                    || {
-                        default_api::claim_jobs_based_on_resources(
-                            &self.config,
-                            self.workflow_id,
-                            &self.resources,
-                            limit,
-                            Some(self.rules.jobs_sort_method),
-                            Some(strict_scheduler_match),
-                        )
-                    },
-                    self.rules.compute_node_wait_for_healthy_database_minutes,
-                ) {
+                match self.send_with_retries(|| {
+                    default_api::claim_jobs_based_on_resources(
+                        &self.config,
+                        self.workflow_id,
+                        &self.resources,
+                        limit,
+                        Some(self.rules.jobs_sort_method),
+                        Some(strict_scheduler_match),
+                    )
+                }) {
                     Ok(_) => {
                         info!("Successfully prepared jobs after retry");
                     }
@@ -952,11 +994,9 @@ impl JobRunner {
             .max_parallel_jobs
             .expect("max_parallel_jobs must be set")
             - self.running_jobs.len() as i64;
-        match utils::send_with_retries(
-            &self.config,
-            || default_api::claim_next_jobs(&self.config, self.workflow_id, Some(limit), None),
-            self.rules.compute_node_wait_for_healthy_database_minutes,
-        ) {
+        match self.send_with_retries(|| {
+            default_api::claim_next_jobs(&self.config, self.workflow_id, Some(limit), None)
+        }) {
             Ok(response) => {
                 let jobs = response.jobs.unwrap_or_default();
                 if jobs.is_empty() {
@@ -980,19 +1020,15 @@ impl JobRunner {
                     let mut async_job = AsyncCliCommand::new(job);
 
                     // Mark job as started in the database before actually starting it
-                    match utils::send_with_retries(
-                        &self.config,
-                        || {
-                            default_api::start_job(
-                                &self.config,
-                                job_id,
-                                self.run_id,
-                                self.compute_node_id,
-                                None,
-                            )
-                        },
-                        self.rules.compute_node_wait_for_healthy_database_minutes,
-                    ) {
+                    match self.send_with_retries(|| {
+                        default_api::start_job(
+                            &self.config,
+                            job_id,
+                            self.run_id,
+                            self.compute_node_id,
+                            None,
+                        )
+                    }) {
                         Ok(_) => {
                             debug!("Successfully marked job {} as started in database", job_id);
                         }
@@ -1039,8 +1075,7 @@ impl JobRunner {
         info!("Checking for on_workflow_start actions");
 
         // Get pending on_workflow_start actions
-        let pending_actions = match utils::send_with_retries(
-            &self.config,
+        let pending_actions = match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_pending_actions(
                     &self.config,
@@ -1049,7 +1084,6 @@ impl JobRunner {
                 )?;
                 Ok(actions)
             },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(actions) => actions,
             Err(e) => {
@@ -1078,13 +1112,7 @@ impl JobRunner {
             }
 
             // Try to atomically claim this action
-            let claimed = match utils::claim_action(
-                &self.config,
-                self.workflow_id,
-                action_id,
-                Some(self.compute_node_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            let claimed = match self.claim_action(action_id) {
                 Ok(claimed) => claimed,
                 Err(e) => {
                     error!(
@@ -1119,8 +1147,7 @@ impl JobRunner {
         info!("Checking for on_worker_start actions");
 
         // Get pending on_worker_start actions
-        let pending_actions = match utils::send_with_retries(
-            &self.config,
+        let pending_actions = match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_pending_actions(
                     &self.config,
@@ -1129,7 +1156,6 @@ impl JobRunner {
                 )?;
                 Ok(actions)
             },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(actions) => actions,
             Err(e) => {
@@ -1158,13 +1184,7 @@ impl JobRunner {
             }
 
             // Try to atomically claim this action
-            let claimed = match utils::claim_action(
-                &self.config,
-                self.workflow_id,
-                action_id,
-                Some(self.compute_node_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            let claimed = match self.claim_action(action_id) {
                 Ok(claimed) => claimed,
                 Err(e) => {
                     // Not fatal - just log and continue
@@ -1198,8 +1218,7 @@ impl JobRunner {
         info!("Checking for on_worker_complete actions");
 
         // Get pending on_worker_complete actions
-        let pending_actions = match utils::send_with_retries(
-            &self.config,
+        let pending_actions = match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_pending_actions(
                     &self.config,
@@ -1208,7 +1227,6 @@ impl JobRunner {
                 )?;
                 Ok(actions)
             },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(actions) => actions,
             Err(e) => {
@@ -1237,13 +1255,7 @@ impl JobRunner {
             }
 
             // Try to atomically claim this action
-            let claimed = match utils::claim_action(
-                &self.config,
-                self.workflow_id,
-                action_id,
-                Some(self.compute_node_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            let claimed = match self.claim_action(action_id) {
                 Ok(claimed) => claimed,
                 Err(e) => {
                     // Not fatal - just log and continue
@@ -1278,8 +1290,7 @@ impl JobRunner {
     /// Check for pending workflow actions and execute them if their trigger conditions are met
     fn check_and_execute_actions(&mut self) {
         // Get pending on_jobs_ready and on_jobs_complete actions
-        let pending_actions = match utils::send_with_retries(
-            &self.config,
+        let pending_actions = match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_pending_actions(
                     &self.config,
@@ -1291,7 +1302,6 @@ impl JobRunner {
                 )?;
                 Ok(actions)
             },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(actions) => {
                 if !actions.is_empty() {
@@ -1342,13 +1352,7 @@ impl JobRunner {
             }
 
             // Try to atomically claim this action
-            let claimed = match utils::claim_action(
-                &self.config,
-                self.workflow_id,
-                action_id,
-                Some(self.compute_node_id),
-                self.rules.compute_node_wait_for_healthy_database_minutes,
-            ) {
+            let claimed = match self.claim_action(action_id) {
                 Ok(claimed) => claimed,
                 Err(e) => {
                     error!("Error claiming action {}: {}", action_id, e);
@@ -1375,13 +1379,11 @@ impl JobRunner {
     /// soon should also keep us alive.
     fn has_pending_actions_we_can_handle(&self) -> bool {
         // Get ALL actions for this workflow (not just pending ones)
-        match utils::send_with_retries(
-            &self.config,
+        match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_workflow_actions(&self.config, self.workflow_id)?;
                 Ok(actions)
             },
-            self.rules.compute_node_wait_for_healthy_database_minutes,
         ) {
             Ok(actions) => {
                 // Check if we can handle any unexecuted on_jobs_ready or on_jobs_complete actions
@@ -1577,7 +1579,14 @@ impl JobRunner {
 struct ComputeNodeRules {
     /// Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.
     pub compute_node_expiration_buffer_seconds: i64,
-    /// Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
+    /// Inform all compute nodes to wait for new jobs for this time period before exiting.
+    /// Does not apply if the workflow is complete.
+    ///
+    /// The default value must satisfy:
+    ///   compute_node_wait_for_new_jobs_seconds >= completion_check_interval_secs + job_completion_poll_interval
+    /// This ensures the worker doesn't exit before the server's background unblock task runs
+    /// and the worker polls for newly-ready jobs. With defaults of 30s for each interval,
+    /// the minimum safe value is 60s. We use 90s to provide a safety buffer.
     pub compute_node_wait_for_new_jobs_seconds: u64,
     /// Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     pub compute_node_ignore_workflow_completion: bool,
@@ -1596,9 +1605,9 @@ impl ComputeNodeRules {
     ) -> Self {
         ComputeNodeRules {
             compute_node_expiration_buffer_seconds: compute_node_expiration_buffer_seconds
-                .unwrap_or(60) as i64,
+                .unwrap_or(60),
             compute_node_wait_for_new_jobs_seconds: compute_node_wait_for_new_jobs_seconds
-                .unwrap_or(60) as u64,
+                .unwrap_or(90) as u64,
             compute_node_ignore_workflow_completion: compute_node_ignore_workflow_completion
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:

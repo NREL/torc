@@ -1,9 +1,10 @@
 # Quick Start (HPC)
 
-This guide walks you through running your first Torc workflow on an HPC cluster with Slurm.
-Jobs are submitted to Slurm and run on compute nodes.
+This guide walks you through running your first Torc workflow on an HPC cluster with Slurm. Jobs are
+submitted to Slurm and run on compute nodes.
 
-For local execution (testing, development, or non-HPC environments), see [Quick Start (Local)](./quick-start-local.md).
+For local execution (testing, development, or non-HPC environments), see
+[Quick Start (Local)](./quick-start-local.md).
 
 ## Prerequisites
 
@@ -19,8 +20,8 @@ On the login node, start a Torc server with a local database:
 torc-server run --database torc.db --completion-check-interval-secs 5
 ```
 
-> **Note:** For larger deployments, your team may provide a shared Torc server.
-> In that case, skip this step and set `TORC_API_URL` to the shared server address.
+> **Note:** For larger deployments, your team may provide a shared Torc server. In that case, skip
+> this step and set `TORC_API_URL` to the shared server address.
 
 ## Check Your HPC Profile
 
@@ -36,8 +37,9 @@ If detected, you'll see your HPC system name. To see available partitions:
 torc hpc partitions <profile-name>
 ```
 
-> **Note:** If your HPC system isn't detected, see [Custom HPC Profile](./tutorials/custom-hpc-profile.md)
-> or [request built-in support](https://github.com/NREL/torc/issues).
+> **Note:** If your HPC system isn't detected, see
+> [Custom HPC Profile](./tutorials/custom-hpc-profile.md) or
+> [request built-in support](https://github.com/NREL/torc/issues).
 
 ## Create a Workflow with Resource Requirements
 
@@ -65,6 +67,7 @@ jobs:
 ```
 
 Key differences from local workflows:
+
 - **resource_requirements**: Define CPU, memory, and runtime needs
 - Jobs reference these requirements by name
 - Torc matches requirements to appropriate Slurm partitions
@@ -78,6 +81,7 @@ torc submit-slurm --account <your-account> workflow.yaml
 ```
 
 Torc will:
+
 1. Detect your HPC system
 2. Match job requirements to appropriate partitions
 3. Generate Slurm scheduler configurations
@@ -156,6 +160,7 @@ jobs:
 ```
 
 Torc stages resource allocation based on dependencies:
+
 - `preprocess` resources are allocated at workflow start
 - `train` resources are allocated when `preprocess` completes
 - `evaluate` resources are allocated when `train` completes

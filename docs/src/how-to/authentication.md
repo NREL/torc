@@ -1,6 +1,7 @@
 # Authentication
 
-Torc supports HTTP Basic authentication to secure access to your workflow orchestration server. This guide explains how to set up and use authentication.
+Torc supports HTTP Basic authentication to secure access to your workflow orchestration server. This
+guide explains how to set up and use authentication.
 
 ## Overview
 
@@ -39,6 +40,7 @@ torc-htpasswd remove --file /path/to/htpasswd username
 ```
 
 The htpasswd file format is simple:
+
 ```
 # Torc htpasswd file
 # Format: username:bcrypt_hash
@@ -63,7 +65,8 @@ torc-server run
 **Authentication Modes:**
 
 - **No `--auth-file`**: Authentication disabled, all requests allowed (default)
-- **`--auth-file` only**: Authentication optional - authenticated requests are logged, unauthenticated requests allowed
+- **`--auth-file` only**: Authentication optional - authenticated requests are logged,
+  unauthenticated requests allowed
 - **`--auth-file --require-auth`**: Authentication required - unauthenticated requests are rejected
 
 ### 3. Server Logs
@@ -125,7 +128,8 @@ torc --username bob --password bobpass workflows list
 
 ### 1. Use HTTPS in Production
 
-Basic authentication sends base64-encoded credentials (easily decoded). **Always use HTTPS** when authentication is enabled:
+Basic authentication sends base64-encoded credentials (easily decoded). **Always use HTTPS** when
+authentication is enabled:
 
 ```bash
 # Start server with HTTPS
@@ -138,12 +142,14 @@ torc --url https://torc.example.com/torc-service/v1 --username alice workflows l
 ### 2. Secure Credential Storage
 
 **Do:**
+
 - Store htpasswd files with restrictive permissions: `chmod 600 /path/to/htpasswd`
 - Use environment variables for passwords in scripts
 - Use password prompting for interactive sessions
 - Rotate passwords periodically
 
 **Don't:**
+
 - Commit htpasswd files to version control
 - Share htpasswd files between environments
 - Pass passwords as command-line arguments in production (visible in process list)
@@ -257,6 +263,7 @@ torc-server run --auth-file /etc/torc/htpasswd --require-auth --database prod.db
 **Cause:** Server has `--require-auth` but client didn't send credentials.
 
 **Solution:**
+
 ```bash
 # Add username and password
 torc --username alice --password mypass workflows list
@@ -267,6 +274,7 @@ torc --username alice --password mypass workflows list
 **Cause:** Wrong password or user doesn't exist in htpasswd file.
 
 **Solutions:**
+
 ```bash
 # 1. Verify user exists
 torc-htpasswd list --file /path/to/htpasswd
@@ -283,6 +291,7 @@ torc-htpasswd add --file /path/to/htpasswd alice
 **Cause:** Server has `--auth-file` but not `--require-auth`, and client didn't authenticate.
 
 **Solution:** This is normal in optional auth mode. To require auth:
+
 ```bash
 torc-server run --auth-file /path/to/htpasswd --require-auth
 ```
@@ -292,6 +301,7 @@ torc-server run --auth-file /path/to/htpasswd --require-auth
 **Problem:** Scripts or CI/CD fail waiting for password prompt.
 
 **Solutions:**
+
 ```bash
 # Use environment variable
 export TORC_PASSWORD=mypassword
@@ -323,6 +333,7 @@ torc-htpasswd add --file /etc/torc/prod_htpasswd --cost 14 alice
 When using Torc's Rust, Python, or Julia clients programmatically:
 
 **Rust:**
+
 ```rust
 use torc::client::apis::configuration::Configuration;
 
@@ -332,6 +343,7 @@ config.basic_auth = Some(("alice".to_string(), Some("password".to_string())));
 ```
 
 **Python:**
+
 ```python
 from torc import Configuration, ApiClient
 
@@ -343,6 +355,7 @@ config = Configuration(
 ```
 
 **Julia:**
+
 ```julia
 using Torc
 using Base64

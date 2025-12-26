@@ -1,10 +1,12 @@
 # Automatic Failure Recovery
 
-This document explains how Torc's automatic failure recovery system works, its design principles, and when to use automatic vs manual recovery.
+This document explains how Torc's automatic failure recovery system works, its design principles,
+and when to use automatic vs manual recovery.
 
 ## Overview
 
-Torc provides **automatic failure recovery** through the `torc watch --auto-recover` command. When jobs fail, the system:
+Torc provides **automatic failure recovery** through the `torc watch --recover` command. When jobs
+fail, the system:
 
 1. Diagnoses the failure cause (OOM, timeout, or unknown)
 2. Applies heuristics to adjust resource requirements
@@ -19,14 +21,15 @@ This deterministic approach handles the majority of HPC failures without human i
 
 Most HPC job failures fall into predictable categories:
 
-| Failure Type | Frequency | Solution |
-|--------------|-----------|----------|
-| Out of Memory | ~60% | Increase memory allocation |
-| Timeout | ~25% | Increase runtime limit |
-| Transient errors | ~10% | Simple retry |
-| Code bugs | ~5% | Manual intervention |
+| Failure Type     | Frequency | Solution                   |
+| ---------------- | --------- | -------------------------- |
+| Out of Memory    | ~60%      | Increase memory allocation |
+| Timeout          | ~25%      | Increase runtime limit     |
+| Transient errors | ~10%      | Simple retry               |
+| Code bugs        | ~5%       | Manual intervention        |
 
-For 85-90% of failures, the solution is mechanical: increase resources and retry. This doesn't require AI judgment—simple heuristics work well.
+For 85-90% of failures, the solution is mechanical: increase resources and retry. This doesn't
+require AI judgment—simple heuristics work well.
 
 ### Recovery Architecture
 
@@ -44,6 +47,7 @@ flowchart LR
 ### Failure Detection
 
 Torc tracks resource usage during job execution:
+
 - Memory usage (RSS and peak)
 - CPU utilization
 - Execution time
@@ -51,11 +55,13 @@ Torc tracks resource usage during job execution:
 This data is analyzed to determine failure causes:
 
 **OOM Detection:**
+
 - Peak memory exceeds specified limit
 - Exit code 137 (SIGKILL from OOM killer)
 - Flag: `likely_oom: true`
 
 **Timeout Detection:**
+
 - Execution time within 10% of runtime limit
 - Job was killed (not graceful exit)
 - Flag: `likely_timeout: true`
@@ -64,10 +70,10 @@ This data is analyzed to determine failure causes:
 
 Default multipliers applied to failed jobs:
 
-| Failure | Default Multiplier | Configurable |
-|---------|-------------------|--------------|
-| OOM | 1.5x memory | `--memory-multiplier` |
-| Timeout | 1.5x runtime | `--runtime-multiplier` |
+| Failure | Default Multiplier | Configurable           |
+| ------- | ------------------ | ---------------------- |
+| OOM     | 1.5x memory        | `--memory-multiplier`  |
+| Timeout | 1.5x runtime       | `--runtime-multiplier` |
 
 Example: A job with 8g memory that fails with OOM gets 12g on retry.
 
@@ -89,24 +95,26 @@ This is handled by `torc slurm regenerate --submit`.
 
 ```bash
 torc watch <workflow_id> \
-  --auto-recover \              # Enable automatic recovery
-  --max-retries 3 \             # Maximum recovery attempts
+  -r \                          # Enable automatic recovery (--recover)
+  -m 3 \                        # Maximum recovery attempts (--max-retries)
   --memory-multiplier 1.5 \     # Memory increase factor for OOM
   --runtime-multiplier 1.5 \    # Runtime increase factor for timeout
-  --poll-interval 60 \          # Seconds between status checks
-  --output-dir output \         # Directory for job output files
-  --show-job-counts             # Display job counts during polling (optional)
+  -p 60 \                       # Seconds between status checks (--poll-interval)
+  -o output \                   # Directory for job output files (--output-dir)
+  -s                            # Display job counts during polling (--show-job-counts)
 ```
 
 ### Retry Limits
 
-The `--max-retries` option prevents infinite retry loops. After exceeding this limit, the system exits with an error, indicating manual intervention is needed.
+The `--max-retries` option prevents infinite retry loops. After exceeding this limit, the system
+exits with an error, indicating manual intervention is needed.
 
 Default: 3 retries
 
 ## When to Use Manual Recovery
 
-Automatic recovery works well for resource-related failures, but some situations require manual intervention:
+Automatic recovery works well for resource-related failures, but some situations require manual
+intervention:
 
 ### Use Manual Recovery When:
 
@@ -130,39 +138,40 @@ Automatic recovery works well for resource-related failures, but some situations
 
 The Torc MCP server provides tools for AI-assisted investigation:
 
-| Tool | Purpose |
-|------|---------|
-| `get_workflow_status` | Get overall workflow status |
-| `list_failed_jobs` | List failed jobs with error info |
-| `get_job_logs` | Read stdout/stderr logs |
-| `check_resource_utilization` | Detailed resource analysis |
-| `update_job_resources` | Manually adjust resources |
-| `resubmit_workflow` | Regenerate Slurm schedulers |
+| Tool                         | Purpose                          |
+| ---------------------------- | -------------------------------- |
+| `get_workflow_status`        | Get overall workflow status      |
+| `list_failed_jobs`           | List failed jobs with error info |
+| `get_job_logs`               | Read stdout/stderr logs          |
+| `check_resource_utilization` | Detailed resource analysis       |
+| `update_job_resources`       | Manually adjust resources        |
+| `resubmit_workflow`          | Regenerate Slurm schedulers      |
 
 ## Comparison
 
-| Feature | Automatic | Manual/AI-Assisted |
-|---------|-----------|-------------------|
-| Human involvement | None | Interactive |
-| Speed | Fast | Depends on human |
-| Handles OOM/timeout | Yes | Yes |
-| Handles unknown errors | Retry only | Full investigation |
-| Cost optimization | Basic | Can be sophisticated |
-| Use case | Production workflows | Debugging, optimization |
+| Feature                | Automatic            | Manual/AI-Assisted      |
+| ---------------------- | -------------------- | ----------------------- |
+| Human involvement      | None                 | Interactive             |
+| Speed                  | Fast                 | Depends on human        |
+| Handles OOM/timeout    | Yes                  | Yes                     |
+| Handles unknown errors | Retry only           | Full investigation      |
+| Cost optimization      | Basic                | Can be sophisticated    |
+| Use case               | Production workflows | Debugging, optimization |
 
 ## Implementation Details
 
 ### The Watch Command
 
 ```bash
-torc watch <workflow_id> --auto-recover
+torc watch <workflow_id> --recover
 ```
 
 Main loop:
+
 1. Poll `is_workflow_complete` API
 2. Print status updates
 3. On completion, check for failures
-4. If failures and auto-recover enabled:
+4. If failures and recover enabled:
    - Run `torc reports check-resource-utilization --include-failed`
    - Parse results for `likely_oom` and `likely_timeout` flags
    - Update resource requirements via API

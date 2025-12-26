@@ -1,6 +1,8 @@
 # Explanation
 
-This section provides understanding-oriented discussions of Torc's key concepts and architecture. Here you'll learn how Torc works internally, how components interact, and the design decisions behind the system.
+This section provides understanding-oriented discussions of Torc's key concepts and architecture.
+Here you'll learn how Torc works internally, how components interact, and the design decisions
+behind the system.
 
 **Topics covered:**
 

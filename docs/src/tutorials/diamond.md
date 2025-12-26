@@ -1,6 +1,7 @@
 # Tutorial 2: Diamond Workflow with File Dependencies
 
-This tutorial teaches you how to create workflows where job dependencies are automatically inferred from file inputs and outputs—a core concept in Torc called **implicit dependencies**.
+This tutorial teaches you how to create workflows where job dependencies are automatically inferred
+from file inputs and outputs—a core concept in Torc called **implicit dependencies**.
 
 ## Learning Objectives
 
@@ -19,6 +20,7 @@ By the end of this tutorial, you will:
 ## The Diamond Pattern
 
 The "diamond" pattern is a common workflow structure where:
+
 1. One job produces multiple outputs (fan-out)
 2. Multiple jobs process those outputs in parallel
 3. A final job combines all results (fan-in)
@@ -41,7 +43,9 @@ graph TD
     Postprocess --> Output["output.txt"]
 ```
 
-Notice that we never explicitly say "work1 depends on preprocess"—Torc figures this out automatically because `work1` needs `intermediate1.txt` as input, and `preprocess` produces it as output.
+Notice that we never explicitly say "work1 depends on preprocess"—Torc figures this out
+automatically because `work1` needs `intermediate1.txt` as input, and `preprocess` produces it as
+output.
 
 ## Step 1: Create the Workflow Specification
 
@@ -120,12 +124,14 @@ The key concept here is **file variable substitution**:
 - **`${files.output.filename}`** - References a file this job writes (satisfies dependencies)
 
 When Torc processes the workflow:
+
 1. It sees `preprocess` outputs `intermediate1` and `intermediate2`
 2. It sees `work1` inputs `intermediate1` → dependency created
 3. It sees `work2` inputs `intermediate2` → dependency created
 4. It sees `postprocess` inputs `result1` and `result2` → dependencies created
 
 This is more maintainable than explicit `depends_on` declarations because:
+
 - Dependencies are derived from actual data flow
 - Adding a new intermediate step automatically updates dependencies
 - The workflow specification documents the data flow
@@ -152,6 +158,7 @@ torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 The `initialize-jobs` command is where Torc:
+
 1. Analyzes file input/output relationships
 2. Builds the dependency graph
 3. Marks jobs with satisfied dependencies as "ready"
@@ -164,6 +171,7 @@ torc jobs list $WORKFLOW_ID
 ```
 
 Expected output:
+
 ```
 ╭────┬──────────────┬─────────┬────────╮
 │ ID │ Name         │ Status  │ ...    │
@@ -176,6 +184,7 @@ Expected output:
 ```
 
 Only `preprocess` is ready because:
+
 - Its only input (`input_file`) already exists
 - The others are blocked waiting for files that don't exist yet
 
@@ -205,14 +214,16 @@ You should see the combined, sorted, unique values from both columns of the inpu
 
 Torc determines job order through file relationships:
 
-| Job | Inputs | Outputs | Blocked By |
-|-----|--------|---------|------------|
-| preprocess | input_file | intermediate1, intermediate2 | (nothing) |
-| work1 | intermediate1 | result1 | preprocess |
-| work2 | intermediate2 | result2 | preprocess |
-| postprocess | result1, result2 | final_output | work1, work2 |
+| Job         | Inputs           | Outputs                      | Blocked By   |
+| ----------- | ---------------- | ---------------------------- | ------------ |
+| preprocess  | input_file       | intermediate1, intermediate2 | (nothing)    |
+| work1       | intermediate1    | result1                      | preprocess   |
+| work2       | intermediate2    | result2                      | preprocess   |
+| postprocess | result1, result2 | final_output                 | work1, work2 |
 
-The dependency graph is built automatically from these relationships. If you later add a validation step between `preprocess` and `work1`, you only need to update the file references—the dependencies adjust automatically.
+The dependency graph is built automatically from these relationships. If you later add a validation
+step between `preprocess` and `work1`, you only need to update the file references—the dependencies
+adjust automatically.
 
 ## What You Learned
 
@@ -227,11 +238,13 @@ In this tutorial, you learned:
 ## When to Use File Dependencies vs Explicit Dependencies
 
 **Use file dependencies when:**
+
 - Jobs actually read/write files
 - Data flow defines the natural ordering
 - You want self-documenting workflows
 
 **Use explicit `depends_on` when:**
+
 - Dependencies are logical, not data-based
 - Jobs communicate through side effects
 - You need precise control over ordering
@@ -239,13 +252,16 @@ In this tutorial, you learned:
 ## Example Files
 
 See the diamond workflow examples in all three formats:
+
 - [diamond_workflow.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/diamond_workflow.yaml)
 - [diamond_workflow.json5](https://github.com/NREL/torc/blob/main/examples/json/diamond_workflow.json5)
 - [diamond_workflow.kdl](https://github.com/NREL/torc/blob/main/examples/kdl/diamond_workflow.kdl)
 
-A Python version is also available: [diamond_workflow.py](https://github.com/NREL/torc/blob/main/examples/python/diamond_workflow.py)
+A Python version is also available:
+[diamond_workflow.py](https://github.com/NREL/torc/blob/main/examples/python/diamond_workflow.py)
 
 ## Next Steps
 
 - [Tutorial 3: User Data Dependencies](./user-data.md) - Pass JSON data between jobs without files
-- [Tutorial 4: Simple Parameterization](./simple-params.md) - Combine file dependencies with parameter expansion
+- [Tutorial 4: Simple Parameterization](./simple-params.md) - Combine file dependencies with
+  parameter expansion

@@ -3,6 +3,7 @@ use serde_json;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::output::{print_if_json, print_json_wrapped};
 use crate::client::commands::{get_env_user_name, pagination};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
@@ -151,14 +152,8 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
                 *producer_job_id,
             ) {
                 Ok(created_user_data) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_user_data) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing user data to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_user_data, "user data") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created user data:");
                         println!("  ID: {}", created_user_data.id.unwrap_or(-1));
@@ -220,38 +215,30 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
             match pagination::paginate_user_data(config, selected_workflow_id, params) {
                 Ok(user_data_list) => {
                     if format == "json" {
-                        match pagination::display_json_results("user_data", &user_data_list) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing user data to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json_wrapped("user_data", &user_data_list, "user_data");
+                    } else if user_data_list.is_empty() {
+                        println!(
+                            "No user data found for workflow ID: {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if user_data_list.is_empty() {
-                            println!(
-                                "No user data found for workflow ID: {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            println!("User data for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<UserDataTableRow> = user_data_list
-                                .iter()
-                                .map(|user_data| UserDataTableRow {
-                                    id: user_data.id.unwrap_or(-1),
-                                    name: user_data.name.clone(),
-                                    ephemeral: user_data
-                                        .is_ephemeral
-                                        .map_or("N/A".to_string(), |e| e.to_string()),
-                                    data_preview: user_data
-                                        .data
-                                        .as_ref()
-                                        .and_then(|d| serde_json::to_string(d).ok())
-                                        .unwrap_or_else(|| "N/A".to_string()),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "user data records");
-                        }
+                        println!("User data for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<UserDataTableRow> = user_data_list
+                            .iter()
+                            .map(|user_data| UserDataTableRow {
+                                id: user_data.id.unwrap_or(-1),
+                                name: user_data.name.clone(),
+                                ephemeral: user_data
+                                    .is_ephemeral
+                                    .map_or("N/A".to_string(), |e| e.to_string()),
+                                data_preview: user_data
+                                    .data
+                                    .as_ref()
+                                    .and_then(|d| serde_json::to_string(d).ok())
+                                    .unwrap_or_else(|| "N/A".to_string()),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "user data records");
                     }
                 }
                 Err(e) => {
@@ -262,14 +249,8 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
         }
         UserDataCommands::Get { id } => match default_api::get_user_data(config, *id) {
             Ok(user_data) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&user_data) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing user data to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &user_data, "user data") {
+                    // JSON was printed
                 } else {
                     println!("User data ID {}:", id);
                     println!("  Workflow ID: {}", user_data.workflow_id);
@@ -322,14 +303,8 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
 
                     match default_api::update_user_data(config, *id, user_data) {
                         Ok(updated_user_data) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&updated_user_data) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing user data to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &updated_user_data, "user data") {
+                                // JSON was printed
                             } else {
                                 println!("Successfully updated user data:");
                                 println!("  ID: {}", updated_user_data.id.unwrap_or(-1));
@@ -358,14 +333,8 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
         }
         UserDataCommands::Delete { id } => match default_api::delete_user_data(config, *id, None) {
             Ok(removed_user_data) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_user_data) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing user data to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_user_data, "user data") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed user data:");
                     println!("  ID: {}", removed_user_data.id.unwrap_or(-1));
@@ -402,24 +371,16 @@ pub fn handle_user_data_commands(config: &Configuration, command: &UserDataComma
         UserDataCommands::ListMissing { workflow_id } => {
             match default_api::list_missing_user_data(config, *workflow_id) {
                 Ok(missing_data) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&missing_data) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing missing user data to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &missing_data, "missing user data") {
+                        // JSON was printed
+                    } else if missing_data.user_data.is_empty() {
+                        println!("No missing user data for workflow ID: {}", workflow_id);
                     } else {
-                        if missing_data.user_data.is_empty() {
-                            println!("No missing user data for workflow ID: {}", workflow_id);
-                        } else {
-                            println!("Missing user data for workflow ID {}:", workflow_id);
-                            println!("{:<30}", "Missing User Data ID");
-                            println!("{}", "-".repeat(30));
-                            for user_data_id in &missing_data.user_data {
-                                println!("{:<30}", user_data_id);
-                            }
+                        println!("Missing user data for workflow ID {}:", workflow_id);
+                        println!("{:<30}", "Missing User Data ID");
+                        println!("{}", "-".repeat(30));
+                        for user_data_id in &missing_data.user_data {
+                            println!("{:<30}", user_data_id);
                         }
                     }
                 }

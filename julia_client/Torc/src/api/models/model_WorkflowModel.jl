@@ -11,7 +11,7 @@
         description=nothing,
         timestamp=nothing,
         compute_node_expiration_buffer_seconds=60,
-        compute_node_wait_for_new_jobs_seconds=60,
+        compute_node_wait_for_new_jobs_seconds=90,
         compute_node_ignore_workflow_completion=false,
         compute_node_wait_for_healthy_database_minutes=20,
         jobs_sort_method=nothing,
@@ -37,7 +37,7 @@ Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
     description::Union{Nothing, String} = nothing
     timestamp::Union{Nothing, String} = nothing
     compute_node_expiration_buffer_seconds::Union{Nothing, Int64} = 60
-    compute_node_wait_for_new_jobs_seconds::Union{Nothing, Int64} = 60
+    compute_node_wait_for_new_jobs_seconds::Union{Nothing, Int64} = 90
     compute_node_ignore_workflow_completion::Union{Nothing, Bool} = false
     compute_node_wait_for_healthy_database_minutes::Union{Nothing, Int64} = 20
     jobs_sort_method = nothing # spec type: Union{ Nothing, JobsSortMethod }

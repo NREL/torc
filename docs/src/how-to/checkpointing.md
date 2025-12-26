@@ -1,9 +1,8 @@
 # How to Checkpoint a Job During Wall-Time Timeout
 
-When running jobs on HPC systems like Slurm, your job may be terminated when the
-allocated wall-time expires. Torc supports **graceful termination**, allowing
-jobs to save checkpoints before exiting. This guide explains how to configure
-Slurm and your jobs to handle wall-time timeouts gracefully.
+When running jobs on HPC systems like Slurm, your job may be terminated when the allocated wall-time
+expires. Torc supports **graceful termination**, allowing jobs to save checkpoints before exiting.
+This guide explains how to configure Slurm and your jobs to handle wall-time timeouts gracefully.
 
 ## Overview
 
@@ -15,17 +14,17 @@ worker process. Torc then:
 3. Waits for all processes to exit
 4. Reports job status as `terminated` to the server
 
-Jobs that support termination can catch SIGTERM and perform cleanup operations
-like saving checkpoints, flushing buffers, or releasing resources.
+Jobs that support termination can catch SIGTERM and perform cleanup operations like saving
+checkpoints, flushing buffers, or releasing resources.
 
 ## Enabling Graceful Termination
 
 ### Configuring Slurm to Send a Signal Before Timeout
 
-By default, Slurm does **not** send any signal before the job's end time. When
-the wall-time limit is reached, Slurm immediately terminates all processes. To
-receive a warning signal before timeout, you must explicitly configure it using
-the `--signal` option in the `extra` field of your Slurm scheduler specification:
+By default, Slurm does **not** send any signal before the job's end time. When the wall-time limit
+is reached, Slurm immediately terminates all processes. To receive a warning signal before timeout,
+you must explicitly configure it using the `--signal` option in the `extra` field of your Slurm
+scheduler specification:
 
 ```yaml
 slurm_schedulers:
@@ -38,17 +37,17 @@ slurm_schedulers:
 ```
 
 The `--signal` option format is `[B:]<sig_num>[@sig_time]`:
-- `B:` prefix sends the signal only to the batch shell (by default, all job
-  steps are signaled but not the batch shell itself)
+
+- `B:` prefix sends the signal only to the batch shell (by default, all job steps are signaled but
+  not the batch shell itself)
 - `sig_num` is the signal name or number (e.g., `TERM`, `USR1`, `10`)
-- `sig_time` is seconds before the time limit to send the signal (default: 60
-  if not specified)
+- `sig_time` is seconds before the time limit to send the signal (default: 60 if not specified)
 
-Note: Due to Slurm's event handling resolution, the signal may be sent up to 60
-seconds earlier than specified.
+Note: Due to Slurm's event handling resolution, the signal may be sent up to 60 seconds earlier than
+specified.
 
-To enable graceful termination for a job, set `supports_termination: true` in
-your job specification:
+To enable graceful termination for a job, set `supports_termination: true` in your job
+specification:
 
 ### Configuring a Torc job to be terminated gracefully
 
@@ -187,8 +186,8 @@ actions:
 
 ## Restarting After Termination
 
-When a job is terminated due to wall-time, it will have status `terminated`.
-To continue the workflow:
+When a job is terminated due to wall-time, it will have status `terminated`. To continue the
+workflow:
 
 1. **Re-submit the workflow** to allocate new compute time:
    ```bash
@@ -200,8 +199,7 @@ To continue the workflow:
    torc workflows reinitialize $WORKFLOW_ID
    ```
 
-Your job script should detect existing checkpoints and resume from where it
-left off.
+Your job script should detect existing checkpoints and resume from where it left off.
 
 ## Best Practices
 
@@ -257,11 +255,13 @@ ls -la /scratch/checkpoints/
 **Symptoms:** Job status is `terminated` but no checkpoint was saved.
 
 **Causes:**
+
 - `supports_termination` not set to `true`
 - Signal handler not registered before training started
 - Checkpoint save took longer than the buffer time
 
 **Solutions:**
+
 - Verify `supports_termination: true` in job spec
 - Register signal handlers early in your script
 
@@ -270,10 +270,12 @@ ls -la /scratch/checkpoints/
 **Symptoms:** Job fails to load checkpoint on restart.
 
 **Causes:**
+
 - Job was killed during checkpoint write
 - Disk space exhausted
 
 **Solutions:**
+
 - Use atomic file operations (write to temp, then rename)
 - Check available disk space before checkpointing
 - Implement checkpoint validation on load
@@ -283,10 +285,12 @@ ls -la /scratch/checkpoints/
 **Symptoms:** Job runs until hard kill with no graceful shutdown.
 
 **Causes:**
+
 - Job running in a subprocess that doesn't forward signals
 - Container or wrapper script intercepting signals
 
 **Solutions:**
+
 - Use `exec` in wrapper scripts to replace the shell
 - Configure signal forwarding in containers
 - Run the job directly without wrapper scripts
@@ -296,4 +300,5 @@ ls -la /scratch/checkpoints/
 - [Working with Slurm](./slurm.md) - General Slurm configuration
 - [Managing Resources](./resources.md) - Resource requirements configuration
 - [Debugging Workflows](./debugging.md) - Troubleshooting workflow issues
-- [Slurm sbatch --signal option](https://slurm.schedmd.com/sbatch.html#OPT_signal) - Customize which signal is sent and when before wall-time timeout
+- [Slurm sbatch --signal option](https://slurm.schedmd.com/sbatch.html#OPT_signal) - Customize which
+  signal is sent and when before wall-time timeout

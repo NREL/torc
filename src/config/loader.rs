@@ -65,10 +65,10 @@ impl ConfigPaths {
         if self.system.exists() {
             paths.push(&self.system);
         }
-        if let Some(user) = &self.user {
-            if user.exists() {
-                paths.push(user);
-            }
+        if let Some(user) = &self.user
+            && user.exists()
+        {
+            paths.push(user);
         }
         if self.local.exists() {
             paths.push(&self.local);
@@ -112,14 +112,14 @@ impl TorcConfig {
         }
 
         // 2. User config (optional)
-        if let Some(user_path) = &paths.user {
-            if user_path.exists() {
-                builder = builder.add_source(
-                    File::from(user_path.clone())
-                        .format(FileFormat::Toml)
-                        .required(false),
-                );
-            }
+        if let Some(user_path) = &paths.user
+            && user_path.exists()
+        {
+            builder = builder.add_source(
+                File::from(user_path.clone())
+                    .format(FileFormat::Toml)
+                    .required(false),
+            );
         }
 
         // 3. Project-local config (optional)
@@ -211,7 +211,7 @@ output_dir = "output"
 
 [client.slurm]
 # Poll interval in seconds for Slurm job runners
-poll_interval = 60
+poll_interval = 30
 
 # Keep submission scripts after job submission (useful for debugging)
 keep_submission_scripts = false
@@ -263,7 +263,7 @@ https = false
 require_auth = false
 
 # Interval for background job completion processing (seconds)
-completion_check_interval_secs = 60.0
+completion_check_interval_secs = 30.0
 
 # Log level: error, warn, info, debug, trace
 log_level = "info"

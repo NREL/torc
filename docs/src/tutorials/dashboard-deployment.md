@@ -1,16 +1,19 @@
 # Dashboard Deployment Tutorial
 
-This tutorial covers three common deployment scenarios for the Torc web dashboard (`torc-dash`). Each scenario addresses different environments and use cases.
+This tutorial covers three common deployment scenarios for the Torc web dashboard (`torc-dash`).
+Each scenario addresses different environments and use cases.
 
-> **Prefer the terminal?** If you work primarily in SSH sessions or terminal environments, consider using the [Terminal UI (TUI)](../how-to/tui.md) instead. The TUI provides the same workflow and job management capabilities without requiring a web browser or SSH tunnels.
+> **Prefer the terminal?** If you work primarily in SSH sessions or terminal environments, consider
+> using the [Terminal UI (TUI)](../how-to/tui.md) instead. The TUI provides the same workflow and
+> job management capabilities without requiring a web browser or SSH tunnels.
 
 ## Overview of Deployment Scenarios
 
-| Scenario | Environment | Use Case |
-|----------|-------------|----------|
-| 1. Standalone | Local computer | Single-computer workflows, development, testing |
-| 2. All-in-One Login Node | HPC login node | Small HPC workflows (< 100 jobs) |
-| 3. Shared Server | HPC login node + dedicated server | Large-scale multi-user HPC workflows |
+| Scenario                 | Environment                       | Use Case                                        |
+| ------------------------ | --------------------------------- | ----------------------------------------------- |
+| 1. Standalone            | Local computer                    | Single-computer workflows, development, testing |
+| 2. All-in-One Login Node | HPC login node                    | Small HPC workflows (< 100 jobs)                |
+| 3. Shared Server         | HPC login node + dedicated server | Large-scale multi-user HPC workflows            |
 
 ## Prerequisites
 
@@ -35,9 +38,11 @@ Before starting, ensure you have:
 
 ## Scenario 1: Local Development (Standalone Mode)
 
-**Best for**: Single-computer workflows on your laptop or workstation. Also ideal for development, testing, and learning Torc.
+**Best for**: Single-computer workflows on your laptop or workstation. Also ideal for development,
+testing, and learning Torc.
 
-This is the simplest setup - everything runs on one machine with a single command. Use this when you want to run workflows entirely on your local computer without HPC resources.
+This is the simplest setup - everything runs on one machine with a single command. Use this when you
+want to run workflows entirely on your local computer without HPC resources.
 
 ### Architecture
 
@@ -67,6 +72,7 @@ torc-dash --standalone
 ```
 
 This single command:
+
 - Automatically starts `torc-server` on a free port
 - Starts the dashboard on http://127.0.0.1:8090
 - Configures the dashboard to connect to the managed server
@@ -109,9 +115,11 @@ Press `Ctrl+C` in the terminal. This stops both the dashboard and the managed se
 
 ## Scenario 2: All-in-One Login Node
 
-**Best for**: Small HPC workflows (fewer than 100 jobs) where you want the complete Torc stack running on the login node, with jobs submitted to Slurm.
+**Best for**: Small HPC workflows (fewer than 100 jobs) where you want the complete Torc stack
+running on the login node, with jobs submitted to Slurm.
 
-This is the simplest HPC setup - everything runs on the login node. It's ideal for individual users running small HPC workflows without needing a dedicated server infrastructure.
+This is the simplest HPC setup - everything runs on the login node. It's ideal for individual users
+running small HPC workflows without needing a dedicated server infrastructure.
 
 **Important**: Login nodes are shared resources. The torc-dash and torc-server applications consume
 minimal resources when workflows are small (e.g., less than 100 jobs). If you run these applications
@@ -199,8 +207,8 @@ From your local machine:
 ssh -L 8090:localhost:8090 user@login-node
 ```
 
-> **Important**: Use `localhost` in the tunnel command, not the login node's hostname.
-> This works because torc-dash binds to 127.0.0.1 by default.
+> **Important**: Use `localhost` in the tunnel command, not the login node's hostname. This works
+> because torc-dash binds to 127.0.0.1 by default.
 
 Open http://localhost:8090 in your browser.
 
@@ -234,6 +242,7 @@ The dashboard shows job status updates as Slurm jobs progress:
 4. Watch status change from `pending` → `running` → `completed`
 
 You can also monitor via:
+
 - **Events** tab for state transitions
 - **Debugging** tab for job logs after completion
 
@@ -241,9 +250,11 @@ You can also monitor via:
 
 ## Scenario 3: Shared Server on HPC
 
-**Best for**: Large-scale multi-user HPC environments where a central `torc-server` runs persistently on a dedicated server, and multiple users access it via `torc-dash` from login nodes.
+**Best for**: Large-scale multi-user HPC environments where a central `torc-server` runs
+persistently on a dedicated server, and multiple users access it via `torc-dash` from login nodes.
 
-This is the most scalable setup, suitable for production deployments with many concurrent users and large workflows.
+This is the most scalable setup, suitable for production deployments with many concurrent users and
+large workflows.
 
 ### Architecture
 
@@ -314,9 +325,9 @@ From your local machine, create an SSH tunnel:
 ssh -L 8090:localhost:8090 user@login-node
 ```
 
-> **Important**: Use `localhost` in the tunnel command, not the login node's hostname.
-> The tunnel forwards your local port to `localhost:8090` *as seen from the login node*,
-> which matches where torc-dash binds (127.0.0.1:8090).
+> **Important**: Use `localhost` in the tunnel command, not the login node's hostname. The tunnel
+> forwards your local port to `localhost:8090` _as seen from the login node_, which matches where
+> torc-dash binds (127.0.0.1:8090).
 
 Then open http://localhost:8090 in your local browser.
 
@@ -356,14 +367,14 @@ See [Authentication](../how-to/authentication.md) for details.
 
 ## Comparison Summary
 
-| Feature | Standalone | All-in-One Login Node | Shared Server |
-|---------|------------|----------------------|---------------|
-| Setup complexity | Low | Medium | Medium-High |
-| Multi-user support | No | Single user | Yes |
-| Slurm integration | No | Yes | Yes |
-| Database location | Local | Login node | Shared storage |
-| Persistence | Session only | Depends on setup | Persistent |
-| Best for | Single-computer workflows | Small HPC workflows (< 100 jobs) | Large-scale production |
+| Feature            | Standalone                | All-in-One Login Node            | Shared Server          |
+| ------------------ | ------------------------- | -------------------------------- | ---------------------- |
+| Setup complexity   | Low                       | Medium                           | Medium-High            |
+| Multi-user support | No                        | Single user                      | Yes                    |
+| Slurm integration  | No                        | Yes                              | Yes                    |
+| Database location  | Local                     | Login node                       | Shared storage         |
+| Persistence        | Session only              | Depends on setup                 | Persistent             |
+| Best for           | Single-computer workflows | Small HPC workflows (< 100 jobs) | Large-scale production |
 
 ## Troubleshooting
 

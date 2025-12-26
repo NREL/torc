@@ -219,7 +219,7 @@ impl AsyncCliCommand {
                 .expect("A completed job must have a return code"),
             self.exec_time_s / 60.0,
             timestamp_str,
-            self.status.clone(),
+            self.status,
         );
 
         // Set resource metrics
@@ -338,8 +338,8 @@ impl AsyncCliCommand {
         self.send_sigterm()
     }
 
-    /// Force the job to completion with a return code and status. Does not send anything
-    /// to the process.
+    // Force the job to completion with a return code and status. Does not send anything
+    // to the process.
     // pub fn force_complete(mut self, return_code: i64, status: JobStatus) -> Result<(), Box<dyn std::error::Error>>  {
     //     match self.handle_completion(return_code, status) {
     //         Ok(_) => Ok(()),
@@ -444,7 +444,7 @@ impl AsyncCliCommand {
                     // Process was killed by a signal - return negative signal number
                     // This is a common Unix convention
                     debug!("Job {} was terminated by signal {}", self.job_id, signal);
-                    -(signal as i32)
+                    -signal
                 } else {
                     -1
                 }

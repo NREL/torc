@@ -1,6 +1,4 @@
 use clap::{CommandFactory, Parser};
-use clap_complete;
-use rpassword;
 
 use torc::cli::{Cli, Commands};
 use torc::client::apis::configuration::Configuration;
@@ -448,7 +446,7 @@ fn main() {
         Commands::Watch {
             workflow_id,
             poll_interval,
-            auto_recover,
+            recover,
             max_retries,
             memory_multiplier,
             runtime_multiplier,
@@ -460,7 +458,7 @@ fn main() {
             let args = WatchArgs {
                 workflow_id: *workflow_id,
                 poll_interval: *poll_interval,
-                auto_recover: *auto_recover,
+                recover: *recover,
                 max_retries: *max_retries,
                 memory_multiplier: *memory_multiplier,
                 runtime_multiplier: *runtime_multiplier,

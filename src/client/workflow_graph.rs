@@ -15,6 +15,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::client::parameter_expansion::parse_parameter_value;
 use crate::client::workflow_spec::{JobSpec, WorkflowActionSpec, WorkflowSpec};
+use crate::models::{JobModel, ResourceRequirementsModel};
 
 /// A node in the workflow graph representing a job (or parameterized job template)
 #[derive(Debug, Clone)]
@@ -139,10 +140,11 @@ impl WorkflowGraph {
             if let Some(ref input_files) = job.input_files {
                 for input_file in input_files {
                     for other_job in &spec.jobs {
-                        if let Some(ref output_files) = other_job.output_files {
-                            if output_files.contains(input_file) && other_job.name != job.name {
-                                dependencies.insert(other_job.name.clone());
-                            }
+                        if let Some(ref output_files) = other_job.output_files
+                            && output_files.contains(input_file)
+                            && other_job.name != job.name
+                        {
+                            dependencies.insert(other_job.name.clone());
                         }
                     }
                 }
@@ -152,10 +154,11 @@ impl WorkflowGraph {
             if let Some(ref input_data) = job.input_user_data {
                 for input_datum in input_data {
                     for other_job in &spec.jobs {
-                        if let Some(ref output_data) = other_job.output_user_data {
-                            if output_data.contains(input_datum) && other_job.name != job.name {
-                                dependencies.insert(other_job.name.clone());
-                            }
+                        if let Some(ref output_data) = other_job.output_user_data
+                            && output_data.contains(input_datum)
+                            && other_job.name != job.name
+                        {
+                            dependencies.insert(other_job.name.clone());
                         }
                     }
                 }
@@ -173,6 +176,120 @@ impl WorkflowGraph {
                     .get_mut(dep)
                     .unwrap()
                     .insert(job.name.clone());
+            }
+        }
+
+        Ok(graph)
+    }
+
+    /// Build a workflow graph from database models (jobs fetched from server)
+    ///
+    /// This is used for recovery scenarios and execution plan visualization
+    /// when we don't have access to the original workflow specification.
+    pub fn from_jobs(
+        jobs: &[JobModel],
+        resource_requirements: &[ResourceRequirementsModel],
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut graph = Self::new();
+
+        // Build resource requirements ID -> name map
+        let rr_id_to_name: HashMap<i64, String> = resource_requirements
+            .iter()
+            .filter_map(|rr| rr.id.map(|id| (id, rr.name.clone())))
+            .collect();
+
+        // Build job ID -> name map
+        let job_id_to_name: HashMap<i64, String> = jobs
+            .iter()
+            .filter_map(|j| j.id.map(|id| (id, j.name.clone())))
+            .collect();
+
+        // First pass: add all job nodes
+        for job in jobs {
+            let rr_name = job
+                .resource_requirements_id
+                .and_then(|rr_id| rr_id_to_name.get(&rr_id).cloned());
+
+            // For database jobs, we treat each job as a single instance
+            // (parameterized jobs have already been expanded)
+            let node = JobNode {
+                name: job.name.clone(),
+                resource_requirements: rr_name,
+                instance_count: 1,
+                name_pattern: regex::escape(&job.name), // Exact match for expanded jobs
+                scheduler: None,                        // Not tracked from database models
+                command: job.command.clone(),
+            };
+
+            graph.nodes.insert(job.name.clone(), node);
+            graph.depends_on.insert(job.name.clone(), HashSet::new());
+            graph.depended_by.insert(job.name.clone(), HashSet::new());
+        }
+
+        // Second pass: build dependency edges
+        // First try explicit depends_on_job_ids
+        let mut has_any_deps = false;
+        for job in jobs {
+            let dep_ids = job.depends_on_job_ids.clone().unwrap_or_default();
+            if !dep_ids.is_empty() {
+                has_any_deps = true;
+            }
+
+            for dep_id in &dep_ids {
+                if let Some(dep_name) = job_id_to_name.get(dep_id)
+                    && graph.nodes.contains_key(dep_name)
+                {
+                    graph
+                        .depends_on
+                        .get_mut(&job.name)
+                        .unwrap()
+                        .insert(dep_name.clone());
+                    graph
+                        .depended_by
+                        .get_mut(dep_name)
+                        .unwrap()
+                        .insert(job.name.clone());
+                }
+            }
+        }
+
+        // If no explicit dependencies found, compute from file relationships
+        // This handles cases where workflow hasn't been initialized yet
+        if !has_any_deps {
+            // Build file_id -> producing job_id map
+            let mut file_producers: HashMap<i64, i64> = HashMap::new();
+            for job in jobs {
+                if let Some(output_ids) = &job.output_file_ids
+                    && let Some(job_id) = job.id
+                {
+                    for file_id in output_ids {
+                        file_producers.insert(*file_id, job_id);
+                    }
+                }
+            }
+
+            // Compute dependencies from input files
+            for job in jobs {
+                if let Some(input_ids) = &job.input_file_ids {
+                    for file_id in input_ids {
+                        if let Some(producer_id) = file_producers.get(file_id)
+                            && job.id != Some(*producer_id)
+                            && let Some(producer_name) = job_id_to_name.get(producer_id)
+                            && graph.nodes.contains_key(producer_name)
+                        {
+                            graph
+                                .depends_on
+                                .get_mut(&job.name)
+                                .unwrap()
+                                .insert(producer_name.clone());
+                            graph
+                                .depended_by
+                                .get_mut(producer_name)
+                                .unwrap()
+                                .insert(job.name.clone());
+                        }
+                    }
+                }
             }
         }
 
@@ -548,22 +665,21 @@ impl WorkflowGraph {
             // Check job_name_regexes
             if let Some(ref regexes) = action.job_name_regexes {
                 for regex_str in regexes {
-                    if let Ok(re) = Regex::new(regex_str) {
-                        if jobs_becoming_ready.iter().any(|j| re.is_match(j)) {
-                            matching.push(action);
-                            break;
-                        }
+                    if let Ok(re) = Regex::new(regex_str)
+                        && jobs_becoming_ready.iter().any(|j| re.is_match(j))
+                    {
+                        matching.push(action);
+                        break;
                     }
                 }
             }
 
             // Check exact job names
-            if let Some(ref job_names) = action.jobs {
-                if jobs_becoming_ready.iter().any(|j| job_names.contains(j)) {
-                    if !matching.contains(&action) {
-                        matching.push(action);
-                    }
-                }
+            if let Some(ref job_names) = action.jobs
+                && jobs_becoming_ready.iter().any(|j| job_names.contains(j))
+                && !matching.contains(&action)
+            {
+                matching.push(action);
             }
         }
 

@@ -1,17 +1,22 @@
 # Workflow Archiving
 
-Workflow archiving provides a way to hide completed or inactive workflows from default list views while preserving all workflow data and execution history. Archived workflows remain fully accessible but don't clutter everyday workflow management operations.
+Workflow archiving provides a way to hide completed or inactive workflows from default list views
+while preserving all workflow data and execution history. Archived workflows remain fully accessible
+but don't clutter everyday workflow management operations.
 
 ## Purpose and Motivation
 
-As projects mature and accumulate workflows over time, the list of active workflows can become difficult to navigate. Archiving addresses this by:
+As projects mature and accumulate workflows over time, the list of active workflows can become
+difficult to navigate. Archiving addresses this by:
 
 - **Reducing visual clutter** - Completed workflows no longer appear in default list views
 - **Preserving historical data** - All workflow data, jobs, results, and logs remain accessible
 - **Improving usability** - Users can focus on active workflows without losing access to past work
-- **Maintaining audit trails** - Archived workflows can be retrieved for analysis, debugging, or compliance
+- **Maintaining audit trails** - Archived workflows can be retrieved for analysis, debugging, or
+  compliance
 
 Archiving is particularly useful for:
+
 - Completed experiments that may need future reference
 - Successful production runs that serve as historical records
 - Development workflows that are no longer active but contain valuable examples
@@ -19,12 +24,14 @@ Archiving is particularly useful for:
 
 ## How It Works
 
-When you archive a workflow, it's marked with an "archived" flag. This flag controls whether the workflow appears in default list views:
+When you archive a workflow, it's marked with an "archived" flag. This flag controls whether the
+workflow appears in default list views:
 
 - **Active workflows** (not archived): Appear in standard `workflows list` commands
 - **Archived workflows**: Hidden from default lists but accessible with the `--archived-only` flag
 
-The archive status is just metadata - it doesn't affect the workflow's data, results, or any other functionality.
+The archive status is just metadata - it doesn't affect the workflow's data, results, or any other
+functionality.
 
 ## Archiving Workflows
 
@@ -123,7 +130,8 @@ torc workflows status <workflow_id>
 
 ### Operations Restricted on Archived Workflows
 
-Certain workflow operations are not allowed on archived workflows to prevent accidental modifications:
+Certain workflow operations are not allowed on archived workflows to prevent accidental
+modifications:
 
 - ❌ **Status reset**: Cannot use `workflows reset-status` on archived workflows
   - Error message: "Cannot reset archived workflow status. Unarchive the workflow first."
@@ -131,7 +139,8 @@ Certain workflow operations are not allowed on archived workflows to prevent acc
 
 ### Interactive Selection Behavior
 
-When commands prompt for interactive workflow selection (when workflow ID is not specified), archived workflows are excluded by default:
+When commands prompt for interactive workflow selection (when workflow ID is not specified),
+archived workflows are excluded by default:
 
 ```bash
 # These will NOT show archived workflows in the interactive menu
@@ -140,24 +149,27 @@ torc-client workflows status
 torc-client workflows initialize
 ```
 
-This prevents accidentally operating on archived workflows while still allowing explicit access by ID.
+This prevents accidentally operating on archived workflows while still allowing explicit access by
+ID.
 
 ## Archive vs. Delete
 
 Understanding when to archive versus delete workflows:
 
-| Operation | Data Preserved | Reversible | Use Case |
-|-----------|---------------|------------|----------|
-| **Archive** | ✅ Yes | ✅ Yes | Completed workflows you may reference later |
-| **Delete** | ❌ No | ❌ No | Failed experiments, test workflows, unwanted data |
+| Operation   | Data Preserved | Reversible | Use Case                                          |
+| ----------- | -------------- | ---------- | ------------------------------------------------- |
+| **Archive** | ✅ Yes         | ✅ Yes     | Completed workflows you may reference later       |
+| **Delete**  | ❌ No          | ❌ No      | Failed experiments, test workflows, unwanted data |
 
 **Archive when:**
+
 - Workflow completed successfully and may need future reference
 - Results should be preserved for reproducibility or compliance
 - Workflow represents a milestone or important historical run
 - You want to declutter lists but maintain data integrity
 
 **Delete when:**
+
 - Workflow failed and results are not useful
 - Workflow was created for testing purposes only
 - Data is no longer needed and storage space is a concern
@@ -206,15 +218,17 @@ torc workflows archive true 401 402 403 404 405
 
 ### When to Archive
 
-1. **After successful completion** - Archive workflows once they've completed successfully and been validated
+1. **After successful completion** - Archive workflows once they've completed successfully and been
+   validated
 2. **Project milestones** - Archive workflows representing project phases or releases
 3. **Regular cleanup** - Establish periodic archiving of workflows older than a certain timeframe
 4. **Before major changes** - Archive working versions before making significant modifications
 
-
 ## Summary
 
-Workflow archiving provides a simple, reversible way to hide completed or inactive workflows from default views while preserving all data and functionality. It's designed for long-term workflow management in active projects where historical data is valuable but visual clutter is undesirable.
+Workflow archiving provides a simple, reversible way to hide completed or inactive workflows from
+default views while preserving all data and functionality. It's designed for long-term workflow
+management in active projects where historical data is valuable but visual clutter is undesirable.
 
 **Key points:**
 

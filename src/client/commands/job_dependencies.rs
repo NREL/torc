@@ -1,5 +1,6 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::output::print_if_json;
 use crate::client::commands::table_format::display_table_with_count;
 use crate::client::commands::{get_env_user_name, print_error, select_workflow_interactively};
 use clap::Subcommand;
@@ -118,14 +119,8 @@ pub fn handle_job_dependency_commands(
                 Some(*limit),
             ) {
                 Ok(response) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&response) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &response, "job dependencies") {
+                        // JSON was printed
                     } else {
                         let rows: Vec<JobDependencyTableRow> = response
                             .items
@@ -171,14 +166,8 @@ pub fn handle_job_dependency_commands(
                 Some(*limit),
             ) {
                 Ok(response) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&response) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &response, "job-file relationships") {
+                        // JSON was printed
                     } else {
                         let rows: Vec<JobFileRelationshipTableRow> = response
                             .items
@@ -238,14 +227,8 @@ pub fn handle_job_dependency_commands(
                 Some(*limit),
             ) {
                 Ok(response) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&response) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &response, "job-user_data relationships") {
+                        // JSON was printed
                     } else {
                         let rows: Vec<JobUserDataRelationshipTableRow> = response
                             .items

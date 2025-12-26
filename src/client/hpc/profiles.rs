@@ -39,12 +39,11 @@ impl HpcDetection {
                 env::var(name).map(|v| v == *value).unwrap_or(false)
             }
             HpcDetection::HostnamePattern { pattern } => {
-                if let Ok(hostname) = hostname::get() {
-                    if let Some(hostname_str) = hostname.to_str() {
-                        if let Ok(re) = regex::Regex::new(pattern) {
-                            return re.is_match(hostname_str);
-                        }
-                    }
+                if let Ok(hostname) = hostname::get()
+                    && let Some(hostname_str) = hostname.to_str()
+                    && let Ok(re) = regex::Regex::new(pattern)
+                {
+                    return re.is_match(hostname_str);
                 }
                 false
             }
@@ -168,12 +167,12 @@ impl HpcPartition {
         }
 
         // Check GPUs if requested
-        if let Some(requested_gpus) = gpus {
-            if requested_gpus > 0 {
-                match self.gpus_per_node {
-                    Some(available) if requested_gpus <= available => {}
-                    _ => return false,
-                }
+        if let Some(requested_gpus) = gpus
+            && requested_gpus > 0
+        {
+            match self.gpus_per_node {
+                Some(available) if requested_gpus <= available => {}
+                _ => return false,
             }
         }
 

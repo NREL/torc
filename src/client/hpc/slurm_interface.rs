@@ -308,7 +308,7 @@ impl HpcInterface for SlurmInterface {
         let squeue = Self::get_squeue_exec();
 
         let output = Command::new(&squeue)
-            .args(&["-j", &job_id, "--format='%20e'"])
+            .args(["-j", &job_id, "--format='%20e'"])
             .output()?;
 
         if !output.status.success() {
@@ -333,7 +333,7 @@ impl HpcInterface for SlurmInterface {
 
     fn get_job_stats(&self, job_id: &str) -> Result<HpcJobStats> {
         let output = Command::new("sacct")
-            .args(&[
+            .args([
                 "-j",
                 job_id,
                 "--format=JobID,JobName%20,state,start,end,Account,Partition%15,QOS",
@@ -444,7 +444,7 @@ impl HpcInterface for SlurmInterface {
     }
 
     fn is_head_node(&self) -> bool {
-        return self.get_node_id() == "0".to_string();
+        self.get_node_id() == "0"
     }
 
     fn list_active_nodes(&self, job_id: &str) -> Result<Vec<String>> {
@@ -457,7 +457,7 @@ impl HpcInterface for SlurmInterface {
 
         // Get compact node list
         let output = Command::new(&squeue)
-            .args(&["-j", job_id, "--format='%5D %500N'", "-h"])
+            .args(["-j", job_id, "--format='%5D %500N'", "-h"])
             .output()?;
 
         if !output.status.success() {
@@ -480,7 +480,7 @@ impl HpcInterface for SlurmInterface {
 
         // Expand compact node notation
         let output = Command::new("scontrol")
-            .args(&["show", "hostnames", nodes_compact])
+            .args(["show", "hostnames", nodes_compact])
             .output()?;
 
         if !output.status.success() {

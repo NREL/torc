@@ -1,0 +1,114 @@
+name: "Database Contention Stress Test"
+description: |
+  This workflow is designed to stress test the database with high contention.
+  It creates 5 stages of 1000 jobs each, with barriers between stages.
+  All jobs are simple echo commands that complete almost instantly,
+  causing many jobs to complete simultaneously and trigger concurrent
+  unblocking operations in the server's background thread.
+
+  Expected behavior:
+  - 5000 total jobs (1000 per stage)
+  - ~6000 total dependencies
+  - High contention between API handlers completing jobs and
+    the background unblocking thread processing completions
+
+  Run with:
+    torc workflows create tests/workflows/database_contention_test/workflow.yaml
+    torc workflows run <workflow_id>
+
+  Or for Slurm:
+    torc workflows create-slurm --account <account> tests/workflows/database_contention_test/workflow.yaml
+    torc workflows submit <workflow_id>
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 1: 1000 parallel jobs
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: "stage1_{i:04d}"
+    command: "echo 'stage1 job {i}'"
+    resource_requirements: "minimal"
+    parameters:
+      i: "0:999"
+
+  # BARRIER 1
+  - name: "barrier_stage1_complete"
+    command: "echo 'Stage 1 complete: 1000 jobs finished' && date"
+    resource_requirements: "minimal"
+    depends_on_regexes: ["^stage1_\\d+$"]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 2: 1000 parallel jobs
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: "stage2_{i:04d}"
+    command: "echo 'stage2 job {i}'"
+    resource_requirements: "minimal"
+    depends_on: ["barrier_stage1_complete"]
+    parameters:
+      i: "0:999"
+
+  # BARRIER 2
+  - name: "barrier_stage2_complete"
+    command: "echo 'Stage 2 complete: 1000 jobs finished' && date"
+    resource_requirements: "minimal"
+    depends_on_regexes: ["^stage2_\\d+$"]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 3: 1000 parallel jobs
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: "stage3_{i:04d}"
+    command: "echo 'stage3 job {i}'"
+    resource_requirements: "minimal"
+    depends_on: ["barrier_stage2_complete"]
+    parameters:
+      i: "0:999"
+
+  # BARRIER 3
+  - name: "barrier_stage3_complete"
+    command: "echo 'Stage 3 complete: 1000 jobs finished' && date"
+    resource_requirements: "minimal"
+    depends_on_regexes: ["^stage3_\\d+$"]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 4: 1000 parallel jobs
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: "stage4_{i:04d}"
+    command: "echo 'stage4 job {i}'"
+    resource_requirements: "minimal"
+    depends_on: ["barrier_stage3_complete"]
+    parameters:
+      i: "0:999"
+
+  # BARRIER 4
+  - name: "barrier_stage4_complete"
+    command: "echo 'Stage 4 complete: 1000 jobs finished' && date"
+    resource_requirements: "minimal"
+    depends_on_regexes: ["^stage4_\\d+$"]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 5: 1000 parallel jobs
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: "stage5_{i:04d}"
+    command: "echo 'stage5 job {i}'"
+    resource_requirements: "minimal"
+    depends_on: ["barrier_stage4_complete"]
+    parameters:
+      i: "0:999"
+
+  # FINAL BARRIER
+  - name: "workflow_complete"
+    command: |
+      echo "════════════════════════════════════════════════════════════"
+      echo "Database Contention Stress Test Complete"
+      echo "Finished at: $(date)"
+      echo "Total jobs executed: 5000 (5 stages x 1000 jobs)"
+      echo "════════════════════════════════════════════════════════════"
+    resource_requirements: "minimal"
+    depends_on_regexes: ["^stage5_\\d+$"]
+
+resource_requirements:
+  - name: "minimal"
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: "100m"
+    runtime: "PT1M"

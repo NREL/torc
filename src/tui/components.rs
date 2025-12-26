@@ -317,7 +317,7 @@ impl HelpPopup {
             Self::key_line("R", "Reset workflow status"),
             Self::key_line("x", "Run workflow locally"),
             Self::key_line("s", "Submit workflow to scheduler"),
-            Self::key_line("W", "Watch workflow (auto-recovery)"),
+            Self::key_line("W", "Watch workflow (recovery)"),
             Self::key_line("d", "Delete workflow"),
             Line::from(""),
             Line::from(vec![Span::styled(
@@ -1113,10 +1113,8 @@ impl ProcessViewer {
             let tx_stdout = tx.clone();
             thread::spawn(move || {
                 let reader = BufReader::new(stdout);
-                for line in reader.lines() {
-                    if let Ok(line) = line {
-                        let _ = tx_stdout.send(line);
-                    }
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = tx_stdout.send(line);
                 }
             });
         }
@@ -1126,10 +1124,8 @@ impl ProcessViewer {
             let tx_stderr = tx;
             thread::spawn(move || {
                 let reader = BufReader::new(stderr);
-                for line in reader.lines() {
-                    if let Ok(line) = line {
-                        let _ = tx_stderr.send(format!("[stderr] {}", line));
-                    }
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = tx_stderr.send(format!("[stderr] {}", line));
                 }
             });
         }

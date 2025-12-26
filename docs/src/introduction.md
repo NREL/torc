@@ -8,24 +8,26 @@ dependencies, mixed resource requirements, and multiple stages, compute node sch
 
 Torc offers multiple interfaces to match your preferred workflow:
 
-| Interface | Best For | Example |
-|-----------|----------|---------|
-| **Dashboard** | Visual monitoring, team collaboration | Point-and-click in browser |
-| **AI Assistants** | Natural language interaction, debugging, quick tasks | *"Create a workflow with 10 parallel jobs"* |
-| **CLI** | Scripting, automation, power users | `torc run workflow.yaml` |
-| **Spec Files** | Version control, reproducibility, complex workflows | YAML, KDL, or JSON5 files |
-| **Python/Julia** | Programmatic workflow generation | API libraries |
+| Interface         | Best For                                             | Example                                     |
+| ----------------- | ---------------------------------------------------- | ------------------------------------------- |
+| **Dashboard**     | Visual monitoring, team collaboration                | Point-and-click in browser                  |
+| **AI Assistants** | Natural language interaction, debugging, quick tasks | _"Create a workflow with 10 parallel jobs"_ |
+| **CLI**           | Scripting, automation, power users                   | `torc run workflow.yaml`                    |
+| **Spec Files**    | Version control, reproducibility, complex workflows  | YAML, KDL, or JSON5 files                   |
+| **Python/Julia**  | Programmatic workflow generation                     | API libraries                               |
 
-You can mix these freely—create a workflow with AI, monitor it in the dashboard, and script restarts with the CLI.
+You can mix these freely—create a workflow with AI, monitor it in the dashboard, and script restarts
+with the CLI.
 
 ## Key Features
 
 Torc provides:
 
-- **AI-Assisted Management** — Use Claude Code or GitHub Copilot to create, debug, and manage workflows through conversation
 - **Declarative Workflow Definitions** — Define workflows in YAML, JSON, JSON5, or KDL
 - **Automatic Dependency Resolution** — Dependencies inferred from file and data relationships
 - **Distributed Execution** — Run jobs across local machines and HPC clusters
+- **AI-Assisted Management** — Use Claude Code or GitHub Copilot to create, debug, and manage
+  workflows through conversation
 - **Resource Management** — Track CPU, memory, and GPU usage across all jobs
 - **Automatic Failure Recovery** — Detect OOM/timeout failures and retry with adjusted resources
 - **Fault Tolerance** — Resume workflows after failures without losing progress
@@ -123,6 +125,7 @@ This documentation is divided into these sections:
 
 - **New to Torc?** Start with [Getting Started](./getting-started.md)
 - **Prefer AI assistance?** See [AI-Assisted Workflow Management](./tutorials/ai-assistant.md)
-- **Want to understand how it works?** Read the [Architecture Overview](./explanation/architecture.md)
+- **Want to understand how it works?** Read the
+  [Architecture Overview](./explanation/architecture.md)
 - **Ready to create workflows?** Jump to [Creating Workflows](./how-to/creating-workflows.md)
 - **Need specific examples?** Check out the [Tutorials](./tutorials/README.md)

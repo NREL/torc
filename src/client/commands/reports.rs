@@ -1,5 +1,6 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::output::print_json;
 use crate::client::commands::{
     get_env_user_name, pagination, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -10,8 +11,8 @@ use crate::client::log_paths::{
 };
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
-use serde_json;
-use std::path::PathBuf;
+use chrono::{DateTime, FixedOffset};
+use std::path::Path;
 use tabled::Tabled;
 
 /// Format memory bytes into a human-readable string
@@ -68,6 +69,7 @@ pub enum ReportCommands {
         /// Show all jobs (default: only show jobs that exceeded requirements)
         #[arg(short, long)]
         all: bool,
+        /// Include failed and terminated jobs in the analysis (for recovery diagnostics)
         /// Include failed and terminated jobs in the analysis (for recovery diagnostics)
         #[arg(long)]
         include_failed: bool,
@@ -494,9 +496,9 @@ fn check_resource_utilization(
                 json_output["failed_jobs"] = serde_json::json!(failed_jobs_info);
             }
 
-            println!("{}", serde_json::to_string_pretty(&json_output).unwrap());
+            print_json(&json_output, "resource utilization");
         }
-        "table" | _ => {
+        _ => {
             if rows.is_empty() {
                 if show_all {
                     println!(
@@ -565,7 +567,7 @@ fn check_log_file_exists(path: &str, log_type: &str, job_id: i64) {
 fn generate_results_report(
     config: &Configuration,
     workflow_id: Option<i64>,
-    output_dir: &PathBuf,
+    output_dir: &Path,
     all_runs: bool,
 ) {
     // Validate that output directory exists
@@ -681,7 +683,7 @@ fn generate_results_report(
                     "local" => {
                         // For local runner, we need hostname, workflow_id, and run_id
                         let log_path = get_job_runner_log_file(
-                            output_dir.clone(),
+                            output_dir.to_path_buf(),
                             &compute_node.hostname,
                             wf_id,
                             result.run_id,
@@ -691,39 +693,36 @@ fn generate_results_report(
                     }
                     "slurm" => {
                         // For slurm runner, extract slurm job ID from scheduler JSON
-                        if let Some(scheduler_value) = &compute_node.scheduler {
-                            if let Some(slurm_job_id) = scheduler_value.get("slurm_job_id") {
-                                if let Some(slurm_job_id_str) = slurm_job_id.as_str() {
-                                    // Build slurm job runner log path
-                                    // We need node_id and task_pid from the scheduler data
-                                    // The slurm job runner uses format: job_runner_slurm_{job_id}_{node_id}_{task_pid}.log
-                                    // We can extract node_id and task_pid from environment during slurm execution
-                                    // For now, we'll try to get it from the hostname or compute_node.pid
+                        if let Some(scheduler_value) = &compute_node.scheduler
+                            && let Some(slurm_job_id) = scheduler_value.get("slurm_job_id")
+                            && let Some(slurm_job_id_str) = slurm_job_id.as_str()
+                        {
+                            // Build slurm job runner log path
+                            // We need node_id and task_pid from the scheduler data
+                            // The slurm job runner uses format: job_runner_slurm_{job_id}_{node_id}_{task_pid}.log
+                            // We can extract node_id and task_pid from environment during slurm execution
+                            // For now, we'll try to get it from the hostname or compute_node.pid
 
-                                    // Use hostname as node_id and pid as task_pid for the log path
-                                    let node_id = &compute_node.hostname;
-                                    let task_pid = compute_node.pid as usize;
+                            // Use hostname as node_id and pid as task_pid for the log path
+                            let node_id = &compute_node.hostname;
+                            let task_pid = compute_node.pid as usize;
 
-                                    let log_path = get_slurm_job_runner_log_file(
-                                        output_dir.clone(),
-                                        slurm_job_id_str,
-                                        node_id,
-                                        task_pid,
-                                    );
-                                    check_log_file_exists(&log_path, "slurm job runner", job_id);
-                                    record["job_runner_log"] = serde_json::json!(log_path);
+                            let log_path = get_slurm_job_runner_log_file(
+                                output_dir.to_path_buf(),
+                                slurm_job_id_str,
+                                node_id,
+                                task_pid,
+                            );
+                            check_log_file_exists(&log_path, "slurm job runner", job_id);
+                            record["job_runner_log"] = serde_json::json!(log_path);
 
-                                    // Add slurm stdout/stderr paths
-                                    let slurm_stdout =
-                                        get_slurm_stdout_path(output_dir, slurm_job_id_str);
-                                    let slurm_stderr =
-                                        get_slurm_stderr_path(output_dir, slurm_job_id_str);
-                                    check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
-                                    check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
-                                    record["slurm_stdout"] = serde_json::json!(slurm_stdout);
-                                    record["slurm_stderr"] = serde_json::json!(slurm_stderr);
-                                }
-                            }
+                            // Add slurm stdout/stderr paths
+                            let slurm_stdout = get_slurm_stdout_path(output_dir, slurm_job_id_str);
+                            let slurm_stderr = get_slurm_stderr_path(output_dir, slurm_job_id_str);
+                            check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
+                            check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
+                            record["slurm_stdout"] = serde_json::json!(slurm_stdout);
+                            record["slurm_stderr"] = serde_json::json!(slurm_stderr);
                         }
                     }
                     _ => {
@@ -756,13 +755,7 @@ fn generate_results_report(
     });
 
     // Output JSON
-    match serde_json::to_string_pretty(&report) {
-        Ok(json) => println!("{}", json),
-        Err(e) => {
-            eprintln!("Error serializing report to JSON: {}", e);
-            std::process::exit(1);
-        }
-    }
+    print_json(&report, "results report");
 }
 
 /// Generate a summary of workflow results
@@ -779,36 +772,6 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             }
         },
     };
-
-    // Check if workflow is complete
-    let completion_status = match default_api::is_workflow_complete(config, workflow_id) {
-        Ok(status) => status,
-        Err(e) => {
-            print_error("checking workflow completion", &e);
-            std::process::exit(1);
-        }
-    };
-
-    if !completion_status.is_complete {
-        if format == "json" {
-            let error_response = serde_json::json!({
-                "status": "error",
-                "message": "Workflow is not complete",
-                "workflow_id": workflow_id,
-                "is_complete": false,
-                "is_canceled": completion_status.is_canceled,
-            });
-            println!("{}", serde_json::to_string_pretty(&error_response).unwrap());
-        } else {
-            eprintln!("Error: Workflow {} is not complete.", workflow_id);
-            if completion_status.is_canceled {
-                eprintln!("The workflow was canceled.");
-            } else {
-                eprintln!("Wait for the workflow to finish before generating a summary.");
-            }
-        }
-        std::process::exit(1);
-    }
 
     // Fetch workflow info
     let workflow = match default_api::get_workflow(config, workflow_id) {
@@ -832,19 +795,30 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     let total_jobs = jobs.len();
 
     // Count jobs by status
+    let mut uninitialized_count = 0;
+    let mut blocked_count = 0;
+    let mut ready_count = 0;
+    let mut pending_count = 0;
+    let mut running_count = 0;
     let mut completed_count = 0;
     let mut failed_count = 0;
     let mut canceled_count = 0;
     let mut terminated_count = 0;
-    let mut other_count = 0;
+    let mut disabled_count = 0;
 
     for job in &jobs {
         match job.status {
+            Some(models::JobStatus::Uninitialized) => uninitialized_count += 1,
+            Some(models::JobStatus::Blocked) => blocked_count += 1,
+            Some(models::JobStatus::Ready) => ready_count += 1,
+            Some(models::JobStatus::Pending) => pending_count += 1,
+            Some(models::JobStatus::Running) => running_count += 1,
             Some(models::JobStatus::Completed) => completed_count += 1,
             Some(models::JobStatus::Failed) => failed_count += 1,
             Some(models::JobStatus::Canceled) => canceled_count += 1,
             Some(models::JobStatus::Terminated) => terminated_count += 1,
-            _ => other_count += 1,
+            Some(models::JobStatus::Disabled) => disabled_count += 1,
+            None => {}
         }
     }
 
@@ -864,30 +838,68 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     // Calculate total execution time
     let total_exec_time_minutes: f64 = results.iter().map(|r| r.exec_time_minutes).sum();
 
+    // Calculate walltime (elapsed time from first job start to last job completion)
+    let walltime_seconds: Option<f64> = {
+        let mut min_start: Option<DateTime<FixedOffset>> = None;
+        let mut max_end: Option<DateTime<FixedOffset>> = None;
+
+        for result in &results {
+            if let Ok(completion_time) = DateTime::parse_from_rfc3339(&result.completion_time) {
+                // Calculate start time by subtracting execution time from completion time
+                let exec_duration = chrono::Duration::milliseconds(
+                    (result.exec_time_minutes * 60.0 * 1000.0) as i64,
+                );
+                let start_time = completion_time - exec_duration;
+
+                min_start = Some(match min_start {
+                    Some(current_min) if start_time < current_min => start_time,
+                    Some(current_min) => current_min,
+                    None => start_time,
+                });
+
+                max_end = Some(match max_end {
+                    Some(current_max) if completion_time > current_max => completion_time,
+                    Some(current_max) => current_max,
+                    None => completion_time,
+                });
+            }
+        }
+
+        match (min_start, max_end) {
+            (Some(start), Some(end)) => Some((end - start).num_milliseconds() as f64 / 1000.0),
+            _ => None,
+        }
+    };
+
     // Output results
     if format == "json" {
-        let report = serde_json::json!({
+        let mut report = serde_json::json!({
             "workflow_id": workflow_id,
             "workflow_name": workflow.name,
             "workflow_user": workflow.user,
-            "is_complete": true,
             "total_jobs": total_jobs,
-            "completed_jobs": completed_count,
-            "failed_jobs": failed_count,
-            "canceled_jobs": canceled_count,
-            "terminated_jobs": terminated_count,
-            "other_jobs": other_count,
+            "jobs_by_status": {
+                "uninitialized": uninitialized_count,
+                "blocked": blocked_count,
+                "ready": ready_count,
+                "pending": pending_count,
+                "running": running_count,
+                "completed": completed_count,
+                "failed": failed_count,
+                "canceled": canceled_count,
+                "terminated": terminated_count,
+                "disabled": disabled_count,
+            },
             "total_exec_time_minutes": total_exec_time_minutes,
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
         });
 
-        match serde_json::to_string_pretty(&report) {
-            Ok(json) => println!("{}", json),
-            Err(e) => {
-                eprintln!("Error serializing report to JSON: {}", e);
-                std::process::exit(1);
-            }
+        if let Some(walltime) = walltime_seconds {
+            report["walltime_seconds"] = serde_json::json!(walltime);
+            report["walltime_formatted"] = serde_json::json!(format_duration(walltime));
         }
+
+        print_json(&report, "workflow summary");
     } else {
         println!("Workflow Summary");
         println!("================");
@@ -896,30 +908,47 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         println!("Name: {}", workflow.name);
         println!("User: {}", workflow.user);
         println!();
-        println!("Job Status:");
-        println!("  Total Jobs: {}", total_jobs);
-        println!("  Completed:  {} ✓", completed_count);
+        println!("Job Status (total: {}):", total_jobs);
+        if uninitialized_count > 0 {
+            println!("  Uninitialized: {}", uninitialized_count);
+        }
+        if blocked_count > 0 {
+            println!("  Blocked:       {}", blocked_count);
+        }
+        if ready_count > 0 {
+            println!("  Ready:         {}", ready_count);
+        }
+        if pending_count > 0 {
+            println!("  Pending:       {}", pending_count);
+        }
+        if running_count > 0 {
+            println!("  Running:       {}", running_count);
+        }
+        if completed_count > 0 {
+            println!("  Completed:     {} ✓", completed_count);
+        }
         if failed_count > 0 {
-            println!("  Failed:     {} ✗", failed_count);
-        } else {
-            println!("  Failed:     {}", failed_count);
+            println!("  Failed:        {} ✗", failed_count);
         }
         if canceled_count > 0 {
-            println!("  Canceled:   {}", canceled_count);
+            println!("  Canceled:      {}", canceled_count);
         }
         if terminated_count > 0 {
-            println!("  Terminated: {} ✗", terminated_count);
+            println!("  Terminated:    {} ✗", terminated_count);
         }
-        if other_count > 0 {
-            println!("  Other:      {}", other_count);
+        if disabled_count > 0 {
+            println!("  Disabled:      {}", disabled_count);
         }
         println!();
         println!(
             "Total Execution Time: {}",
             format_duration(total_exec_time_minutes * 60.0)
         );
+        if let Some(walltime) = walltime_seconds {
+            println!("Walltime:             {}", format_duration(walltime));
+        }
 
-        if failed_count == 0 && canceled_count == 0 {
+        if completed_count == total_jobs {
             println!();
             println!("✓ All jobs completed successfully!");
         }

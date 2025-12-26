@@ -1,7 +1,7 @@
 # Recovery Hook Test
 
-This test verifies that `torc watch --recovery-hook` correctly invokes a custom
-recovery script when jobs fail with unknown causes.
+This test verifies that `torc watch --recovery-hook` correctly invokes a custom recovery script when
+jobs fail with unknown causes.
 
 ## Workflow Description
 
@@ -31,7 +31,7 @@ Note the workflow ID from the output.
 
 ```bash
 export TORC_OUTPUT_DIR=output
-torc watch <workflow_id> --auto-recover --recovery-hook "bash create_missing_file.sh"
+torc watch <workflow_id> --recover --recovery-hook "bash create_missing_file.sh"
 ```
 
 ### 4. Expected behavior

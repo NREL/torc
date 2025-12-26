@@ -1,11 +1,12 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::{print_if_json, print_wrapped_if_json};
+use crate::client::commands::pagination::{ComputeNodeListParams, paginate_compute_nodes};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -96,14 +97,8 @@ pub fn handle_compute_node_commands(
     match command {
         ComputeNodeCommands::Get { id } => match default_api::get_compute_node(config, *id) {
             Ok(node) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&node) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing compute node to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &node, "compute node") {
+                    // JSON was printed
                 } else {
                     println!("Compute Node Details:");
                     println!("  ID: {}", node.id.unwrap_or(-1));
@@ -152,50 +147,33 @@ pub fn handle_compute_node_commands(
                 },
             };
 
-            match default_api::list_compute_nodes(
-                config,
-                selected_workflow_id,
-                Some(*offset),
-                Some(*limit),
-                sort_by.as_deref(),
-                Some(*reverse_sort),
-                None, // hostname filter
-                None, // is_active filter
-                *scheduled_compute_node,
-            ) {
-                Ok(response) => {
-                    let nodes = response.items.unwrap_or_default();
+            let mut params = ComputeNodeListParams::new()
+                .with_offset(*offset)
+                .with_limit(*limit);
 
-                    if format == "json" {
-                        let json_output = serde_json::json!({
-                            "items": nodes,
-                            "total_count": response.total_count,
-                        });
-                        match serde_json::to_string_pretty(&json_output) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing compute nodes to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+            if let Some(sort) = sort_by {
+                params = params.with_sort_by(sort.clone());
+            }
+            if *reverse_sort {
+                params = params.with_reverse_sort(true);
+            }
+            if let Some(scn_id) = scheduled_compute_node {
+                params = params.with_scheduled_compute_node_id(*scn_id);
+            }
+
+            match paginate_compute_nodes(config, selected_workflow_id, params) {
+                Ok(nodes) => {
+                    if print_wrapped_if_json(format, "compute_nodes", &nodes, "compute_nodes") {
+                        // JSON was printed
+                    } else if nodes.is_empty() {
+                        println!(
+                            "No compute nodes found for workflow {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if nodes.is_empty() {
-                            println!(
-                                "No compute nodes found for workflow {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            let rows: Vec<ComputeNodeTableRow> =
-                                nodes.iter().map(|n| n.into()).collect();
-                            display_table_with_count(&rows, "compute nodes");
-                            if response.total_count as usize > nodes.len() {
-                                println!(
-                                    "\nShowing {} of {} total compute nodes",
-                                    nodes.len(),
-                                    response.total_count
-                                );
-                            }
-                        }
+                        let rows: Vec<ComputeNodeTableRow> =
+                            nodes.iter().map(|n| n.into()).collect();
+                        display_table_with_count(&rows, "compute nodes");
                     }
                 }
                 Err(e) => {

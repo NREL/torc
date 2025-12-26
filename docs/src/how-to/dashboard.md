@@ -1,6 +1,7 @@
 # Web Dashboard (torc-dash)
 
-The Torc Dashboard (`torc-dash`) provides a modern web-based interface for monitoring and managing workflows, offering an intuitive alternative to the command-line interface.
+The Torc Dashboard (`torc-dash`) provides a modern web-based interface for monitoring and managing
+workflows, offering an intuitive alternative to the command-line interface.
 
 ## Overview
 
@@ -44,6 +45,7 @@ torc-dash --standalone
 ```
 
 This will:
+
 1. Start `torc-server` on an automatically-detected free port
 2. Start the dashboard on http://127.0.0.1:8090
 3. Configure the dashboard to connect to the managed server
@@ -115,6 +117,7 @@ Explore workflow components with interactive tables:
 - **Schedulers**: Slurm scheduler configurations
 
 Features:
+
 - **Workflow selector**: Filter by workflow
 - **Column sorting**: Click headers to sort
 - **Row filtering**: Type in filter boxes (supports `column:value` syntax)
@@ -215,7 +218,8 @@ Settings are saved to browser local storage.
 
 1. **Network Access**: By default, binds to 127.0.0.1 (localhost only)
 2. **Remote Access**: Use `--host 0.0.0.0` with caution; consider a reverse proxy with HTTPS
-3. **Authentication**: Torc server supports htpasswd-based authentication (see [Authentication](./authentication.md))
+3. **Authentication**: Torc server supports htpasswd-based authentication (see
+   [Authentication](./authentication.md))
 
 ## Troubleshooting
 
@@ -253,12 +257,14 @@ Settings are saved to browser local storage.
 - **CLI integration** for workflow operations
 
 The frontend uses vanilla JavaScript with:
+
 - **Cytoscape.js** for DAG visualization
 - **Plotly.js** for resource charts
 - **Custom components** for tables and forms
 
 ## Next Steps
 
-- [Dashboard Deployment Tutorial](../tutorials/dashboard-deployment.md) - Detailed deployment scenarios
+- [Dashboard Deployment Tutorial](../tutorials/dashboard-deployment.md) - Detailed deployment
+  scenarios
 - [Authentication](./authentication.md) - Secure your deployment
 - [Server Deployment](./server-deployment.md) - Production server configuration

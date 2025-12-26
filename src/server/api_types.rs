@@ -1247,6 +1247,8 @@ pub trait Api<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError>;
@@ -1339,7 +1341,13 @@ pub trait Api<C: Send + Sync> {
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -1983,6 +1991,8 @@ pub trait ApiNoContext<C: Send + Sync> {
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError>;
 
@@ -2067,7 +2077,13 @@ pub trait ApiNoContext<C: Send + Sync> {
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2743,6 +2759,8 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
     ) -> Result<ListComputeNodesResponse, ApiError> {
         let context = self.context().clone();
@@ -2753,6 +2771,8 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 limit,
                 sort_by,
                 reverse_sort,
+                hostname,
+                is_active,
                 scheduled_compute_node_id,
                 &context,
             )
@@ -2916,7 +2936,13 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2926,7 +2952,13 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         self.api()
             .list_resource_requirements(
                 workflow_id,
+                job_id,
                 name,
+                memory,
+                num_cpus,
+                num_gpus,
+                num_nodes,
+                runtime,
                 offset,
                 limit,
                 sort_by,

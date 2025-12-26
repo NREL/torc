@@ -1,11 +1,11 @@
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use clap::Subcommand;
-use serde_json;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
 use crate::client::commands::{
+    output::{print_if_json, print_json_wrapped},
     pagination::{self, FileListParams},
     print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -17,8 +17,7 @@ use tabled::Tabled;
 fn format_mtime(st_mtime: Option<f64>) -> String {
     match st_mtime {
         Some(timestamp) => {
-            let dt = DateTime::from_timestamp(timestamp as i64, 0)
-                .unwrap_or_else(|| DateTime::<Utc>::default());
+            let dt = DateTime::from_timestamp(timestamp as i64, 0).unwrap_or_default();
             dt.format("%Y-%m-%d %H:%M:%S UTC").to_string()
         }
         None => "N/A".to_string(),
@@ -123,14 +122,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
             match default_api::create_file(config, file) {
                 Ok(created_file) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&created_file) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!("Error serializing file to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &created_file, "file") {
+                        // JSON was printed
                     } else {
                         println!("Successfully created file:");
                         println!("  ID: {}", created_file.id.unwrap_or(-1));
@@ -172,29 +165,21 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
             match pagination::paginate_files(config, selected_workflow_id as i64, params) {
                 Ok(files) => {
                     if format == "json" {
-                        match pagination::display_json_results("files", &files) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                eprintln!("Error serializing files to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
+                        print_json_wrapped("files", &files, "files");
+                    } else if files.is_empty() {
+                        println!("No files found for workflow ID: {}", selected_workflow_id);
                     } else {
-                        if files.is_empty() {
-                            println!("No files found for workflow ID: {}", selected_workflow_id);
-                        } else {
-                            println!("Files for workflow ID {}:", selected_workflow_id);
-                            let rows: Vec<FileTableRow> = files
-                                .iter()
-                                .map(|file| FileTableRow {
-                                    id: file.id.unwrap_or(-1),
-                                    name: file.name.clone(),
-                                    path: file.path.clone(),
-                                    st_mtime: format_mtime(file.st_mtime),
-                                })
-                                .collect();
-                            display_table_with_count(&rows, "files");
-                        }
+                        println!("Files for workflow ID {}:", selected_workflow_id);
+                        let rows: Vec<FileTableRow> = files
+                            .iter()
+                            .map(|file| FileTableRow {
+                                id: file.id.unwrap_or(-1),
+                                name: file.name.clone(),
+                                path: file.path.clone(),
+                                st_mtime: format_mtime(file.st_mtime),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "files");
                     }
                 }
                 Err(e) => {
@@ -205,14 +190,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
         }
         FileCommands::Get { id } => match default_api::get_file(config, *id) {
             Ok(file) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&file) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing file to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &file, "file") {
+                    // JSON was printed
                 } else {
                     println!("File ID {}:", id);
                     println!("  Name: {}", file.name);
@@ -239,14 +218,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
                     match default_api::update_file(config, *id, file) {
                         Ok(updated_file) => {
-                            if format == "json" {
-                                match serde_json::to_string_pretty(&updated_file) {
-                                    Ok(json) => println!("{}", json),
-                                    Err(e) => {
-                                        eprintln!("Error serializing file to JSON: {}", e);
-                                        std::process::exit(1);
-                                    }
-                                }
+                            if print_if_json(format, &updated_file, "file") {
+                                // JSON was printed
                             } else {
                                 println!("Successfully updated file:");
                                 println!("  ID: {}", updated_file.id.unwrap_or(-1));
@@ -269,14 +242,8 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
         }
         FileCommands::Delete { id } => match default_api::delete_file(config, *id, None) {
             Ok(removed_file) => {
-                if format == "json" {
-                    match serde_json::to_string_pretty(&removed_file) {
-                        Ok(json) => println!("{}", json),
-                        Err(e) => {
-                            eprintln!("Error serializing file to JSON: {}", e);
-                            std::process::exit(1);
-                        }
-                    }
+                if print_if_json(format, &removed_file, "file") {
+                    // JSON was printed
                 } else {
                     println!("Successfully removed file:");
                     println!("  ID: {}", removed_file.id.unwrap_or(-1));
@@ -298,42 +265,31 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
 
             match default_api::list_required_existing_files(config, selected_workflow_id) {
                 Ok(response) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&response) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!(
-                                    "Error serializing required existing files to JSON: {}",
-                                    e
-                                );
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &response, "required existing files") {
+                        // JSON was printed
+                    } else if response.files.is_empty() {
+                        println!(
+                            "No missing required files found for workflow ID: {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if response.files.is_empty() {
-                            println!(
-                                "No missing required files found for workflow ID: {}",
-                                selected_workflow_id
-                            );
-                        } else {
-                            println!(
-                                "Missing required files for workflow ID {}:",
-                                selected_workflow_id
-                            );
-                            println!("These files are needed by jobs but do not exist:");
-                            println!("{}", "-".repeat(50));
-                            for file_id in response.files.iter() {
-                                println!("File ID: {}", file_id);
-                            }
-                            println!("\nTotal missing files: {}", response.files.len());
-                            println!("\nNote: This includes:");
-                            println!(
-                                "- Files needed by jobs but not produced by any job (user-provided)"
-                            );
-                            println!(
-                                "- Files that should have been produced by completed jobs but are missing"
-                            );
+                        println!(
+                            "Missing required files for workflow ID {}:",
+                            selected_workflow_id
+                        );
+                        println!("These files are needed by jobs but do not exist:");
+                        println!("{}", "-".repeat(50));
+                        for file_id in response.files.iter() {
+                            println!("File ID: {}", file_id);
                         }
+                        println!("\nTotal missing files: {}", response.files.len());
+                        println!("\nNote: This includes:");
+                        println!(
+                            "- Files needed by jobs but not produced by any job (user-provided)"
+                        );
+                        println!(
+                            "- Files that should have been produced by completed jobs but are missing"
+                        );
                     }
                 }
                 Err(e) => {

@@ -144,7 +144,7 @@ pub enum Commands {
     },
     /// Watch a workflow and automatically recover from failures
     ///
-    /// Monitors a workflow until completion. With --auto-recover, automatically
+    /// Monitors a workflow until completion. With --recover, automatically
     /// diagnoses failures, adjusts resource requirements, and resubmits jobs.
     ///
     /// Recovery heuristics:
@@ -152,7 +152,7 @@ pub enum Commands {
     /// - Timeout: Increase runtime by --runtime-multiplier (default 1.5x)
     /// - Other failures: Retry without changes (transient errors)
     ///
-    /// Without --auto-recover, reports failures and exits for manual intervention
+    /// Without --recover, reports failures and exits for manual intervention
     /// or AI-assisted recovery via the MCP server.
     Watch {
         /// Workflow ID to watch
@@ -164,11 +164,11 @@ pub enum Commands {
         poll_interval: u64,
 
         /// Enable automatic failure recovery
-        #[arg(long)]
-        auto_recover: bool,
+        #[arg(short, long)]
+        recover: bool,
 
         /// Maximum number of recovery attempts
-        #[arg(long, default_value = "3")]
+        #[arg(short, long, default_value = "3")]
         max_retries: u32,
 
         /// Memory multiplier for OOM failures (default: 1.5 = 50% increase)
@@ -213,7 +213,7 @@ pub enum Commands {
         ///
         /// WARNING: This option queries all jobs on each poll, which can cause high
         /// server load for large workflows. Only use for debugging or small workflows.
-        #[arg(long)]
+        #[arg(short, long)]
         show_job_counts: bool,
     },
     /// Workflow management commands

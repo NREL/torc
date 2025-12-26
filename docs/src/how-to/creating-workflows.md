@@ -1,10 +1,12 @@
 # How to Create Workflows
 
-This guide shows different methods for creating Torc workflows, from the most common (specification files) to more advanced approaches (CLI, API).
+This guide shows different methods for creating Torc workflows, from the most common (specification
+files) to more advanced approaches (CLI, API).
 
 ## Using Workflow Specification Files (Recommended)
 
-The easiest way to create workflows is with specification files. Torc supports YAML, JSON5, and KDL formats.
+The easiest way to create workflows is with specification files. Torc supports YAML, JSON5, and KDL
+formats.
 
 ### Create from a YAML File
 
@@ -33,11 +35,13 @@ torc run workflow.yaml
 torc submit workflow.yaml
 ```
 
-For format syntax and examples, see the [Workflow Specification Formats](../reference/workflow-formats.md) reference.
+For format syntax and examples, see the
+[Workflow Specification Formats](../reference/workflow-formats.md) reference.
 
 ## Using the CLI (Step by Step)
 
-For programmatic workflow construction or when you need fine-grained control, create workflows piece by piece using the CLI.
+For programmatic workflow construction or when you need fine-grained control, create workflows piece
+by piece using the CLI.
 
 ### Step 1: Create an Empty Workflow
 
@@ -48,6 +52,7 @@ torc workflows new \
 ```
 
 Output:
+
 ```
 Successfully created workflow:
   ID: 1
@@ -70,6 +75,7 @@ torc resource-requirements create \
 ```
 
 Output:
+
 ```
 Successfully created resource requirements:
   ID: 2
@@ -149,7 +155,8 @@ api.create_job(JobModel(
 print(f"Created workflow {workflow.id}")
 ```
 
-For more details, see the [Map Python Functions](../tutorials/map_python_function_across_workers.md) tutorial.
+For more details, see the [Map Python Functions](../tutorials/map_python_function_across_workers.md)
+tutorial.
 
 ## Using the Julia API
 
@@ -201,16 +208,17 @@ send_api_command(
 println("Created workflow $(workflow.id)")
 ```
 
-The Julia client also supports `map_function_to_jobs` for mapping a function across parameters, similar to the Python client.
+The Julia client also supports `map_function_to_jobs` for mapping a function across parameters,
+similar to the Python client.
 
 ## Choosing a Method
 
-| Method | Best For |
-|--------|----------|
-| **Specification files** | Most workflows; declarative, version-controllable |
-| **CLI step-by-step** | Scripted workflows, testing individual components |
-| **Python API** | Complex dynamic workflows, integration with Python pipelines |
-| **Julia API** | Complex dynamic workflows, integration with Julia pipelines |
+| Method                  | Best For                                                     |
+| ----------------------- | ------------------------------------------------------------ |
+| **Specification files** | Most workflows; declarative, version-controllable            |
+| **CLI step-by-step**    | Scripted workflows, testing individual components            |
+| **Python API**          | Complex dynamic workflows, integration with Python pipelines |
+| **Julia API**           | Complex dynamic workflows, integration with Julia pipelines  |
 
 ## Common Tasks
 
@@ -223,6 +231,7 @@ torc workflows create --dry-run workflow.yaml
 ```
 
 Example output:
+
 ```
 Workflow Validation Results
 ===========================
@@ -254,11 +263,13 @@ torc -f json workflows create --dry-run workflow.yaml
 The dry-run performs comprehensive validation:
 
 **Structural Checks:**
+
 - Valid file format (YAML, JSON5, KDL, or JSON)
 - Required fields present
 - Parameter expansion (shows expanded job count vs. original spec count)
 
 **Reference Validation:**
+
 - `depends_on` references existing jobs
 - `depends_on_regexes` patterns are valid and match at least one job
 - `resource_requirements` references exist
@@ -268,6 +279,7 @@ The dry-run performs comprehensive validation:
 - All regex patterns (`*_regexes` fields) are valid
 
 **Duplicate Detection:**
+
 - Duplicate job names
 - Duplicate file names
 - Duplicate user data names
@@ -275,19 +287,24 @@ The dry-run performs comprehensive validation:
 - Duplicate scheduler names
 
 **Dependency Analysis:**
+
 - Circular dependency detection (reports all jobs in the cycle)
 
 **Action Validation:**
+
 - Actions reference existing jobs and schedulers
 - `schedule_nodes` actions have required `scheduler` and `scheduler_type`
 
 **Scheduler Configuration:**
+
 - Slurm scheduler node requirements are valid
 - Warns about heterogeneous schedulers without `jobs_sort_method` (see below)
 
 #### Heterogeneous Scheduler Warning
 
-When you have multiple Slurm schedulers with different resource profiles (memory, GPUs, walltime, partition) and jobs without explicit scheduler assignments, the validation warns about potential suboptimal job-to-node matching:
+When you have multiple Slurm schedulers with different resource profiles (memory, GPUs, walltime,
+partition) and jobs without explicit scheduler assignments, the validation warns about potential
+suboptimal job-to-node matching:
 
 ```
 Warnings (1):
@@ -300,11 +317,13 @@ Warnings (1):
 ```
 
 This warning helps you avoid situations where:
+
 - Long-walltime nodes pull short-runtime jobs
 - High-memory nodes pull low-memory jobs
 - GPU nodes pull non-GPU jobs
 
 **Solutions:**
+
 1. Set `jobs_sort_method` explicitly in your workflow spec
 2. Assign jobs to specific schedulers using the `scheduler` field on each job
 3. Accept the default `gpus_runtime_memory` sorting if it matches your workload
@@ -317,7 +336,9 @@ To create a workflow despite validation warnings:
 torc workflows create --skip-checks workflow.yaml
 ```
 
-Note: This bypasses scheduler node validation checks (which are treated as errors), but does not bypass all errors. Errors such as missing references or circular dependencies will always prevent creation.
+Note: This bypasses scheduler node validation checks (which are treated as errors), but does not
+bypass all errors. Errors such as missing references or circular dependencies will always prevent
+creation.
 
 ### List Available Workflows
 
@@ -339,7 +360,8 @@ torc workflows get <workflow_id>
 
 ## Defining File Dependencies
 
-Jobs often need to read input files and produce output files. Torc can automatically infer job dependencies from these file relationships using **variable substitution**:
+Jobs often need to read input files and produce output files. Torc can automatically infer job
+dependencies from these file relationships using **variable substitution**:
 
 ```yaml
 files:
@@ -357,16 +379,21 @@ jobs:
 ```
 
 Key concepts:
-- **`${files.input.NAME}`** - References a file this job reads (creates a dependency on the job that outputs it)
-- **`${files.output.NAME}`** - References a file this job writes (satisfies dependencies for downstream jobs)
 
-In the example above, `analyze` automatically depends on `preprocess` because it needs `raw_data` as input, which `preprocess` produces as output.
+- **`${files.input.NAME}`** - References a file this job reads (creates a dependency on the job that
+  outputs it)
+- **`${files.output.NAME}`** - References a file this job writes (satisfies dependencies for
+  downstream jobs)
+
+In the example above, `analyze` automatically depends on `preprocess` because it needs `raw_data` as
+input, which `preprocess` produces as output.
 
 For a complete walkthrough, see [Tutorial: Diamond Workflow](../tutorials/diamond.md).
 
 ## Next Steps
 
-- [Tutorial: Diamond Workflow](../tutorials/diamond.md) - Learn file-based dependencies with the fan-out/fan-in pattern
+- [Tutorial: Diamond Workflow](../tutorials/diamond.md) - Learn file-based dependencies with the
+  fan-out/fan-in pattern
 - [Workflow Specification Formats](../reference/workflow-formats.md) - Detailed format reference
 - [Job Parameterization](../reference/parameterization.md) - Generate multiple jobs from templates
 - [Tutorial: Many Independent Jobs](../tutorials/many-jobs.md) - Your first workflow

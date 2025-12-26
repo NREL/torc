@@ -55,6 +55,7 @@ pub trait HpcInterface: Send + Sync {
     /// * `filename` - Path where the submission script should be written
     /// * `config` - Configuration parameters for the HPC scheduler
     /// * `start_one_worker_per_node` - If true, start a torc worker on each compute node
+    #[allow(clippy::too_many_arguments)]
     fn create_submission_script(
         &self,
         name: &str,

@@ -6,14 +6,29 @@ use log::{LevelFilter, debug, error, info, warn};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::utils;
+
+/// Default wait time for database connectivity issues (in minutes)
+const WAIT_FOR_HEALTHY_DATABASE_MINUTES: u64 = 20;
+
+/// Execute an API call with automatic retries for network errors.
+/// This wraps utils::send_with_retries with a default timeout.
+fn send_with_retries<T, E, F>(config: &Configuration, api_call: F) -> Result<T, E>
+where
+    F: FnMut() -> Result<T, E>,
+    E: std::fmt::Display,
+{
+    utils::send_with_retries(config, api_call, WAIT_FOR_HEALTHY_DATABASE_MINUTES)
+}
 use crate::client::commands::pagination::{
-    ScheduledComputeNodeListParams, paginate_scheduled_compute_nodes,
+    ComputeNodeListParams, JobListParams, ScheduledComputeNodeListParams, paginate_compute_nodes,
+    paginate_jobs, paginate_scheduled_compute_nodes,
 };
 use crate::client::hpc::common::HpcJobStatus;
 use crate::client::hpc::hpc_interface::HpcInterface;
@@ -51,7 +66,7 @@ pub const ORPHANED_JOB_RETURN_CODE: i64 = -128;
 pub struct WatchArgs {
     pub workflow_id: i64,
     pub poll_interval: u64,
-    pub auto_recover: bool,
+    pub recover: bool,
     pub max_retries: u32,
     pub memory_multiplier: f64,
     pub runtime_multiplier: f64,
@@ -117,22 +132,8 @@ fn get_job_counts(
     config: &Configuration,
     workflow_id: i64,
 ) -> Result<HashMap<String, i64>, String> {
-    let jobs_response = default_api::list_jobs(
-        config,
-        workflow_id,
-        None,        // status filter
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // include_relationships
-        None,        // active_compute_node_id
-    )
-    .map_err(|e| format!("Failed to list jobs: {}", e))?;
-
-    let jobs = jobs_response.items.unwrap_or_default();
+    let jobs = paginate_jobs(config, workflow_id, JobListParams::new())
+        .map_err(|e| format!("Failed to list jobs: {}", e))?;
     let mut counts = HashMap::new();
 
     for job in &jobs {
@@ -221,20 +222,12 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
         );
 
         // Find all compute nodes associated with this scheduled compute node
-        let compute_nodes_response = default_api::list_compute_nodes(
+        let compute_nodes = paginate_compute_nodes(
             config,
             workflow_id,
-            None,                            // offset
-            Some(1000),                      // limit
-            None,                            // sort_by
-            None,                            // reverse_sort
-            None,                            // hostname
-            None,                            // is_active - any status
-            Some(scheduled_compute_node_id), // scheduled_compute_node_id
+            ComputeNodeListParams::new().with_scheduled_compute_node_id(scheduled_compute_node_id),
         )
         .map_err(|e| format!("Failed to list compute nodes: {}", e))?;
-
-        let compute_nodes = compute_nodes_response.items.unwrap_or_default();
 
         for compute_node in &compute_nodes {
             let compute_node_id = match compute_node.id {
@@ -243,22 +236,12 @@ fn fail_orphaned_slurm_jobs(config: &Configuration, workflow_id: i64) -> Result<
             };
 
             // Find all jobs with this active_compute_node_id
-            let jobs_response = default_api::list_jobs(
+            let orphaned_jobs = paginate_jobs(
                 config,
                 workflow_id,
-                None,                  // status - we want any status (should be Running)
-                None,                  // needs_file_id
-                None,                  // upstream_job_id
-                None,                  // offset
-                Some(10000),           // limit
-                None,                  // sort_by
-                None,                  // reverse_sort
-                None,                  // include_relationships
-                Some(compute_node_id), // active_compute_node_id
+                JobListParams::new().with_active_compute_node_id(compute_node_id),
             )
             .map_err(|e| format!("Failed to list jobs for compute node: {}", e))?;
-
-            let orphaned_jobs = jobs_response.items.unwrap_or_default();
 
             if orphaned_jobs.is_empty() {
                 continue;
@@ -492,45 +475,73 @@ fn cleanup_dead_pending_slurm_jobs(
     Ok(total_cleaned)
 }
 
+/// Check if there are any active workers (compute nodes or scheduled compute nodes).
+/// This is used after workflow completion to wait for all workers to exit before
+/// proceeding with recovery actions. Workers need to complete their cleanup routines.
+fn has_active_workers(config: &Configuration, workflow_id: i64) -> bool {
+    // Check for active compute nodes (is_active=true)
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_compute_nodes(
+            config,
+            workflow_id,
+            None,       // offset
+            Some(1),    // limit - just need one
+            None,       // sort_by
+            None,       // reverse_sort
+            None,       // hostname
+            Some(true), // is_active = true
+            None,       // scheduled_compute_node_id
+        )
+    }) && let Some(nodes) = response.items
+        && !nodes.is_empty()
+    {
+        return true;
+    }
+
+    // Also check for any scheduled compute nodes (pending or active)
+    // These represent Slurm allocations that haven't fully exited yet
+    has_any_scheduled_compute_nodes(config, workflow_id)
+}
+
 /// Check if there are any scheduled compute nodes with status pending or active.
 /// If there are none, the workflow cannot make progress.
 fn has_any_scheduled_compute_nodes(config: &Configuration, workflow_id: i64) -> bool {
     // Check for pending allocations
-    if let Ok(response) = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,            // offset
-        Some(1),         // limit - just need one
-        None,            // sort_by
-        None,            // reverse_sort
-        None,            // scheduler_id
-        None,            // scheduler_config_id
-        Some("pending"), // status
-    ) {
-        if let Some(nodes) = response.items {
-            if !nodes.is_empty() {
-                return true;
-            }
-        }
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,            // offset
+            Some(1),         // limit - just need one
+            None,            // sort_by
+            None,            // reverse_sort
+            None,            // scheduler_id
+            None,            // scheduler_config_id
+            Some("pending"), // status
+        )
+    }) && let Some(nodes) = response.items
+        && !nodes.is_empty()
+    {
+        return true;
     }
 
     // Check for active allocations
-    if let Ok(response) = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,           // offset
-        Some(1),        // limit - just need one
-        None,           // sort_by
-        None,           // reverse_sort
-        None,           // scheduler_id
-        None,           // scheduler_config_id
-        Some("active"), // status
-    ) {
-        if let Some(nodes) = response.items {
-            if !nodes.is_empty() {
-                return true;
-            }
-        }
+    if let Ok(response) = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,           // offset
+            Some(1),        // limit - just need one
+            None,           // sort_by
+            None,           // reverse_sort
+            None,           // scheduler_id
+            None,           // scheduler_config_id
+            Some("active"), // status
+        )
+    }) && let Some(nodes) = response.items
+        && !nodes.is_empty()
+    {
+        return true;
     }
 
     false
@@ -547,36 +558,37 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
     // We'll sample one from each category to check
 
     // First check for active allocations
-    let active_nodes = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,           // offset
-        Some(1),        // limit - just need one
-        None,           // sort_by
-        None,           // reverse_sort
-        None,           // scheduler_id
-        None,           // scheduler_config_id
-        Some("active"), // status
-    );
+    let active_nodes = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,           // offset
+            Some(1),        // limit - just need one
+            None,           // sort_by
+            None,           // reverse_sort
+            None,           // scheduler_id
+            None,           // scheduler_config_id
+            Some("active"), // status
+        )
+    });
 
-    if let Ok(response) = active_nodes {
-        if let Some(nodes) = response.items {
-            for node in nodes {
-                if node.scheduler_type.to_lowercase() == "slurm" {
-                    // Check if this Slurm job is still running
-                    if let Ok(slurm) = SlurmInterface::new() {
-                        let slurm_job_id = node.scheduler_id.to_string();
-                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
-                            if info.status == HpcJobStatus::Running
-                                || info.status == HpcJobStatus::Queued
-                            {
-                                debug!(
-                                    "Found valid active Slurm allocation {} (status: {:?})",
-                                    slurm_job_id, info.status
-                                );
-                                return true;
-                            }
-                        }
+    if let Ok(response) = active_nodes
+        && let Some(nodes) = response.items
+    {
+        for node in nodes {
+            if node.scheduler_type.to_lowercase() == "slurm" {
+                // Check if this Slurm job is still running
+                if let Ok(slurm) = SlurmInterface::new() {
+                    let slurm_job_id = node.scheduler_id.to_string();
+                    if let Ok(info) = slurm.get_status(&slurm_job_id)
+                        && (info.status == HpcJobStatus::Running
+                            || info.status == HpcJobStatus::Queued)
+                    {
+                        debug!(
+                            "Found valid active Slurm allocation {} (status: {:?})",
+                            slurm_job_id, info.status
+                        );
+                        return true;
                     }
                 }
             }
@@ -584,36 +596,37 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
     }
 
     // Check for pending allocations
-    let pending_nodes = default_api::list_scheduled_compute_nodes(
-        config,
-        workflow_id,
-        None,            // offset
-        Some(1),         // limit - just need one
-        None,            // sort_by
-        None,            // reverse_sort
-        None,            // scheduler_id
-        None,            // scheduler_config_id
-        Some("pending"), // status
-    );
+    let pending_nodes = send_with_retries(config, || {
+        default_api::list_scheduled_compute_nodes(
+            config,
+            workflow_id,
+            None,            // offset
+            Some(1),         // limit - just need one
+            None,            // sort_by
+            None,            // reverse_sort
+            None,            // scheduler_id
+            None,            // scheduler_config_id
+            Some("pending"), // status
+        )
+    });
 
-    if let Ok(response) = pending_nodes {
-        if let Some(nodes) = response.items {
-            for node in nodes {
-                if node.scheduler_type.to_lowercase() == "slurm" {
-                    // Check if this Slurm job is still queued
-                    if let Ok(slurm) = SlurmInterface::new() {
-                        let slurm_job_id = node.scheduler_id.to_string();
-                        if let Ok(info) = slurm.get_status(&slurm_job_id) {
-                            if info.status == HpcJobStatus::Running
-                                || info.status == HpcJobStatus::Queued
-                            {
-                                debug!(
-                                    "Found valid pending Slurm allocation {} (status: {:?})",
-                                    slurm_job_id, info.status
-                                );
-                                return true;
-                            }
-                        }
+    if let Ok(response) = pending_nodes
+        && let Some(nodes) = response.items
+    {
+        for node in nodes {
+            if node.scheduler_type.to_lowercase() == "slurm" {
+                // Check if this Slurm job is still queued
+                if let Ok(slurm) = SlurmInterface::new() {
+                    let slurm_job_id = node.scheduler_id.to_string();
+                    if let Ok(info) = slurm.get_status(&slurm_job_id)
+                        && (info.status == HpcJobStatus::Running
+                            || info.status == HpcJobStatus::Queued)
+                    {
+                        debug!(
+                            "Found valid pending Slurm allocation {} (status: {:?})",
+                            slurm_job_id, info.status
+                        );
+                        return true;
                     }
                 }
             }
@@ -662,22 +675,12 @@ fn fail_orphaned_running_jobs(config: &Configuration, workflow_id: i64) -> Resul
     }
 
     // Get all jobs with status=Running
-    let running_jobs_response = default_api::list_jobs(
+    let running_jobs = paginate_jobs(
         config,
         workflow_id,
-        Some(models::JobStatus::Running),
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // include_relationships
-        None,        // active_compute_node_id
+        JobListParams::new().with_status(models::JobStatus::Running),
     )
     .map_err(|e| format!("Failed to list running jobs: {}", e))?;
-
-    let running_jobs = running_jobs_response.items.unwrap_or_default();
 
     if running_jobs.is_empty() {
         return Ok(0);
@@ -787,25 +790,51 @@ fn fail_orphaned_running_jobs(config: &Configuration, workflow_id: i64) -> Resul
     Ok(failed_count)
 }
 
-/// Poll until workflow is complete, optionally printing status updates
+/// Poll until workflow is complete, optionally printing status updates.
+/// After the workflow is complete, continues to wait until all workers have exited
+/// (no active compute nodes and no scheduled compute nodes). This is critical for
+/// recovery scenarios to ensure workers complete their cleanup routines before
+/// any recovery actions are taken.
 fn poll_until_complete(
     config: &Configuration,
     workflow_id: i64,
     poll_interval: u64,
     show_job_counts: bool,
 ) -> Result<HashMap<String, i64>, String> {
+    let mut workflow_complete = false;
+
     loop {
         // Check if workflow is complete
-        match default_api::is_workflow_complete(config, workflow_id) {
-            Ok(response) => {
-                if response.is_complete {
-                    info!("Workflow {} is complete", workflow_id);
-                    break;
+        if !workflow_complete {
+            match send_with_retries(config, || {
+                default_api::is_workflow_complete(config, workflow_id)
+            }) {
+                Ok(response) => {
+                    if response.is_complete {
+                        info!(
+                            "Workflow {} is complete, waiting for workers to exit...",
+                            workflow_id
+                        );
+                        workflow_complete = true;
+                        // Don't break yet - wait for workers to exit
+                    }
+                }
+                Err(e) => {
+                    return Err(format!("Error checking workflow status: {}", e));
                 }
             }
-            Err(e) => {
-                return Err(format!("Error checking workflow status: {}", e));
+        }
+
+        // If workflow is complete, wait for all workers to exit before returning
+        if workflow_complete {
+            let workers_active = has_active_workers(config, workflow_id);
+            if !workers_active {
+                info!("All workers have exited");
+                break;
             }
+            debug!("Waiting for workers to exit...");
+            std::thread::sleep(Duration::from_secs(poll_interval));
+            continue;
         }
 
         // Print current status if requested
@@ -814,12 +843,12 @@ fn poll_until_complete(
                 Ok(counts) => {
                     let completed = counts.get("Completed").unwrap_or(&0);
                     let running = counts.get("Running").unwrap_or(&0);
-                    let pending = counts.get("Pending").unwrap_or(&0);
+                    let ready = counts.get("Ready").unwrap_or(&0);
                     let failed = counts.get("Failed").unwrap_or(&0);
                     let blocked = counts.get("Blocked").unwrap_or(&0);
                     info!(
-                        "  completed={}, running={}, pending={}, failed={}, blocked={}",
-                        completed, running, pending, failed, blocked
+                        "  ready={}, blocked={}, running={}, completed={}, failed={}",
+                        ready, blocked, running, completed, failed
                     );
                 }
                 Err(e) => {
@@ -896,7 +925,7 @@ fn poll_until_complete(
 }
 
 /// Diagnose failures and return job IDs that need resource adjustments
-fn diagnose_failures(workflow_id: i64, _output_dir: &PathBuf) -> Result<serde_json::Value, String> {
+fn diagnose_failures(workflow_id: i64, _output_dir: &Path) -> Result<serde_json::Value, String> {
     // Run check-resource-utilization command
     // Note: This command doesn't take an output_dir argument - it reads from the database
     let output = Command::new("torc")
@@ -922,7 +951,7 @@ fn diagnose_failures(workflow_id: i64, _output_dir: &PathBuf) -> Result<serde_js
 }
 
 /// Get Slurm log information for failed jobs
-fn get_slurm_log_info(workflow_id: i64, output_dir: &PathBuf) -> Result<serde_json::Value, String> {
+fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<serde_json::Value, String> {
     // Run reports results command to get log paths
     let output = Command::new("torc")
         .args([
@@ -989,10 +1018,10 @@ fn correlate_slurm_logs(
     let mut failed_log_map = HashMap::new();
     if let Some(failed_jobs) = diagnosis.get("failed_jobs").and_then(|v| v.as_array()) {
         for job_info in failed_jobs {
-            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64()) {
-                if let Some(log_info) = log_map.remove(&job_id) {
-                    failed_log_map.insert(job_id, log_info);
-                }
+            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64())
+                && let Some(log_info) = log_map.remove(&job_id)
+            {
+                failed_log_map.insert(job_id, log_info);
             }
         }
     }
@@ -1024,7 +1053,7 @@ fn apply_recovery_heuristics(
     memory_multiplier: f64,
     runtime_multiplier: f64,
     retry_unknown: bool,
-    output_dir: &PathBuf,
+    output_dir: &Path,
 ) -> Result<RecoveryResult, String> {
     let mut oom_fixed = 0;
     let mut timeout_fixed = 0;
@@ -1069,10 +1098,10 @@ fn apply_recovery_heuristics(
         }
 
         // Log Slurm info if available
-        if let Some(slurm_info) = slurm_log_map.get(&job_id) {
-            if let Some(slurm_job_id) = &slurm_info.slurm_job_id {
-                log::debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
-            }
+        if let Some(slurm_info) = slurm_log_map.get(&job_id)
+            && let Some(slurm_job_id) = &slurm_info.slurm_job_id
+        {
+            log::debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
         }
 
         // Get current job to find resource requirements
@@ -1109,18 +1138,16 @@ fn apply_recovery_heuristics(
         let mut new_rr = rr.clone();
 
         // Apply OOM heuristic
-        if likely_oom {
-            if let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
-                let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
-                let new_memory = format_memory_bytes_short(new_bytes);
-                info!(
-                    "  Job {} ({}): OOM detected, increasing memory {} -> {}",
-                    job_id, job.name, rr.memory, new_memory
-                );
-                new_rr.memory = new_memory;
-                updated = true;
-                oom_fixed += 1;
-            }
+        if likely_oom && let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
+            let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
+            let new_memory = format_memory_bytes_short(new_bytes);
+            info!(
+                "  Job {} ({}): OOM detected, increasing memory {} -> {}",
+                job_id, job.name, rr.memory, new_memory
+            );
+            new_rr.memory = new_memory;
+            updated = true;
+            oom_fixed += 1;
         }
 
         // Apply timeout heuristic
@@ -1167,7 +1194,15 @@ fn apply_recovery_heuristics(
     })
 }
 
-/// Reset specific failed jobs for retry
+/// Reset specific failed jobs for retry (without reinitializing)
+///
+/// Note: We intentionally do NOT use --reinitialize here. The order matters:
+/// 1. Reset failed jobs (this function)
+/// 2. Regenerate schedulers (marks old on_workflow_start actions as executed)
+/// 3. Reinitialize workflow (fires actions - but old ones are already marked executed)
+///
+/// If we used --reinitialize here, the old on_workflow_start action would fire
+/// BEFORE regenerate has a chance to mark it as executed.
 fn reset_failed_jobs(
     _config: &Configuration,
     workflow_id: i64,
@@ -1179,14 +1214,13 @@ fn reset_failed_jobs(
 
     let job_count = job_ids.len();
 
-    // Use reset-status --failed-only --reinitialize to reset failed jobs and trigger unblocking
+    // Reset failed jobs WITHOUT --reinitialize (we'll reinitialize after regenerate)
     let output = Command::new("torc")
         .args([
             "workflows",
             "reset-status",
             &workflow_id.to_string(),
             "--failed-only",
-            "--reinitialize",
             "--no-prompts",
         ])
         .output()
@@ -1206,6 +1240,26 @@ fn reset_failed_jobs(
     }
 
     Ok(job_count)
+}
+
+/// Reinitialize the workflow (set up dependencies and fire on_workflow_start actions)
+///
+/// Uses `reinitialize` instead of `initialize` because:
+/// - We're re-initializing after jobs have been reset
+/// - It handles canceled/terminated jobs appropriately
+/// - It's designed for recovery scenarios
+fn reinitialize_workflow(workflow_id: i64) -> Result<(), String> {
+    let output = Command::new("torc")
+        .args(["workflows", "reinitialize", &workflow_id.to_string()])
+        .output()
+        .map_err(|e| format!("Failed to run workflow reinitialize: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("workflow reinitialize failed: {}", stderr));
+    }
+
+    Ok(())
 }
 
 /// Run the user's custom recovery hook command
@@ -1276,7 +1330,7 @@ fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String>
 }
 
 /// Regenerate Slurm schedulers and submit allocations
-fn regenerate_and_submit(workflow_id: i64, output_dir: &PathBuf) -> Result<(), String> {
+fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), String> {
     let output = Command::new("torc")
         .args([
             "slurm",
@@ -1370,8 +1424,8 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         "Watching workflow {} (poll interval: {}s{}{})",
         args.workflow_id,
         args.poll_interval,
-        if args.auto_recover {
-            format!(", auto-recover enabled, max retries: {}", args.max_retries)
+        if args.recover {
+            format!(", recover enabled, max retries: {}", args.max_retries)
         } else {
             String::new()
         },
@@ -1387,7 +1441,6 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     }
 
     loop {
-        // Poll until workflow is complete
         let counts = match poll_until_complete(
             config,
             args.workflow_id,
@@ -1420,8 +1473,8 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         warn!("  - Completed: {}", completed);
 
         // Check if we should attempt recovery
-        if !args.auto_recover {
-            info!("\nAuto-recovery disabled. To enable, use --auto-recover flag.");
+        if !args.recover {
+            info!("\nRecovery disabled. To enable, use --recover flag.");
             info!("Or use the Torc MCP server with your AI assistant for manual recovery.");
             std::process::exit(1);
         }
@@ -1507,16 +1560,16 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         };
 
         // Step 2.5: Run recovery hook if there are unknown failures
-        if recovery_result.other_failures > 0 {
-            if let Some(ref hook_cmd) = args.recovery_hook {
-                info!(
-                    "\n{} job(s) with unknown failure cause - running recovery hook...",
-                    recovery_result.other_failures
-                );
-                if let Err(e) = run_recovery_hook(args.workflow_id, hook_cmd) {
-                    error!("Recovery hook failed: {}", e);
-                    std::process::exit(1);
-                }
+        if recovery_result.other_failures > 0
+            && let Some(ref hook_cmd) = args.recovery_hook
+        {
+            info!(
+                "\n{} job(s) with unknown failure cause - running recovery hook...",
+                recovery_result.other_failures
+            );
+            if let Err(e) = run_recovery_hook(args.workflow_id, hook_cmd) {
+                error!("Recovery hook failed: {}", e);
+                std::process::exit(1);
             }
         }
 
@@ -1546,10 +1599,17 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             }
         }
 
-        // Step 4: Regenerate Slurm schedulers and submit
-        info!("Regenerating Slurm schedulers and submitting...");
+        // Step 4: Regenerate Slurm schedulers (this also marks old actions as executed)
+        info!("Regenerating Slurm schedulers...");
         if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
             warn!("Error regenerating schedulers: {}", e);
+            std::process::exit(1);
+        }
+
+        // Step 5: Reinitialize workflow (fires on_workflow_start actions - but old ones are now marked executed)
+        info!("Reinitializing workflow...");
+        if let Err(e) = reinitialize_workflow(args.workflow_id) {
+            warn!("Error reinitializing workflow: {}", e);
             std::process::exit(1);
         }
 

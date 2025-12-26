@@ -6,8 +6,8 @@ Choose the approach that matches your environment and preference:
 
 **For conversational workflow management** — Use Claude Code or GitHub Copilot.
 
-- Natural language: *"Create a workflow with 10 parallel jobs"*
-- Debug failures: *"Why did job 5 fail? Show me the logs"*
+- Natural language: _"Create a workflow with 10 parallel jobs"_
+- Debug failures: _"Why did job 5 fail? Show me the logs"_
 - Works with both local and HPC execution
 - Ideal for interactive exploration and debugging
 
@@ -32,6 +32,7 @@ Choose the approach that matches your environment and preference:
 ---
 
 **Not sure which to choose?**
+
 - New to Torc? Start with **AI-Assisted** for guided exploration
 - On an HPC cluster? Use **HPC** for production workloads
 - Testing locally? Use **Local** for quick iteration

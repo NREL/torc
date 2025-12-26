@@ -5,6 +5,7 @@ pub mod files;
 pub mod hpc;
 pub mod job_dependencies;
 pub mod jobs;
+pub mod output;
 pub mod pagination;
 pub mod reports;
 pub mod resource_requirements;
@@ -104,7 +105,7 @@ pub fn get_user_name(user: &Option<String>) -> String {
     if user.is_some() {
         return user.as_deref().unwrap().to_string();
     }
-    return get_env_user_name();
+    get_env_user_name()
 }
 
 pub fn get_env_user_name() -> String {

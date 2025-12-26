@@ -1,6 +1,7 @@
 # Tutorial 11: Filtering CLI Output with Nushell
 
-This tutorial teaches you how to filter and analyze Torc CLI output using [Nushell](https://www.nushell.sh/), a modern shell with powerful structured data capabilities.
+This tutorial teaches you how to filter and analyze Torc CLI output using
+[Nushell](https://www.nushell.sh/), a modern shell with powerful structured data capabilities.
 
 ## Learning Objectives
 
@@ -18,7 +19,8 @@ By the end of this tutorial, you will:
 
 ## Why Nushell?
 
-Torc's CLI can output JSON with the `-f json` flag. While tools like `jq` can process JSON, Nushell offers a more readable, SQL-like syntax that's easier to learn and use interactively.
+Torc's CLI can output JSON with the `-f json` flag. While tools like `jq` can process JSON, Nushell
+offers a more readable, SQL-like syntax that's easier to learn and use interactively.
 
 Compare filtering failed jobs:
 
@@ -31,6 +33,7 @@ torc jobs list 123 -f json | from json | get jobs | where status == "failed"
 ```
 
 Nushell is:
+
 - **Cross-platform**: Works on Linux, macOS, and Windows
 - **Readable**: Uses intuitive commands like `where`, `select`, `sort-by`
 - **Interactive**: Tab completion and helpful error messages
@@ -51,7 +54,8 @@ winget install nushell
 cargo install nu
 ```
 
-After installation, run `nu` to start a Nushell session. You can use Nushell interactively or run individual commands with `nu -c "command"`.
+After installation, run `nu` to start a Nushell session. You can use Nushell interactively or run
+individual commands with `nu -c "command"`.
 
 ## Basic Filtering
 
@@ -241,21 +245,21 @@ torc jobs list $wf -f json | from json | get jobs | where status == "failed" | t
 
 ## Quick Reference
 
-| Operation | Nushell Command |
-|-----------|-----------------|
-| Parse JSON | `from json` |
-| Get field | `get jobs` |
-| Filter rows | `where status == "failed"` |
-| Select columns | `select name status id` |
-| Sort | `sort-by name` |
-| Sort descending | `sort-by id -r` |
-| Count | `length` |
-| Substring match | `where name =~ "pattern"` |
+| Operation           | Nushell Command                            |
+| ------------------- | ------------------------------------------ |
+| Parse JSON          | `from json`                                |
+| Get field           | `get jobs`                                 |
+| Filter rows         | `where status == "failed"`                 |
+| Select columns      | `select name status id`                    |
+| Sort                | `sort-by name`                             |
+| Sort descending     | `sort-by id -r`                            |
+| Count               | `length`                                   |
+| Substring match     | `where name =~ "pattern"`                  |
 | Multiple conditions | `where status == "failed" and name =~ "x"` |
-| In list | `where status in ["ready", "running"]` |
-| Group by | `group-by status` |
-| Save to file | `save output.json` |
-| Convert to CSV | `to csv` |
+| In list             | `where status in ["ready", "running"]`     |
+| Group by            | `group-by status`                          |
+| Save to file        | `save output.json`                         |
+| Convert to CSV      | `to csv`                                   |
 
 ## Tips
 

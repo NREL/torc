@@ -93,10 +93,10 @@ impl ExecutionPlan {
         let mut start_allocations = Vec::new();
         if let Some(ref actions) = spec.actions {
             for action in actions {
-                if action.trigger_type == "on_workflow_start" {
-                    if let Some(alloc) = build_scheduler_allocation(spec, action)? {
-                        start_allocations.push(alloc);
-                    }
+                if action.trigger_type == "on_workflow_start"
+                    && let Some(alloc) = build_scheduler_allocation(spec, action)?
+                {
+                    start_allocations.push(alloc);
                 }
             }
         }
@@ -204,10 +204,10 @@ impl ExecutionPlan {
 
         for (event_id, deps) in event_deps {
             for dep_event_id in deps {
-                if let Some(dep_event) = events.get_mut(&dep_event_id) {
-                    if !dep_event.unlocks_events.contains(&event_id) {
-                        dep_event.unlocks_events.push(event_id.clone());
-                    }
+                if let Some(dep_event) = events.get_mut(&dep_event_id)
+                    && !dep_event.unlocks_events.contains(&event_id)
+                {
+                    dep_event.unlocks_events.push(event_id.clone());
                 }
             }
         }
@@ -239,7 +239,11 @@ impl ExecutionPlan {
         jobs: &[JobModel],
         actions: &[WorkflowActionModel],
         slurm_schedulers: &[crate::models::SlurmSchedulerModel],
+        resource_requirements: &[crate::models::ResourceRequirementsModel],
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        // Build the workflow graph from database models
+        let graph = WorkflowGraph::from_jobs(jobs, resource_requirements)?;
+
         // Build scheduler ID to name map
         let scheduler_id_to_name: HashMap<i64, String> = slurm_schedulers
             .iter()
@@ -250,87 +254,37 @@ impl ExecutionPlan {
             .collect();
         let mut events: HashMap<String, ExecutionEvent> = HashMap::new();
 
-        // Build dependency graph from jobs (job_name -> Vec<job_names it depends on>)
-        let mut job_id_to_name: HashMap<i64, String> = HashMap::new();
-        let mut job_name_to_id: HashMap<String, i64> = HashMap::new();
-        let mut dependency_graph_by_name: HashMap<String, HashSet<String>> = HashMap::new();
-
-        for job in jobs {
-            let job_id = job.id.ok_or("Job missing ID")?;
-            job_id_to_name.insert(job_id, job.name.clone());
-            job_name_to_id.insert(job.name.clone(), job_id);
-        }
-
-        // Try to use depends_on_job_ids first
-        let mut has_any_deps = false;
-        for job in jobs {
-            let dep_ids = job.depends_on_job_ids.clone().unwrap_or_default();
-            if !dep_ids.is_empty() {
-                has_any_deps = true;
-            }
-            let dep_names: HashSet<String> = dep_ids
-                .iter()
-                .filter_map(|id| job_id_to_name.get(id).cloned())
-                .collect();
-            dependency_graph_by_name.insert(job.name.clone(), dep_names);
-        }
-
-        // If no explicit dependencies found, compute from file relationships
-        // This handles cases where workflow hasn't been initialized yet
-        if !has_any_deps {
-            // Build file_id -> producing job_id map
-            let mut file_producers: HashMap<i64, i64> = HashMap::new();
-            for job in jobs {
-                if let Some(output_ids) = &job.output_file_ids {
-                    let job_id = job.id.ok_or("Job missing ID")?;
-                    for file_id in output_ids {
-                        file_producers.insert(*file_id, job_id);
-                    }
-                }
-            }
-
-            // Compute dependencies from input files
-            for job in jobs {
-                let job_id = job.id.ok_or("Job missing ID")?;
-                let mut deps: HashSet<String> = HashSet::new();
-
-                if let Some(input_ids) = &job.input_file_ids {
-                    for file_id in input_ids {
-                        if let Some(producer_id) = file_producers.get(file_id) {
-                            if *producer_id != job_id {
-                                if let Some(producer_name) = job_id_to_name.get(producer_id) {
-                                    deps.insert(producer_name.clone());
-                                }
-                            }
-                        }
-                    }
-                }
-
-                dependency_graph_by_name.insert(job.name.clone(), deps);
-            }
-        }
-
-        // Find root jobs (no dependencies)
-        let root_jobs: Vec<String> = jobs
+        // Build job ID <-> name maps for action matching
+        let _job_id_to_name: HashMap<i64, String> = jobs
             .iter()
-            .filter(|j| {
-                dependency_graph_by_name
-                    .get(&j.name)
-                    .map(|deps| deps.is_empty())
-                    .unwrap_or(true)
+            .filter_map(|j| j.id.map(|id| (id, j.name.clone())))
+            .collect();
+        let job_name_to_id: HashMap<String, i64> = jobs
+            .iter()
+            .filter_map(|j| j.id.map(|id| (j.name.clone(), id)))
+            .collect();
+
+        // Find root jobs using the graph
+        let root_jobs: Vec<String> = graph.roots().iter().map(|s| s.to_string()).collect();
+
+        // Build dependency graph reference for event grouping
+        // (using graph's internal structure via dependencies_of)
+        let dependency_graph_by_name: HashMap<String, HashSet<String>> = jobs
+            .iter()
+            .map(|j| {
+                let deps = graph.dependencies_of(&j.name).cloned().unwrap_or_default();
+                (j.name.clone(), deps)
             })
-            .map(|j| j.name.clone())
             .collect();
 
         // Find on_workflow_start scheduler allocations
         let mut start_allocations = Vec::new();
         for action in actions {
-            if action.trigger_type == "on_workflow_start" {
-                if let Some(alloc) =
+            if action.trigger_type == "on_workflow_start"
+                && let Some(alloc) =
                     build_scheduler_allocation_from_db_action(action, jobs, &scheduler_id_to_name)?
-                {
-                    start_allocations.push(alloc);
-                }
+            {
+                start_allocations.push(alloc);
             }
         }
 
@@ -361,10 +315,11 @@ impl ExecutionPlan {
                 if processed_jobs.contains(&job.name) {
                     continue;
                 }
-                if let Some(deps) = dependency_graph_by_name.get(&job.name) {
-                    if !deps.is_empty() && deps.iter().all(|d| processed_jobs.contains(d)) {
-                        newly_ready.push(job.name.clone());
-                    }
+                if let Some(deps) = dependency_graph_by_name.get(&job.name)
+                    && !deps.is_empty()
+                    && deps.iter().all(|d| processed_jobs.contains(d))
+                {
+                    newly_ready.push(job.name.clone());
                 }
             }
 
@@ -413,14 +368,14 @@ impl ExecutionPlan {
                                 .any(|job_name| job_name_to_id.get(job_name) == Some(action_job_id))
                         });
 
-                        if matches_any {
-                            if let Some(alloc) = build_scheduler_allocation_from_db_action(
+                        if matches_any
+                            && let Some(alloc) = build_scheduler_allocation_from_db_action(
                                 action,
                                 jobs,
                                 &scheduler_id_to_name,
-                            )? {
-                                scheduler_allocations.push(alloc);
-                            }
+                            )?
+                        {
+                            scheduler_allocations.push(alloc);
                         }
                     }
                 }
@@ -456,10 +411,10 @@ impl ExecutionPlan {
 
         for (event_id, deps) in event_deps {
             for dep_event_id in deps {
-                if let Some(dep_event) = events.get_mut(&dep_event_id) {
-                    if !dep_event.unlocks_events.contains(&event_id) {
-                        dep_event.unlocks_events.push(event_id.clone());
-                    }
+                if let Some(dep_event) = events.get_mut(&dep_event_id)
+                    && !dep_event.unlocks_events.contains(&event_id)
+                {
+                    dep_event.unlocks_events.push(event_id.clone());
                 }
             }
         }
@@ -481,7 +436,7 @@ impl ExecutionPlan {
             events,
             root_events,
             leaf_events,
-            graph: None,
+            graph: Some(graph),
         })
     }
 

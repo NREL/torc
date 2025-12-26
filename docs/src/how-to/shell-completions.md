@@ -1,6 +1,7 @@
 # Shell Completions
 
-Torc provides shell completion scripts to make working with the CLI faster and more convenient. Completions help you discover commands, avoid typos, and speed up your workflow.
+Torc provides shell completion scripts to make working with the CLI faster and more convenient.
+Completions help you discover commands, avoid typos, and speed up your workflow.
 
 ## Overview
 
@@ -228,7 +229,8 @@ torc workflows create --<TAB>
 
 ## Updating Completions
 
-When you update Torc to a new version, regenerate the completion scripts to get the latest commands and flags:
+When you update Torc to a new version, regenerate the completion scripts to get the latest commands
+and flags:
 
 ```bash
 # Bash

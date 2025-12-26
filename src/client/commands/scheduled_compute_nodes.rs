@@ -1,11 +1,11 @@
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
+use crate::client::commands::output::{print_if_json, print_json, print_wrapped_if_json};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
 use crate::models;
-use serde_json;
 use tabled::Tabled;
 
 #[derive(Tabled)]
@@ -86,17 +86,8 @@ pub fn handle_scheduled_compute_node_commands(
         ScheduledComputeNodeCommands::Get { id } => {
             match default_api::get_scheduled_compute_node(config, *id) {
                 Ok(node) => {
-                    if format == "json" {
-                        match serde_json::to_string_pretty(&node) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!(
-                                    "Error serializing scheduled compute node to JSON: {}",
-                                    e
-                                );
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_if_json(format, &node, "scheduled compute node") {
+                        // JSON was printed
                     } else {
                         println!("Scheduled Compute Node ID {}:", id);
                         println!("  Workflow ID: {}", node.workflow_id);
@@ -148,38 +139,28 @@ pub fn handle_scheduled_compute_node_commands(
                 Ok(response) => {
                     let nodes = response.items.unwrap_or_default();
 
-                    if format == "json" {
-                        let json_output = serde_json::json!({
-                            "items": nodes,
-                            "total_count": response.total_count,
-                        });
-                        match serde_json::to_string_pretty(&json_output) {
-                            Ok(json) => println!("{}", json),
-                            Err(e) => {
-                                eprintln!(
-                                    "Error serializing scheduled compute nodes to JSON: {}",
-                                    e
-                                );
-                                std::process::exit(1);
-                            }
-                        }
+                    if print_wrapped_if_json(
+                        format,
+                        "scheduled_compute_nodes",
+                        &nodes,
+                        "scheduled compute nodes",
+                    ) {
+                        // JSON was printed
+                    } else if nodes.is_empty() {
+                        println!(
+                            "No scheduled compute nodes found for workflow {}",
+                            selected_workflow_id
+                        );
                     } else {
-                        if nodes.is_empty() {
+                        let rows: Vec<ScheduledComputeNodeTableRow> =
+                            nodes.iter().map(|n| n.into()).collect();
+                        display_table_with_count(&rows, "scheduled compute nodes");
+                        if response.total_count as usize > nodes.len() {
                             println!(
-                                "No scheduled compute nodes found for workflow {}",
-                                selected_workflow_id
+                                "\nShowing {} of {} total scheduled compute nodes",
+                                nodes.len(),
+                                response.total_count
                             );
-                        } else {
-                            let rows: Vec<ScheduledComputeNodeTableRow> =
-                                nodes.iter().map(|n| n.into()).collect();
-                            display_table_with_count(&rows, "scheduled compute nodes");
-                            if response.total_count as usize > nodes.len() {
-                                println!(
-                                    "\nShowing {} of {} total scheduled compute nodes",
-                                    nodes.len(),
-                                    response.total_count
-                                );
-                            }
                         }
                     }
                 }
@@ -275,13 +256,7 @@ pub fn handle_scheduled_compute_node_commands(
                     "compute_node_count": compute_nodes.len(),
                     "job_ids": job_ids_vec,
                 });
-                match serde_json::to_string_pretty(&json_output) {
-                    Ok(json) => println!("{}", json),
-                    Err(e) => {
-                        eprintln!("Error serializing to JSON: {}", e);
-                        std::process::exit(1);
-                    }
-                }
+                print_json(&json_output, "scheduled compute node jobs");
             } else {
                 println!(
                     "Jobs that ran under scheduled compute node {} (workflow {}):",

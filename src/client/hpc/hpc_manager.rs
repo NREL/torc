@@ -125,6 +125,7 @@ impl HpcManager {
     ///
     /// # Returns
     /// The HPC job ID
+    #[allow(clippy::too_many_arguments)]
     pub fn submit(
         &self,
         directory: &Path,

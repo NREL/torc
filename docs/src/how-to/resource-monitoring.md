@@ -1,10 +1,12 @@
 # How to Monitor Resource Usage
 
-This guide shows how to track CPU and memory usage of your workflow jobs and identify resource requirement mismatches.
+This guide shows how to track CPU and memory usage of your workflow jobs and identify resource
+requirement mismatches.
 
 ## Enable Resource Monitoring
 
-Resource monitoring is **enabled by default** for all workflows. To explicitly configure it, add a `resource_monitor` section to your workflow specification:
+Resource monitoring is **enabled by default** for all workflows. To explicitly configure it, add a
+`resource_monitor` section to your workflow specification:
 
 ```yaml
 name: "My Workflow"
@@ -80,6 +82,7 @@ resource_requirements:
 ```
 
 **Guidelines for buffers:**
+
 - Memory: Add 10-20% above peak usage
 - Runtime: Add 15-30% above actual duration
 - CPU: Round up to next core count
@@ -112,6 +115,7 @@ torc plot-resources output/resource_utilization/resource_metrics_*.db \
 ```
 
 The tool generates:
+
 - Individual job plots showing CPU, memory, and process count over time
 - Overview plots comparing all jobs
 - Summary dashboard with bar charts
@@ -153,5 +157,6 @@ SELECT * FROM job_metadata;
 
 ## Next Steps
 
-- [Resource Monitoring Reference](../reference/resource-monitoring.md) - Configuration options and database schema
+- [Resource Monitoring Reference](../reference/resource-monitoring.md) - Configuration options and
+  database schema
 - [Managing Resources](./resources.md) - Define job resource requirements

@@ -1,6 +1,7 @@
 # Security Reference
 
-This document describes Torc's security features, threat model, and best practices for secure deployments.
+This document describes Torc's security features, threat model, and best practices for secure
+deployments.
 
 ## Authentication & Authorization
 
@@ -9,6 +10,7 @@ This document describes Torc's security features, threat model, and best practic
 Torc uses HTTP Basic authentication with bcrypt password hashing.
 
 **Security Properties:**
+
 - ✅ Industry-standard authentication method
 - ✅ Bcrypt hashing with configurable work factor (cost 4-31)
 - ✅ No plaintext password storage
@@ -16,6 +18,7 @@ Torc uses HTTP Basic authentication with bcrypt password hashing.
 - ⚠️ Credentials sent base64-encoded (requires HTTPS)
 
 **Architecture:**
+
 ```
 Client Request
     ↓
@@ -33,11 +36,11 @@ API Handler (receives authorization context)
 
 ### Authentication Modes
 
-| Mode | Configuration | Behavior |
-|------|--------------|----------|
-| **Disabled** | No `--auth-file` | All requests allowed, no authentication |
-| **Optional** | `--auth-file` only | Valid credentials logged, invalid/missing allowed |
-| **Required** | `--auth-file --require-auth` | Invalid/missing credentials rejected |
+| Mode         | Configuration                | Behavior                                          |
+| ------------ | ---------------------------- | ------------------------------------------------- |
+| **Disabled** | No `--auth-file`             | All requests allowed, no authentication           |
+| **Optional** | `--auth-file` only           | Valid credentials logged, invalid/missing allowed |
+| **Required** | `--auth-file --require-auth` | Invalid/missing credentials rejected              |
 
 **Recommendation:** Use **Required** mode in production.
 
@@ -46,12 +49,14 @@ API Handler (receives authorization context)
 ### HTTPS/TLS
 
 **When to use HTTPS:**
+
 - ✅ **Always** when authentication is enabled
 - ✅ When transmitting sensitive workflow data
 - ✅ Over untrusted networks (internet, shared networks)
 - ✅ Compliance requirements (PCI-DSS, HIPAA, etc.)
 
 **Configuration:**
+
 ```bash
 # Server
 torc-server run --https --auth-file /etc/torc/htpasswd
@@ -61,6 +66,7 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 ```
 
 **TLS Version:** Torc uses the system's OpenSSL/native-tls library. Ensure:
+
 - TLS 1.2 minimum (TLS 1.3 preferred)
 - Strong cipher suites enabled
 - Valid certificates from trusted CA
@@ -70,27 +76,33 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 **Deployment Patterns:**
 
 **Pattern 1: Internal Network Only**
+
 ```
 [Torc Clients] ←→ [Torc Server]
     (Trusted internal network)
 ```
+
 - May use HTTP if network is truly isolated
 - Still recommend HTTPS for defense in depth
 
 **Pattern 2: Load Balancer with TLS Termination**
+
 ```
 [Torc Clients] ←HTTPS→ [Load Balancer] ←HTTP→ [Torc Server]
     (Internet)              (Internal trusted network)
 ```
+
 - TLS terminates at load balancer
 - Internal traffic may use HTTP
 - Ensure load balancer validates certificates
 
 **Pattern 3: End-to-End TLS**
+
 ```
 [Torc Clients] ←HTTPS→ [Torc Server]
     (Internet or untrusted network)
 ```
+
 - Most secure pattern
 - TLS all the way to Torc server
 - Required for compliance scenarios
@@ -100,6 +112,7 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 ### Password Requirements
 
 **Recommendations:**
+
 - Minimum 12 characters
 - Mix of uppercase, lowercase, numbers, symbols
 - No dictionary words or common patterns
@@ -107,15 +120,16 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 
 **Bcrypt Cost Factor:**
 
-| Cost | Hash Time | Use Case |
-|------|-----------|----------|
-| 4-8  | < 100ms   | Testing only |
-| 10   | ~100ms    | Legacy systems |
-| 12   | ~250ms    | **Default**, good for most use cases |
-| 13-14| ~500ms-1s | Production, sensitive data |
-| 15+  | > 2s      | High-security, infrequent logins |
+| Cost  | Hash Time | Use Case                             |
+| ----- | --------- | ------------------------------------ |
+| 4-8   | < 100ms   | Testing only                         |
+| 10    | ~100ms    | Legacy systems                       |
+| 12    | ~250ms    | **Default**, good for most use cases |
+| 13-14 | ~500ms-1s | Production, sensitive data           |
+| 15+   | > 2s      | High-security, infrequent logins     |
 
 **Cost Selection Criteria:**
+
 - Higher cost = more CPU, slower login
 - Balance security vs. user experience
 - Consider attack surface (internet-facing vs. internal)
@@ -123,6 +137,7 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 ### Htpasswd File Security
 
 **File Permissions:**
+
 ```bash
 # Restrict to server process owner only
 chmod 600 /etc/torc/htpasswd
@@ -130,6 +145,7 @@ chown torc-server:torc-server /etc/torc/htpasswd
 ```
 
 **Storage Best Practices:**
+
 - ❌ Never commit to version control
 - ❌ Never share between environments
 - ✅ Store in secure configuration management (Ansible Vault, HashiCorp Vault)
@@ -137,10 +153,12 @@ chown torc-server:torc-server /etc/torc/htpasswd
 - ✅ Rotate regularly (quarterly recommended)
 
 **File Format Security:**
+
 ```
 # Comments allowed
 username:$2b$12$hash...
 ```
+
 - Only bcrypt hashes accepted (`$2a$`, `$2b$`, or `$2y$`)
 - No plaintext passwords
 - No MD5, SHA-1, or weak hashes
@@ -149,14 +167,15 @@ username:$2b$12$hash...
 
 **Best Practices:**
 
-| Method | Security | Use Case |
-|--------|----------|----------|
-| **Environment variables** | ⭐⭐⭐ | Scripts, automation, CI/CD |
-| **Password prompt** | ⭐⭐⭐⭐⭐ | Interactive sessions |
-| **Config files** | ⭐ | Not recommended |
-| **Command-line args** | ⚠️ | Visible in process list, avoid |
+| Method                    | Security   | Use Case                       |
+| ------------------------- | ---------- | ------------------------------ |
+| **Environment variables** | ⭐⭐⭐     | Scripts, automation, CI/CD     |
+| **Password prompt**       | ⭐⭐⭐⭐⭐ | Interactive sessions           |
+| **Config files**          | ⭐         | Not recommended                |
+| **Command-line args**     | ⚠️          | Visible in process list, avoid |
 
 **Examples:**
+
 ```bash
 # Good: Environment variables
 export TORC_USERNAME=alice
@@ -178,23 +197,23 @@ torc --username alice --password mypassword workflows list
 
 ### Threats Mitigated
 
-| Threat | Mitigation | Effectiveness |
-|--------|------------|---------------|
-| **Unauthorized API access** | Required authentication | ✅ High |
-| **Credential stuffing** | Bcrypt work factor, rate limiting | ✅ Medium-High |
-| **Password cracking** | Bcrypt (cost ≥12) | ✅ High |
-| **Man-in-the-middle** | HTTPS/TLS | ✅ High |
-| **Credential theft (database)** | No plaintext storage, bcrypt | ✅ High |
+| Threat                          | Mitigation                        | Effectiveness  |
+| ------------------------------- | --------------------------------- | -------------- |
+| **Unauthorized API access**     | Required authentication           | ✅ High        |
+| **Credential stuffing**         | Bcrypt work factor, rate limiting | ✅ Medium-High |
+| **Password cracking**           | Bcrypt (cost ≥12)                 | ✅ High        |
+| **Man-in-the-middle**           | HTTPS/TLS                         | ✅ High        |
+| **Credential theft (database)** | No plaintext storage, bcrypt      | ✅ High        |
 
 ### Threats Not Mitigated
 
-| Threat | Impact | Recommendation |
-|--------|--------|----------------|
-| **DDoS attacks** | High | Use rate limiting, firewalls, CDN |
-| **SQL injection** | Medium | Use parameterized queries (Torc does) |
-| **Insider threats** | High | Audit logging, least privilege |
-| **Compromised client** | High | Network segmentation, monitoring |
-| **Side-channel attacks** | Low | Constant-time operations (bcrypt does) |
+| Threat                   | Impact | Recommendation                         |
+| ------------------------ | ------ | -------------------------------------- |
+| **DDoS attacks**         | High   | Use rate limiting, firewalls, CDN      |
+| **SQL injection**        | Medium | Use parameterized queries (Torc does)  |
+| **Insider threats**      | High   | Audit logging, least privilege         |
+| **Compromised client**   | High   | Network segmentation, monitoring       |
+| **Side-channel attacks** | Low    | Constant-time operations (bcrypt does) |
 
 ### Attack Scenarios
 
@@ -205,6 +224,7 @@ torc --username alice --password mypassword workflows list
 **Risk:** Medium - Bcrypt makes cracking difficult
 
 **Mitigation:**
+
 1. Immediately revoke all user accounts
 2. Generate new htpasswd file with fresh passwords
 3. Investigate how file was compromised
@@ -217,11 +237,13 @@ torc --username alice --password mypassword workflows list
 **Risk:** High
 
 **Prevention:**
+
 - Never log passwords
 - Sanitize logs before sharing
 - Restrict log access
 
 **Response:**
+
 1. Rotate affected credentials immediately
 2. Audit all log access
 3. Review code for password logging
@@ -233,10 +255,12 @@ torc --username alice --password mypassword workflows list
 **Risk:** Critical over untrusted networks
 
 **Prevention:**
+
 - **Always use HTTPS** when authentication is enabled
 - Especially critical for internet-facing deployments
 
 **Response:**
+
 1. Enable HTTPS immediately
 2. Rotate all credentials (assume compromised)
 3. Review access logs for suspicious activity
@@ -264,18 +288,21 @@ DEBUG torc::server::auth: No authentication configured, allowing request
 ### Recommended Monitoring
 
 **Metrics to track:**
+
 1. Failed authentication attempts (per user, total)
 2. Successful authentications (per user)
 3. Requests without credentials (when auth enabled)
 4. Unusual access patterns (time, volume, endpoints)
 
 **Alerting thresholds:**
+
 - 5+ failed attempts from same user in 5 minutes
 - 100+ failed attempts total in 1 hour
 - Authentication from unexpected IP ranges
 - Access during unusual hours (if applicable)
 
 **Log aggregation:**
+
 ```bash
 # Collect auth events
 grep "torc::server::auth" /var/log/torc-server.log
@@ -293,10 +320,12 @@ tail -f /var/log/torc-server.log | grep "WARN.*auth"
 ### GDPR / Privacy
 
 **User data in htpasswd:**
+
 - Usernames may be personal data (email addresses)
 - Password hashes are not personal data (irreversible)
 
 **Recommendations:**
+
 - Allow users to request account deletion
 - Don't use email addresses as usernames (use aliases)
 - Document data retention policies
@@ -304,6 +333,7 @@ tail -f /var/log/torc-server.log | grep "WARN.*auth"
 ### PCI-DSS / SOC2
 
 **Requirements that apply:**
+
 1. **Transport encryption:** Use HTTPS
 2. **Access control:** Enable required authentication
 3. **Password complexity:** Enforce strong passwords
@@ -311,6 +341,7 @@ tail -f /var/log/torc-server.log | grep "WARN.*auth"
 5. **Regular reviews:** Audit user accounts quarterly
 
 **Configuration:**
+
 ```bash
 # PCI-DSS compliant setup
 torc-server run \

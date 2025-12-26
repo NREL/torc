@@ -1,5 +1,6 @@
 //! Configuration management commands
 
+use super::output::print_json;
 use crate::client::config::{ConfigPaths, TorcConfig};
 use clap::Subcommand;
 use std::fs;
@@ -72,13 +73,7 @@ fn show_config(format: &str) {
                 std::process::exit(1);
             }
         },
-        "json" => match serde_json::to_string_pretty(&config) {
-            Ok(json) => println!("{}", json),
-            Err(e) => {
-                eprintln!("Error serializing config to JSON: {}", e);
-                std::process::exit(1);
-            }
-        },
+        "json" => print_json(&config, "config"),
         _ => {
             eprintln!("Unknown format '{}'. Use 'toml' or 'json'.", format);
             std::process::exit(1);
@@ -178,14 +173,14 @@ fn write_config_file(path: &PathBuf, force: bool) {
     }
 
     // Create parent directories if needed
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            match fs::create_dir_all(parent) {
-                Ok(_) => println!("Created directory: {}", parent.display()),
-                Err(e) => {
-                    eprintln!("Error creating directory {}: {}", parent.display(), e);
-                    std::process::exit(1);
-                }
+    if let Some(parent) = path.parent()
+        && !parent.exists()
+    {
+        match fs::create_dir_all(parent) {
+            Ok(_) => println!("Created directory: {}", parent.display()),
+            Err(e) => {
+                eprintln!("Error creating directory {}: {}", parent.display(), e);
+                std::process::exit(1);
             }
         }
     }

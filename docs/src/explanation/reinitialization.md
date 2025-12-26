@@ -22,6 +22,7 @@ The `process_changed_job_inputs` endpoint implements hash-based change detection
 4. All updates happen in a single database transaction (all-or-none).
 
 After jobs are marked `uninitialized`, calling `initialize_jobs` re-evaluates the dependency graph:
+
 - Jobs with satisfied dependencies → `ready`
 - Jobs waiting on dependencies → `blocked`
 

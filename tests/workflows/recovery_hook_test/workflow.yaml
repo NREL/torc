@@ -9,7 +9,7 @@
 #
 # Test procedure:
 # 1. Submit the workflow: torc submit-slurm --account <account> workflow.yaml
-# 2. Watch with recovery hook: torc watch <workflow_id> --auto-recover --recovery-hook "bash create_missing_file.sh"
+# 2. Watch with recovery hook: torc watch <workflow_id> --recover --recovery-hook "bash create_missing_file.sh"
 # 3. work_3 will fail, recovery hook creates the missing file, workflow retries and succeeds
 #
 # The recovery hook script (create_missing_file.sh) creates the required file.

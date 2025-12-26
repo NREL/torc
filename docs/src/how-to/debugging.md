@@ -1,11 +1,12 @@
 # Debugging Workflows
 
-When workflows fail or produce unexpected results, Torc provides comprehensive
-debugging tools to help you identify and resolve issues. The primary debugging
-tools are:
+When workflows fail or produce unexpected results, Torc provides comprehensive debugging tools to
+help you identify and resolve issues. The primary debugging tools are:
 
-- **`torc results list`**: Prints a table of return codes for each job execution (non-zero means failure)
-- **`torc reports results`**: Generates a detailed JSON report containing job results and all associated log file paths
+- **`torc results list`**: Prints a table of return codes for each job execution (non-zero means
+  failure)
+- **`torc reports results`**: Generates a detailed JSON report containing job results and all
+  associated log file paths
 - **torc-dash Debug tab**: Interactive web interface for visual debugging with log file viewer
 
 ## Overview
@@ -14,11 +15,11 @@ Torc automatically captures return codes and multiple log files for each job exe
 
 - **Job stdout/stderr**: Output from your job commands
 - **Job runner logs**: Internal logs from the Torc job runner
-- **Slurm logs**: Additional logs when using Slurm scheduler (see [Debugging Slurm Workflows](debugging-slurm.md))
+- **Slurm logs**: Additional logs when using Slurm scheduler (see
+  [Debugging Slurm Workflows](debugging-slurm.md))
 
-The `reports results` command consolidates all this information into a single
-JSON report, making it easy to locate and examine relevant log files for
-debugging.
+The `reports results` command consolidates all this information into a single JSON report, making it
+easy to locate and examine relevant log files for debugging.
 
 ## Quick Start
 
@@ -27,6 +28,7 @@ View the job return codes in a table:
 ```bash
 torc results list <workflow_id>
 ```
+
 ```
 Results for workflow ID 2:
 ╭────┬────────┬───────┬────────┬─────────────┬───────────┬──────────┬────────────┬──────────────────────────┬────────╮
@@ -71,7 +73,8 @@ torc reports results <workflow_id> --all-runs
 torc reports results
 ```
 
-The command outputs a comprehensive JSON report to stdout. Redirect it to a file for easier analysis:
+The command outputs a comprehensive JSON report to stdout. Redirect it to a file for easier
+analysis:
 
 ```bash
 torc reports results <workflow_id> > debug_report.json
@@ -95,6 +98,7 @@ The JSON report includes workflow-level information:
 ```
 
 **Fields**:
+
 - `workflow_id`: Unique identifier for the workflow
 - `workflow_name`: Human-readable workflow name
 - `workflow_user`: Owner of the workflow
@@ -124,6 +128,7 @@ Each entry in the `results` array contains detailed information about a single j
 ```
 
 **Core Fields**:
+
 - `job_id`: Unique identifier for the job
 - `job_name`: Human-readable job name from workflow spec
 - `status`: Job status (Done, Terminated, Failed, etc.)
@@ -133,12 +138,14 @@ Each entry in the `results` array contains detailed information about a single j
 - `exec_time_minutes`: Duration of job execution in minutes
 
 **Compute Node Fields**:
+
 - `compute_node_id`: ID of the compute node that executed the job
 - `compute_node_type`: Type of compute node ("local" or "slurm")
 
 ## Log File Paths
 
-The report includes paths to all log files associated with each job. The specific files depend on the compute node type.
+The report includes paths to all log files associated with each job. The specific files depend on
+the compute node type.
 
 ### Local Runner Log Files
 
@@ -170,19 +177,23 @@ For jobs executed by the local job runner (`compute_node_type: "local"`):
    - **Use for**: Understanding Torc's job execution behavior, timing issues
 
 **Log path format conventions**:
+
 - Job stdio logs use job ID in filename
 - Runner logs use hostname, workflow ID, and run ID
 - All paths are relative to the specified `--output-dir`
 
 ### Slurm Runner Log Files
 
-For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`), additional log files are available including Slurm stdout/stderr, environment logs, and dmesg logs.
+For jobs executed via Slurm scheduler (`compute_node_type: "slurm"`), additional log files are
+available including Slurm stdout/stderr, environment logs, and dmesg logs.
 
-See [Debugging Slurm Workflows](debugging-slurm.md) for detailed information about Slurm-specific log files and debugging tools.
+See [Debugging Slurm Workflows](debugging-slurm.md) for detailed information about Slurm-specific
+log files and debugging tools.
 
 ## Using the torc-dash Debugging Tab
 
-The torc-dash web interface provides an interactive Debugging tab for visual debugging of workflow jobs. This is often the quickest way to investigate failed jobs without using command-line tools.
+The torc-dash web interface provides an interactive Debugging tab for visual debugging of workflow
+jobs. This is often the quickest way to investigate failed jobs without using command-line tools.
 
 ### Accessing the Debugging Tab
 
@@ -203,11 +214,14 @@ The torc-dash web interface provides an interactive Debugging tab for visual deb
 
 The Debug tab provides a report generator with the following options:
 
-- **Output Directory**: Specify where job logs are stored (default: `output`). This must match the directory used during workflow execution.
+- **Output Directory**: Specify where job logs are stored (default: `output`). This must match the
+  directory used during workflow execution.
 
-- **Include all runs**: Check this to see results from all workflow runs, not just the latest. Useful for comparing job behavior across reinitializations.
+- **Include all runs**: Check this to see results from all workflow runs, not just the latest.
+  Useful for comparing job behavior across reinitializations.
 
-- **Show only failed jobs**: Filter to display only jobs with non-zero return codes. This is checked by default to help you focus on problematic jobs.
+- **Show only failed jobs**: Filter to display only jobs with non-zero return codes. This is checked
+  by default to help you focus on problematic jobs.
 
 Click **Generate Report** to fetch job results from the server.
 
@@ -237,6 +251,7 @@ When you select a job from the table, the Log File Viewer displays:
   - Primary location for investigating crashes and exceptions
 
 Each tab includes:
+
 - **Copy Path** button: Copy the full file path to clipboard
 - **File path display**: Shows where the log file is located
 - **Scrollable content viewer**: Dark-themed viewer for easy reading
@@ -254,12 +269,14 @@ Each tab includes:
 ### When to Use torc-dash vs CLI
 
 **Use torc-dash Debugging tab when:**
+
 - You want a visual, interactive debugging experience
 - You need to quickly scan multiple failed jobs
 - You're investigating jobs and want to easily switch between stdout/stderr
 - You prefer not to construct `jq` queries manually
 
 **Use CLI tools (`torc reports results`) when:**
+
 - You need to automate failure detection in CI/CD
 - You want to save reports for archival or version control
 - You're working on a remote server without browser access
@@ -357,7 +374,8 @@ jq -r '.results[] | select(.job_name == "flaky_job" and .return_code != 0) | "Ru
 
 ### Log File Missing Warnings
 
-The `reports results` command automatically checks for log file existence and prints warnings to stderr if files are missing:
+The `reports results` command automatically checks for log file existence and prints warnings to
+stderr if files are missing:
 
 ```
 Warning: job stdout log file does not exist for job 456: output/job_stdio/job_456.o
@@ -366,13 +384,14 @@ Warning: job runner log file does not exist for job 456: output/job_runner_host1
 
 **Common causes of missing log files**:
 
-1. **Wrong output directory**: Ensure `--output-dir` matches the directory used during workflow execution
+1. **Wrong output directory**: Ensure `--output-dir` matches the directory used during workflow
+   execution
 2. **Logs not yet written**: Job may still be running or failed to start
 3. **Logs cleaned up**: Files may have been manually deleted
 4. **Path mismatch**: Output directory moved or renamed after execution
 
-**Solution**: Verify the output directory and ensure it matches what was passed to `torc run` or `torc slurm schedule-nodes`.
-
+**Solution**: Verify the output directory and ensure it matches what was passed to `torc run` or
+`torc slurm schedule-nodes`.
 
 ## Output Directory Management
 
@@ -398,31 +417,38 @@ torc slurm schedule-nodes <workflow_id> --output-dir /path/to/my_output
 torc reports results <workflow_id> --output-dir /path/to/my_output
 ```
 
-**Default behavior**: If `--output-dir` is not specified, both the runner and reports command default to `./output`.
+**Default behavior**: If `--output-dir` is not specified, both the runner and reports command
+default to `./output`.
 
 ## Best Practices
 
-1. **Generate reports after each run**: Create a debug report immediately after workflow execution for easier troubleshooting
+1. **Generate reports after each run**: Create a debug report immediately after workflow execution
+   for easier troubleshooting
 
 2. **Archive reports with logs**: Store the JSON report alongside log files for future reference
    ```bash
    torc reports results "$WF_ID" > "output/report_${WF_ID}_$(date +%Y%m%d_%H%M%S).json"
    ```
 
-3. **Use version control**: Commit debug reports for important workflow runs to track changes over time
+3. **Use version control**: Commit debug reports for important workflow runs to track changes over
+   time
 
-4. **Automate failure detection**: Use the report in CI/CD pipelines to automatically detect and report failures
+4. **Automate failure detection**: Use the report in CI/CD pipelines to automatically detect and
+   report failures
 
-5. **Check warnings**: Pay attention to warnings about missing log files - they often indicate configuration issues
+5. **Check warnings**: Pay attention to warnings about missing log files - they often indicate
+   configuration issues
 
-6. **Combine with resource monitoring**: Use `reports results` for log files and `reports check-resource-utilization` for performance issues
+6. **Combine with resource monitoring**: Use `reports results` for log files and
+   `reports check-resource-utilization` for performance issues
    ```bash
    # Check if job failed due to resource constraints
    torc reports check-resource-utilization "$WF_ID"
    torc reports results "$WF_ID" > report.json
    ```
 
-7. **Filter large reports**: For workflows with many jobs, filter the report to focus on relevant jobs
+7. **Filter large reports**: For workflows with many jobs, filter the report to focus on relevant
+   jobs
    ```bash
    # Only include failed jobs in filtered report
    jq '{workflow_id, workflow_name, results: [.results[] | select(.return_code != 0)]}' report.json
@@ -435,6 +461,7 @@ torc reports results <workflow_id> --output-dir /path/to/my_output
 **Cause**: The specified `--output-dir` path doesn't exist.
 
 **Solution**: Verify the directory exists and the path is correct:
+
 ```bash
 ls -ld output/  # Check if directory exists
 torc reports results <workflow_id> --output-dir "$(pwd)/output"
@@ -445,6 +472,7 @@ torc reports results <workflow_id> --output-dir "$(pwd)/output"
 **Cause**: No job results exist for the workflow (jobs not yet executed or initialized).
 
 **Solution**: Check workflow status and ensure jobs have been completed:
+
 ```bash
 torc workflows status <workflow_id>
 torc results list <workflow_id>  # Verify results exist
@@ -455,6 +483,7 @@ torc results list <workflow_id>  # Verify results exist
 **Cause**: Output directory mismatch between execution and report generation.
 
 **Solution**: Verify the output directory used during execution:
+
 ```bash
 # Check where logs actually are
 find . -name "job_*.o" -o -name "job_runner_*.log"
@@ -473,4 +502,5 @@ torc reports results <workflow_id> --output-dir <correct_path>
 - **`torc-dash`**: Launch web interface with interactive Debugging tab
 - **`torc tui`**: Launch terminal UI for workflow monitoring
 
-For Slurm-specific debugging tools (`torc slurm parse-logs`, `torc slurm sacct`, etc.), see [Debugging Slurm Workflows](debugging-slurm.md).
+For Slurm-specific debugging tools (`torc slurm parse-logs`, `torc slurm sacct`, etc.), see
+[Debugging Slurm Workflows](debugging-slurm.md).

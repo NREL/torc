@@ -1,6 +1,7 @@
 # Central Database
 
-The SQLite database is the heart of Torc's coordination model. All workflow state lives in the database, enabling:
+The SQLite database is the heart of Torc's coordination model. All workflow state lives in the
+database, enabling:
 
 - **Stateless clients and workers** - All state persists in the database
 - **Multiple concurrent workers** - Workers coordinate through database locks
@@ -27,8 +28,12 @@ The SQLite database is the heart of Torc's coordination model. All workflow stat
 
 ## Foreign Key Cascades
 
-The schema uses foreign key constraints with cascading deletes. Deleting a workflow automatically removes all associated jobs, files, events, and other related records, ensuring referential integrity.
+The schema uses foreign key constraints with cascading deletes. Deleting a workflow automatically
+removes all associated jobs, files, events, and other related records, ensuring referential
+integrity.
 
 ## Concurrency Model
 
-SQLite uses database-level locking with `BEGIN IMMEDIATE TRANSACTION` to prevent race conditions in critical sections, particularly during job allocation when multiple workers request jobs simultaneously.
+SQLite uses database-level locking with `BEGIN IMMEDIATE TRANSACTION` to prevent race conditions in
+critical sections, particularly during job allocation when multiple workers request jobs
+simultaneously.

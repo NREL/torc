@@ -1,7 +1,7 @@
 # Timeout Auto-Recovery Test
 
-This test verifies that `torc watch --auto-recover` correctly detects timeout
-failures and automatically increases runtime allocations for retry.
+This test verifies that `torc watch --recover` correctly detects timeout failures and automatically
+increases runtime allocations for retry.
 
 ## Workflow Description
 
@@ -41,7 +41,7 @@ Note the workflow ID from the output.
 ### 3. Run the watcher with auto-recover
 
 ```bash
-torc watch <workflow_id> --auto-recover --max-retries 3
+torc watch <workflow_id> --recover --max-retries 3
 ```
 
 ### 4. Expected output
@@ -73,14 +73,14 @@ The cycle may repeat once more until runtime reaches ~11 minutes.
 
 ## Timing Details
 
-| Component | Duration |
-|-----------|----------|
-| job_fast actual runtime | 1 minute |
-| job_slow actual runtime | 10 minutes |
-| Initial resource runtime | 5 minutes |
-| Initial Slurm walltime | 8 minutes |
-| First recovery runtime | 7.5 minutes |
-| Second recovery runtime | 11.25 minutes |
+| Component                | Duration      |
+| ------------------------ | ------------- |
+| job_fast actual runtime  | 1 minute      |
+| job_slow actual runtime  | 10 minutes    |
+| Initial resource runtime | 5 minutes     |
+| Initial Slurm walltime   | 8 minutes     |
+| First recovery runtime   | 7.5 minutes   |
+| Second recovery runtime  | 11.25 minutes |
 
 ## Files
 
@@ -111,9 +111,9 @@ To make the test faster:
 
 1. Use a higher runtime multiplier:
    ```bash
-   torc watch <workflow_id> --auto-recover --runtime-multiplier 2.5
+   torc watch <workflow_id> --recover --runtime-multiplier 2.5
    ```
    With 2.5x: 5min → 12.5min (success in 1 retry)
 
-2. Reduce the sleep time in job_slow (edit workflow.yaml):
-   Change `sleep 60` to `sleep 30` for a 5-minute job instead of 10.
+2. Reduce the sleep time in job_slow (edit workflow.yaml): Change `sleep 60` to `sleep 30` for a
+   5-minute job instead of 10.

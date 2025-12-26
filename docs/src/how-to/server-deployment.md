@@ -1,6 +1,7 @@
 # Server Deployment
 
-This guide covers deploying and operating the Torc server in production environments, including logging configuration, daemonization, and service management.
+This guide covers deploying and operating the Torc server in production environments, including
+logging configuration, daemonization, and service management.
 
 ## Server Subcommands
 
@@ -9,10 +10,12 @@ The `torc-server` binary has two main subcommands:
 ### `torc-server run`
 
 Use `torc-server run` for:
+
 - **HPC login nodes** - Run the server in a tmux session while your jobs are running.
 - **Development and testing** - Run the server interactively in a terminal
 - **Manual startup** - When you want to control when the server starts and stops
-- **Custom deployment** - Integration with external process managers (e.g., supervisord, custom scripts)
+- **Custom deployment** - Integration with external process managers (e.g., supervisord, custom
+  scripts)
 - **Debugging** - Running with verbose logging to troubleshoot issues
 
 ```bash
@@ -27,6 +30,7 @@ torc-server run --completion-check-interval-secs 5
 ### `torc-server service`
 
 Use `torc-server service` for:
+
 - **Production deployment** - Install as a system service that starts on boot
 - **Reliability** - Automatic restart on failure
 - **Managed lifecycle** - Standard start/stop/status commands
@@ -43,6 +47,7 @@ sudo torc-server service start
 ```
 
 **Which to choose?**
+
 - For **HPC login nodes/development/testing**: Use `torc-server run`
 - For **production servers/standalone computers**: Use `torc-server service install`
 
@@ -72,11 +77,15 @@ sudo torc-server service install --user
 sudo torc-server service start --user
 ```
 
-The service will automatically start on boot and restart on failure. Logs are automatically configured to rotate when they reach 10 MiB (keeping 5 files max). See the [Service Management](#service-management-recommended-for-production) section for customization options.
+The service will automatically start on boot and restart on failure. Logs are automatically
+configured to rotate when they reach 10 MiB (keeping 5 files max). See the
+[Service Management](#service-management-recommended-for-production) section for customization
+options.
 
 ## Logging System
 
-Torc-server uses the `tracing` ecosystem for structured, high-performance logging with automatic size-based file rotation.
+Torc-server uses the `tracing` ecosystem for structured, high-performance logging with automatic
+size-based file rotation.
 
 ### Console Logging (Default)
 
@@ -95,6 +104,7 @@ torc-server run --log-dir /var/log/torc
 ```
 
 This will:
+
 - Write logs to both console and file
 - Automatically rotate when log file reaches 10 MiB
 - Keep up to 5 rotated log files (torc-server.log, torc-server.log.1, ..., torc-server.log.5)
@@ -128,6 +138,7 @@ RUST_LOG=debug torc-server run --log-dir /var/log/torc
 - `RUST_LOG`: Default log level
 
 Example:
+
 ```bash
 export TORC_LOG_DIR=/var/log/torc
 export RUST_LOG=info
@@ -143,6 +154,7 @@ torc-server run --daemon --log-dir /var/log/torc
 ```
 
 **Important:**
+
 - Daemonization is only available on Unix/Linux systems
 - When running as daemon, **you must use `--log-dir`** since console output is lost
 - The daemon creates a PID file (default: `/var/run/torc-server.pid`)
@@ -201,7 +213,8 @@ torc-server run \
 
 ### Automatic Installation
 
-The easiest way to install torc-server as a service is using the built-in service management commands.
+The easiest way to install torc-server as a service is using the built-in service management
+commands.
 
 #### User Service (No Root Required)
 
@@ -233,6 +246,7 @@ torc-server service uninstall --user
 ```
 
 **User Service Defaults:**
+
 - Log directory: `~/.torc/logs`
 - Database: `~/.torc/torc.db`
 - Listen address: `0.0.0.0:8080`
@@ -271,12 +285,14 @@ sudo torc-server service uninstall
 ```
 
 **System Service Defaults:**
+
 - Log directory: `/var/log/torc`
 - Database: `/var/lib/torc/torc.db`
 - Listen address: `0.0.0.0:8080`
 - Worker threads: 4
 
 This automatically creates the appropriate service configuration for your platform:
+
 - **Linux**: systemd service (user: `~/.config/systemd/user/`, system: `/etc/systemd/system/`)
 - **macOS**: launchd service (user: `~/Library/LaunchAgents/`, system: `/Library/LaunchDaemons/`)
 - **Windows**: Windows Service
@@ -315,6 +331,7 @@ WantedBy=multi-user.target
 ```
 
 Then:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable torc-server
@@ -328,11 +345,13 @@ journalctl -u torc-server -f
 ## Log Rotation Strategy
 
 The server uses automatic size-based rotation with the following defaults:
+
 - **Max file size**: 10 MiB per file
 - **Max files**: 5 rotated files (plus the current log file)
 - **Total disk usage**: Maximum of ~50 MiB for all log files
 
 When the current log file reaches 10 MiB, it is automatically rotated:
+
 1. `torc-server.log` → `torc-server.log.1`
 2. `torc-server.log.1` → `torc-server.log.2`
 3. And so on...
@@ -348,7 +367,8 @@ For advanced performance monitoring, enable timing instrumentation:
 TORC_TIMING_ENABLED=true torc-server run --log-dir /var/log/torc
 ```
 
-This adds detailed timing information for all instrumented functions. Note that timing instrumentation works with both console and file logging.
+This adds detailed timing information for all instrumented functions. Note that timing
+instrumentation works with both console and file logging.
 
 ## Troubleshooting
 
@@ -377,7 +397,9 @@ This adds detailed timing information for all instrumented functions. Note that 
 
 ### Logs not rotating
 
-Log rotation happens automatically when a log file reaches 10 MiB. If you need to verify rotation is working:
+Log rotation happens automatically when a log file reaches 10 MiB. If you need to verify rotation is
+working:
+
 1. Check the log directory for numbered files (e.g., `torc-server.log.1`)
 2. Monitor disk usage - it should never exceed ~50 MiB for all log files
 3. For testing, you can generate large amounts of logs with `--log-level trace`

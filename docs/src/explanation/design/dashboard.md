@@ -1,6 +1,8 @@
 # Web Dashboard (torc-dash)
 
-The `torc-dash` application is a web gateway that provides a browser-based UI for managing Torc workflows. It bridges a web frontend with the torc ecosystem by proxying API requests and executing CLI commands.
+The `torc-dash` application is a web gateway that provides a browser-based UI for managing Torc
+workflows. It bridges a web frontend with the torc ecosystem by proxying API requests and executing
+CLI commands.
 
 ## Architecture
 
@@ -22,7 +24,8 @@ The dashboard acts as a gateway layer that:
 
 ### Embedded Static Assets
 
-Uses the `rust_embed` crate to bundle all files from the `static/` directory directly into the binary at compile time:
+Uses the `rust_embed` crate to bundle all files from the `static/` directory directly into the
+binary at compile time:
 
 ```rust
 #[derive(Embed)]
@@ -61,9 +64,9 @@ This enables single-command deployment for local development or simple productio
 
 ### Static File Routes
 
-| Route | Handler | Purpose |
-|-------|---------|---------|
-| `/` | `index_handler` | Serves `index.html` |
+| Route       | Handler          | Purpose                                |
+| ----------- | ---------------- | -------------------------------------- |
+| `/`         | `index_handler`  | Serves `index.html`                    |
 | `/static/*` | `static_handler` | Serves embedded assets with MIME types |
 
 ### API Proxy
@@ -84,34 +87,35 @@ The proxy preserves HTTP methods (GET, POST, PUT, PATCH, DELETE), headers, and r
 
 ### CLI Command Endpoints
 
-These endpoints execute the `torc` CLI as subprocesses, enabling operations that require local file access or complex orchestration:
+These endpoints execute the `torc` CLI as subprocesses, enabling operations that require local file
+access or complex orchestration:
 
-| Endpoint | CLI Command | Purpose |
-|----------|-------------|---------|
-| `POST /api/cli/create` | `torc workflows create` | Create workflow from spec file |
-| `POST /api/cli/run` | `torc workflows run` | Run workflow locally |
-| `POST /api/cli/submit` | `torc workflows submit` | Submit to scheduler |
-| `POST /api/cli/initialize` | `torc workflows initialize` | Initialize job dependencies |
-| `POST /api/cli/delete` | `torc workflows delete` | Delete workflow |
-| `POST /api/cli/reinitialize` | `torc workflows reinitialize` | Reinitialize workflow |
-| `POST /api/cli/reset-status` | `torc workflows reset-status` | Reset job statuses |
-| `GET /api/cli/run-stream` | `torc workflows run` | SSE streaming execution |
+| Endpoint                     | CLI Command                   | Purpose                        |
+| ---------------------------- | ----------------------------- | ------------------------------ |
+| `POST /api/cli/create`       | `torc workflows create`       | Create workflow from spec file |
+| `POST /api/cli/run`          | `torc workflows run`          | Run workflow locally           |
+| `POST /api/cli/submit`       | `torc workflows submit`       | Submit to scheduler            |
+| `POST /api/cli/initialize`   | `torc workflows initialize`   | Initialize job dependencies    |
+| `POST /api/cli/delete`       | `torc workflows delete`       | Delete workflow                |
+| `POST /api/cli/reinitialize` | `torc workflows reinitialize` | Reinitialize workflow          |
+| `POST /api/cli/reset-status` | `torc workflows reset-status` | Reset job statuses             |
+| `GET /api/cli/run-stream`    | `torc workflows run`          | SSE streaming execution        |
 
 ### Server Management Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
+| Endpoint                 | Purpose                     |
+| ------------------------ | --------------------------- |
 | `POST /api/server/start` | Start a managed torc-server |
-| `POST /api/server/stop` | Stop the managed server |
+| `POST /api/server/stop`  | Stop the managed server     |
 | `GET /api/server/status` | Check server running status |
 
 ### Utility Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /api/cli/read-file` | Read local file contents |
-| `POST /api/cli/plot-resources` | Generate resource plots from DB |
-| `POST /api/cli/list-resource-dbs` | Find resource database files |
+| Endpoint                          | Purpose                         |
+| --------------------------------- | ------------------------------- |
+| `POST /api/cli/read-file`         | Read local file contents        |
+| `POST /api/cli/plot-resources`    | Generate resource plots from DB |
+| `POST /api/cli/list-resource-dbs` | Find resource database files    |
 
 ## Key Features
 
@@ -140,6 +144,7 @@ Data: 0
 ```
 
 The stream includes:
+
 - **stdout/stderr** from the torc CLI process
 - **Periodic status updates** fetched from the API every 3 seconds
 - **Exit code** when the process completes
@@ -188,7 +193,8 @@ Configuration is merged from multiple sources (highest to lowest priority):
 
 ### Why CLI Delegation?
 
-Complex operations like workflow creation are delegated to the existing `torc` CLI rather than reimplementing:
+Complex operations like workflow creation are delegated to the existing `torc` CLI rather than
+reimplementing:
 
 1. **Code reuse** - Leverages tested CLI implementation
 2. **Local file access** - CLI can read workflow specs from the filesystem

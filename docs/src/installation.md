@@ -4,7 +4,9 @@
 
 Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases).
 
-**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute after downloading:
+**macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS
+Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute
+after downloading:
 
 ```bash
 xattr -cr /path/to/torc*
@@ -28,8 +30,8 @@ cd torc
 
 ## Building All Components
 
-Note that the file `.env` designates the database URL as `./db/sqlite/dev.db`
-Change as desired or set the environment variable `DATABASE_URL`.
+Note that the file `.env` designates the database URL as `./db/sqlite/dev.db` Change as desired or
+set the environment variable `DATABASE_URL`.
 
 **Initialize the database**
 
@@ -65,8 +67,8 @@ cargo build --release -p torc-dash
 cargo build --release -p torc-slurm-job-runner
 ```
 
-Binaries will be in `target/release/`. We recommend adding this directory
-to your system path so that you can run all binaries without specifying the full path.
+Binaries will be in `target/release/`. We recommend adding this directory to your system path so
+that you can run all binaries without specifying the full path.
 
 ## Python Client
 
@@ -94,7 +96,8 @@ The Julia client provides programmatic workflow management for Julia users.
 
 ### Installation
 
-Since the package is not yet registered in the Julia General registry, install it directly from GitHub:
+Since the package is not yet registered in the Julia General registry, install it directly from
+GitHub:
 
 ```julia
 using Pkg
@@ -112,6 +115,7 @@ using Torc
 ### Running Tests
 
 # Run all tests
+
 ```bash
 cargo test -- --test-threads=1
 

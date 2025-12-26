@@ -5,9 +5,14 @@ use clap::Subcommand;
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::hpc::create_registry_with_config_public;
+use crate::client::commands::pagination::{
+    JobListParams, ResourceRequirementsListParams, ScheduledComputeNodeListParams,
+    SlurmSchedulersListParams, WorkflowListParams, paginate_jobs, paginate_resource_requirements,
+    paginate_scheduled_compute_nodes, paginate_slurm_schedulers, paginate_workflows,
+};
 use crate::client::commands::slurm::generate_schedulers_for_workflow;
 use crate::client::commands::{
-    get_env_user_name, get_user_name, pagination, print_error, select_workflow_interactively,
+    get_env_user_name, get_user_name, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
 };
 use crate::client::hpc::hpc_interface::HpcInterface;
@@ -421,27 +426,17 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
     };
 
     // Fetch all jobs for this workflow
-    let jobs_response = match default_api::list_jobs(
+    let jobs = match paginate_jobs(
         config,
         workflow_id,
-        None,        // status
-        None,        // needs_file_id
-        None,        // upstream_job_id
-        None,        // offset
-        Some(10000), // limit - get all jobs
-        None,        // sort_by
-        None,        // reverse_sort
-        Some(true),  // include_relationships
-        None,        // active_compute_node_id
+        JobListParams::new().with_include_relationships(true),
     ) {
-        Ok(response) => response,
+        Ok(jobs) => jobs,
         Err(e) => {
             eprintln!("Error fetching jobs for workflow {}: {}", workflow_id, e);
             std::process::exit(1);
         }
     };
-
-    let jobs = jobs_response.items.unwrap_or_default();
 
     // Fetch workflow actions
     let actions = match default_api::get_workflow_actions(config, workflow_id) {
@@ -453,27 +448,28 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
     };
 
     // Fetch slurm schedulers for this workflow
-    let slurm_schedulers = match default_api::list_slurm_schedulers(
+    let slurm_schedulers =
+        match paginate_slurm_schedulers(config, workflow_id, SlurmSchedulersListParams::new()) {
+            Ok(schedulers) => schedulers,
+            Err(e) => {
+                eprintln!(
+                    "Warning: Could not fetch slurm schedulers for workflow {}: {}",
+                    workflow_id, e
+                );
+                vec![]
+            }
+        };
+
+    // Fetch resource requirements for this workflow
+    let resource_requirements = match paginate_resource_requirements(
         config,
         workflow_id,
-        None, // offset
-        None, // limit
-        None, // sort_by
-        None, // reverse_sort
-        None, // name
-        None, // account
-        None, // gres
-        None, // mem
-        None, // nodes
-        None, // partition
-        None, // qos
-        None, // tmp
-        None, // walltime
+        ResourceRequirementsListParams::new(),
     ) {
-        Ok(response) => response.items.unwrap_or_default(),
+        Ok(rrs) => rrs,
         Err(e) => {
             eprintln!(
-                "Warning: Could not fetch slurm schedulers for workflow {}: {}",
+                "Warning: Could not fetch resource requirements for workflow {}: {}",
                 workflow_id, e
             );
             vec![]
@@ -486,6 +482,7 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
         &jobs,
         &actions,
         &slurm_schedulers,
+        &resource_requirements,
     ) {
         Ok(plan) => {
             if format == "json" {
@@ -582,84 +579,78 @@ fn handle_list_actions(
                         std::process::exit(1);
                     }
                 }
+            } else if actions.is_empty() {
+                println!(
+                    "No workflow actions found for workflow {}",
+                    selected_workflow_id
+                );
             } else {
-                if actions.is_empty() {
-                    println!(
-                        "No workflow actions found for workflow {}",
-                        selected_workflow_id
-                    );
-                } else {
-                    println!("Workflow Actions for workflow {}:", selected_workflow_id);
-                    println!();
+                println!("Workflow Actions for workflow {}:", selected_workflow_id);
+                println!();
 
-                    let rows: Vec<WorkflowActionTableRow> = actions
-                        .iter()
-                        .map(|action| {
-                            // Determine status based on trigger_count, required_triggers, and executed
-                            let status = if action.executed {
-                                "Executed".to_string()
-                            } else if action.trigger_count >= action.required_triggers {
-                                "Pending (ready to claim)".to_string()
-                            } else {
-                                "Waiting".to_string()
-                            };
+                let rows: Vec<WorkflowActionTableRow> = actions
+                    .iter()
+                    .map(|action| {
+                        // Determine status based on trigger_count, required_triggers, and executed
+                        let status = if action.executed {
+                            "Executed".to_string()
+                        } else if action.trigger_count >= action.required_triggers {
+                            "Pending (ready to claim)".to_string()
+                        } else {
+                            "Waiting".to_string()
+                        };
 
-                            // Format progress as "trigger_count/required_triggers"
-                            let progress =
-                                format!("{}/{}", action.trigger_count, action.required_triggers);
+                        // Format progress as "trigger_count/required_triggers"
+                        let progress =
+                            format!("{}/{}", action.trigger_count, action.required_triggers);
 
-                            // Format job_ids for display
-                            let job_ids = match &action.job_ids {
-                                Some(ids) if !ids.is_empty() => {
-                                    if ids.len() <= 5 {
+                        // Format job_ids for display
+                        let job_ids = match &action.job_ids {
+                            Some(ids) if !ids.is_empty() => {
+                                if ids.len() <= 5 {
+                                    ids.iter()
+                                        .map(|id| id.to_string())
+                                        .collect::<Vec<_>>()
+                                        .join(", ")
+                                } else {
+                                    format!(
+                                        "{}, ... (+{} more)",
                                         ids.iter()
+                                            .take(3)
                                             .map(|id| id.to_string())
                                             .collect::<Vec<_>>()
-                                            .join(", ")
-                                    } else {
-                                        format!(
-                                            "{}, ... (+{} more)",
-                                            ids.iter()
-                                                .take(3)
-                                                .map(|id| id.to_string())
-                                                .collect::<Vec<_>>()
-                                                .join(", "),
-                                            ids.len() - 3
-                                        )
-                                    }
+                                            .join(", "),
+                                        ids.len() - 3
+                                    )
                                 }
-                                _ => "(all jobs)".to_string(),
-                            };
-
-                            WorkflowActionTableRow {
-                                id: action.id.unwrap_or(-1),
-                                trigger_type: action.trigger_type.clone(),
-                                action_type: action.action_type.clone(),
-                                progress,
-                                status,
-                                executed_at: action
-                                    .executed_at
-                                    .as_deref()
-                                    .unwrap_or("-")
-                                    .to_string(),
-                                job_ids,
                             }
-                        })
-                        .collect();
+                            _ => "(all jobs)".to_string(),
+                        };
 
-                    display_table_with_count(&rows, "actions");
+                        WorkflowActionTableRow {
+                            id: action.id.unwrap_or(-1),
+                            trigger_type: action.trigger_type.clone(),
+                            action_type: action.action_type.clone(),
+                            progress,
+                            status,
+                            executed_at: action.executed_at.as_deref().unwrap_or("-").to_string(),
+                            job_ids,
+                        }
+                    })
+                    .collect();
 
-                    // Print a helpful legend
-                    println!();
-                    println!("Status legend:");
-                    println!(
-                        "  Waiting  - trigger_count < required_triggers (action not yet triggered)"
-                    );
-                    println!(
-                        "  Pending  - trigger_count >= required_triggers (ready to be claimed and executed)"
-                    );
-                    println!("  Executed - action has been claimed and executed");
-                }
+                display_table_with_count(&rows, "actions");
+
+                // Print a helpful legend
+                println!();
+                println!("Status legend:");
+                println!(
+                    "  Waiting  - trigger_count < required_triggers (action not yet triggered)"
+                );
+                println!(
+                    "  Pending  - trigger_count >= required_triggers (ready to be claimed and executed)"
+                );
+                println!("  Executed - action has been claimed and executed");
             }
         }
         Err(e) => {
@@ -699,72 +690,12 @@ fn handle_cancel(config: &Configuration, workflow_id: &Option<i64>, format: &str
     }
 
     // Get all scheduled compute nodes for this workflow
-    match default_api::list_scheduled_compute_nodes(
+    let nodes = match paginate_scheduled_compute_nodes(
         config,
         selected_workflow_id,
-        Some(0),     // offset
-        Some(10000), // limit
-        None,        // sort_by
-        None,        // reverse_sort
-        None,        // scheduler_id filter
-        None,        // scheduler_config_id filter
-        None,        // status filter
+        ScheduledComputeNodeListParams::new(),
     ) {
-        Ok(response) => {
-            let nodes = response.items.unwrap_or_default();
-            let mut canceled_jobs = Vec::new();
-            let mut errors = Vec::new();
-
-            for node in nodes {
-                if node.scheduler_type == "slurm" {
-                    match crate::client::hpc::slurm_interface::SlurmInterface::new() {
-                        Ok(slurm_interface) => {
-                            let job_id_str = node.scheduler_id.to_string();
-                            match slurm_interface.cancel_job(&job_id_str) {
-                                Ok(_) => {
-                                    canceled_jobs.push(node.scheduler_id);
-                                    if format != "json" {
-                                        println!("  Canceled Slurm job: {}", node.scheduler_id);
-                                    }
-                                }
-                                Err(e) => {
-                                    let error_msg = format!(
-                                        "Failed to cancel Slurm job {}: {}",
-                                        node.scheduler_id, e
-                                    );
-                                    errors.push(error_msg.clone());
-                                    if format != "json" {
-                                        eprintln!("  {}", error_msg);
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            let error_msg = format!(
-                                "Failed to create SlurmInterface for job {}: {}",
-                                node.scheduler_id, e
-                            );
-                            errors.push(error_msg.clone());
-                            if format != "json" {
-                                eprintln!("  {}", error_msg);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if format == "json" {
-                let response = serde_json::json!({
-                    "status": if errors.is_empty() { "success" } else { "partial_success" },
-                    "workflow_id": selected_workflow_id,
-                    "canceled_slurm_jobs": canceled_jobs,
-                    "errors": if errors.is_empty() { None } else { Some(errors) }
-                });
-                println!("{}", serde_json::to_string_pretty(&response).unwrap());
-            } else if !canceled_jobs.is_empty() {
-                println!("Canceled {} Slurm job(s)", canceled_jobs.len());
-            }
-        }
+        Ok(nodes) => nodes,
         Err(e) => {
             if format == "json" {
                 let error_response = serde_json::json!({
@@ -778,6 +709,57 @@ fn handle_cancel(config: &Configuration, workflow_id: &Option<i64>, format: &str
             }
             std::process::exit(1);
         }
+    };
+
+    let mut canceled_jobs = Vec::new();
+    let mut errors = Vec::new();
+
+    for node in nodes {
+        if node.scheduler_type == "slurm" {
+            match crate::client::hpc::slurm_interface::SlurmInterface::new() {
+                Ok(slurm_interface) => {
+                    let job_id_str = node.scheduler_id.to_string();
+                    match slurm_interface.cancel_job(&job_id_str) {
+                        Ok(_) => {
+                            canceled_jobs.push(node.scheduler_id);
+                            if format != "json" {
+                                println!("  Canceled Slurm job: {}", node.scheduler_id);
+                            }
+                        }
+                        Err(e) => {
+                            let error_msg =
+                                format!("Failed to cancel Slurm job {}: {}", node.scheduler_id, e);
+                            errors.push(error_msg.clone());
+                            if format != "json" {
+                                eprintln!("  {}", error_msg);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    let error_msg = format!(
+                        "Failed to create SlurmInterface for job {}: {}",
+                        node.scheduler_id, e
+                    );
+                    errors.push(error_msg.clone());
+                    if format != "json" {
+                        eprintln!("  {}", error_msg);
+                    }
+                }
+            }
+        }
+    }
+
+    if format == "json" {
+        let response = serde_json::json!({
+            "status": if errors.is_empty() { "success" } else { "partial_success" },
+            "workflow_id": selected_workflow_id,
+            "canceled_slurm_jobs": canceled_jobs,
+            "errors": if errors.is_empty() { None } else { Some(errors) }
+        });
+        println!("{}", serde_json::to_string_pretty(&response).unwrap());
+    } else if !canceled_jobs.is_empty() {
+        println!("Canceled {} Slurm job(s)", canceled_jobs.len());
     }
 }
 
@@ -1254,26 +1236,27 @@ fn handle_initialize(
                 // Normal initialization (not dry-run)
                 match default_api::is_workflow_uninitialized(config, selected_workflow_id) {
                     Ok(is_initialized) => {
-                        if is_initialized.as_bool().unwrap_or(false) {
-                            if !no_prompts && format != "json" {
-                                println!("\nWarning: This workflow has already been initialized.");
-                                println!("Some jobs already have initialized status.");
-                                print!("\nDo you want to continue? (y/N): ");
-                                io::stdout().flush().unwrap();
+                        if is_initialized.as_bool().unwrap_or(false)
+                            && !no_prompts
+                            && format != "json"
+                        {
+                            println!("\nWarning: This workflow has already been initialized.");
+                            println!("Some jobs already have initialized status.");
+                            print!("\nDo you want to continue? (y/N): ");
+                            io::stdout().flush().unwrap();
 
-                                let mut input = String::new();
-                                match io::stdin().read_line(&mut input) {
-                                    Ok(_) => {
-                                        let response = input.trim().to_lowercase();
-                                        if response != "y" && response != "yes" {
-                                            println!("Initialization cancelled.");
-                                            std::process::exit(0);
-                                        }
+                            let mut input = String::new();
+                            match io::stdin().read_line(&mut input) {
+                                Ok(_) => {
+                                    let response = input.trim().to_lowercase();
+                                    if response != "y" && response != "yes" {
+                                        println!("Initialization cancelled.");
+                                        std::process::exit(0);
                                     }
-                                    Err(e) => {
-                                        eprintln!("Failed to read input: {}", e);
-                                        std::process::exit(1);
-                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to read input: {}", e);
+                                    std::process::exit(1);
                                 }
                             }
                         }
@@ -1328,7 +1311,7 @@ fn handle_run(
     workflow_id: &Option<i64>,
     poll_interval: f64,
     max_parallel_jobs: Option<i64>,
-    output_dir: &std::path::PathBuf,
+    output_dir: &std::path::Path,
 ) {
     let user_name = get_env_user_name();
 
@@ -1341,7 +1324,7 @@ fn handle_run(
     let args = crate::run_jobs_cmd::Args {
         workflow_id: Some(selected_workflow_id),
         url: config.base_path.clone(),
-        output_dir: output_dir.clone(),
+        output_dir: output_dir.to_path_buf(),
         poll_interval,
         max_parallel_jobs,
         database_poll_interval: 30,
@@ -1635,7 +1618,7 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
         }
 
         // Proceed with deletion
-        match default_api::delete_workflow(config, selected_id as i64, None) {
+        match default_api::delete_workflow(config, selected_id, None) {
             Ok(removed_workflow) => {
                 deleted_workflows.push(removed_workflow);
             }
@@ -1653,10 +1636,10 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
             .map(|wf| {
                 let mut json = serde_json::to_value(wf).unwrap();
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &wf.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &wf.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
                 json
             })
@@ -1735,12 +1718,11 @@ fn handle_update(
                         let mut json = serde_json::to_value(&updated_workflow).unwrap();
 
                         // Parse resource_monitor_config from JSON string to object if present
-                        if let Some(config_str) = &updated_workflow.resource_monitor_config {
-                            if let Ok(config_obj) =
+                        if let Some(config_str) = &updated_workflow.resource_monitor_config
+                            && let Ok(config_obj) =
                                 serde_json::from_str::<serde_json::Value>(config_str)
-                            {
-                                json["resource_monitor_config"] = config_obj;
-                            }
+                        {
+                            json["resource_monitor_config"] = config_obj;
                         }
 
                         match serde_json::to_string_pretty(&json) {
@@ -1788,10 +1770,10 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, f
                 let mut json = serde_json::to_value(&workflow).unwrap();
 
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &workflow.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &workflow.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
 
                 match serde_json::to_string_pretty(&json) {
@@ -1820,6 +1802,7 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, f
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_list(
     config: &Configuration,
     user: &Option<String>,
@@ -1833,7 +1816,7 @@ fn handle_list(
     format: &str,
 ) {
     // Use pagination utility to get all workflows
-    let mut params = pagination::WorkflowListParams::new()
+    let mut params = WorkflowListParams::new()
         .with_offset(offset)
         .with_limit(limit)
         .with_reverse_sort(reverse_sort);
@@ -1859,7 +1842,7 @@ fn handle_list(
         params = params.with_sort_by(sort_field.clone());
     }
 
-    match pagination::paginate_workflows(config, params) {
+    match paginate_workflows(config, params) {
         Ok(workflows) => {
             if format == "json" {
                 // Convert workflows to JSON values, parsing resource_monitor_config if present
@@ -1869,12 +1852,11 @@ fn handle_list(
                         let mut json = serde_json::to_value(workflow).unwrap();
 
                         // Parse resource_monitor_config from JSON string to object if present
-                        if let Some(config_str) = &workflow.resource_monitor_config {
-                            if let Ok(config_obj) =
+                        if let Some(config_str) = &workflow.resource_monitor_config
+                            && let Ok(config_obj) =
                                 serde_json::from_str::<serde_json::Value>(config_str)
-                            {
-                                json["resource_monitor_config"] = config_obj;
-                            }
+                        {
+                            json["resource_monitor_config"] = config_obj;
                         }
 
                         json
@@ -1888,55 +1870,43 @@ fn handle_list(
                         std::process::exit(1);
                     }
                 }
-            } else {
-                if workflows.is_empty() {
-                    if all_users {
-                        println!("No workflows found for any user");
-                    } else {
-                        let display_user = user.clone().unwrap_or_else(|| {
-                            std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                        });
-                        println!("No workflows found for user: {}", display_user);
-                    }
+            } else if workflows.is_empty() {
+                if all_users {
+                    println!("No workflows found for any user");
                 } else {
-                    if all_users {
-                        println!("Workflows for all users:");
-                        let rows: Vec<WorkflowTableRow> = workflows
-                            .iter()
-                            .map(|workflow| WorkflowTableRow {
-                                id: workflow.id.unwrap_or(-1),
-                                name: workflow.name.clone(),
-                                description: workflow
-                                    .description
-                                    .as_deref()
-                                    .unwrap_or("")
-                                    .to_string(),
-                                user: workflow.user.clone(),
-                                timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
-                            })
-                            .collect();
-                        display_table_with_count(&rows, "workflows");
-                    } else {
-                        let display_user = user.clone().unwrap_or_else(|| {
-                            std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                        });
-                        println!("Workflows for user {}:", display_user);
-                        let rows: Vec<WorkflowTableRowNoUser> = workflows
-                            .iter()
-                            .map(|workflow| WorkflowTableRowNoUser {
-                                id: workflow.id.unwrap_or(-1),
-                                name: workflow.name.clone(),
-                                description: workflow
-                                    .description
-                                    .as_deref()
-                                    .unwrap_or("")
-                                    .to_string(),
-                                timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
-                            })
-                            .collect();
-                        display_table_with_count(&rows, "workflows");
-                    }
+                    let display_user = user.clone().unwrap_or_else(|| {
+                        std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
+                    });
+                    println!("No workflows found for user: {}", display_user);
                 }
+            } else if all_users {
+                println!("Workflows for all users:");
+                let rows: Vec<WorkflowTableRow> = workflows
+                    .iter()
+                    .map(|workflow| WorkflowTableRow {
+                        id: workflow.id.unwrap_or(-1),
+                        name: workflow.name.clone(),
+                        description: workflow.description.as_deref().unwrap_or("").to_string(),
+                        user: workflow.user.clone(),
+                        timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
+                    })
+                    .collect();
+                display_table_with_count(&rows, "workflows");
+            } else {
+                let display_user = user.clone().unwrap_or_else(|| {
+                    std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
+                });
+                println!("Workflows for user {}:", display_user);
+                let rows: Vec<WorkflowTableRowNoUser> = workflows
+                    .iter()
+                    .map(|workflow| WorkflowTableRowNoUser {
+                        id: workflow.id.unwrap_or(-1),
+                        name: workflow.name.clone(),
+                        description: workflow.description.as_deref().unwrap_or("").to_string(),
+                        timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
+                    })
+                    .collect();
+                display_table_with_count(&rows, "workflows");
             }
         }
         Err(e) => {
@@ -1963,10 +1933,10 @@ fn handle_new(
                 let mut json = serde_json::to_value(&created_workflow).unwrap();
 
                 // Parse resource_monitor_config from JSON string to object if present
-                if let Some(config_str) = &created_workflow.resource_monitor_config {
-                    if let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str) {
-                        json["resource_monitor_config"] = config_obj;
-                    }
+                if let Some(config_str) = &created_workflow.resource_monitor_config
+                    && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
+                {
+                    json["resource_monitor_config"] = config_obj;
                 }
 
                 match serde_json::to_string_pretty(&json) {
@@ -2138,6 +2108,7 @@ fn handle_create(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_create_slurm(
     config: &Configuration,
     file: &str,

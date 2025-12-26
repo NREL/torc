@@ -1,19 +1,32 @@
 //! Scheduled compute nodes pagination functionality.
 //!
-//! This module provides lazy iteration and vector collection support for scheduled compute nodes.
+//! This module provides lazy iteration and vector collection support for scheduled compute nodes
+//! using the generic pagination framework.
 
 use crate::client::apis;
-use crate::models::*;
+use crate::client::commands::pagination::base::{
+    Paginatable, PaginatedIterator, PaginatedResponse, PaginationParams,
+};
+use crate::models::ScheduledComputeNodesModel;
 
 /// Parameters for listing scheduled compute nodes with default values and builder methods.
 #[derive(Debug, Clone, Default)]
 pub struct ScheduledComputeNodeListParams {
+    /// Workflow ID to list scheduled compute nodes from
+    pub workflow_id: i64,
+    /// Pagination offset
     pub offset: i64,
+    /// Maximum number of records to return
     pub limit: Option<i64>,
+    /// Field to sort by
     pub sort_by: Option<String>,
+    /// Reverse sort order
     pub reverse_sort: Option<bool>,
+    /// Filter by scheduler ID
     pub scheduler_id: Option<String>,
+    /// Filter by scheduler config ID
     pub scheduler_config_id: Option<String>,
+    /// Filter by status
     pub status: Option<String>,
 }
 
@@ -58,117 +71,87 @@ impl ScheduledComputeNodeListParams {
     }
 }
 
-/// Iterator for scheduled compute nodes with lazy pagination
-pub struct ScheduledComputeNodesIterator {
-    config: apis::configuration::Configuration,
-    workflow_id: i64,
-    params: ScheduledComputeNodeListParams,
-    remaining_limit: i64,
-    initial_limit: i64,
-    current_page: std::vec::IntoIter<ScheduledComputeNodesModel>,
-    finished: bool,
-}
-
-impl ScheduledComputeNodesIterator {
-    pub fn new(
-        config: apis::configuration::Configuration,
-        workflow_id: i64,
-        params: ScheduledComputeNodeListParams,
-        initial_limit: Option<i64>,
-    ) -> Self {
-        let remaining_limit = params.limit.unwrap_or(i64::MAX);
-        Self {
-            config,
-            workflow_id,
-            params,
-            remaining_limit,
-            initial_limit: initial_limit.unwrap_or(1000),
-            current_page: Vec::new().into_iter(),
-            finished: false,
-        }
+impl PaginationParams for ScheduledComputeNodeListParams {
+    fn offset(&self) -> i64 {
+        self.offset
     }
 
-    fn fetch_next_page(
-        &mut self,
-    ) -> Result<bool, apis::Error<apis::default_api::ListScheduledComputeNodesError>> {
-        if self.finished || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0) {
-            return Ok(false);
-        }
+    fn set_offset(&mut self, offset: i64) {
+        self.offset = offset;
+    }
 
-        let page_limit = std::cmp::min(self.remaining_limit, self.initial_limit);
+    fn limit(&self) -> Option<i64> {
+        self.limit
+    }
+
+    fn sort_by(&self) -> Option<&str> {
+        self.sort_by.as_deref()
+    }
+
+    fn reverse_sort(&self) -> Option<bool> {
+        self.reverse_sort
+    }
+}
+
+impl Paginatable for ScheduledComputeNodesModel {
+    type ListError = apis::default_api::ListScheduledComputeNodesError;
+    type Params = ScheduledComputeNodeListParams;
+
+    fn fetch_page(
+        config: &apis::configuration::Configuration,
+        params: &Self::Params,
+        limit: i64,
+    ) -> Result<PaginatedResponse<Self>, apis::Error<Self::ListError>> {
         let response = apis::default_api::list_scheduled_compute_nodes(
-            &self.config,
-            self.workflow_id,
-            Some(self.params.offset),
-            Some(page_limit),
-            self.params.sort_by.as_deref(),
-            self.params.reverse_sort,
-            self.params.scheduler_id.as_deref(),
-            self.params.scheduler_config_id.as_deref(),
-            self.params.status.as_deref(),
+            config,
+            params.workflow_id,
+            Some(params.offset),
+            Some(limit),
+            params.sort_by.as_deref(),
+            params.reverse_sort,
+            params.scheduler_id.as_deref(),
+            params.scheduler_config_id.as_deref(),
+            params.status.as_deref(),
         )?;
 
-        if let Some(items) = response.items {
-            let items_to_take = if self.remaining_limit == i64::MAX {
-                items.len()
-            } else {
-                std::cmp::min(items.len() as i64, self.remaining_limit) as usize
-            };
-            let taken_items: Vec<ScheduledComputeNodesModel> =
-                items.into_iter().take(items_to_take).collect();
-            if self.remaining_limit != i64::MAX {
-                self.remaining_limit -= taken_items.len() as i64;
-            }
-            self.params.offset += taken_items.len() as i64;
-            self.current_page = taken_items.into_iter();
-
-            if !response.has_more || (self.remaining_limit != i64::MAX && self.remaining_limit <= 0)
-            {
-                self.finished = true;
-            }
-            Ok(true)
-        } else {
-            self.finished = true;
-            Ok(false)
-        }
+        Ok(PaginatedResponse {
+            items: response.items,
+            has_more: response.has_more,
+        })
     }
 }
 
-impl Iterator for ScheduledComputeNodesIterator {
-    type Item = Result<
-        ScheduledComputeNodesModel,
-        apis::Error<apis::default_api::ListScheduledComputeNodesError>,
-    >;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // Try to get next item from current page
-        if let Some(item) = self.current_page.next() {
-            return Some(Ok(item));
-        }
-
-        // If current page is exhausted, try to fetch next page
-        if !self.finished {
-            match self.fetch_next_page() {
-                Ok(true) => self.current_page.next().map(Ok),
-                Ok(false) => None,
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            None
-        }
-    }
-}
+/// Type alias for the scheduled compute nodes iterator
+pub type ScheduledComputeNodesIterator = PaginatedIterator<ScheduledComputeNodesModel>;
 
 /// Create a lazy iterator for scheduled compute nodes that fetches pages on-demand.
+///
+/// # Arguments
+/// * `config` - API configuration
+/// * `workflow_id` - ID of the workflow to list scheduled compute nodes from
+/// * `params` - ScheduledComputeNodeListParams containing filter and pagination parameters
+///
+/// # Returns
+/// An iterator that yields `Result<ScheduledComputeNodesModel, Error>` items
 pub fn iter_scheduled_compute_nodes(
     config: &apis::configuration::Configuration,
     workflow_id: i64,
     params: ScheduledComputeNodeListParams,
 ) -> ScheduledComputeNodesIterator {
-    ScheduledComputeNodesIterator::new(config.clone(), workflow_id, params, None)
+    let mut params = params;
+    params.workflow_id = workflow_id;
+    PaginatedIterator::new(config.clone(), params, None)
 }
 
 /// Collect all scheduled compute nodes into a vector using lazy iteration internally.
+///
+/// # Arguments
+/// * `config` - API configuration
+/// * `workflow_id` - ID of the workflow to list scheduled compute nodes from
+/// * `params` - ScheduledComputeNodeListParams containing filter and pagination parameters
+///
+/// # Returns
+/// `Result<Vec<ScheduledComputeNodesModel>, Error>` containing all scheduled compute nodes or an error
 pub fn paginate_scheduled_compute_nodes(
     config: &apis::configuration::Configuration,
     workflow_id: i64,

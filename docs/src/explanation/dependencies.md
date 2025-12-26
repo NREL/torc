@@ -1,6 +1,7 @@
 # Dependency Resolution
 
-Torc supports two types of dependencies. For a hands-on tutorial, see [Diamond Workflow with File Dependencies](../tutorials/diamond.md).
+Torc supports two types of dependencies. For a hands-on tutorial, see
+[Diamond Workflow with File Dependencies](../tutorials/diamond.md).
 
 ## 1. Explicit Dependencies
 
@@ -36,8 +37,9 @@ jobs:
 ```
 
 ### User Data Dependencies
-User scripts ingest JSON data into Torc's database. This is analagous to JSON files except that
-they are stored in the database AND user code must understand Torc's API.
+
+User scripts ingest JSON data into Torc's database. This is analagous to JSON files except that they
+are stored in the database AND user code must understand Torc's API.
 
 ```yaml
 jobs:
@@ -58,6 +60,7 @@ user_data:
 ## Resolution Process
 
 During workflow creation, the server:
+
 1. Resolves all names to IDs
 2. Stores explicit dependencies in `job_depends_on`
 3. Stores file/user_data relationships in junction tables
@@ -66,6 +69,7 @@ During workflow creation, the server:
 ## Dependency Graph Evaluation
 
 When `initialize` is called:
+
 1. All jobs start in `uninitialized` state
 2. Server builds complete dependency graph from explicit and implicit dependencies
 3. Jobs with no unsatisfied dependencies are marked `ready`
@@ -74,16 +78,18 @@ When `initialize` is called:
 
 ## Variable Substitution Syntax
 
-In workflow specification files (YAML, JSON5, KDL), use these patterns to reference files and user data in job commands:
+In workflow specification files (YAML, JSON5, KDL), use these patterns to reference files and user
+data in job commands:
 
-| Pattern | Description |
-|---------|-------------|
-| `${files.input.NAME}` | File path this job reads (creates implicit dependency) |
-| `${files.output.NAME}` | File path this job writes (satisfies dependencies) |
-| `${user_data.input.NAME}` | User data this job reads |
-| `${user_data.output.NAME}` | User data this job writes |
+| Pattern                    | Description                                            |
+| -------------------------- | ------------------------------------------------------ |
+| `${files.input.NAME}`      | File path this job reads (creates implicit dependency) |
+| `${files.output.NAME}`     | File path this job writes (satisfies dependencies)     |
+| `${user_data.input.NAME}`  | User data this job reads                               |
+| `${user_data.output.NAME}` | User data this job writes                              |
 
 Example:
+
 ```yaml
 jobs:
   - name: process

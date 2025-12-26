@@ -49,7 +49,7 @@ impl Default for ServerConfig {
             database: None,
             auth_file: None,
             require_auth: false,
-            completion_check_interval_secs: 60.0,
+            completion_check_interval_secs: 30.0,
             logging: ServerLoggingConfig::default(),
         }
     }
@@ -58,21 +58,13 @@ impl Default for ServerConfig {
 /// Logging configuration for the server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct ServerLoggingConfig {
     /// Directory for log files (enables file logging with rotation)
     pub log_dir: Option<PathBuf>,
 
     /// Use JSON format for log files
     pub json_logs: bool,
-}
-
-impl Default for ServerLoggingConfig {
-    fn default() -> Self {
-        Self {
-            log_dir: None,
-            json_logs: false,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -89,7 +81,7 @@ mod tests {
         assert_eq!(config.threads, 1);
         assert!(config.database.is_none());
         assert!(!config.require_auth);
-        assert_eq!(config.completion_check_interval_secs, 60.0);
+        assert_eq!(config.completion_check_interval_secs, 30.0);
     }
 
     #[test]

@@ -289,8 +289,11 @@ async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> R
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
-    // Retry logic for database lock contention
-    const MAX_RETRIES: u32 = 3;
+    // Retry logic for database lock contention.
+    // Note: SQLite's busy_timeout doesn't work with sqlx's BEGIN DEFERRED transactions
+    // because SQLITE_BUSY is returned immediately when upgrading to a write lock.
+    // We implement our own retry logic to wait up to ~45 seconds (matching busy_timeout).
+    const MAX_RETRIES: u32 = 45;
     const RETRY_DELAY_MS: u64 = 1000;
 
     let mut last_error: Option<ApiError> = None;
@@ -337,11 +340,11 @@ where
     let mut tx = match server.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
-            error!(
+            debug!(
                 "Failed to begin transaction for workflow {}: {}",
                 workflow_id, e
             );
-            return Err(ApiError("Database error".to_string()));
+            return Err(ApiError(format!("Database error: {}", e)));
         }
     };
 
@@ -367,11 +370,11 @@ where
     {
         Ok(jobs) => jobs,
         Err(e) => {
-            error!(
+            debug!(
                 "Database error fetching completed jobs for workflow {}: {}",
                 workflow_id, e
             );
-            return Err(ApiError("Database error".to_string()));
+            return Err(ApiError(format!("Database error: {}", e)));
         }
     };
 
@@ -385,6 +388,26 @@ where
         workflow_id
     );
 
+    // Check if any job in this batch failed
+    let batch_has_failures = completed_jobs.iter().any(|j| j.return_code != 0);
+
+    // Check if we've seen failures before for this workflow (from previous batches)
+    let workflow_has_prior_failures = server
+        .workflows_with_failures
+        .read()
+        .map(|set| set.contains(&workflow_id))
+        .unwrap_or(true); // Assume failures on lock error
+
+    // If this batch has failures, record it for future batches
+    if batch_has_failures {
+        if let Ok(mut set) = server.workflows_with_failures.write() {
+            set.insert(workflow_id);
+        }
+    }
+
+    // Combine: workflow has failures if either this batch or prior batches had failures
+    let workflow_has_failures = batch_has_failures || workflow_has_prior_failures;
+
     // Track all jobs that become ready for action triggering
     let mut all_ready_job_ids = Vec::new();
 
@@ -395,6 +418,7 @@ where
             workflow_id,
             job.id,
             job.return_code,
+            workflow_has_failures,
         )
         .await
         {
@@ -402,7 +426,7 @@ where
                 all_ready_job_ids.extend(ready_job_ids);
             }
             Err(e) => {
-                error!(
+                debug!(
                     "Error unblocking jobs for completed job {} in workflow {}: {}",
                     job.id, workflow_id, e
                 );
@@ -428,20 +452,20 @@ where
     );
 
     if let Err(e) = sqlx::query(&sql).execute(&mut *tx).await {
-        error!(
+        debug!(
             "Database error marking jobs as processed for workflow {}: {}",
             workflow_id, e
         );
-        return Err(ApiError("Database error".to_string()));
+        return Err(ApiError(format!("Database error: {}", e)));
     }
 
     // Commit the transaction
     if let Err(e) = tx.commit().await {
-        error!(
+        debug!(
             "Failed to commit transaction for workflow {}: {}",
             workflow_id, e
         );
-        return Err(ApiError("Database error".to_string()));
+        return Err(ApiError(format!("Database error: {}", e)));
     }
 
     info!(
@@ -487,6 +511,10 @@ pub struct Server<C> {
     /// Timestamp (Unix millis) of the last job completion. Used by the background
     /// unblock task to skip processing when no new completions have occurred.
     last_completion_time: Arc<AtomicU64>,
+    /// Tracks workflows that have had job failures in the current run.
+    /// Used to skip expensive cancellation queries when all jobs succeed.
+    /// Cleared when a workflow is reset/restarted.
+    workflows_with_failures: Arc<std::sync::RwLock<std::collections::HashSet<i64>>>,
     compute_nodes_api: ComputeNodesApiImpl,
     events_api: EventsApiImpl,
     files_api: FilesApiImpl,
@@ -510,6 +538,9 @@ impl<C> Server<C> {
             // Initialize to 1 so the background task runs at least once on startup
             // to process any completions that happened while server was down
             last_completion_time: Arc::new(AtomicU64::new(1)),
+            workflows_with_failures: Arc::new(std::sync::RwLock::new(
+                std::collections::HashSet::new(),
+            )),
             compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
             events_api: EventsApiImpl::new(api_context.clone()),
             files_api: FilesApiImpl::new(api_context.clone()),
@@ -813,11 +844,17 @@ impl<C> Server<C> {
             .resource_requirements_api
             .list_resource_requirements(
                 workflow_id,
-                Some("default".to_string()),
-                0,
-                1,
-                None,
-                None,
+                None,                        // job_id
+                Some("default".to_string()), // name
+                None,                        // memory
+                None,                        // num_cpus
+                None,                        // num_gpus
+                None,                        // num_nodes
+                None,                        // runtime
+                0,                           // offset
+                1,                           // limit
+                None,                        // sort_by
+                None,                        // reverse_sort
                 context,
             )
             .await;
@@ -1129,31 +1166,26 @@ impl<C> Server<C> {
         Ok(())
     }
 
-    /// Unblock jobs using a provided transaction (for batch processing).
+    /// Fast path for unblocking jobs after a successful completion (return_code = 0).
     ///
-    /// This is the internal implementation that accepts a transaction parameter,
-    /// allowing the background task to process multiple completions in one transaction.
+    /// Uses bulk UPDATE statements instead of individual updates for better performance.
+    /// Handles cancellation of jobs with failed dependencies before marking remaining jobs as ready.
     ///
     /// # Arguments
     /// * `tx` - The database transaction to use
-    /// * `completed_job_id` - The ID of the job that just completed
     /// * `workflow_id` - The workflow ID containing the jobs
-    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_has_failures` - Whether any job in this workflow has failed (from in-memory tracking)
     ///
     /// # Returns
-    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready
     /// * `Err(ApiError)` if there's a database error
-    async fn unblock_jobs_waiting_for_tx(
+    async fn unblock_jobs_fast_path_tx(
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         workflow_id: i64,
         completed_job_id: i64,
-        return_code: i64,
+        workflow_has_failures: bool,
     ) -> Result<Vec<i64>, ApiError> {
-        debug!(
-            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={}",
-            completed_job_id, workflow_id, return_code
-        );
-
         let completed_status = models::JobStatus::Completed.to_int();
         let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
@@ -1161,8 +1193,144 @@ impl<C> Server<C> {
         let ready_status = models::JobStatus::Ready.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
 
-        // Use a recursive CTE to find all jobs that need status updates (including cascading cancellations)
-        // The CTE propagates return codes through the dependency chain to determine final status
+        // Only run the expensive cancellation query if we know there are failed jobs.
+        // The workflow_has_failures flag is tracked in memory to avoid database queries.
+        if workflow_has_failures {
+            let _canceled = sqlx::query!(
+                r#"
+                UPDATE job
+                SET status = ?
+                WHERE workflow_id = ?
+                  AND status = ?
+                  AND cancel_on_blocking_job_failure = 1
+                  AND id IN (
+                      SELECT jbb.job_id
+                      FROM job_depends_on jbb
+                      WHERE jbb.depends_on_job_id = ?
+                        AND jbb.workflow_id = ?
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM job_depends_on jbb2
+                            JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                            WHERE jbb2.job_id = jbb.job_id
+                              AND jbb2.depends_on_job_id != ?
+                              AND j2.status NOT IN (?, ?, ?, ?)
+                        )
+                  )
+                  AND EXISTS (
+                      SELECT 1
+                      FROM job_depends_on jbb_fail
+                      JOIN job j_fail ON jbb_fail.depends_on_job_id = j_fail.id
+                      JOIN result r_fail ON j_fail.id = r_fail.job_id
+                      JOIN workflow_status ws ON j_fail.workflow_id = ws.id AND r_fail.run_id = ws.run_id
+                      WHERE jbb_fail.job_id = job.id
+                        AND jbb_fail.workflow_id = ?
+                        AND j_fail.status IN (?, ?, ?, ?)
+                        AND r_fail.return_code != 0
+                  )
+                "#,
+                canceled_status,
+                workflow_id,
+                blocked_status,
+                completed_job_id,
+                workflow_id,
+                completed_job_id,
+                completed_status,
+                failed_status,
+                canceled_status,
+                terminated_status,
+                workflow_id,
+                completed_status,
+                failed_status,
+                canceled_status,
+                terminated_status
+            )
+            .execute(&mut **tx)
+            .await;
+        }
+
+        // Then, mark remaining unblocked jobs as ready (those without failed dependencies
+        // or without cancel_on_blocking_job_failure)
+        let updated_jobs = match sqlx::query!(
+            r#"
+            UPDATE job
+            SET status = ?
+            WHERE workflow_id = ?
+              AND status = ?
+              AND id IN (
+                  SELECT jbb.job_id
+                  FROM job_depends_on jbb
+                  WHERE jbb.depends_on_job_id = ?
+                    AND jbb.workflow_id = ?
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM job_depends_on jbb2
+                        JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                        WHERE jbb2.job_id = jbb.job_id
+                          AND jbb2.depends_on_job_id != ?
+                          AND j2.status NOT IN (?, ?, ?, ?)
+                    )
+              )
+            RETURNING id
+            "#,
+            ready_status,
+            workflow_id,
+            blocked_status,
+            completed_job_id,
+            workflow_id,
+            completed_job_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status
+        )
+        .fetch_all(&mut **tx)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                debug!("Fast path bulk update failed: {}", e);
+                return Err(ApiError(format!("Database error: {}", e)));
+            }
+        };
+
+        let ready_job_ids: Vec<i64> = updated_jobs.iter().map(|r| r.id).collect();
+        debug!(
+            "unblock_jobs_fast_path_tx: updated {} jobs to ready after completion of job_id={}",
+            ready_job_ids.len(),
+            completed_job_id
+        );
+        Ok(ready_job_ids)
+    }
+
+    /// Slow path for unblocking jobs after a failed completion (return_code != 0).
+    ///
+    /// Uses a recursive CTE to handle cascading cancellations when a job fails.
+    /// This is more expensive than the fast path but necessary for proper cancellation propagation.
+    ///
+    /// # Arguments
+    /// * `tx` - The database transaction to use
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `completed_job_id` - The ID of the job that just completed
+    ///
+    /// # Returns
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_slow_path_tx(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        workflow_id: i64,
+        completed_job_id: i64,
+    ) -> Result<Vec<i64>, ApiError> {
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+        let ready_status = models::JobStatus::Ready.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        // Use a recursive CTE to find all jobs that need status updates (including cascading
+        // cancellations). The CTE propagates return codes through the dependency chain to
+        // determine final status.
         let jobs_to_update = match sqlx::query(
             r#"
             WITH RECURSIVE jobs_to_process(job_id, should_cancel, level) AS (
@@ -1269,14 +1437,14 @@ impl<C> Server<C> {
 
         if jobs_to_update.is_empty() {
             debug!(
-                "unblock_jobs_waiting_for_tx: no jobs to unblock after completion of job_id={}",
+                "unblock_jobs_slow_path_tx: no jobs to unblock after completion of job_id={}",
                 completed_job_id
             );
-            return Ok(Vec::new()); // No jobs to unblock
+            return Ok(Vec::new());
         }
 
         debug!(
-            "unblock_jobs_waiting_for_tx: found {} jobs to update after completion of job_id={}",
+            "unblock_jobs_slow_path_tx: found {} jobs to update after completion of job_id={}",
             jobs_to_update.len(),
             completed_job_id
         );
@@ -1285,7 +1453,7 @@ impl<C> Server<C> {
         let mut updated_count = 0;
         let mut ready_count = 0;
         let mut canceled_count = 0;
-        let mut ready_job_ids = Vec::new(); // Track jobs that became ready
+        let mut ready_job_ids = Vec::new();
 
         for row in jobs_to_update {
             let job_id: i64 = row.get("job_id");
@@ -1312,13 +1480,13 @@ impl<C> Server<C> {
                         updated_count += 1;
                         if new_status == ready_status {
                             ready_count += 1;
-                            ready_job_ids.push(job_id); // Track this job for triggering actions
+                            ready_job_ids.push(job_id);
                         } else {
                             canceled_count += 1;
                         }
 
                         debug!(
-                            "unblock_jobs_waiting_for_tx: updated job_id={} to status={}",
+                            "unblock_jobs_slow_path_tx: updated job_id={} to status={}",
                             job_id,
                             if new_status == ready_status {
                                 "ready"
@@ -1336,11 +1504,111 @@ impl<C> Server<C> {
         }
 
         debug!(
-            "unblock_jobs_waiting_for_tx: successfully updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
+            "unblock_jobs_slow_path_tx: updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
             updated_count, ready_count, canceled_count, completed_job_id
         );
 
         Ok(ready_job_ids)
+    }
+
+    /// Unblock jobs using a provided transaction (for batch processing).
+    ///
+    /// This is the internal implementation that accepts a transaction parameter,
+    /// allowing the background task to process multiple completions in one transaction.
+    ///
+    /// # Arguments
+    /// * `tx` - The database transaction to use
+    /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    /// * `workflow_has_failures` - Whether any job in this workflow has failed (used to skip cancellation checks)
+    ///
+    /// # Returns
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_waiting_for_tx(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        workflow_id: i64,
+        completed_job_id: i64,
+        return_code: i64,
+        workflow_has_failures: bool,
+    ) -> Result<Vec<i64>, ApiError> {
+        debug!(
+            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={} workflow_has_failures={}",
+            completed_job_id, workflow_id, return_code, workflow_has_failures
+        );
+
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        // Quick pre-check: Are there ANY blocked jobs that depend on this completed job
+        // AND have no other incomplete dependencies? If not, skip the expensive CTE.
+        // This optimization is critical for barrier patterns where 1000 jobs complete
+        // but only the last one actually unblocks the barrier.
+        let has_unblockable_jobs = match sqlx::query!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jbb.depends_on_job_id = ?
+                  AND jbb.workflow_id = ?
+                  AND j.status = ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM job_depends_on jbb2
+                      JOIN job j2 ON jbb2.depends_on_job_id = j2.id
+                      WHERE jbb2.job_id = jbb.job_id
+                        AND jbb2.depends_on_job_id != ?
+                        AND j2.status NOT IN (?, ?, ?, ?)
+                  )
+            ) as has_jobs
+            "#,
+            completed_job_id,
+            workflow_id,
+            blocked_status,
+            completed_job_id,
+            completed_status,
+            failed_status,
+            canceled_status,
+            terminated_status
+        )
+        .fetch_one(&mut **tx)
+        .await
+        {
+            Ok(row) => row.has_jobs != 0,
+            Err(e) => {
+                debug!("Pre-check query failed: {}", e);
+                // If pre-check fails, fall through to full query
+                true
+            }
+        };
+
+        if !has_unblockable_jobs {
+            debug!(
+                "unblock_jobs_waiting_for_tx: quick check found no unblockable jobs for job_id={}",
+                completed_job_id
+            );
+            return Ok(Vec::new());
+        }
+
+        // Dispatch to appropriate path based on return code
+        if return_code == 0 {
+            // Fast path for successful completions: uses bulk updates
+            Self::unblock_jobs_fast_path_tx(
+                tx,
+                workflow_id,
+                completed_job_id,
+                workflow_has_failures,
+            )
+            .await
+        } else {
+            // Slow path for failed completions: uses recursive CTE for cascading cancellations
+            Self::unblock_jobs_slow_path_tx(tx, workflow_id, completed_job_id).await
+        }
     }
 
     /// Unblock jobs that were waiting for a completed job.
@@ -1374,9 +1642,16 @@ impl<C> Server<C> {
         };
 
         // Call the transaction-based helper
-        let ready_job_ids =
-            Self::unblock_jobs_waiting_for_tx(&mut tx, workflow_id, completed_job_id, return_code)
-                .await?;
+        // Pass true for workflow_has_failures since this codepath doesn't have access to
+        // in-memory failure tracking (used outside background batch processing)
+        let ready_job_ids = Self::unblock_jobs_waiting_for_tx(
+            &mut tx,
+            workflow_id,
+            completed_job_id,
+            return_code,
+            true, // Conservative: assume failures possible, let DB pre-check optimize
+        )
+        .await?;
 
         // Commit the transaction
         if let Err(e) = tx.commit().await {
@@ -1435,84 +1710,54 @@ impl<C> Server<C> {
             job_id, workflow_id
         );
 
-        // Find all jobs that were blocked by this job and are currently completed/failed
         let completed_status = models::JobStatus::Completed.to_int();
         let failed_status = models::JobStatus::Failed.to_int();
         let uninitialized_status = models::JobStatus::Uninitialized.to_int();
 
-        let affected_jobs = match sqlx::query!(
+        // Update downstream jobs to uninitialized in a single query using a subquery
+        let result = match sqlx::query!(
             r#"
-            SELECT DISTINCT jbb.job_id
-            FROM job_depends_on jbb
-            JOIN job j ON jbb.job_id = j.id
-            WHERE jbb.depends_on_job_id = ?
-            AND jbb.workflow_id = ?
-            AND j.status IN (?, ?)
+            UPDATE job
+            SET status = ?
+            WHERE workflow_id = ?
+            AND id IN (
+                SELECT DISTINCT jbb.job_id
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jbb.depends_on_job_id = ?
+                AND jbb.workflow_id = ?
+                AND j.status IN (?, ?)
+            )
             "#,
+            uninitialized_status,
+            workflow_id,
             job_id,
             workflow_id,
             completed_status,
             failed_status
         )
-        .fetch_all(self.pool.as_ref())
+        .execute(self.pool.as_ref())
         .await
         {
-            Ok(rows) => rows,
+            Ok(result) => result,
             Err(e) => {
-                error!("Database error finding downstream jobs: {}", e);
+                error!("Database error reinitializing downstream jobs: {}", e);
                 return Err(ApiError("Database error".to_string()));
             }
         };
 
-        if affected_jobs.is_empty() {
+        let affected_count = result.rows_affected();
+        if affected_count == 0 {
             debug!(
                 "reinitialize_downstream_jobs: no downstream jobs to reinitialize for job_id={}",
                 job_id
             );
-            return Ok(());
+        } else {
+            info!(
+                "reinitialize_downstream_jobs: successfully reinitialized {} downstream jobs for job_id={}",
+                affected_count, job_id
+            );
         }
-
-        debug!(
-            "reinitialize_downstream_jobs: found {} downstream jobs to reinitialize",
-            affected_jobs.len()
-        );
-
-        // Update the status of affected jobs to uninitialized
-        for row in &affected_jobs {
-            let downstream_job_id = row.job_id;
-
-            match sqlx::query!(
-                "UPDATE job SET status = ? WHERE id = ? AND workflow_id = ?",
-                uninitialized_status,
-                downstream_job_id,
-                workflow_id
-            )
-            .execute(self.pool.as_ref())
-            .await
-            {
-                Ok(result) => {
-                    if result.rows_affected() > 0 {
-                        debug!(
-                            "reinitialize_downstream_jobs: reset job_id={} from done to uninitialized",
-                            downstream_job_id
-                        );
-                    }
-                }
-                Err(e) => {
-                    error!(
-                        "Database error updating job {} status: {}",
-                        downstream_job_id, e
-                    );
-                    return Err(ApiError("Database error".to_string()));
-                }
-            }
-        }
-
-        info!(
-            "reinitialize_downstream_jobs: successfully reinitialized {} downstream jobs for job_id={}",
-            affected_jobs.len(),
-            job_id
-        );
 
         Ok(())
     }
@@ -2318,6 +2563,8 @@ where
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        hostname: Option<String>,
+        is_active: Option<bool>,
         scheduled_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListComputeNodesResponse, ApiError> {
@@ -2329,6 +2576,8 @@ where
                 processed_limit,
                 sort_by,
                 reverse_sort,
+                hostname,
+                is_active,
                 scheduled_compute_node_id,
                 context,
             )
@@ -2496,7 +2745,13 @@ where
     async fn list_resource_requirements(
         &self,
         workflow_id: i64,
+        job_id: Option<i64>,
         name: Option<String>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        num_gpus: Option<i64>,
+        num_nodes: Option<i64>,
+        runtime: Option<i64>,
         offset: Option<i64>,
         limit: Option<i64>,
         sort_by: Option<String>,
@@ -2507,7 +2762,13 @@ where
         self.resource_requirements_api
             .list_resource_requirements(
                 workflow_id,
+                job_id,
                 name,
+                memory,
+                num_cpus,
+                num_gpus,
+                num_nodes,
+                runtime,
                 processed_offset,
                 processed_limit,
                 sort_by,
@@ -2791,6 +3052,11 @@ where
             body,
             context.get().0.clone()
         );
+
+        // Clear in-memory failure tracking for this workflow when (re)initializing
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
 
         // Begin a transaction to ensure all initialization steps are atomic
         let mut tx = match self.pool.begin().await {
@@ -3224,6 +3490,13 @@ where
         body: models::WorkflowStatusModel,
         context: &C,
     ) -> Result<UpdateWorkflowStatusResponse, ApiError> {
+        // Clear in-memory failure tracking when workflow is being archived
+        if body.is_archived == Some(true) {
+            if let Ok(mut set) = self.workflows_with_failures.write() {
+                set.remove(&id);
+            }
+        }
+
         self.workflows_api
             .update_workflow_status(id, body, context)
             .await
@@ -3495,19 +3768,25 @@ where
             }
         }
 
-        // If we have jobs to update, update their status to pending
+        // If we have jobs to update, update their status to pending using bulk UPDATE
         if !job_ids_to_update.is_empty() {
-            // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
-            for job_id in &job_ids_to_update {
-                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
-                    .execute(&mut *conn)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to update job status: {}", e);
-                        ApiError("Database update error".to_string())
-                    })?;
-            }
+            // SAFETY: job_ids are i64 from database query results.
+            // i64::to_string() only produces numeric strings - SQL injection impossible.
+            // Using string formatting because sqlx doesn't support parameterized IN clauses.
+            let job_ids_str = job_ids_to_update
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            let sql = format!(
+                "UPDATE job SET status = {} WHERE id IN ({})",
+                pending, job_ids_str
+            );
+            sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
+                error!("Failed to update job status: {}", e);
+                ApiError("Database update error".to_string())
+            })?;
 
             debug!(
                 "Updated {} jobs to pending status for workflow {}",
@@ -3664,6 +3943,11 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<DeleteWorkflowResponse, ApiError> {
+        // Clear in-memory failure tracking for this workflow
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
+
         self.workflows_api.delete_workflow(id, body, context).await
     }
 
@@ -3705,6 +3989,11 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ResetWorkflowStatusResponse, ApiError> {
+        // Clear in-memory failure tracking for this workflow
+        if let Ok(mut set) = self.workflows_with_failures.write() {
+            set.remove(&id);
+        }
+
         // TODO: don't allow this if any nodes are scheduled
         self.workflows_api
             .reset_workflow_status(id, force, body, context)
@@ -4150,36 +4439,10 @@ where
             }
         };
 
-        // 3. Add/update workflow_result record
-        // First, delete any existing record for this workflow_id and job_id combination
-        // This handles the case where a job is being re-run or a result is being replaced
+        // 3. Add/update workflow_result record using INSERT OR REPLACE for atomic upsert.
+        // This handles the case where a job is being re-run or a result is being replaced.
+        // The table has PRIMARY KEY (workflow_id, job_id), so conflicts are automatically resolved.
         let workflow_id = job.workflow_id;
-        match sqlx::query!(
-            "DELETE FROM workflow_result WHERE workflow_id = ? AND job_id = ?",
-            workflow_id,
-            id
-        )
-        .execute(self.pool.as_ref())
-        .await
-        {
-            Ok(result) => {
-                if result.rows_affected() > 0 {
-                    error!(
-                        "Bug in complete_job: found existing workflow_result record for workflow_id={}, job_id={}",
-                        workflow_id, id
-                    );
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Failed to delete existing workflow_result for workflow_id={}, job_id={}: {}",
-                    workflow_id, id, e
-                );
-                return Err(ApiError("Database error".to_string()));
-            }
-        }
-
-        // Now insert the new workflow_result record
         let result_id_value = result_id.ok_or_else(|| {
             error!("Result ID is missing after creating result");
             ApiError("Result ID is missing".to_string())
@@ -4187,7 +4450,7 @@ where
 
         match sqlx::query!(
             r#"
-            INSERT INTO workflow_result (workflow_id, job_id, result_id)
+            INSERT OR REPLACE INTO workflow_result (workflow_id, job_id, result_id)
             VALUES (?, ?, ?)
             "#,
             workflow_id,
@@ -4727,19 +4990,25 @@ where
             }
         }
 
-        // If we have jobs to update, update their status to pending
+        // If we have jobs to update, update their status to pending using bulk UPDATE
         if !job_ids_to_update.is_empty() {
-            // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
-            for job_id in &job_ids_to_update {
-                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
-                    .execute(&mut *conn)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to update job status: {}", e);
-                        ApiError("Database update error".to_string())
-                    })?;
-            }
+            // SAFETY: job_ids are i64 from database query results.
+            // i64::to_string() only produces numeric strings - SQL injection impossible.
+            // Using string formatting because sqlx doesn't support parameterized IN clauses.
+            let job_ids_str = job_ids_to_update
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            let sql = format!(
+                "UPDATE job SET status = {} WHERE id IN ({})",
+                pending, job_ids_str
+            );
+            sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
+                error!("Failed to update job status: {}", e);
+                ApiError("Database update error".to_string())
+            })?;
 
             debug!(
                 "Updated {} jobs to pending status for workflow {}",

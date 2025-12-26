@@ -1,15 +1,15 @@
 # Quick Start (Local)
 
 This guide walks you through creating and running your first Torc workflow with local execution.
-Jobs run directly on the current machine, making this ideal for testing, development, or
-non-HPC environments.
+Jobs run directly on the current machine, making this ideal for testing, development, or non-HPC
+environments.
 
 For running workflows on HPC clusters with Slurm, see [Quick Start (HPC)](./quick-start-hpc.md).
 
 ## Start the Server
 
-Start a Torc server with a local database. Setting `--completion-check-interval-secs` ensures
-job completions are processed quickly (use this for personal servers, not shared deployments).
+Start a Torc server with a local database. Setting `--completion-check-interval-secs` ensures job
+completions are processed quickly (use this for personal servers, not shared deployments).
 
 ```console
 torc-server run --database torc.db --completion-check-interval-secs 5
@@ -38,8 +38,8 @@ jobs:
     command: echo "Hello again from torc!"
 ```
 
-> **Note:** Torc also accepts `.json5` and `.kdl` workflow specifications.
-> See [Workflow Specification Formats](./reference/workflow-formats.md) for details.
+> **Note:** Torc also accepts `.json5` and `.kdl` workflow specifications. See
+> [Workflow Specification Formats](./reference/workflow-formats.md) for details.
 
 ## Run the Workflow
 
@@ -100,6 +100,7 @@ files:
 ```
 
 Dependencies are automatically inferred from file inputs/outputs:
+
 - `work1` and `work2` wait for `preprocess` (depend on its output files)
 - `postprocess` waits for both `work1` and `work2` to complete
 

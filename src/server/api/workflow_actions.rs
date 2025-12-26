@@ -220,8 +220,8 @@ where
             .map(|ids| serde_json::to_string(ids).expect("Failed to serialize job_ids"));
 
         let result = sqlx::query(
-            "INSERT INTO workflow_action (workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, persistent)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO workflow_action (workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, persistent, is_recovery)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(body.workflow_id)
         .bind(&body.trigger_type)
@@ -232,6 +232,7 @@ where
         .bind(required_triggers)
         .bind(if body.executed { 1 } else { 0 })
         .bind(if body.persistent { 1 } else { 0 })
+        .bind(if body.is_recovery { 1 } else { 0 })
         .execute(self.context.pool.as_ref())
         .await;
 
@@ -269,7 +270,7 @@ where
         );
 
         let rows = sqlx::query(
-            "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent
+            "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent, is_recovery
              FROM workflow_action
              WHERE workflow_id = ?
              ORDER BY id"
@@ -306,6 +307,7 @@ where
                             executed_at: row.get("executed_at"),
                             executed_by: row.get("executed_by"),
                             persistent: row.get::<i32, _>("persistent") != 0,
+                            is_recovery: row.get::<i32, _>("is_recovery") != 0,
                         })
                     })
                     .collect();
@@ -358,7 +360,7 @@ where
                 // Build IN clause with placeholders
                 let placeholders = types.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
                 let query_str = format!(
-                    "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent
+                    "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent, is_recovery
                      FROM workflow_action
                      WHERE workflow_id = ? AND trigger_count >= required_triggers AND executed = 0 AND trigger_type IN ({})
                      ORDER BY id",
@@ -377,7 +379,7 @@ where
             }
         } else {
             // No filter - get all pending actions
-            let query_str = "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent
+            let query_str = "SELECT id, workflow_id, trigger_type, action_type, action_config, job_ids, trigger_count, required_triggers, executed, executed_at, executed_by, persistent, is_recovery
                  FROM workflow_action
                  WHERE workflow_id = ? AND trigger_count >= required_triggers AND executed = 0
                  ORDER BY id".to_string();
@@ -420,6 +422,7 @@ where
                             executed_at: row.get("executed_at"),
                             executed_by: row.get("executed_by"),
                             persistent: row.get::<i32, _>("persistent") != 0,
+                            is_recovery: row.get::<i32, _>("is_recovery") != 0,
                         })
                     })
                     .collect();
@@ -774,7 +777,8 @@ impl WorkflowActionsApiImpl {
     }
 
     /// Reset workflow actions for reinitialization.
-    /// This resets executed flags and pre-computes trigger_count based on current job states.
+    /// This first deletes any recovery actions (created by `torc slurm regenerate`),
+    /// then resets executed flags and pre-computes trigger_count based on current job states.
     /// For on_jobs_ready and on_jobs_complete actions, trigger_count is set to the number of jobs
     /// already in a satisfied state (e.g., Completed jobs count toward on_jobs_ready).
     /// For other action types, trigger_count is reset to 0.
@@ -784,7 +788,31 @@ impl WorkflowActionsApiImpl {
             workflow_id
         );
 
-        // First, reset executed flags for all actions
+        // First, delete all recovery actions (ephemeral actions created during recovery)
+        match sqlx::query("DELETE FROM workflow_action WHERE workflow_id = ? AND is_recovery = 1")
+            .bind(workflow_id)
+            .execute(self.context.pool.as_ref())
+            .await
+        {
+            Ok(result) => {
+                let deleted = result.rows_affected();
+                if deleted > 0 {
+                    info!(
+                        "Deleted {} recovery action(s) for workflow {}",
+                        deleted, workflow_id
+                    );
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Failed to delete recovery actions for workflow {}: {}",
+                    workflow_id, e
+                );
+                return Err(database_error(e));
+            }
+        }
+
+        // Reset executed flags for all remaining (non-recovery) actions
         match sqlx::query(
             "UPDATE workflow_action SET executed = 0, executed_by = NULL WHERE workflow_id = ?",
         )

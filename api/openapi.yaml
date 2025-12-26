@@ -4493,12 +4493,14 @@ components:
             \ job processes and set all statuses to terminated. Increase the time\
             \ in cases where the job processes handle SIGTERM and need more time to\
             \ gracefully shut down. Set the value to 0 to maximize the time given\
-            \ to jobs. If not set, take the database's default value of 60 seconds."
+            \ to jobs. If not set, take the database's default value of 90 seconds."
           type: integer
         compute_node_wait_for_new_jobs_seconds:
-          default: 60
+          default: 90
           description: Inform all compute nodes to wait for new jobs for this time
-            period before exiting. Does not apply if the workflow is complete.
+            period before exiting. Does not apply if the workflow is complete. Default
+            must be >= completion_check_interval_secs + job_completion_poll_interval
+            to avoid exiting before dependent jobs are unblocked.
           type: integer
         compute_node_ignore_workflow_completion:
           default: false

@@ -5,6 +5,7 @@ Configuration guide for deploying Torc on High-Performance Computing systems.
 ## Overview
 
 Running Torc on HPC systems requires special configuration to ensure:
+
 - Compute nodes can reach the torc-server running on a login node
 - The database is stored on a filesystem accessible to all nodes
 - Network paths use the correct hostnames for the HPC interconnect
@@ -14,20 +15,23 @@ Running Torc on HPC systems requires special configuration to ensure:
 ### Hostname Requirements
 
 On most HPC systems, login nodes have multiple network interfaces:
-- **External hostname**: Used for SSH access from outside (e.g., `kl3.hpc.nrel.gov`)
-- **Internal hostname**: Used by compute nodes via the high-speed interconnect (e.g., `kl3.hsn.cm.kestrel.hpc.nrel.gov`)
 
-When running `torc-server` on a login node, you must use the **internal hostname** so compute nodes can connect.
+- **External hostname**: Used for SSH access from outside (e.g., `kl3.hpc.nrel.gov`)
+- **Internal hostname**: Used by compute nodes via the high-speed interconnect (e.g.,
+  `kl3.hsn.cm.kestrel.hpc.nrel.gov`)
+
+When running `torc-server` on a login node, you must use the **internal hostname** so compute nodes
+can connect.
 
 ### NREL Kestrel Example
 
 On NREL's Kestrel system, login nodes use the High-Speed Network (HSN) for internal communication:
 
-| Login Node | External Hostname | Internal Hostname (for `-u` flag) |
-|------------|-------------------|-----------------------------------|
-| kl1 | `kl1.hpc.nrel.gov` | `kl1.hsn.cm.kestrel.hpc.nrel.gov` |
-| kl2 | `kl2.hpc.nrel.gov` | `kl2.hsn.cm.kestrel.hpc.nrel.gov` |
-| kl3 | `kl3.hpc.nrel.gov` | `kl3.hsn.cm.kestrel.hpc.nrel.gov` |
+| Login Node | External Hostname  | Internal Hostname (for `-u` flag) |
+| ---------- | ------------------ | --------------------------------- |
+| kl1        | `kl1.hpc.nrel.gov` | `kl1.hsn.cm.kestrel.hpc.nrel.gov` |
+| kl2        | `kl2.hpc.nrel.gov` | `kl2.hsn.cm.kestrel.hpc.nrel.gov` |
+| kl3        | `kl3.hpc.nrel.gov` | `kl3.hsn.cm.kestrel.hpc.nrel.gov` |
 
 **Starting the server:**
 
@@ -69,16 +73,17 @@ Consult your HPC system's documentation or support team for the correct internal
 ## Database Placement
 
 The SQLite database must be on a filesystem accessible to both:
+
 - The login node running `torc-server`
 - All compute nodes running jobs
 
 ### Recommended Locations
 
-| Filesystem | Pros | Cons |
-|------------|------|------|
+| Filesystem                  | Pros                        | Cons                       |
+| --------------------------- | --------------------------- | -------------------------- |
 | Scratch (`/scratch/$USER/`) | Fast, shared, high capacity | May be purged periodically |
-| Project (`/projects/`) | Persistent, shared | May have quotas |
-| Home (`~`) | Persistent | Often slow, limited space |
+| Project (`/projects/`)      | Persistent, shared          | May have quotas            |
+| Home (`~`)                  | Persistent                  | Often slow, limited space  |
 
 **Best practice:** Use scratch for active workflows, backup completed workflows to project storage.
 
@@ -183,7 +188,8 @@ export TORC_CLIENT__RUN__OUTPUT_DIR="/scratch/$USER/torc/output"
 
 ## Slurm Job Runner Configuration
 
-When submitting workflows to Slurm, the job runners on compute nodes need to reach the server. The `TORC_API_URL` is automatically passed to Slurm jobs.
+When submitting workflows to Slurm, the job runners on compute nodes need to reach the server. The
+`TORC_API_URL` is automatically passed to Slurm jobs.
 
 Verify connectivity from a compute node:
 

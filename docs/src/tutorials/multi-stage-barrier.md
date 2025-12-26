@@ -1,6 +1,7 @@
 # Multi-Stage Workflows with Barriers
 
-This tutorial teaches you how to efficiently structure workflows with multiple stages using the **barrier pattern**. This is essential for scaling workflows to thousands of jobs.
+This tutorial teaches you how to efficiently structure workflows with multiple stages using the
+**barrier pattern**. This is essential for scaling workflows to thousands of jobs.
 
 ## Learning Objectives
 
@@ -54,6 +55,7 @@ jobs:
 ### Why This is Bad
 
 When Torc expands this workflow:
+
 - Each of the 1000 `analyze_*` jobs gets a dependency on each of the 1000 `preprocess_*` jobs
 - **Total dependencies: 1000 × 1000 = 1,000,000 relationships**
 - Workflow creation takes **minutes** instead of seconds
@@ -63,6 +65,7 @@ When Torc expands this workflow:
 ## The Solution: Barrier Jobs
 
 A **barrier job** is a lightweight synchronization point that:
+
 - Depends on all jobs from the previous stage (using a regex)
 - Is depended upon by all jobs in the next stage
 - Reduces dependencies from O(n²) to O(n)
@@ -143,11 +146,13 @@ resource_requirements:
 ### Dependency Breakdown
 
 **Without barriers:**
+
 - Stage 1 → Stage 2: 1000 × 1000 = **1,000,000 dependencies**
 - Stage 2 → Stage 3: 1000 = **1,000 dependencies**
 - **Total: 1,001,000 dependencies**
 
 **With barriers:**
+
 - Stage 1 → Barrier 1: **1,000 dependencies**
 - Barrier 1 → Stage 2: **1,000 dependencies**
 - Stage 2 → Barrier 2: **1,000 dependencies**
@@ -204,6 +209,7 @@ torc workflows create barrier_demo.yaml
 ```
 
 You should see output like:
+
 ```
 Created workflow with ID: 1
 - Created 100 stage 1 jobs
@@ -228,6 +234,7 @@ torc tui
 ```
 
 You'll see:
+
 1. All 100 `generate_data_*` jobs run in parallel
 2. Once they finish, `data_generation_complete` executes
 3. Then all 100 `process_data_*` jobs run in parallel
@@ -321,6 +328,7 @@ depends_on_regexes: [".*"]                  # Matches EVERYTHING (disaster!)
 ```
 
 Test your regex before deploying:
+
 ```bash
 # Python regex tester
 python3 -c "import re; print(re.match(r'^stage1_job_.*', 'stage1_job_001'))"
@@ -396,17 +404,20 @@ jobs:
 
 The barrier pattern scales beautifully. Let's compare performance:
 
-| Stage 1 Jobs | Stage 2 Jobs | Without Barriers | With Barriers | Speedup |
-|--------------|--------------|------------------|---------------|---------|
-| 100 | 100 | 10,000 deps (~1s) | 200 deps (<0.1s) | 10× |
-| 1,000 | 1,000 | 1,000,000 deps (~45s) | 2,000 deps (~0.5s) | 90× |
-| 10,000 | 10,000 | 100,000,000 deps (hours) | 20,000 deps (~5s) | 1000×+ |
+| Stage 1 Jobs | Stage 2 Jobs | Without Barriers         | With Barriers      | Speedup |
+| ------------ | ------------ | ------------------------ | ------------------ | ------- |
+| 100          | 100          | 10,000 deps (~1s)        | 200 deps (<0.1s)   | 10×     |
+| 1,000        | 1,000        | 1,000,000 deps (~45s)    | 2,000 deps (~0.5s) | 90×     |
+| 10,000       | 10,000       | 100,000,000 deps (hours) | 20,000 deps (~5s)  | 1000×+  |
 
 As you can see, barriers become **essential** for large-scale workflows.
 
 ## Complete Example
 
-See [multi_stage_barrier_pattern.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/multi_stage_barrier_pattern.yaml) for a comprehensive example with:
+See
+[multi_stage_barrier_pattern.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/multi_stage_barrier_pattern.yaml)
+for a comprehensive example with:
+
 - 3 distinct stages (1000 → 1000 → 100 jobs)
 - Informative barrier jobs with progress logging
 - Different resource requirements per stage
@@ -414,7 +425,8 @@ See [multi_stage_barrier_pattern.yaml](https://github.com/NREL/torc/blob/main/ex
 
 ## Summary
 
-✓ **Use barrier jobs** when all jobs in one stage must complete before any job in the next stage starts
+✓ **Use barrier jobs** when all jobs in one stage must complete before any job in the next stage
+starts
 
 ✓ **Use file/data dependencies** for one-to-one job relationships
 
@@ -424,11 +436,14 @@ See [multi_stage_barrier_pattern.yaml](https://github.com/NREL/torc/blob/main/ex
 
 ✓ **Use descriptive names** to track workflow progress
 
-The barrier pattern is your key to scaling Torc workflows from hundreds to thousands of jobs efficiently!
+The barrier pattern is your key to scaling Torc workflows from hundreds to thousands of jobs
+efficiently!
 
 ## Next Steps
 
 - Try modifying the demo workflow to have 3 or more stages
 - Experiment with adding validation logic to barrier jobs
-- Check out [Advanced Parameterization](./advanced-params.md) for creating complex multi-stage pipelines
-- Learn about [Workflow Actions](../explanation/workflow-actions.md) for conditional execution between stages
+- Check out [Advanced Parameterization](./advanced-params.md) for creating complex multi-stage
+  pipelines
+- Learn about [Workflow Actions](../explanation/workflow-actions.md) for conditional execution
+  between stages
