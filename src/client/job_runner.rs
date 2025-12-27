@@ -62,7 +62,6 @@
 
 use chrono::{DateTime, Utc};
 use log::{self, debug, error, info, warn};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -78,12 +77,11 @@ use crate::client::commands::watch::format_duration_iso8601;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
 use crate::config::TorcConfig;
+use crate::memory_utils::memory_string_to_gb;
 use crate::models::{
     ClaimJobsSortMethod, ComputeNodesResources, JobStatus, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
 };
-
-const GB: i64 = 1024 * 1024 * 1024;
 
 /// Result of running the job worker, indicating whether any jobs failed or were terminated.
 #[derive(Debug, Default, Clone)]
@@ -92,11 +90,6 @@ pub struct WorkerResult {
     pub had_failures: bool,
     /// True if any job was terminated (e.g., due to SIGTERM or time limit)
     pub had_terminations: bool,
-}
-
-// Cache for memory string to GB conversions
-thread_local! {
-    static MEMORY_CACHE: RefCell<HashMap<String, f64>> = RefCell::new(HashMap::new());
 }
 
 /// Manages parallel job execution on a compute node.
@@ -839,7 +832,7 @@ impl JobRunner {
     }
 
     fn decrement_resources(&mut self, rr: &ResourceRequirementsModel) {
-        let job_memory_gb = convert_memory_string_to_gb(&rr.memory);
+        let job_memory_gb = memory_string_to_gb(&rr.memory);
         self.resources.memory_gb -= job_memory_gb;
         self.resources.num_cpus -= rr.num_cpus;
         self.resources.num_gpus -= rr.num_gpus;
@@ -849,7 +842,7 @@ impl JobRunner {
     }
 
     fn increment_resources(&mut self, rr: &ResourceRequirementsModel) {
-        let job_memory_gb = convert_memory_string_to_gb(&rr.memory);
+        let job_memory_gb = memory_string_to_gb(&rr.memory);
         self.resources.memory_gb += job_memory_gb;
         self.resources.num_cpus += rr.num_cpus;
         self.resources.num_gpus += rr.num_gpus;
@@ -1645,76 +1638,4 @@ impl ComputeNodeRules {
             jobs_sort_method: jobs_sort_method.unwrap_or(ClaimJobsSortMethod::GpusRuntimeMemory),
         }
     }
-}
-
-/// Convert memory string to bytes
-/// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
-/// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
-fn convert_memory_string_to_gb(memory_str: &str) -> f64 {
-    // Check cache first
-    let cached_result = MEMORY_CACHE.with(|cache| cache.borrow().get(memory_str).copied());
-
-    if let Some(cached_value) = cached_result {
-        return cached_value;
-    }
-
-    // Calculate the value if not in cache
-    let result = match convert_memory_string_to_bytes(memory_str) {
-        Ok(bytes) => bytes as f64 / GB as f64,
-        Err(e) => {
-            panic!("Error converting memory string to bytes: {}", e);
-        }
-    };
-
-    // Store in cache
-    MEMORY_CACHE.with(|cache| {
-        cache.borrow_mut().insert(memory_str.to_string(), result);
-    });
-
-    result
-}
-
-/// Convert memory string to bytes
-/// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
-/// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
-fn convert_memory_string_to_bytes(memory_str: &str) -> Result<i64, String> {
-    // TODO: This is repeated on the server. Remove duplication.
-    let memory_str = memory_str.trim();
-
-    if memory_str.is_empty() {
-        return Err("Memory string cannot be empty".to_string());
-    }
-
-    // Check if the last character is a unit
-    let (number_part, multiplier) = if let Some(last_char) = memory_str.chars().last() {
-        if last_char.is_alphabetic() {
-            let number_part = &memory_str[..memory_str.len() - 1];
-            let multiplier = match last_char.to_ascii_lowercase() {
-                'k' => 1024_i64,
-                'm' => 1024_i64.pow(2),
-                'g' => 1024_i64.pow(3),
-                't' => 1024_i64.pow(4),
-                _ => return Err(format!("Invalid memory unit: {}", last_char)),
-            };
-            (number_part, multiplier)
-        } else {
-            (memory_str, 1_i64)
-        }
-    } else {
-        return Err("Memory string cannot be empty".to_string());
-    };
-
-    // Parse the number part
-    let number: i64 = number_part
-        .parse()
-        .map_err(|_| format!("Invalid number in memory string: {}", number_part))?;
-
-    if number < 0 {
-        return Err("Memory size cannot be negative".to_string());
-    }
-
-    // Calculate total bytes, checking for overflow
-    number
-        .checked_mul(multiplier)
-        .ok_or_else(|| "Memory size too large, would cause overflow".to_string())
 }
