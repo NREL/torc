@@ -54,6 +54,7 @@ __all__ = [
     "ListFilesResponse",
     "ListJobDependenciesResponse",
     "ListJobFileRelationshipsResponse",
+    "ListJobIdsResponse",
     "ListJobUserDataRelationshipsResponse",
     "ListJobsResponse",
     "ListLocalSchedulersResponse",
@@ -69,6 +70,7 @@ __all__ = [
     "NotFoundErrorResponse",
     "ProcessChangedJobInputsResponse",
     "RemoteWorkerModel",
+    "ResetJobStatusResponse",
     "ResourceRequirementsModel",
     "ResultModel",
     "ScheduledComputeNodesModel",
@@ -120,6 +122,7 @@ from torc.openapi_client.models.list_events_response import ListEventsResponse a
 from torc.openapi_client.models.list_files_response import ListFilesResponse as ListFilesResponse
 from torc.openapi_client.models.list_job_dependencies_response import ListJobDependenciesResponse as ListJobDependenciesResponse
 from torc.openapi_client.models.list_job_file_relationships_response import ListJobFileRelationshipsResponse as ListJobFileRelationshipsResponse
+from torc.openapi_client.models.list_job_ids_response import ListJobIdsResponse as ListJobIdsResponse
 from torc.openapi_client.models.list_job_user_data_relationships_response import ListJobUserDataRelationshipsResponse as ListJobUserDataRelationshipsResponse
 from torc.openapi_client.models.list_jobs_response import ListJobsResponse as ListJobsResponse
 from torc.openapi_client.models.list_local_schedulers_response import ListLocalSchedulersResponse as ListLocalSchedulersResponse
@@ -135,6 +138,7 @@ from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
 from torc.openapi_client.models.not_found_error_response import NotFoundErrorResponse as NotFoundErrorResponse
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse as ProcessChangedJobInputsResponse
 from torc.openapi_client.models.remote_worker_model import RemoteWorkerModel as RemoteWorkerModel
+from torc.openapi_client.models.reset_job_status_response import ResetJobStatusResponse as ResetJobStatusResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel as ResourceRequirementsModel
 from torc.openapi_client.models.result_model import ResultModel as ResultModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel as ScheduledComputeNodesModel

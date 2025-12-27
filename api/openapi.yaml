@@ -3193,7 +3193,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/list_job_ids_response"
           description: Successful response
         "500":
           content:
@@ -3555,8 +3555,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/reset_job_status_response"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -5817,4 +5823,39 @@ components:
       - gpus_memory_runtime
       - none
       type: string
+    reset_job_status_response:
+      description: Response from resetting job statuses
+      properties:
+        workflow_id:
+          description: The workflow ID for which jobs were reset
+          type: integer
+        updated_count:
+          description: The number of jobs that were updated
+          type: integer
+        status:
+          description: The status that jobs were reset to
+          type: string
+        reset_type:
+          description: The type of reset performed (e.g., "all" or "failed_only")
+          type: string
+      required:
+        - workflow_id
+        - updated_count
+        - status
+      type: object
+    list_job_ids_response:
+      description: Response containing job IDs for a workflow
+      properties:
+        job_ids:
+          description: List of job IDs in the workflow
+          items:
+            type: integer
+          type: array
+        count:
+          description: The number of job IDs returned
+          type: integer
+      required:
+        - job_ids
+        - count
+      type: object
 x-original-swagger-version: "2.0"

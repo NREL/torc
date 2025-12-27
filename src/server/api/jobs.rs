@@ -497,14 +497,13 @@ impl JobsApiImpl {
             total_reset_count, workflow_id
         );
 
-        // TODO: Return a data model - define in openapi spec
         Ok(ResetJobStatusResponse::SuccessfulResponse(
-            serde_json::json!({
-                "workflow_id": workflow_id,
-                "updated_count": total_reset_count,
-                "status": JobStatus::Uninitialized.to_string(),
-                "reset_type": "failed_only"
-            }),
+            models::ResetJobStatusResponse::new(
+                workflow_id,
+                total_reset_count,
+                JobStatus::Uninitialized.to_string(),
+            )
+            .with_reset_type("failed_only".to_string()),
         ))
     }
 
@@ -1246,11 +1245,9 @@ where
 
         debug!("Retrieved {} job IDs for workflow {}", job_ids.len(), id);
 
-        // TODO: Make response object
-        Ok(ListJobIdsResponse::SuccessfulResponse(serde_json::json!({
-            "job_ids": job_ids,
-            "count": job_ids.len()
-        })))
+        Ok(ListJobIdsResponse::SuccessfulResponse(
+            models::ListJobIdsResponse::new(job_ids),
+        ))
     }
 
     /// Retrieve all jobs for one workflow.
@@ -2132,11 +2129,11 @@ where
         );
 
         Ok(ResetJobStatusResponse::SuccessfulResponse(
-            serde_json::json!({
-                "workflow_id": id,
-                "updated_count": updated_count,
-                "status": "uninitialized"
-            }),
+            models::ResetJobStatusResponse::new(
+                id,
+                updated_count as i64,
+                JobStatus::Uninitialized.to_string(),
+            ),
         ))
     }
 }

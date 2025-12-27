@@ -2223,7 +2223,7 @@ function list_job_file_relationships(_api::DefaultApi, response_stream::Channel,
 end
 
 const _returntypes_list_job_ids_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobIdsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2242,7 +2242,7 @@ Retrieve all job IDs for one workflow.
 Params:
 - id::Int64 (required)
 
-Return: Any, OpenAPI.Clients.ApiResponse
+Return: ListJobIdsResponse, OpenAPI.Clients.ApiResponse
 """
 function list_job_ids(_api::DefaultApi, id::Int64; _mediaType=nothing)
     _ctx = _oacinternal_list_job_ids(_api, id; _mediaType=_mediaType)
@@ -2888,7 +2888,8 @@ function process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, 
 end
 
 const _returntypes_reset_job_status_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ResetJobStatusResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2910,7 +2911,7 @@ Params:
 - failed_only::Bool
 - body::Any
 
-Return: Any, OpenAPI.Clients.ApiResponse
+Return: ResetJobStatusResponse, OpenAPI.Clients.ApiResponse
 """
 function reset_job_status(_api::DefaultApi, id::Int64; failed_only=nothing, body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_reset_job_status(_api, id; failed_only=failed_only, body=body, _mediaType=_mediaType)

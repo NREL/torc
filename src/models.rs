@@ -10718,3 +10718,63 @@ impl RemoteWorkerModel {
         }
     }
 }
+
+/// Response model for reset_job_status endpoint.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ResetJobStatusResponse {
+    /// The workflow ID for which jobs were reset
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+
+    /// The number of jobs that were updated
+    #[serde(rename = "updated_count")]
+    pub updated_count: i64,
+
+    /// The status that jobs were reset to
+    #[serde(rename = "status")]
+    pub status: String,
+
+    /// The type of reset performed (e.g., "all" or "failed_only")
+    #[serde(rename = "reset_type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reset_type: Option<String>,
+}
+
+impl ResetJobStatusResponse {
+    #[allow(clippy::new_without_default)]
+    pub fn new(workflow_id: i64, updated_count: i64, status: String) -> ResetJobStatusResponse {
+        ResetJobStatusResponse {
+            workflow_id,
+            updated_count,
+            status,
+            reset_type: None,
+        }
+    }
+
+    pub fn with_reset_type(mut self, reset_type: String) -> Self {
+        self.reset_type = Some(reset_type);
+        self
+    }
+}
+
+/// Response model for list_job_ids endpoint.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListJobIdsResponse {
+    /// List of job IDs in the workflow
+    #[serde(rename = "job_ids")]
+    pub job_ids: Vec<i64>,
+
+    /// The number of job IDs returned
+    #[serde(rename = "count")]
+    pub count: i64,
+}
+
+impl ListJobIdsResponse {
+    #[allow(clippy::new_without_default)]
+    pub fn new(job_ids: Vec<i64>) -> ListJobIdsResponse {
+        let count = job_ids.len() as i64;
+        ListJobIdsResponse { job_ids, count }
+    }
+}

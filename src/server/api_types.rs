@@ -644,7 +644,7 @@ pub enum IsWorkflowUninitializedResponse {
 #[must_use]
 pub enum ListJobIdsResponse {
     /// Successful response
-    SuccessfulResponse(serde_json::Value),
+    SuccessfulResponse(models::ListJobIdsResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -990,7 +990,7 @@ pub enum DeleteWorkflowResponse {
 #[must_use]
 pub enum ResetJobStatusResponse {
     /// Successful response
-    SuccessfulResponse(serde_json::Value),
+    SuccessfulResponse(models::ResetJobStatusResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
