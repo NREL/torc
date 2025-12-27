@@ -881,7 +881,32 @@ impl WorkflowManager {
                             "Dry run: Would reset job {} (name: '{}') from {:?} to Uninitialized due to file change in {} (id: {})",
                             job_id, &job.name, job_status, file.name, file_id
                         );
-                        // TODO: Find all downstream jobs and log those also.
+
+                        // TODO
+                        // Find and log direct downstream jobs (jobs that depend on this job)
+                        // Note: This only finds direct dependencies, not transitive ones.
+                        // A server-side recursive query would be more efficient for full traversal.
+                        let downstream_params = JobListParams::new().with_upstream_job_id(job_id);
+                        for downstream_job_result in
+                            iter_jobs(&self.config, self.workflow_id, downstream_params)
+                        {
+                            let downstream_job = match downstream_job_result {
+                                Ok(job) => job,
+                                Err(err) => {
+                                    panic!("Failed to fetch downstream job: {}", err);
+                                }
+                            };
+
+                            let downstream_job_id = match downstream_job.id {
+                                Some(id) => id,
+                                None => continue,
+                            };
+
+                            info!(
+                                "Dry run: Would reset downstream job {} (name: '{}' status: {:?}) to Uninitialized",
+                                downstream_job_id, &downstream_job.name, downstream_job.status
+                            );
+                        }
                     } else {
                         match default_api::manage_status_change(
                             &self.config,
@@ -969,25 +994,28 @@ impl WorkflowManager {
                         job_id, &job.name
                     );
 
-                    let upstream_params = JobListParams::new().with_upstream_job_id(job_id);
-                    for upstream_job_result in
-                        iter_jobs(&self.config, self.workflow_id, upstream_params)
+                    // Find and log direct downstream jobs (jobs that depend on this job)
+                    // Note: This only finds direct dependencies, not transitive ones.
+                    // A server-side recursive query would be more efficient for full traversal.
+                    let downstream_params = JobListParams::new().with_upstream_job_id(job_id);
+                    for downstream_job_result in
+                        iter_jobs(&self.config, self.workflow_id, downstream_params)
                     {
-                        let upstream_job = match upstream_job_result {
+                        let downstream_job = match downstream_job_result {
                             Ok(job) => job,
                             Err(err) => {
-                                panic!("Failed to fetch upstream job: {}", err);
+                                panic!("Failed to fetch downstream job: {}", err);
                             }
                         };
 
-                        let upstream_job_id = match upstream_job.id {
+                        let downstream_job_id = match downstream_job.id {
                             Some(id) => id,
                             None => continue,
                         };
 
                         info!(
-                            "Dry run: Would reset upstream job {} (name: '{}' status: {:?}) to Uninitialized",
-                            upstream_job_id, &upstream_job.name, upstream_job.status
+                            "Dry run: Would reset downstream job {} (name: '{}' status: {:?}) to Uninitialized",
+                            downstream_job_id, &downstream_job.name, downstream_job.status
                         );
                     }
                 } else {

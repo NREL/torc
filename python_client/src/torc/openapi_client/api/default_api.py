@@ -40,6 +40,7 @@ from torc.openapi_client.models.list_events_response import ListEventsResponse
 from torc.openapi_client.models.list_files_response import ListFilesResponse
 from torc.openapi_client.models.list_job_dependencies_response import ListJobDependenciesResponse
 from torc.openapi_client.models.list_job_file_relationships_response import ListJobFileRelationshipsResponse
+from torc.openapi_client.models.list_job_ids_response import ListJobIdsResponse
 from torc.openapi_client.models.list_job_user_data_relationships_response import ListJobUserDataRelationshipsResponse
 from torc.openapi_client.models.list_jobs_response import ListJobsResponse
 from torc.openapi_client.models.list_local_schedulers_response import ListLocalSchedulersResponse
@@ -54,6 +55,7 @@ from torc.openapi_client.models.list_workflows_response import ListWorkflowsResp
 from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse
 from torc.openapi_client.models.remote_worker_model import RemoteWorkerModel
+from torc.openapi_client.models.reset_job_status_response import ResetJobStatusResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
@@ -19107,7 +19109,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> object:
+    ) -> ListJobIdsResponse:
         """Retrieve all job IDs for one workflow.
 
         Retrieve all job IDs for one workflow.
@@ -19145,7 +19147,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ListJobIdsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19175,7 +19177,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[object]:
+    ) -> ApiResponse[ListJobIdsResponse]:
         """Retrieve all job IDs for one workflow.
 
         Retrieve all job IDs for one workflow.
@@ -19213,7 +19215,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ListJobIdsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19281,7 +19283,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ListJobIdsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -24665,7 +24667,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> object:
+    ) -> ResetJobStatusResponse:
         """Reset status for jobs to uninitialized.
 
         Reset status for jobs to uninitialized.
@@ -24709,7 +24711,8 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ResetJobStatusResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -24741,7 +24744,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[object]:
+    ) -> ApiResponse[ResetJobStatusResponse]:
         """Reset status for jobs to uninitialized.
 
         Reset status for jobs to uninitialized.
@@ -24785,7 +24788,8 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ResetJobStatusResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -24861,7 +24865,8 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "ResetJobStatusResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(

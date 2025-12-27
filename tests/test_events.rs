@@ -645,7 +645,6 @@ fn test_events_unicode_and_special_characters(start_server: &ServerProcess) {
 fn test_events_concurrent_additions(start_server: &ServerProcess) {
     let config = &start_server.config;
 
-    // TODO: this has hung at least once
     let workflow = create_test_workflow(config, "test_concurrent_workflow");
     let workflow_id = workflow.id.unwrap();
 

@@ -61,9 +61,6 @@ pub struct ClientRunConfig {
     /// Output directory for jobs
     pub output_dir: PathBuf,
 
-    /// Database poll interval in seconds
-    pub database_poll_interval: i64,
-
     /// Number of CPUs available
     pub num_cpus: Option<i64>,
 
@@ -80,7 +77,6 @@ impl Default for ClientRunConfig {
             poll_interval: 5.0,
             max_parallel_jobs: None,
             output_dir: PathBuf::from("output"),
-            database_poll_interval: 30,
             num_cpus: None,
             memory_gb: None,
             num_gpus: None,

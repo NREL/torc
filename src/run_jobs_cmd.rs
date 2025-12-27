@@ -55,9 +55,6 @@ pub struct Args {
     /// When set: Uses simple queue-based allocation with this parallel limit (ignores resource requirements).
     #[arg(long)]
     pub max_parallel_jobs: Option<i64>,
-    /// Database poll interval in seconds
-    #[arg(long, default_value = "30")]
-    pub database_poll_interval: i64,
     /// Time limit for jobs
     #[arg(long)]
     pub time_limit: Option<String>,
@@ -263,7 +260,6 @@ pub fn run(args: &Args) {
         args.output_dir.clone(),
         args.poll_interval,
         args.max_parallel_jobs,
-        args.database_poll_interval,
         args.time_limit.clone(),
         parsed_end_time,
         resources,

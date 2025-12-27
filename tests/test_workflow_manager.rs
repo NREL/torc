@@ -142,7 +142,6 @@ fn execute_workflow_with_job(
     let returned_jobs = result.jobs.expect("Server must return jobs array");
 
     // Verify the job was returned with correct status
-    //TODO: broken
     assert_eq!(returned_jobs.len(), 1, "Should return exactly 1 job");
     let prepared_job = &returned_jobs[0];
     assert_eq!(prepared_job.id.expect("Job ID should be present"), job_id);

@@ -3193,7 +3193,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/list_job_ids_response"
           description: Successful response
         "500":
           content:
@@ -3555,8 +3555,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/reset_job_status_response"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -4609,6 +4615,7 @@ components:
         compute_node_ignore_workflow_completion: false
         compute_node_wait_for_new_jobs_seconds: 1
         compute_node_wait_for_healthy_database_minutes: 5
+        compute_node_min_time_for_new_jobs_seconds: 300
         worker_startup_script: worker_startup_script
         worker_completion_script: worker_completion_script
         compute_node_expiration_buffer_seconds: 6
@@ -4654,6 +4661,14 @@ components:
           default: 20
           description: Inform all compute nodes to wait this number of minutes if
             the database becomes unresponsive.
+          type: integer
+        compute_node_min_time_for_new_jobs_seconds:
+          default: 300
+          description: Minimum remaining walltime (in seconds) required before a
+            compute node will request new jobs. If the remaining time is less than
+            this value, the compute node will stop requesting new jobs and wait for
+            running jobs to complete. This prevents starting jobs that won't have
+            enough time to complete. Default is 300 seconds (5 minutes).
           type: integer
         jobs_sort_method:
           $ref: "#/components/schemas/jobs_sort_method"
@@ -5808,4 +5823,39 @@ components:
       - gpus_memory_runtime
       - none
       type: string
+    reset_job_status_response:
+      description: Response from resetting job statuses
+      properties:
+        workflow_id:
+          description: The workflow ID for which jobs were reset
+          type: integer
+        updated_count:
+          description: The number of jobs that were updated
+          type: integer
+        status:
+          description: The status that jobs were reset to
+          type: string
+        reset_type:
+          description: The type of reset performed (e.g., "all" or "failed_only")
+          type: string
+      required:
+        - workflow_id
+        - updated_count
+        - status
+      type: object
+    list_job_ids_response:
+      description: Response containing job IDs for a workflow
+      properties:
+        job_ids:
+          description: List of job IDs in the workflow
+          items:
+            type: integer
+          type: array
+        count:
+          description: The number of job IDs returned
+          type: integer
+      required:
+        - job_ids
+        - count
+      type: object
 x-original-swagger-version: "2.0"

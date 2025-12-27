@@ -1327,7 +1327,6 @@ fn handle_run(
         output_dir: output_dir.to_path_buf(),
         poll_interval,
         max_parallel_jobs,
-        database_poll_interval: 30,
         time_limit: None,
         end_time: None,
         num_cpus: None,

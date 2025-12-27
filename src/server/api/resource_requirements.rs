@@ -11,6 +11,7 @@ use crate::server::api_types::{
     ListResourceRequirementsResponse, UpdateResourceRequirementsResponse,
 };
 
+use crate::memory_utils::memory_string_to_bytes;
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
 
@@ -86,50 +87,6 @@ impl ResourceRequirementsApiImpl {
     pub fn new(context: ApiContext) -> Self {
         Self { context }
     }
-
-    /// Convert memory string to bytes
-    /// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
-    /// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
-    fn memory_string_to_bytes(memory_str: &str) -> Result<i64, String> {
-        let memory_str = memory_str.trim();
-
-        if memory_str.is_empty() {
-            return Err("Memory string cannot be empty".to_string());
-        }
-
-        // Check if the last character is a unit
-        let (number_part, multiplier) = if let Some(last_char) = memory_str.chars().last() {
-            if last_char.is_alphabetic() {
-                let number_part = &memory_str[..memory_str.len() - 1];
-                let multiplier = match last_char.to_ascii_lowercase() {
-                    'k' => 1024_i64,
-                    'm' => 1024_i64.pow(2),
-                    'g' => 1024_i64.pow(3),
-                    't' => 1024_i64.pow(4),
-                    _ => return Err(format!("Invalid memory unit: {}", last_char)),
-                };
-                (number_part, multiplier)
-            } else {
-                (memory_str, 1_i64)
-            }
-        } else {
-            return Err("Memory string cannot be empty".to_string());
-        };
-
-        // Parse the number part
-        let number: i64 = number_part
-            .parse()
-            .map_err(|_| format!("Invalid number in memory string: {}", number_part))?;
-
-        if number < 0 {
-            return Err("Memory size cannot be negative".to_string());
-        }
-
-        // Calculate total bytes, checking for overflow
-        number
-            .checked_mul(multiplier)
-            .ok_or_else(|| "Memory size too large, would cause overflow".to_string())
-    }
 }
 
 #[async_trait]
@@ -149,7 +106,7 @@ where
             context.get().0.clone()
         );
 
-        let memory_bytes = match Self::memory_string_to_bytes(&body.memory) {
+        let memory_bytes = match memory_string_to_bytes(&body.memory) {
             Ok(bytes) => bytes,
             Err(e) => {
                 let error_response = models::ErrorResponse::new(serde_json::json!({
@@ -537,7 +494,7 @@ where
             context.get().0.clone()
         );
 
-        let memory_bytes = Self::memory_string_to_bytes(&body.memory)
+        let memory_bytes = memory_string_to_bytes(&body.memory)
             .map_err(|e| ApiError(format!("Invalid memory format '{}': {}", body.memory, e)))?;
 
         let runtime_seconds = duration_string_to_seconds(&body.runtime)
@@ -652,88 +609,4 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_memory_string_to_bytes() {
-        // Test plain bytes
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1024").unwrap(),
-            1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("0").unwrap(),
-            0
-        );
-
-        // Test KiB (1024 bytes)
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1k").unwrap(),
-            1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1K").unwrap(),
-            1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("2k").unwrap(),
-            2048
-        );
-
-        // Test MiB (1024^2 bytes)
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1m").unwrap(),
-            1024 * 1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1M").unwrap(),
-            1024 * 1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("2m").unwrap(),
-            2 * 1024 * 1024
-        );
-
-        // Test GiB (1024^3 bytes)
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1g").unwrap(),
-            1024_i64.pow(3)
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1G").unwrap(),
-            1024_i64.pow(3)
-        );
-
-        // Test TiB (1024^4 bytes)
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1t").unwrap(),
-            1024_i64.pow(4)
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("1T").unwrap(),
-            1024_i64.pow(4)
-        );
-
-        // Test whitespace trimming
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes(" 1k ").unwrap(),
-            1024
-        );
-        assert_eq!(
-            ResourceRequirementsApiImpl::memory_string_to_bytes("  512m  ").unwrap(),
-            512 * 1024 * 1024
-        );
-
-        // Test error cases
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("   ").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("invalid").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("1x").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("-1").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("-1k").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("abc").is_err());
-        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("1.5k").is_err());
-    }
-}
+// Tests for memory_string_to_bytes are in src/memory_utils.rs

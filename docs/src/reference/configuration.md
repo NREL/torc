@@ -42,15 +42,14 @@ Settings for the `torc` CLI.
 
 Settings for `torc run` command.
 
-| Option                   | Type  | Default  | Description                                         |
-| ------------------------ | ----- | -------- | --------------------------------------------------- |
-| `poll_interval`          | float | `5.0`    | Job completion poll interval (seconds)              |
-| `output_dir`             | path  | `output` | Output directory for job logs                       |
-| `database_poll_interval` | int   | `30`     | Database poll interval (seconds)                    |
-| `max_parallel_jobs`      | int   | (none)   | Maximum parallel jobs (overrides resource-based)    |
-| `num_cpus`               | int   | (none)   | Available CPUs for resource-based scheduling        |
-| `memory_gb`              | float | (none)   | Available memory (GB) for resource-based scheduling |
-| `num_gpus`               | int   | (none)   | Available GPUs for resource-based scheduling        |
+| Option              | Type  | Default  | Description                                         |
+| ------------------- | ----- | -------- | --------------------------------------------------- |
+| `poll_interval`     | float | `5.0`    | Job completion poll interval (seconds)              |
+| `output_dir`        | path  | `output` | Output directory for job logs                       |
+| `max_parallel_jobs` | int   | (none)   | Maximum parallel jobs (overrides resource-based)    |
+| `num_cpus`          | int   | (none)   | Available CPUs for resource-based scheduling        |
+| `memory_gb`         | float | (none)   | Available memory (GB) for resource-based scheduling |
+| `num_gpus`          | int   | (none)   | Available GPUs for resource-based scheduling        |
 
 ### Example
 
@@ -293,7 +292,6 @@ username = "developer"
 [client.run]
 poll_interval = 5.0
 output_dir = "output"
-database_poll_interval = 30
 num_cpus = 8
 memory_gb = 32.0
 num_gpus = 1

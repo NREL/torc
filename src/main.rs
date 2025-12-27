@@ -170,7 +170,6 @@ fn main() {
                     .unwrap_or_else(|| run_config.output_dir.clone()),
                 poll_interval: poll_interval.unwrap_or(run_config.poll_interval),
                 max_parallel_jobs: max_parallel_jobs.or(run_config.max_parallel_jobs),
-                database_poll_interval: run_config.database_poll_interval,
                 time_limit: None,
                 end_time: None,
                 num_cpus: num_cpus.or(run_config.num_cpus),

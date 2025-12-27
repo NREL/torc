@@ -2313,8 +2313,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_job_ids**
-> list_job_ids(_api::DefaultApi, id::Int64; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> list_job_ids(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+> list_job_ids(_api::DefaultApi, id::Int64; _mediaType=nothing) -> ListJobIdsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_ids(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ ListJobIdsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all job IDs for one workflow.
 
@@ -2329,7 +2329,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**Any**
+[**ListJobIdsResponse**](ListJobIdsResponse.md)
 
 ### Authorization
 
@@ -2922,8 +2922,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **reset_job_status**
-> reset_job_status(_api::DefaultApi, id::Int64; failed_only=nothing, body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> reset_job_status(_api::DefaultApi, response_stream::Channel, id::Int64; failed_only=nothing, body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+> reset_job_status(_api::DefaultApi, id::Int64; failed_only=nothing, body=nothing, _mediaType=nothing) -> ResetJobStatusResponse, OpenAPI.Clients.ApiResponse <br/>
+> reset_job_status(_api::DefaultApi, response_stream::Channel, id::Int64; failed_only=nothing, body=nothing, _mediaType=nothing) -> Channel{ ResetJobStatusResponse }, OpenAPI.Clients.ApiResponse
 
 Reset status for jobs to uninitialized.
 
@@ -2945,7 +2945,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**Any**
+[**ResetJobStatusResponse**](ResetJobStatusResponse.md)
 
 ### Authorization
 

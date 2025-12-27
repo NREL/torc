@@ -226,6 +226,9 @@ where
         let compute_node_wait_for_healthy_database_minutes = body
             .compute_node_wait_for_healthy_database_minutes
             .unwrap_or(20);
+        let compute_node_min_time_for_new_jobs_seconds = body
+            .compute_node_min_time_for_new_jobs_seconds
+            .unwrap_or(300);
 
         // Then, create the workflow record
         let workflow_result = match sqlx::query!(
@@ -240,11 +243,12 @@ where
                 compute_node_wait_for_new_jobs_seconds,
                 compute_node_ignore_workflow_completion,
                 compute_node_wait_for_healthy_database_minutes,
+                compute_node_min_time_for_new_jobs_seconds,
                 jobs_sort_method,
                 resource_monitor_config,
                 status_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING rowid
             "#,
             body.name,
@@ -255,6 +259,7 @@ where
             compute_node_wait_for_new_jobs_seconds,
             compute_node_ignore_workflow_completion,
             compute_node_wait_for_healthy_database_minutes,
+            compute_node_min_time_for_new_jobs_seconds,
             jobs_sort_method_str,
             body.resource_monitor_config,
             status_result[0].id,
@@ -459,6 +464,9 @@ where
                     ),
                     compute_node_wait_for_healthy_database_minutes: Some(
                         row.compute_node_wait_for_healthy_database_minutes,
+                    ),
+                    compute_node_min_time_for_new_jobs_seconds: Some(
+                        row.compute_node_min_time_for_new_jobs_seconds,
                     ),
                     jobs_sort_method: row
                         .jobs_sort_method
@@ -724,6 +732,7 @@ where
                 ,w.compute_node_wait_for_new_jobs_seconds
                 ,w.compute_node_ignore_workflow_completion
                 ,w.compute_node_wait_for_healthy_database_minutes
+                ,w.compute_node_min_time_for_new_jobs_seconds
                 ,w.jobs_sort_method
                 ,w.resource_monitor_config
                 ,w.status_id
@@ -743,6 +752,7 @@ where
                 ,compute_node_wait_for_new_jobs_seconds
                 ,compute_node_ignore_workflow_completion
                 ,compute_node_wait_for_healthy_database_minutes
+                ,compute_node_min_time_for_new_jobs_seconds
                 ,jobs_sort_method
                 ,resource_monitor_config
                 ,status_id
@@ -876,6 +886,9 @@ where
                 ),
                 compute_node_wait_for_healthy_database_minutes: Some(
                     record.get("compute_node_wait_for_healthy_database_minutes"),
+                ),
+                compute_node_min_time_for_new_jobs_seconds: Some(
+                    record.get("compute_node_min_time_for_new_jobs_seconds"),
                 ),
                 jobs_sort_method: sort_method,
                 resource_monitor_config: record.get("resource_monitor_config"),
@@ -1255,6 +1268,36 @@ where
             } else {
                 let error_response = models::ErrorResponse::new(serde_json::json!({
                     "message": "Cannot reset workflow status: jobs are currently running or pending submission"
+                }));
+                return Ok(
+                    ResetWorkflowStatusResponse::UnprocessableContentErrorResponse(error_response),
+                );
+            }
+        }
+
+        // Check if any scheduled compute nodes are in pending or active status
+        let has_active_scheduled_nodes = match sqlx::query_scalar::<_, i64>(
+            "SELECT id FROM scheduled_compute_node WHERE workflow_id = ? AND (status = 'pending' OR status = 'active') LIMIT 1",
+        )
+        .bind(id)
+        .fetch_optional(self.context.pool.as_ref())
+        .await
+        {
+            Ok(result) => result.is_some(),
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        if has_active_scheduled_nodes {
+            if force {
+                info!(
+                    "Force flag set: ignoring active scheduled compute nodes check for workflow {} reset",
+                    id
+                );
+            } else {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Cannot reset workflow status: scheduled compute nodes are currently pending or active"
                 }));
                 return Ok(
                     ResetWorkflowStatusResponse::UnprocessableContentErrorResponse(error_response),

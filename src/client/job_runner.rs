@@ -62,7 +62,6 @@
 
 use chrono::{DateTime, Utc};
 use log::{self, debug, error, info, warn};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -78,12 +77,11 @@ use crate::client::commands::watch::format_duration_iso8601;
 use crate::client::resource_monitor::{ResourceMonitor, ResourceMonitorConfig};
 use crate::client::utils;
 use crate::config::TorcConfig;
+use crate::memory_utils::memory_string_to_gb;
 use crate::models::{
     ClaimJobsSortMethod, ComputeNodesResources, JobStatus, ResourceRequirementsModel, ResultModel,
     WorkflowModel,
 };
-
-const GB: i64 = 1024 * 1024 * 1024;
 
 /// Result of running the job worker, indicating whether any jobs failed or were terminated.
 #[derive(Debug, Default, Clone)]
@@ -92,11 +90,6 @@ pub struct WorkerResult {
     pub had_failures: bool,
     /// True if any job was terminated (e.g., due to SIGTERM or time limit)
     pub had_terminations: bool,
-}
-
-// Cache for memory string to GB conversions
-thread_local! {
-    static MEMORY_CACHE: RefCell<HashMap<String, f64>> = RefCell::new(HashMap::new());
 }
 
 /// Manages parallel job execution on a compute node.
@@ -126,7 +119,6 @@ pub struct JobRunner {
     output_dir: PathBuf,
     job_completion_poll_interval: f64,
     max_parallel_jobs: Option<i64>,
-    database_poll_interval: i64,
     time_limit: Option<String>,
     end_time: Option<DateTime<Utc>>,
     resources: ComputeNodesResources,
@@ -163,7 +155,6 @@ impl JobRunner {
         output_dir: PathBuf,
         job_completion_poll_interval: f64,
         max_parallel_jobs: Option<i64>,
-        database_poll_interval: i64, // TODO is this handled properly?
         time_limit: Option<String>,
         end_time: Option<DateTime<Utc>>,
         resources: ComputeNodesResources,
@@ -181,6 +172,7 @@ impl JobRunner {
             workflow.compute_node_wait_for_new_jobs_seconds,
             workflow.compute_node_ignore_workflow_completion,
             workflow.compute_node_wait_for_healthy_database_minutes,
+            workflow.compute_node_min_time_for_new_jobs_seconds,
             workflow.jobs_sort_method,
         );
         let job_resources: HashMap<i64, ResourceRequirementsModel> = HashMap::new();
@@ -231,7 +223,6 @@ impl JobRunner {
             output_dir,
             job_completion_poll_interval,
             max_parallel_jobs,
-            database_poll_interval,
             time_limit,
             end_time,
             resources,
@@ -406,9 +397,27 @@ impl JobRunner {
 
             debug!("Check for new jobs");
             if self.max_parallel_jobs.is_none() {
-                self.run_ready_jobs_based_on_resources()
+                // Resource-based mode: skip if no CPUs available or memory nearly exhausted
+                if self.resources.num_cpus > 0 && self.resources.memory_gb >= 0.1 {
+                    self.run_ready_jobs_based_on_resources()
+                } else {
+                    debug!(
+                        "Skipping job claim: no capacity (cpus={}, memory_gb={:.2})",
+                        self.resources.num_cpus, self.resources.memory_gb
+                    );
+                }
             } else {
-                self.run_ready_jobs_based_on_user_parallelism()
+                // Parallelism-based mode: skip if already at max parallel jobs
+                let max = self.max_parallel_jobs.unwrap();
+                if (self.running_jobs.len() as i64) < max {
+                    self.run_ready_jobs_based_on_user_parallelism()
+                } else {
+                    debug!(
+                        "Skipping job claim: at max parallel jobs ({}/{})",
+                        self.running_jobs.len(),
+                        max
+                    );
+                }
             };
 
             thread::sleep(Duration::from_secs_f64(self.job_completion_poll_interval));
@@ -534,7 +543,6 @@ impl JobRunner {
                 }
                 Err(e) => {
                     error!("Error waiting for job {}: {}", job_id, e);
-                    // TODO
                     Err(e)
                 }
             };
@@ -653,7 +661,6 @@ impl JobRunner {
                 }
                 Err(e) => {
                     error!("Error checking status for job {}: {}", job_id, e);
-                    // TODO
                 }
             }
         }
@@ -818,7 +825,6 @@ impl JobRunner {
             }
             Err(e) => {
                 error!("Error completing job {}: {}", job_id, e);
-                // TODO
             }
         }
         self.running_jobs.remove(&job_id);
@@ -826,7 +832,7 @@ impl JobRunner {
     }
 
     fn decrement_resources(&mut self, rr: &ResourceRequirementsModel) {
-        let job_memory_gb = convert_memory_string_to_gb(&rr.memory);
+        let job_memory_gb = memory_string_to_gb(&rr.memory);
         self.resources.memory_gb -= job_memory_gb;
         self.resources.num_cpus -= rr.num_cpus;
         self.resources.num_gpus -= rr.num_gpus;
@@ -836,7 +842,7 @@ impl JobRunner {
     }
 
     fn increment_resources(&mut self, rr: &ResourceRequirementsModel) {
-        let job_memory_gb = convert_memory_string_to_gb(&rr.memory);
+        let job_memory_gb = memory_string_to_gb(&rr.memory);
         self.resources.memory_gb += job_memory_gb;
         self.resources.num_cpus += rr.num_cpus;
         self.resources.num_gpus += rr.num_gpus;
@@ -868,7 +874,6 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_resources(&mut self) {
-        // Update time_limit based on remaining allocation time before claiming jobs
         self.update_remaining_time_limit();
 
         let limit = self.resources.num_cpus;
@@ -989,7 +994,18 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
-        // TODO: account for time limit
+        // Check if we have enough remaining time to start new jobs
+        if let Some(end_time) = self.end_time {
+            let remaining_seconds = (end_time - Utc::now()).num_seconds();
+            if remaining_seconds < self.rules.compute_node_min_time_for_new_jobs_seconds as i64 {
+                info!(
+                    "Only {} seconds remaining (min required: {}), not requesting new jobs",
+                    remaining_seconds, self.rules.compute_node_min_time_for_new_jobs_seconds
+                );
+                return;
+            }
+        }
+
         let limit = self
             .max_parallel_jobs
             .expect("max_parallel_jobs must be set")
@@ -1592,6 +1608,10 @@ struct ComputeNodeRules {
     pub compute_node_ignore_workflow_completion: bool,
     /// Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
     pub compute_node_wait_for_healthy_database_minutes: u64,
+    /// Minimum remaining walltime (in seconds) required before requesting new jobs.
+    /// If the remaining time is less than this value, the compute node will stop requesting
+    /// new jobs and wait for running jobs to complete. Default is 300 seconds (5 minutes).
+    pub compute_node_min_time_for_new_jobs_seconds: u64,
     pub jobs_sort_method: ClaimJobsSortMethod,
 }
 
@@ -1601,6 +1621,7 @@ impl ComputeNodeRules {
         compute_node_wait_for_new_jobs_seconds: Option<i64>,
         compute_node_ignore_workflow_completion: Option<bool>,
         compute_node_wait_for_healthy_database_minutes: Option<i64>,
+        compute_node_min_time_for_new_jobs_seconds: Option<i64>,
         jobs_sort_method: Option<ClaimJobsSortMethod>,
     ) -> Self {
         ComputeNodeRules {
@@ -1612,79 +1633,9 @@ impl ComputeNodeRules {
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:
                 compute_node_wait_for_healthy_database_minutes.unwrap_or(20) as u64,
+            compute_node_min_time_for_new_jobs_seconds: compute_node_min_time_for_new_jobs_seconds
+                .unwrap_or(300) as u64,
             jobs_sort_method: jobs_sort_method.unwrap_or(ClaimJobsSortMethod::GpusRuntimeMemory),
         }
     }
-}
-
-/// Convert memory string to bytes
-/// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
-/// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
-fn convert_memory_string_to_gb(memory_str: &str) -> f64 {
-    // Check cache first
-    let cached_result = MEMORY_CACHE.with(|cache| cache.borrow().get(memory_str).copied());
-
-    if let Some(cached_value) = cached_result {
-        return cached_value;
-    }
-
-    // Calculate the value if not in cache
-    let result = match convert_memory_string_to_bytes(memory_str) {
-        Ok(bytes) => bytes as f64 / GB as f64,
-        Err(e) => {
-            panic!("Error converting memory string to bytes: {}", e);
-        }
-    };
-
-    // Store in cache
-    MEMORY_CACHE.with(|cache| {
-        cache.borrow_mut().insert(memory_str.to_string(), result);
-    });
-
-    result
-}
-
-/// Convert memory string to bytes
-/// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
-/// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
-fn convert_memory_string_to_bytes(memory_str: &str) -> Result<i64, String> {
-    // TODO: This is repeated on the server. Remove duplication.
-    let memory_str = memory_str.trim();
-
-    if memory_str.is_empty() {
-        return Err("Memory string cannot be empty".to_string());
-    }
-
-    // Check if the last character is a unit
-    let (number_part, multiplier) = if let Some(last_char) = memory_str.chars().last() {
-        if last_char.is_alphabetic() {
-            let number_part = &memory_str[..memory_str.len() - 1];
-            let multiplier = match last_char.to_ascii_lowercase() {
-                'k' => 1024_i64,
-                'm' => 1024_i64.pow(2),
-                'g' => 1024_i64.pow(3),
-                't' => 1024_i64.pow(4),
-                _ => return Err(format!("Invalid memory unit: {}", last_char)),
-            };
-            (number_part, multiplier)
-        } else {
-            (memory_str, 1_i64)
-        }
-    } else {
-        return Err("Memory string cannot be empty".to_string());
-    };
-
-    // Parse the number part
-    let number: i64 = number_part
-        .parse()
-        .map_err(|_| format!("Invalid number in memory string: {}", number_part))?;
-
-    if number < 0 {
-        return Err("Memory size cannot be negative".to_string());
-    }
-
-    // Calculate total bytes, checking for overflow
-    number
-        .checked_mul(multiplier)
-        .ok_or_else(|| "Memory size too large, would cause overflow".to_string())
 }
