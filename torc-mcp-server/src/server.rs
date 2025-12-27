@@ -154,6 +154,44 @@ pub struct AnalyzeWorkflowLogsParams {
     pub output_dir: Option<String>,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct GetWorkflowSummaryParams {
+    #[schemars(description = "The workflow ID")]
+    pub workflow_id: i64,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ListResultsParams {
+    #[schemars(description = "The workflow ID")]
+    pub workflow_id: i64,
+    #[schemars(description = "Filter by job ID")]
+    pub job_id: Option<i64>,
+    #[schemars(description = "Filter by run ID")]
+    pub run_id: Option<i64>,
+    #[schemars(description = "Filter by return code (e.g., 0 for success, 1 for failure)")]
+    pub return_code: Option<i64>,
+    #[schemars(description = "Show only failed jobs (non-zero return code)")]
+    pub failed_only: Option<bool>,
+    #[schemars(
+        description = "Filter by job status: completed, failed, terminated, canceled, etc."
+    )]
+    pub status: Option<String>,
+    #[schemars(description = "Maximum number of results to return (default: 100)")]
+    pub limit: Option<i64>,
+    #[schemars(
+        description = "Field to sort by: exec_time_minutes, peak_memory_bytes, peak_cpu_percent, return_code"
+    )]
+    pub sort_by: Option<String>,
+    #[schemars(description = "Reverse the sort order (descending instead of ascending)")]
+    pub reverse_sort: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct GetSlurmSacctParams {
+    #[schemars(description = "The workflow ID")]
+    pub workflow_id: i64,
+}
+
 // Tool implementations using #[tool(tool_box)]
 // Tools are ordered by workflow lifecycle: create → plan → inspect → monitor → analyze → fix
 
@@ -355,6 +393,60 @@ USE CASES:
             .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
 
+    /// Get a completion summary for a workflow.
+    #[tool(
+        description = "Get workflow completion summary including total execution time, walltime, \
+        and job counts by status. Use this to get a quick overview of workflow results. \
+        Only works for completed workflows."
+    )]
+    async fn get_workflow_summary(
+        &self,
+        #[tool(aggr)] params: GetWorkflowSummaryParams,
+    ) -> Result<CallToolResult, McpError> {
+        let workflow_id = params.workflow_id;
+        tokio::task::spawn_blocking(move || tools::get_workflow_summary(workflow_id))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// List job results with filtering options.
+    #[tool(
+        description = "List job execution results with optional filtering. Returns return codes, \
+        execution time, peak memory, and peak CPU for each job. \
+        Use filters to find specific results: failed_only=true for failures, \
+        sort_by='exec_time_minutes' with reverse_sort=true for slowest jobs, \
+        sort_by='peak_memory_bytes' for memory-hungry jobs."
+    )]
+    async fn list_results(
+        &self,
+        #[tool(aggr)] params: ListResultsParams,
+    ) -> Result<CallToolResult, McpError> {
+        let workflow_id = params.workflow_id;
+        let job_id = params.job_id;
+        let run_id = params.run_id;
+        let return_code = params.return_code;
+        let failed_only = params.failed_only.unwrap_or(false);
+        let status = params.status;
+        let limit = params.limit.unwrap_or(100);
+        let sort_by = params.sort_by;
+        let reverse_sort = params.reverse_sort.unwrap_or(false);
+        tokio::task::spawn_blocking(move || {
+            tools::list_results(
+                workflow_id,
+                job_id,
+                run_id,
+                return_code,
+                failed_only,
+                status,
+                limit,
+                sort_by,
+                reverse_sort,
+            )
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
     /// Analyze workflow logs for errors.
     #[tool(
         description = "Scan all log files for a workflow and detect common error patterns. \
@@ -438,6 +530,23 @@ USE CASES:
         })
         .await
         .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Get Slurm accounting data for a workflow.
+    #[tool(
+        description = "Get Slurm sacct accounting data for all scheduled compute nodes in a workflow. \
+        Shows job state, exit codes, elapsed time, max RSS (memory), CPU time, and nodes used. \
+        Includes a summary of total walltime consumed across all Slurm allocations. \
+        Useful for understanding HPC resource usage and diagnosing Slurm-level failures."
+    )]
+    async fn get_slurm_sacct(
+        &self,
+        #[tool(aggr)] params: GetSlurmSacctParams,
+    ) -> Result<CallToolResult, McpError> {
+        let workflow_id = params.workflow_id;
+        tokio::task::spawn_blocking(move || tools::get_slurm_sacct(workflow_id))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
 
     /// Update resource requirements for a job.

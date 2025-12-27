@@ -102,6 +102,16 @@ claude mcp list
   3. Or submit to Slurm: torc submit workflow.json (requires adding an account)
 ```
 
+You can create much more complex workflows. Output is not shown, but this prompt will create a
+workflow with job dependencies defined implicitly through job-file relationships:
+
+```
+Create a workflow with four stages of jobs. There are 3 initial jobs each dependent on an input file. Each of those jobs fans out into 10 work jobs through
+  output files. Each of those jobs creates a file. In the third stage there is a script that aggregates each of the 10 jobs into one file. The final
+  postprocess job aggregates those three files into one. I will run it with Slurm: account=my_account. The work jobs require 10 cpus and 30 GB of
+  memory. The other jobs have trivial resource requirements.
+```
+
 ---
 
 ## Example: Adjusting jobs' resource requirements

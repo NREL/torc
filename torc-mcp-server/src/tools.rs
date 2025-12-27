@@ -853,3 +853,154 @@ pub fn analyze_workflow_logs(
         serde_json::to_string_pretty(&response).unwrap_or_default(),
     )]))
 }
+
+/// Get workflow summary by running the CLI command.
+pub fn get_workflow_summary(workflow_id: i64) -> Result<CallToolResult, McpError> {
+    let output = Command::new("torc")
+        .args(["-f", "json", "reports", "summary", &workflow_id.to_string()])
+        .output()
+        .map_err(|e| internal_error(format!("Failed to execute torc command: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(internal_error(format!(
+            "torc command failed: {}",
+            stderr.trim()
+        )));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        stdout.to_string(),
+    )]))
+}
+
+/// List job results with filtering options.
+#[allow(clippy::too_many_arguments)]
+pub fn list_results(
+    workflow_id: i64,
+    job_id: Option<i64>,
+    run_id: Option<i64>,
+    return_code: Option<i64>,
+    failed_only: bool,
+    status: Option<String>,
+    limit: i64,
+    sort_by: Option<String>,
+    reverse_sort: bool,
+) -> Result<CallToolResult, McpError> {
+    let mut cmd = Command::new("torc");
+    cmd.args(["-f", "json", "results", "list", &workflow_id.to_string()]);
+
+    if let Some(jid) = job_id {
+        cmd.args(["--job-id", &jid.to_string()]);
+    }
+    if let Some(rid) = run_id {
+        cmd.args(["--run-id", &rid.to_string()]);
+    }
+    if let Some(rc) = return_code {
+        cmd.args(["--return-code", &rc.to_string()]);
+    }
+    if failed_only {
+        cmd.arg("--failed");
+    }
+    if let Some(s) = status {
+        cmd.args(["--status", &s]);
+    }
+    cmd.args(["--limit", &limit.to_string()]);
+    if let Some(sb) = sort_by {
+        cmd.args(["--sort-by", &sb]);
+    }
+    if reverse_sort {
+        cmd.arg("--reverse-sort");
+    }
+
+    let output = cmd
+        .output()
+        .map_err(|e| internal_error(format!("Failed to execute torc command: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(internal_error(format!(
+            "torc command failed: {}",
+            stderr.trim()
+        )));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        stdout.to_string(),
+    )]))
+}
+
+/// Get Slurm sacct accounting data for a workflow with walltime summary.
+pub fn get_slurm_sacct(workflow_id: i64) -> Result<CallToolResult, McpError> {
+    let output = Command::new("torc")
+        .args(["-f", "json", "slurm", "sacct", &workflow_id.to_string()])
+        .output()
+        .map_err(|e| internal_error(format!("Failed to execute torc command: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(internal_error(format!(
+            "torc command failed: {}",
+            stderr.trim()
+        )));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON to calculate total walltime
+    let mut response = stdout.to_string();
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout)
+        && let Some(rows) = json.get("rows").and_then(|r| r.as_array())
+    {
+        let mut total_seconds: i64 = 0;
+        for row in rows {
+            if let Some(elapsed) = row.get("elapsed").and_then(|e| e.as_str()) {
+                total_seconds += parse_elapsed_to_seconds(elapsed);
+            }
+        }
+        if total_seconds > 0 {
+            let hours = total_seconds / 3600;
+            let minutes = (total_seconds % 3600) / 60;
+            let seconds = total_seconds % 60;
+            let summary = format!(
+                "\n\n[SUMMARY: Total walltime consumed: {}h {}m {}s ({} seconds)]",
+                hours, minutes, seconds, total_seconds
+            );
+            response.push_str(&summary);
+        }
+    }
+
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        response,
+    )]))
+}
+
+/// Parse elapsed time string (e.g., "2h 15m", "45m 30s", "1d 2h 30m") to seconds.
+fn parse_elapsed_to_seconds(elapsed: &str) -> i64 {
+    let mut total = 0i64;
+    let parts: Vec<&str> = elapsed.split_whitespace().collect();
+
+    for part in parts {
+        if let Some(num_str) = part.strip_suffix('d') {
+            if let Ok(days) = num_str.parse::<i64>() {
+                total += days * 86400;
+            }
+        } else if let Some(num_str) = part.strip_suffix('h') {
+            if let Ok(hours) = num_str.parse::<i64>() {
+                total += hours * 3600;
+            }
+        } else if let Some(num_str) = part.strip_suffix('m') {
+            if let Ok(minutes) = num_str.parse::<i64>() {
+                total += minutes * 60;
+            }
+        } else if let Some(num_str) = part.strip_suffix('s')
+            && let Ok(seconds) = num_str.parse::<i64>()
+        {
+            total += seconds;
+        }
+    }
+
+    total
+}
