@@ -113,8 +113,14 @@ fn collect_bundle(
 
     // Scan output directory for matching files
     if output_dir.exists() {
+        // Collect workflow-specific files (job logs, runner logs, etc.)
         files_collected +=
             collect_matching_files(&mut tar_builder, output_dir, &wf_pattern, &mut total_size);
+
+        // Collect Slurm output files (slurm_output_wf*_sl*.o and slurm_output_wf*_sl*.e)
+        // These contain important scheduler-level error information
+        files_collected +=
+            collect_slurm_files(&mut tar_builder, output_dir, &wf_pattern, &mut total_size);
 
         // Also check job_stdio subdirectory
         let job_stdio_dir = output_dir.join("job_stdio");
@@ -204,6 +210,66 @@ fn collect_matching_files<W: std::io::Write>(
         if path.is_file() {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             if filename.contains(wf_pattern) {
+                match File::open(&path) {
+                    Ok(mut file) => {
+                        let metadata = file.metadata().unwrap();
+                        *total_size += metadata.len();
+
+                        // Use relative path in the archive
+                        let archive_name = if let Some(parent) = path.parent() {
+                            if let Some(parent_name) = parent.file_name() {
+                                format!("{}/{}", parent_name.to_string_lossy(), filename)
+                            } else {
+                                filename.to_string()
+                            }
+                        } else {
+                            filename.to_string()
+                        };
+
+                        if tar_builder.append_file(&archive_name, &mut file).is_ok() {
+                            println!("  Added: {}", archive_name);
+                            count += 1;
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Warning: Cannot read file {}: {}", path.display(), e);
+                    }
+                }
+            }
+        }
+    }
+
+    count
+}
+
+/// Collect Slurm output files from a directory
+fn collect_slurm_files<W: std::io::Write>(
+    tar_builder: &mut Builder<W>,
+    dir: &Path,
+    wf_pattern: &str,
+    total_size: &mut u64,
+) -> usize {
+    let mut count = 0;
+
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("Warning: Cannot read directory {}: {}", dir.display(), e);
+            return 0;
+        }
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            let filename = path.file_name().unwrap_or_default().to_string_lossy();
+            // Match Slurm files for this workflow: slurm_output_wf*_sl*.o/e,
+            // slurm_env_wf*_sl*.log, dmesg_slurm_wf*_sl*.log, job_runner_slurm_wf*_sl*.log
+            let is_slurm_file = filename.starts_with("slurm_output_")
+                || filename.starts_with("slurm_env_")
+                || filename.starts_with("dmesg_slurm_")
+                || filename.starts_with("job_runner_slurm_");
+            if is_slurm_file && filename.contains(wf_pattern) {
                 match File::open(&path) {
                     Ok(mut file) => {
                         let metadata = file.metadata().unwrap();

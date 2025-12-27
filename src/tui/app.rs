@@ -1734,8 +1734,9 @@ impl App {
         // Default output directory is "output" in the current working directory
         let output_dir = PathBuf::from("output");
 
-        let stdout_path = get_slurm_stdout_path(&output_dir, scheduler_id);
-        let stderr_path = get_slurm_stderr_path(&output_dir, scheduler_id);
+        let workflow_id = self.selected_workflow_id.unwrap_or(0);
+        let stdout_path = get_slurm_stdout_path(&output_dir, workflow_id, scheduler_id);
+        let stderr_path = get_slurm_stderr_path(&output_dir, workflow_id, scheduler_id);
 
         viewer.stdout_path = Some(stdout_path.clone());
         viewer.stderr_path = Some(stderr_path.clone());
