@@ -26,6 +26,7 @@ use crate::client::commands::{
 };
 use crate::client::hpc::HpcProfile;
 use crate::client::hpc::hpc_interface::HpcInterface;
+use crate::client::utils;
 use crate::client::workflow_graph::WorkflowGraph;
 use crate::client::workflow_manager::WorkflowManager;
 use crate::client::workflow_spec::{ResourceRequirementsSpec, WorkflowSpec};
@@ -976,6 +977,9 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 /// * `keep_submission_scripts` - Keep submission scripts after job submission
 ///
 /// # Returns
+/// Default wait time (in minutes) for the database to recover from network errors
+const WAIT_FOR_HEALTHY_DATABASE_MINUTES: u64 = 20;
+
 /// Result indicating success or failure
 #[allow(clippy::too_many_arguments)]
 pub fn schedule_slurm_nodes(
@@ -990,7 +994,11 @@ pub fn schedule_slurm_nodes(
     start_one_worker_per_node: bool,
     keep_submission_scripts: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let scheduler = match default_api::get_slurm_scheduler(config, scheduler_config_id) {
+    let scheduler = match utils::send_with_retries(
+        config,
+        || default_api::get_slurm_scheduler(config, scheduler_config_id),
+        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+    ) {
         Ok(s) => s,
         Err(e) => {
             return Err(format!("Failed to get Slurm scheduler: {}", e).into());
@@ -1041,14 +1049,17 @@ pub fn schedule_slurm_nodes(
             "slurm".to_string(),
             "pending".to_string(),
         );
-        let created_scn =
-            match default_api::create_scheduled_compute_node(config, scheduled_compute_node) {
-                Ok(scn) => scn,
-                Err(e) => {
-                    error!("Failed to create scheduled compute node: {}", e);
-                    return Err(format!("Failed to create scheduled compute node: {}", e).into());
-                }
-            };
+        let created_scn = match utils::send_with_retries(
+            config,
+            || default_api::create_scheduled_compute_node(config, scheduled_compute_node.clone()),
+            WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+        ) {
+            Ok(scn) => scn,
+            Err(e) => {
+                error!("Failed to create scheduled compute node: {}", e);
+                return Err(format!("Failed to create scheduled compute node: {}", e).into());
+            }
+        };
         let scn_id = created_scn
             .id
             .expect("Created scheduled compute node should have an ID");
@@ -1070,7 +1081,11 @@ pub fn schedule_slurm_nodes(
         ) {
             error!("Error creating submission script: {}", e);
             // Clean up the scheduled compute node record since submission failed
-            if let Err(del_err) = default_api::delete_scheduled_compute_node(config, scn_id, None) {
+            if let Err(del_err) = utils::send_with_retries(
+                config,
+                || default_api::delete_scheduled_compute_node(config, scn_id, None),
+                WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+            ) {
                 error!(
                     "Failed to delete scheduled compute node after script creation failure: {}",
                     del_err
@@ -1084,9 +1099,11 @@ pub fn schedule_slurm_nodes(
                 if return_code != 0 {
                     error!("Error submitting job: {}", stderr);
                     // Clean up the scheduled compute node record since submission failed
-                    if let Err(del_err) =
-                        default_api::delete_scheduled_compute_node(config, scn_id, None)
-                    {
+                    if let Err(del_err) = utils::send_with_retries(
+                        config,
+                        || default_api::delete_scheduled_compute_node(config, scn_id, None),
+                        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+                    ) {
                         error!(
                             "Failed to delete scheduled compute node after submission failure: {}",
                             del_err
@@ -1105,9 +1122,17 @@ pub fn schedule_slurm_nodes(
                 // Update the scheduled compute node with the actual Slurm job ID
                 let mut updated_scn = created_scn.clone();
                 updated_scn.scheduler_id = slurm_job_id_int;
-                if let Err(e) =
-                    default_api::update_scheduled_compute_node(config, scn_id, updated_scn)
-                {
+                if let Err(e) = utils::send_with_retries(
+                    config,
+                    || {
+                        default_api::update_scheduled_compute_node(
+                            config,
+                            scn_id,
+                            updated_scn.clone(),
+                        )
+                    },
+                    WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+                ) {
                     error!(
                         "Failed to update scheduled compute node with Slurm job ID: {}",
                         e
@@ -1124,16 +1149,22 @@ pub fn schedule_slurm_nodes(
                 });
 
                 let event = models::EventModel::new(workflow_id, event_data);
-                if let Err(e) = default_api::create_event(config, event) {
+                if let Err(e) = utils::send_with_retries(
+                    config,
+                    || default_api::create_event(config, event.clone()),
+                    WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+                ) {
                     error!("Failed to create event: {}", e);
                 }
             }
             Err(e) => {
                 error!("Error submitting job: {}", e);
                 // Clean up the scheduled compute node record since submission failed
-                if let Err(del_err) =
-                    default_api::delete_scheduled_compute_node(config, scn_id, None)
-                {
+                if let Err(del_err) = utils::send_with_retries(
+                    config,
+                    || default_api::delete_scheduled_compute_node(config, scn_id, None),
+                    WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+                ) {
                     error!(
                         "Failed to delete scheduled compute node after submission error: {}",
                         del_err
@@ -1201,23 +1232,24 @@ pub fn create_compute_node(
     hostname: &str,
     scheduler: serde_json::Value,
 ) -> models::ComputeNodeModel {
-    let pid = 1; // TODO
-    // TODO: send_with_retries
+    let pid = std::process::id() as i64;
+    let compute_node = models::ComputeNodeModel::new(
+        workflow_id,
+        hostname.to_string(),
+        pid,
+        Utc::now().to_rfc3339(),
+        resources.num_cpus,
+        resources.memory_gb,
+        resources.num_gpus,
+        resources.num_nodes,
+        "slurm".to_string(),
+        Some(scheduler),
+    );
 
-    match default_api::create_compute_node(
+    match utils::send_with_retries(
         config,
-        models::ComputeNodeModel::new(
-            workflow_id,
-            hostname.to_string(),
-            pid,
-            Utc::now().to_rfc3339(),
-            resources.num_cpus,
-            resources.memory_gb,
-            resources.num_gpus,
-            resources.num_nodes,
-            "slurm".to_string(),
-            Some(scheduler),
-        ),
+        || default_api::create_compute_node(config, compute_node.clone()),
+        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
     ) {
         Ok(node) => node,
         Err(e) => {
@@ -2475,7 +2507,11 @@ fn handle_regenerate(
 
     // Mark existing schedule_nodes actions as executed to prevent duplicate allocations
     // This is critical for recovery scenarios where original actions would otherwise fire again
-    match default_api::get_workflow_actions(config, workflow_id) {
+    match utils::send_with_retries(
+        config,
+        || default_api::get_workflow_actions(config, workflow_id),
+        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+    ) {
         Ok(actions) => {
             for action in actions {
                 // Only mark non-recovery, unexecuted schedule_nodes actions
@@ -2484,11 +2520,17 @@ fn handle_regenerate(
                     && !action.executed
                     && let Some(action_id) = action.id
                 {
-                    match default_api::claim_action(
+                    match utils::send_with_retries(
                         config,
-                        workflow_id,
-                        action_id,
-                        serde_json::json!({}),
+                        || {
+                            default_api::claim_action(
+                                config,
+                                workflow_id,
+                                action_id,
+                                serde_json::json!({}),
+                            )
+                        },
+                        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
                     ) {
                         Ok(_) => {
                             info!(
@@ -2641,7 +2683,11 @@ fn handle_regenerate(
             extra: None,
         };
 
-        let created_scheduler = match default_api::create_slurm_scheduler(config, scheduler) {
+        let created_scheduler = match utils::send_with_retries(
+            config,
+            || default_api::create_slurm_scheduler(config, scheduler.clone()),
+            WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+        ) {
             Ok(s) => s,
             Err(e) => {
                 print_error("creating scheduler", &e);
@@ -2680,7 +2726,11 @@ fn handle_regenerate(
                 updated_job.scheduler_id = Some(scheduler_id);
                 // Clear status so server ignores it during comparison
                 updated_job.status = None;
-                if let Err(e) = default_api::update_job(config, job_id, updated_job) {
+                if let Err(e) = utils::send_with_retries(
+                    config,
+                    || default_api::update_job(config, job_id, updated_job.clone()),
+                    WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+                ) {
                     warnings.push(format!(
                         "Failed to update job {} with scheduler: {}",
                         job_id, e
@@ -2742,7 +2792,11 @@ fn handle_regenerate(
             "is_recovery": true,
         });
 
-        match default_api::create_workflow_action(config, workflow_id, action_body) {
+        match utils::send_with_retries(
+            config,
+            || default_api::create_workflow_action(config, workflow_id, action_body.clone()),
+            WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+        ) {
             Ok(created_action) => {
                 info!(
                     "Created recovery action {} for {} deferred jobs using scheduler {}",
