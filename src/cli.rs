@@ -31,10 +31,52 @@ const STYLES: styling::Styles = styling::Styles::styled()
     .literal(styling::AnsiColor::Cyan.on_default().bold())
     .placeholder(styling::AnsiColor::Cyan.on_default());
 
+const HELP_TEMPLATE: &str = "\
+{before-help}{name} {version}
+{about-with-newline}
+{usage-heading} {usage}
+
+{all-args}
+
+\x1b[1;32mWorkflow Execution:\x1b[0m
+  \x1b[1;36mrun\x1b[0m                      Run a workflow locally
+  \x1b[1;36msubmit\x1b[0m                   Submit a workflow to scheduler
+  \x1b[1;36msubmit-slurm\x1b[0m             Submit to Slurm with auto-generated schedulers
+  \x1b[1;36mwatch\x1b[0m                    Watch workflow and recover from failures
+
+\x1b[1;32mWorkflow Management:\x1b[0m
+  \x1b[1;36mworkflows\x1b[0m                Workflow management commands
+  \x1b[1;36mjobs\x1b[0m                     Job management commands
+  \x1b[1;36mfiles\x1b[0m                    File management commands
+  \x1b[1;36muser-data\x1b[0m                User data management commands
+  \x1b[1;36mevents\x1b[0m                   Event management commands
+  \x1b[1;36mresource-requirements\x1b[0m    Resource requirements management
+  \x1b[1;36mresults\x1b[0m                  Result management commands
+  \x1b[1;36mcompute-nodes\x1b[0m            Compute node management
+  \x1b[1;36mscheduled-compute-nodes\x1b[0m  Scheduled compute node management
+  \x1b[1;36mtui\x1b[0m                      Interactive terminal UI
+
+\x1b[1;32mScheduler & Compute:\x1b[0m
+  \x1b[1;36mslurm\x1b[0m                    Slurm scheduler commands
+  \x1b[1;36mhpc\x1b[0m                      HPC system profiles and partitions
+  \x1b[1;36mremote\x1b[0m                   Remote worker execution (SSH)
+
+\x1b[1;32mAnalysis & Debugging:\x1b[0m
+  \x1b[1;36mreports\x1b[0m                  Generate reports and analytics
+  \x1b[1;36msupport-bundles\x1b[0m          Collect support bundles for debugging
+  \x1b[1;36mjob-dependencies\x1b[0m         Job dependency queries
+
+\x1b[1;32mConfiguration & Utilities:\x1b[0m
+  \x1b[1;36mconfig\x1b[0m                   Manage configuration settings
+  \x1b[1;36mplot-resources\x1b[0m           Generate HTML resource plots
+  \x1b[1;36mcompletions\x1b[0m              Generate shell completions
+  \x1b[1;36mhelp\x1b[0m                     Print help for a subcommand
+{after-help}";
+
 /// Torc workflow orchestration system
 #[derive(Parser)]
 #[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
-#[command(styles = STYLES)]
+#[command(styles = STYLES, help_template = HELP_TEMPLATE, disable_help_subcommand = true, subcommand_help_heading = None)]
 pub struct Cli {
     /// Log level (error, warn, info, debug, trace)
     #[arg(long, env = "RUST_LOG")]
@@ -57,7 +99,11 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    // =========================================================================
+    // Workflow Execution - Primary commands for running workflows
+    // =========================================================================
     /// Run a workflow locally (create from spec file or run existing workflow by ID)
+    #[command(hide = true)]
     Run {
         /// Path to workflow spec file (JSON/JSON5/YAML) or workflow ID
         #[arg()]
@@ -88,6 +134,7 @@ pub enum Commands {
     ///
     /// Requires workflow to have an on_workflow_start action with schedule_nodes.
     /// For Slurm workflows without pre-configured schedulers, use `submit-slurm` instead.
+    #[command(hide = true)]
     Submit {
         /// Path to workflow spec file (JSON/JSON5/YAML) or workflow ID
         #[arg()]
@@ -117,7 +164,7 @@ pub enum Commands {
     ///
     ///   torc slurm generate --account <account> -o workflow_with_schedulers.yaml workflow.yaml
     ///   torc submit workflow_with_schedulers.yaml
-    #[command(name = "submit-slurm")]
+    #[command(name = "submit-slurm", hide = true)]
     SubmitSlurm {
         /// Path to workflow spec file (JSON/JSON5/YAML/KDL)
         #[arg()]
@@ -156,6 +203,7 @@ pub enum Commands {
     ///
     /// Without --recover, reports failures and exits for manual intervention
     /// or AI-assisted recovery via the MCP server.
+    #[command(hide = true)]
     Watch {
         /// Workflow ID to watch
         #[arg()]
@@ -218,92 +266,125 @@ pub enum Commands {
         #[arg(short, long)]
         show_job_counts: bool,
     },
+    /// Interactive terminal UI for managing workflows
+    #[command(hide = true)]
+    Tui(tui_runner::Args),
+    // =========================================================================
+    // Workflow Management - CRUD operations on workflow resources
+    // =========================================================================
     /// Workflow management commands
+    #[command(hide = true)]
     Workflows {
         #[command(subcommand)]
         command: WorkflowCommands,
     },
-    /// Compute node management commands
-    ComputeNodes {
-        #[command(subcommand)]
-        command: ComputeNodeCommands,
-    },
-    /// File management commands
-    Files {
-        #[command(subcommand)]
-        command: FileCommands,
-    },
     /// Job management commands
+    #[command(hide = true)]
     Jobs {
         #[command(subcommand)]
         command: JobCommands,
     },
-    /// Job dependency and relationship queries
-    JobDependencies {
+    /// File management commands
+    #[command(hide = true)]
+    Files {
         #[command(subcommand)]
-        command: JobDependencyCommands,
+        command: FileCommands,
     },
-    /// Resource requirements management commands
-    ResourceRequirements {
+    /// User data management commands
+    #[command(hide = true)]
+    UserData {
         #[command(subcommand)]
-        command: ResourceRequirementsCommands,
+        command: UserDataCommands,
     },
     /// Event management commands
+    #[command(hide = true)]
     Events {
         #[command(subcommand)]
         command: EventCommands,
     },
     /// Result management commands
+    #[command(hide = true)]
     Results {
         #[command(subcommand)]
         command: ResultCommands,
     },
-    /// User data management commands
-    UserData {
-        #[command(subcommand)]
-        command: UserDataCommands,
-    },
+
+    // =========================================================================
+    // Scheduler & Compute - HPC, Slurm, and distributed execution
+    // =========================================================================
     /// Slurm scheduler commands
+    #[command(hide = true)]
     Slurm {
         #[command(subcommand)]
         command: SlurmCommands,
     },
-    /// Remote worker execution commands (SSH-based distributed execution)
-    Remote {
-        #[command(subcommand)]
-        command: RemoteCommands,
-    },
-    /// Scheduled compute node management commands
-    ScheduledComputeNodes {
-        #[command(subcommand)]
-        command: ScheduledComputeNodeCommands,
-    },
     /// HPC system profiles and partition information
+    #[command(hide = true)]
     Hpc {
         #[command(subcommand)]
         command: HpcCommands,
     },
+    /// Compute node management commands
+    #[command(hide = true)]
+    ComputeNodes {
+        #[command(subcommand)]
+        command: ComputeNodeCommands,
+    },
+    /// Scheduled compute node management commands
+    #[command(hide = true)]
+    ScheduledComputeNodes {
+        #[command(subcommand)]
+        command: ScheduledComputeNodeCommands,
+    },
+    /// Remote worker execution commands (SSH-based distributed execution)
+    #[command(hide = true)]
+    Remote {
+        #[command(subcommand)]
+        command: RemoteCommands,
+    },
+
+    // =========================================================================
+    // Analysis & Debugging - Troubleshooting and insights
+    // =========================================================================
     /// Generate reports and analytics
+    #[command(hide = true)]
     Reports {
         #[command(subcommand)]
         command: ReportCommands,
     },
     /// Collect and analyze support bundles for debugging
-    #[command(name = "support-bundles")]
+    #[command(name = "support-bundles", hide = true)]
     SupportBundles {
         #[command(subcommand)]
         command: SupportBundleCommands,
     },
+    /// Job dependency and relationship queries
+    #[command(hide = true)]
+    JobDependencies {
+        #[command(subcommand)]
+        command: JobDependencyCommands,
+    },
+    /// Resource requirements management commands
+    #[command(hide = true)]
+    ResourceRequirements {
+        #[command(subcommand)]
+        command: ResourceRequirementsCommands,
+    },
+
+    // =========================================================================
+    // Configuration & Utilities - Setup and miscellaneous
+    // =========================================================================
     /// Manage configuration files and settings
+    #[command(hide = true)]
     Config {
         #[command(subcommand)]
         command: ConfigCommands,
     },
-    /// Interactive terminal UI for managing workflows
-    Tui(tui_runner::Args),
     /// Generate interactive HTML plots from resource monitoring data
+    #[command(hide = true)]
     PlotResources(plot_resources_cmd::Args),
     /// Generate shell completions
+    #[command(hide = true)]
     Completions {
         /// The shell to generate completions for
         #[arg(value_enum)]
