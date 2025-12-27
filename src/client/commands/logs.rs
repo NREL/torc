@@ -1,7 +1,6 @@
-//! Support bundle collection and parsing commands
+//! Log collection and analysis commands
 //!
-//! Collects all torc-related log files for a workflow into a compressed tarball
-//! for debugging and support purposes.
+//! Provides tools for bundling workflow logs and analyzing them for errors.
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
@@ -16,44 +15,44 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use tar::{Archive, Builder};
 
-/// Support bundle subcommands
+/// Log subcommands
 #[derive(clap::Subcommand)]
-pub enum SupportBundleCommands {
-    /// Collect all log files for a workflow into a support bundle tarball
-    Collect {
-        /// Workflow ID to collect logs for
+pub enum LogCommands {
+    /// Bundle all log files for a workflow into a compressed tarball
+    Bundle {
+        /// Workflow ID to bundle logs for
         #[arg()]
         workflow_id: Option<i64>,
         /// Output directory where logs are stored (the same directory passed to `torc run`)
         #[arg(short, long, default_value = "output")]
         output_dir: PathBuf,
-        /// Directory to write the support bundle to
+        /// Directory to write the bundle to
         #[arg(long, default_value = ".")]
         bundle_dir: PathBuf,
     },
-    /// Parse a support bundle or log directory and extract error information
-    Parse {
-        /// Path to a support bundle tarball (.tar.gz) or log directory
+    /// Analyze logs for errors (from a bundle tarball or log directory)
+    Analyze {
+        /// Path to a bundle tarball (.tar.gz) or log directory
         #[arg()]
         path: PathBuf,
-        /// Workflow ID to filter logs (required when parsing a directory with multiple workflows)
+        /// Workflow ID to filter logs (required when analyzing a directory with multiple workflows)
         #[arg(short, long)]
         workflow_id: Option<i64>,
     },
 }
 
-/// Handle support bundle commands
-pub fn handle_support_bundle_commands(config: &Configuration, command: &SupportBundleCommands) {
+/// Handle log commands
+pub fn handle_log_commands(config: &Configuration, command: &LogCommands) {
     match command {
-        SupportBundleCommands::Collect {
+        LogCommands::Bundle {
             workflow_id,
             output_dir,
             bundle_dir,
         } => {
             collect_bundle(config, *workflow_id, output_dir, bundle_dir);
         }
-        SupportBundleCommands::Parse { path, workflow_id } => {
-            parse_path(path, *workflow_id);
+        LogCommands::Analyze { path, workflow_id } => {
+            analyze_path(path, *workflow_id);
         }
     }
 }
@@ -91,10 +90,7 @@ fn collect_bundle(
         }
     };
 
-    println!(
-        "Collecting support bundle for workflow {} ({})",
-        wf_id, workflow.name
-    );
+    println!("Collecting logs for workflow {} ({})", wf_id, workflow.name);
     println!("Output directory: {}", output_dir.display());
     println!("Bundle path: {}", bundle_path.display());
 
@@ -182,13 +178,13 @@ fn collect_bundle(
     }
 
     println!();
-    println!("Support bundle created successfully:");
+    println!("Log bundle created successfully:");
     println!("  File: {}", bundle_path.display());
     println!("  Files collected: {}", files_collected);
     println!("  Total size: {} bytes", total_size);
     println!();
     println!("To analyze the bundle, run:");
-    println!("  torc support-bundles parse {}", bundle_path.display());
+    println!("  torc logs analyze {}", bundle_path.display());
 }
 
 /// Collect files matching the workflow pattern from a directory
@@ -447,11 +443,6 @@ fn print_parse_results(
                 .unwrap_or(&serde_json::Value::Null)
         );
         println!(
-            "  Workflow Status: {}",
-            meta.get("workflow_status")
-                .unwrap_or(&serde_json::Value::Null)
-        );
-        println!(
             "  Collected At: {}",
             meta.get("collected_at").unwrap_or(&serde_json::Value::Null)
         );
@@ -519,23 +510,23 @@ fn print_parse_results(
     }
 }
 
-/// Dispatch to parse a bundle file or directory
-fn parse_path(path: &Path, workflow_id: Option<i64>) {
+/// Dispatch to analyze a bundle file or directory
+fn analyze_path(path: &Path, workflow_id: Option<i64>) {
     if !path.exists() {
         eprintln!("Error: Path not found: {}", path.display());
         std::process::exit(1);
     }
 
     if path.is_dir() {
-        parse_directory(path, workflow_id);
+        analyze_directory(path, workflow_id);
     } else {
-        parse_bundle(path);
+        analyze_bundle(path);
     }
 }
 
-/// Parse a support bundle tarball and extract error information
-fn parse_bundle(bundle_path: &Path) {
-    println!("Parsing support bundle: {}", bundle_path.display());
+/// Parse a log bundle tarball and extract error information
+fn analyze_bundle(bundle_path: &Path) {
+    println!("Analyzing log bundle: {}", bundle_path.display());
     println!();
 
     // Open and decompress the tarball
@@ -643,7 +634,7 @@ fn detect_workflow_ids(dir: &Path) -> Vec<i64> {
 }
 
 /// Parse a log directory and extract error information
-fn parse_directory(dir: &Path, workflow_id: Option<i64>) {
+fn analyze_directory(dir: &Path, workflow_id: Option<i64>) {
     // Detect workflow IDs in the directory
     let detected_ids = detect_workflow_ids(dir);
 

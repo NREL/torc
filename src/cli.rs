@@ -13,13 +13,13 @@ use crate::client::commands::files::FileCommands;
 use crate::client::commands::hpc::HpcCommands;
 use crate::client::commands::job_dependencies::JobDependencyCommands;
 use crate::client::commands::jobs::JobCommands;
+use crate::client::commands::logs::LogCommands;
 use crate::client::commands::remote::RemoteCommands;
 use crate::client::commands::reports::ReportCommands;
 use crate::client::commands::resource_requirements::ResourceRequirementsCommands;
 use crate::client::commands::results::ResultCommands;
 use crate::client::commands::scheduled_compute_nodes::ScheduledComputeNodeCommands;
 use crate::client::commands::slurm::SlurmCommands;
-use crate::client::commands::support_bundles::SupportBundleCommands;
 use crate::client::commands::user_data::UserDataCommands;
 use crate::client::commands::workflows::WorkflowCommands;
 use crate::plot_resources_cmd;
@@ -63,7 +63,7 @@ const HELP_TEMPLATE: &str = "\
 
 \x1b[1;32mAnalysis & Debugging:\x1b[0m
   \x1b[1;36mreports\x1b[0m                  Generate reports and analytics
-  \x1b[1;36msupport-bundles\x1b[0m          Collect support bundles for debugging
+  \x1b[1;36mlogs\x1b[0m                     Bundle and analyze workflow logs
   \x1b[1;36mjob-dependencies\x1b[0m         Job dependency queries
 
 \x1b[1;32mConfiguration & Utilities:\x1b[0m
@@ -352,11 +352,11 @@ pub enum Commands {
         #[command(subcommand)]
         command: ReportCommands,
     },
-    /// Collect and analyze support bundles for debugging
-    #[command(name = "support-bundles", hide = true)]
-    SupportBundles {
+    /// Bundle and analyze workflow logs
+    #[command(hide = true)]
+    Logs {
         #[command(subcommand)]
-        command: SupportBundleCommands,
+        command: LogCommands,
     },
     /// Job dependency and relationship queries
     #[command(hide = true)]

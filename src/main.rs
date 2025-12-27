@@ -10,13 +10,13 @@ use torc::client::commands::files::handle_file_commands;
 use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
+use torc::client::commands::logs::handle_log_commands;
 use torc::client::commands::remote::handle_remote_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
 use torc::client::commands::results::handle_result_commands;
 use torc::client::commands::scheduled_compute_nodes::handle_scheduled_compute_node_commands;
 use torc::client::commands::slurm::handle_slurm_commands;
-use torc::client::commands::support_bundles::handle_support_bundle_commands;
 use torc::client::commands::user_data::handle_user_data_commands;
 use torc::client::commands::watch::{WatchArgs, run_watch};
 use torc::client::commands::workflows::handle_workflow_commands;
@@ -514,8 +514,8 @@ fn main() {
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &format);
         }
-        Commands::SupportBundles { command } => {
-            handle_support_bundle_commands(&config, command);
+        Commands::Logs { command } => {
+            handle_log_commands(&config, command);
         }
         Commands::Config { command } => {
             handle_config_commands(command);

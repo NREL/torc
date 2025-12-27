@@ -26,11 +26,11 @@ these additional log paths:
 {
   "job_stdout": "output/job_stdio/job_wf1_j456_r1.o",
   "job_stderr": "output/job_stdio/job_wf1_j456_r1.e",
-  "job_runner_log": "output/job_runner_slurm_wf1_sl12345_nnode01_pid67890.log",
+  "job_runner_log": "output/job_runner_slurm_wf1_sl12345_n0_pid67890.log",
   "slurm_stdout": "output/slurm_output_wf1_sl12345.o",
   "slurm_stderr": "output/slurm_output_wf1_sl12345.e",
-  "slurm_env_log": "output/slurm_env_wf1_sl12345_nnode01_pid67890.log",
-  "dmesg_log": "output/dmesg_slurm_wf1_sl12345_nnode01_pid67890.log"
+  "slurm_env_log": "output/slurm_env_wf1_sl12345_n0_pid67890.log",
+  "dmesg_log": "output/dmesg_slurm_wf1_sl12345_n0_pid67890.log"
 }
 ```
 
@@ -340,21 +340,21 @@ When a Slurm job fails, follow this debugging workflow:
 - Check GPU memory with `nvidia-smi` in job script
 - Ensure correct CUDA version is loaded
 
-## Support Bundles
+## Log Bundles
 
-For sharing logs with others or archiving for later analysis, use support bundles:
+For sharing logs with others or archiving for later analysis, use log bundles:
 
-### Collecting a Support Bundle
+### Bundling Logs
 
 ```bash
-# Collect all logs for a workflow into a compressed tarball
-torc support-bundles collect <workflow_id>
+# Bundle all logs for a workflow into a compressed tarball
+torc logs bundle <workflow_id>
 
 # Specify custom output directory
-torc support-bundles collect <workflow_id> --output-dir /path/to/output
+torc logs bundle <workflow_id> --output-dir /path/to/output
 
 # Save bundle to a specific directory
-torc support-bundles collect <workflow_id> --bundle-dir /path/to/bundles
+torc logs bundle <workflow_id> --bundle-dir /path/to/bundles
 ```
 
 This creates a `wf<id>.tar.gz` file containing:
@@ -366,20 +366,20 @@ This creates a `wf<id>.tar.gz` file containing:
 - dmesg logs (`dmesg_slurm_wf*_sl*.log`)
 - Bundle metadata (workflow info, collection timestamp)
 
-### Parsing a Support Bundle
+### Analyzing Logs
 
 ```bash
-# Parse a support bundle tarball
-torc support-bundles parse wf123.tar.gz
+# Analyze a log bundle tarball
+torc logs analyze wf123.tar.gz
 
-# Parse a log directory directly (auto-detects workflow if only one present)
-torc support-bundles parse output/
+# Analyze a log directory directly (auto-detects workflow if only one present)
+torc logs analyze output/
 
-# Parse a directory with multiple workflows (specify which one)
-torc support-bundles parse output/ --workflow-id 123
+# Analyze a directory with multiple workflows (specify which one)
+torc logs analyze output/ --workflow-id 123
 ```
 
-The parser scans all log files for known error patterns (OOM kills, timeouts, segfaults, Slurm
+The analyzer scans all log files for known error patterns (OOM kills, timeouts, segfaults, Slurm
 errors, Python exceptions, etc.) and reports:
 
 - Files with detected errors
@@ -387,13 +387,13 @@ errors, Python exceptions, etc.) and reports:
 - Line numbers and content
 - Summary of error types found
 
-**Note**: Environment variable files (`slurm_env_*.log`) are excluded from error parsing since they
+**Note**: Environment variable files (`slurm_env_*.log`) are excluded from error analysis since they
 contain configuration data, not error logs.
 
 ## Related Commands
 
-- **`torc support-bundles collect`**: Collect workflow logs into a compressed tarball
-- **`torc support-bundles parse`**: Parse logs for known error patterns
+- **`torc logs bundle`**: Bundle workflow logs into a compressed tarball
+- **`torc logs analyze`**: Analyze logs for known error patterns
 - **`torc slurm parse-logs`**: Parse Slurm logs for known error patterns
 - **`torc slurm sacct`**: Collect Slurm accounting data for workflow jobs
 - **`torc reports results`**: Generate debug report with all log file paths
