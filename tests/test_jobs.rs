@@ -360,7 +360,7 @@ fn test_jobs_update_partial_fields(start_server: &ServerProcess) {
     );
 }
 
-// TODO Not supported yet
+// TODO Not supported yet. We don't support updating jobs with depends_on_ids
 // #[rstest]
 // fn test_jobs_update_with_blocking_jobs(start_server: &ServerProcess) {
 //     let config = &start_server.config;

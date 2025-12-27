@@ -1275,6 +1275,36 @@ where
             }
         }
 
+        // Check if any scheduled compute nodes are in pending or active status
+        let has_active_scheduled_nodes = match sqlx::query_scalar::<_, i64>(
+            "SELECT id FROM scheduled_compute_node WHERE workflow_id = ? AND (status = 'pending' OR status = 'active') LIMIT 1",
+        )
+        .bind(id)
+        .fetch_optional(self.context.pool.as_ref())
+        .await
+        {
+            Ok(result) => result.is_some(),
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        if has_active_scheduled_nodes {
+            if force {
+                info!(
+                    "Force flag set: ignoring active scheduled compute nodes check for workflow {} reset",
+                    id
+                );
+            } else {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Cannot reset workflow status: scheduled compute nodes are currently pending or active"
+                }));
+                return Ok(
+                    ResetWorkflowStatusResponse::UnprocessableContentErrorResponse(error_response),
+                );
+            }
+        }
+
         // Begin a transaction to ensure workflow status reset is atomic
         let mut tx = match self.context.pool.begin().await {
             Ok(tx) => tx,

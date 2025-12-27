@@ -965,8 +965,6 @@ impl<C> Server<C> {
         job: &models::JobModel,
         run_id: i64,
     ) -> Result<(), ApiError> {
-        // TODO: return NotFoundError
-        // TODO: How is this different than manage_status_change, which is available in the API?
         let job_id = job
             .id
             .ok_or_else(|| ApiError("Job ID is required".to_string()))?;
