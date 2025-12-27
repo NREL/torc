@@ -181,6 +181,7 @@ impl JobRunner {
             workflow.compute_node_wait_for_new_jobs_seconds,
             workflow.compute_node_ignore_workflow_completion,
             workflow.compute_node_wait_for_healthy_database_minutes,
+            workflow.compute_node_min_time_for_new_jobs_seconds,
             workflow.jobs_sort_method,
         );
         let job_resources: HashMap<i64, ResourceRequirementsModel> = HashMap::new();
@@ -534,7 +535,6 @@ impl JobRunner {
                 }
                 Err(e) => {
                     error!("Error waiting for job {}: {}", job_id, e);
-                    // TODO
                     Err(e)
                 }
             };
@@ -653,7 +653,6 @@ impl JobRunner {
                 }
                 Err(e) => {
                     error!("Error checking status for job {}: {}", job_id, e);
-                    // TODO
                 }
             }
         }
@@ -818,7 +817,6 @@ impl JobRunner {
             }
             Err(e) => {
                 error!("Error completing job {}: {}", job_id, e);
-                // TODO
             }
         }
         self.running_jobs.remove(&job_id);
@@ -868,7 +866,6 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_resources(&mut self) {
-        // Update time_limit based on remaining allocation time before claiming jobs
         self.update_remaining_time_limit();
 
         let limit = self.resources.num_cpus;
@@ -989,7 +986,18 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
-        // TODO: account for time limit
+        // Check if we have enough remaining time to start new jobs
+        if let Some(end_time) = self.end_time {
+            let remaining_seconds = (end_time - Utc::now()).num_seconds();
+            if remaining_seconds < self.rules.compute_node_min_time_for_new_jobs_seconds as i64 {
+                info!(
+                    "Only {} seconds remaining (min required: {}), not requesting new jobs",
+                    remaining_seconds, self.rules.compute_node_min_time_for_new_jobs_seconds
+                );
+                return;
+            }
+        }
+
         let limit = self
             .max_parallel_jobs
             .expect("max_parallel_jobs must be set")
@@ -1592,6 +1600,10 @@ struct ComputeNodeRules {
     pub compute_node_ignore_workflow_completion: bool,
     /// Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
     pub compute_node_wait_for_healthy_database_minutes: u64,
+    /// Minimum remaining walltime (in seconds) required before requesting new jobs.
+    /// If the remaining time is less than this value, the compute node will stop requesting
+    /// new jobs and wait for running jobs to complete. Default is 300 seconds (5 minutes).
+    pub compute_node_min_time_for_new_jobs_seconds: u64,
     pub jobs_sort_method: ClaimJobsSortMethod,
 }
 
@@ -1601,6 +1613,7 @@ impl ComputeNodeRules {
         compute_node_wait_for_new_jobs_seconds: Option<i64>,
         compute_node_ignore_workflow_completion: Option<bool>,
         compute_node_wait_for_healthy_database_minutes: Option<i64>,
+        compute_node_min_time_for_new_jobs_seconds: Option<i64>,
         jobs_sort_method: Option<ClaimJobsSortMethod>,
     ) -> Self {
         ComputeNodeRules {
@@ -1612,6 +1625,8 @@ impl ComputeNodeRules {
                 .unwrap_or(false),
             compute_node_wait_for_healthy_database_minutes:
                 compute_node_wait_for_healthy_database_minutes.unwrap_or(20) as u64,
+            compute_node_min_time_for_new_jobs_seconds: compute_node_min_time_for_new_jobs_seconds
+                .unwrap_or(300) as u64,
             jobs_sort_method: jobs_sort_method.unwrap_or(ClaimJobsSortMethod::GpusRuntimeMemory),
         }
     }

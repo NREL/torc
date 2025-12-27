@@ -14,6 +14,7 @@
         compute_node_wait_for_new_jobs_seconds=90,
         compute_node_ignore_workflow_completion=false,
         compute_node_wait_for_healthy_database_minutes=20,
+        compute_node_min_time_for_new_jobs_seconds=300,
         jobs_sort_method=nothing,
         status_id=nothing,
     )
@@ -27,6 +28,7 @@
     - compute_node_wait_for_new_jobs_seconds::Int64 : Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete. Default must be &gt;&#x3D; completion_check_interval_secs + job_completion_poll_interval to avoid exiting before dependent jobs are unblocked.
     - compute_node_ignore_workflow_completion::Bool : Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
     - compute_node_wait_for_healthy_database_minutes::Int64 : Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
+    - compute_node_min_time_for_new_jobs_seconds::Int64 : Minimum remaining walltime (in seconds) required before a compute node will request new jobs. If the remaining time is less than this value, the compute node will stop requesting new jobs and wait for running jobs to complete. This prevents starting jobs that won&#39;t have enough time to complete. Default is 300 seconds (5 minutes).
     - jobs_sort_method::JobsSortMethod
     - status_id::Int64
 """
@@ -40,17 +42,18 @@ Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
     compute_node_wait_for_new_jobs_seconds::Union{Nothing, Int64} = 90
     compute_node_ignore_workflow_completion::Union{Nothing, Bool} = false
     compute_node_wait_for_healthy_database_minutes::Union{Nothing, Int64} = 20
+    compute_node_min_time_for_new_jobs_seconds::Union{Nothing, Int64} = 300
     jobs_sort_method = nothing # spec type: Union{ Nothing, JobsSortMethod }
     status_id::Union{Nothing, Int64} = nothing
 
-    function WorkflowModel(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, jobs_sort_method, status_id, )
-        o = new(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, jobs_sort_method, status_id, )
+    function WorkflowModel(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, )
+        o = new(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type WorkflowModel
 
-const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("jobs_sort_method")=>"JobsSortMethod", Symbol("status_id")=>"Int64", )
+const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("compute_node_min_time_for_new_jobs_seconds")=>"Int64", Symbol("jobs_sort_method")=>"JobsSortMethod", Symbol("status_id")=>"Int64", )
 OpenAPI.property_type(::Type{ WorkflowModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowModel[name]))}
 
 function OpenAPI.check_required(o::WorkflowModel)
@@ -69,11 +72,13 @@ function OpenAPI.validate_properties(o::WorkflowModel)
     OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_wait_for_new_jobs_seconds"), o.compute_node_wait_for_new_jobs_seconds)
     OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_ignore_workflow_completion"), o.compute_node_ignore_workflow_completion)
     OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_wait_for_healthy_database_minutes"), o.compute_node_wait_for_healthy_database_minutes)
+    OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_min_time_for_new_jobs_seconds"), o.compute_node_min_time_for_new_jobs_seconds)
     OpenAPI.validate_property(WorkflowModel, Symbol("jobs_sort_method"), o.jobs_sort_method)
     OpenAPI.validate_property(WorkflowModel, Symbol("status_id"), o.status_id)
 end
 
 function OpenAPI.validate_property(::Type{ WorkflowModel }, name::Symbol, val)
+
 
 
 

@@ -9660,6 +9660,14 @@ pub struct WorkflowModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compute_node_wait_for_healthy_database_minutes: Option<i64>,
 
+    /// Minimum remaining walltime (in seconds) required before a compute node will request new jobs.
+    /// If the remaining time is less than this value, the compute node will stop requesting new jobs
+    /// and wait for running jobs to complete. This prevents starting jobs that won't have enough time
+    /// to complete. Default is 300 seconds (5 minutes).
+    #[serde(rename = "compute_node_min_time_for_new_jobs_seconds")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compute_node_min_time_for_new_jobs_seconds: Option<i64>,
+
     #[serde(rename = "jobs_sort_method")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jobs_sort_method: Option<models::ClaimJobsSortMethod>,
@@ -9687,6 +9695,7 @@ impl WorkflowModel {
             compute_node_wait_for_new_jobs_seconds: Some(0),
             compute_node_ignore_workflow_completion: Some(false),
             compute_node_wait_for_healthy_database_minutes: Some(20),
+            compute_node_min_time_for_new_jobs_seconds: Some(300),
             jobs_sort_method: None,
             resource_monitor_config: None,
             status_id: None,
@@ -9749,6 +9758,15 @@ impl std::string::ToString for WorkflowModel {
                     ]
                     .join(",")
                 }),
+            self.compute_node_min_time_for_new_jobs_seconds
+                .as_ref()
+                .map(|compute_node_min_time_for_new_jobs_seconds| {
+                    [
+                        "compute_node_min_time_for_new_jobs_seconds".to_string(),
+                        compute_node_min_time_for_new_jobs_seconds.to_string(),
+                    ]
+                    .join(",")
+                }),
             // Skipping non-primitive type jobs_sort_method in query parameter serialization
             self.status_id
                 .as_ref()
@@ -9779,6 +9797,7 @@ impl std::str::FromStr for WorkflowModel {
             pub compute_node_wait_for_new_jobs_seconds: Vec<i64>,
             pub compute_node_ignore_workflow_completion: Vec<bool>,
             pub compute_node_wait_for_healthy_database_minutes: Vec<i64>,
+            pub compute_node_min_time_for_new_jobs_seconds: Vec<i64>,
             pub jobs_sort_method: Vec<models::ClaimJobsSortMethod>,
             pub resource_monitor_config: Vec<String>,
             pub status_id: Vec<i64>,
@@ -9849,6 +9868,12 @@ impl std::str::FromStr for WorkflowModel {
                             <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                         ),
                     #[allow(clippy::redundant_clone)]
+                    "compute_node_min_time_for_new_jobs_seconds" => intermediate_rep
+                        .compute_node_min_time_for_new_jobs_seconds
+                        .push(
+                            <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                        ),
+                    #[allow(clippy::redundant_clone)]
                     "jobs_sort_method" => intermediate_rep.jobs_sort_method.push(
                         <models::ClaimJobsSortMethod as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
@@ -9898,6 +9923,10 @@ impl std::str::FromStr for WorkflowModel {
                 .next(),
             compute_node_wait_for_healthy_database_minutes: intermediate_rep
                 .compute_node_wait_for_healthy_database_minutes
+                .into_iter()
+                .next(),
+            compute_node_min_time_for_new_jobs_seconds: intermediate_rep
+                .compute_node_min_time_for_new_jobs_seconds
                 .into_iter()
                 .next(),
             jobs_sort_method: intermediate_rep.jobs_sort_method.into_iter().next(),
