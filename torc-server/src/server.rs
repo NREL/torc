@@ -936,6 +936,46 @@ impl<C> Server<C> {
         }
     }
 
+    /// Validate that the provided run_id matches the workflow's current run_id.
+    ///
+    /// # Arguments
+    /// * `workflow_id` - The workflow ID to look up
+    /// * `provided_run_id` - The run_id to validate
+    ///
+    /// # Returns
+    /// * `Ok(())` if the run_id matches
+    /// * `Err(String)` with an error message if validation fails
+    async fn validate_run_id(&self, workflow_id: i64, provided_run_id: i64) -> Result<(), String> {
+        let workflow_status = match sqlx::query!(
+            "SELECT run_id FROM workflow_status WHERE id = ?",
+            workflow_id
+        )
+        .fetch_optional(self.pool.as_ref())
+        .await
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => {
+                return Err(format!(
+                    "Workflow status not found for workflow ID: {}",
+                    workflow_id
+                ));
+            }
+            Err(e) => {
+                error!("Database error looking up workflow status: {}", e);
+                return Err("Database error".to_string());
+            }
+        };
+
+        if provided_run_id != workflow_status.run_id {
+            return Err(format!(
+                "Run ID mismatch: provided {} but workflow status has {}",
+                provided_run_id, workflow_status.run_id
+            ));
+        }
+
+        Ok(())
+    }
+
     /// Manage job status change with validation and side effects.
     ///
     /// This function validates a job status change by:
@@ -1021,37 +1061,10 @@ impl<C> Server<C> {
             job_id, current_status, new_status
         );
 
-        // 2. Look up current workflow status and validate run_id
-        let workflow_status = match sqlx::query!(
-            "SELECT run_id FROM workflow_status WHERE id = ?",
-            current_job.workflow_id
-        )
-        .fetch_optional(self.pool.as_ref())
-        .await
-        {
-            Ok(Some(row)) => row,
-            Ok(None) => {
-                return Err(ApiError(format!(
-                    "Workflow status not found for workflow ID: {}",
-                    current_job.workflow_id
-                )));
-            }
-            Err(e) => {
-                error!("Database error looking up workflow status: {}", e);
-                return Err(ApiError("Database error".to_string()));
-            }
-        };
-
-        // Validate run_id matches workflow status run_id
-        if run_id != workflow_status.run_id {
-            error!(
-                "Run ID mismatch: provided {} but workflow status has {}",
-                run_id, workflow_status.run_id
-            );
-            return Err(ApiError(format!(
-                "Run ID mismatch: provided {} but workflow status has {}",
-                run_id, workflow_status.run_id
-            )));
+        // 2. Validate run_id matches workflow status run_id
+        if let Err(e) = self.validate_run_id(current_job.workflow_id, run_id).await {
+            error!("manage_job_status_change: {}", e);
+            return Err(ApiError(e));
         }
 
         // 3. For terminal statuses, check if result exists
@@ -4119,42 +4132,10 @@ where
             return Ok(ManageStatusChangeResponse::SuccessfulResponse(job));
         }
 
-        // 2. Get the current workflow's run_id. If it doesn't match the passed run_id, return an error.
-        let workflow_status = match sqlx::query!(
-            "SELECT run_id FROM workflow_status WHERE id = ?",
-            job.workflow_id
-        )
-        .fetch_optional(self.pool.as_ref())
-        .await
-        {
-            Ok(Some(row)) => row,
-            Ok(None) => {
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": format!("Workflow status not found for workflow ID: {}", job.workflow_id)
-                }));
-                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
-                    error_response,
-                ));
-            }
-            Err(e) => {
-                error!("Database error looking up workflow status: {}", e);
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": "Database error"
-                }));
-                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
-                    error_response,
-                ));
-            }
-        };
-
-        if run_id != workflow_status.run_id {
-            error!(
-                "manage_status_change: run_id mismatch for job_id={}, provided={}, workflow_run_id={}",
-                id, run_id, workflow_status.run_id
-            );
-            let error_response = models::ErrorResponse::new(serde_json::json!({
-                "message": format!("Run ID mismatch: provided {} but workflow status has {}", run_id, workflow_status.run_id)
-            }));
+        // 2. Validate run_id matches workflow status run_id
+        if let Err(e) = self.validate_run_id(job.workflow_id, run_id).await {
+            error!("manage_status_change: job_id={}, {}", id, e);
+            let error_response = models::ErrorResponse::new(serde_json::json!({ "message": e }));
             return Ok(
                 ManageStatusChangeResponse::UnprocessableContentErrorResponse(error_response),
             );
@@ -4259,6 +4240,15 @@ where
             }
         }
 
+        // Validate run_id matches workflow status run_id before proceeding
+        if let Err(e) = self.validate_run_id(job.workflow_id, run_id).await {
+            error!("start_job: job_id={}, {}", id, e);
+            let error_response = models::ErrorResponse::new(serde_json::json!({ "message": e }));
+            return Ok(StartJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
+        }
+
         // Set active_compute_node_id to track which compute node is running this job
         match sqlx::query!(
             "UPDATE job_internal SET active_compute_node_id = ? WHERE job_id = ?",
@@ -4283,20 +4273,7 @@ where
             }
         }
 
-        if let Err(e) = self.manage_job_status_change(&job, run_id).await {
-            // Check if this is a run_id mismatch error
-            // TODO: wrong approach
-            if e.to_string().contains("Run ID mismatch") {
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": e.to_string()
-                }));
-                return Ok(StartJobResponse::UnprocessableContentErrorResponse(
-                    error_response,
-                ));
-            }
-            // For other errors, propagate them
-            return Err(e);
-        }
+        self.manage_job_status_change(&job, run_id).await?;
         let event_data = serde_json::json!({
             "job_id": id,
             "compute_node_id": compute_node_id,
@@ -4485,7 +4462,10 @@ where
             id, status, result_id
         );
 
-        // TODO: update job hash?
+        // Note: We intentionally do NOT update the job input hash on completion.
+        // The hash is stored at initialization time and represents the baseline for
+        // detecting input changes during reinitialize. Updating it here would be
+        // redundant since inputs shouldn't change during execution.
 
         // Check if any on_jobs_complete actions should be triggered
         // Only check actions that involve this specific completed job for efficiency
@@ -5006,10 +4986,13 @@ where
                 ApiError("Database commit error".to_string())
             })?;
 
-        // TODO: generate a reason for the jobs that were not selected
+        // Note: The `reason` field is not populated because generating a useful
+        // single-string reason is impractical when multiple jobs may be skipped
+        // for different reasons (memory, CPUs, GPUs, nodes). Detailed per-job
+        // skip reasons are logged at debug level during job selection above.
         let response = models::ClaimJobsBasedOnResources {
             jobs: Some(selected_jobs),
-            reason: Some(String::new()),
+            reason: None,
         };
 
         Ok(ClaimJobsBasedOnResources::SuccessfulResponse(response))
