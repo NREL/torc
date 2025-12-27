@@ -25,7 +25,6 @@ fn test_client_run_config_defaults() {
     let config = ClientRunConfig::default();
     assert_eq!(config.poll_interval, 5.0);
     assert_eq!(config.output_dir, PathBuf::from("output"));
-    assert_eq!(config.database_poll_interval, 30);
     assert!(config.max_parallel_jobs.is_none());
     assert!(config.num_cpus.is_none());
     assert!(config.memory_gb.is_none());
@@ -384,8 +383,7 @@ fn test_json_deserialization() {
             "log_level": "debug",
             "run": {
                 "poll_interval": 15.0,
-                "output_dir": "json_output",
-                "database_poll_interval": 60
+                "output_dir": "json_output"
             }
         },
         "server": {

@@ -126,7 +126,6 @@ pub struct JobRunner {
     output_dir: PathBuf,
     job_completion_poll_interval: f64,
     max_parallel_jobs: Option<i64>,
-    database_poll_interval: i64,
     time_limit: Option<String>,
     end_time: Option<DateTime<Utc>>,
     resources: ComputeNodesResources,
@@ -163,7 +162,6 @@ impl JobRunner {
         output_dir: PathBuf,
         job_completion_poll_interval: f64,
         max_parallel_jobs: Option<i64>,
-        database_poll_interval: i64, // TODO is this handled properly?
         time_limit: Option<String>,
         end_time: Option<DateTime<Utc>>,
         resources: ComputeNodesResources,
@@ -232,7 +230,6 @@ impl JobRunner {
             output_dir,
             job_completion_poll_interval,
             max_parallel_jobs,
-            database_poll_interval,
             time_limit,
             end_time,
             resources,
@@ -407,9 +404,27 @@ impl JobRunner {
 
             debug!("Check for new jobs");
             if self.max_parallel_jobs.is_none() {
-                self.run_ready_jobs_based_on_resources()
+                // Resource-based mode: skip if no CPUs available or memory nearly exhausted
+                if self.resources.num_cpus > 0 && self.resources.memory_gb >= 0.1 {
+                    self.run_ready_jobs_based_on_resources()
+                } else {
+                    debug!(
+                        "Skipping job claim: no capacity (cpus={}, memory_gb={:.2})",
+                        self.resources.num_cpus, self.resources.memory_gb
+                    );
+                }
             } else {
-                self.run_ready_jobs_based_on_user_parallelism()
+                // Parallelism-based mode: skip if already at max parallel jobs
+                let max = self.max_parallel_jobs.unwrap();
+                if (self.running_jobs.len() as i64) < max {
+                    self.run_ready_jobs_based_on_user_parallelism()
+                } else {
+                    debug!(
+                        "Skipping job claim: at max parallel jobs ({}/{})",
+                        self.running_jobs.len(),
+                        max
+                    );
+                }
             };
 
             thread::sleep(Duration::from_secs_f64(self.job_completion_poll_interval));

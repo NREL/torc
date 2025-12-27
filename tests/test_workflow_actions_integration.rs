@@ -113,7 +113,6 @@ actions:
         output_dir.clone(),
         0.1,
         None,
-        1,
         None,
         None,
         torc::models::ComputeNodesResources {
@@ -246,7 +245,6 @@ actions:
         output_dir.clone(),
         0.1,
         None,
-        1,
         None,
         None,
         torc::models::ComputeNodesResources {
@@ -352,7 +350,6 @@ actions:
         output_dir.clone(),
         0.1,
         None,
-        1,
         None,
         None,
         torc::models::ComputeNodesResources {
@@ -468,7 +465,6 @@ actions:
         output_dir.clone(),
         0.1,
         None,
-        1,
         None,
         None,
         torc::models::ComputeNodesResources {
@@ -580,7 +576,6 @@ actions:
         output_dir.clone(),
         0.1,
         None,
-        1,
         None,
         None,
         torc::models::ComputeNodesResources {
@@ -700,7 +695,6 @@ actions:
             output_dir.clone(),
             0.1,
             Some(1),
-            1,
             None,
             None,
             torc::models::ComputeNodesResources {
@@ -833,7 +827,6 @@ actions:
             output_dir.clone(),
             0.1,
             Some(1),
-            1,
             None,
             None,
             torc::models::ComputeNodesResources {
@@ -972,7 +965,6 @@ actions:
             output_dir.clone(),
             0.1,
             Some(1),
-            1,
             None,
             None,
             torc::models::ComputeNodesResources {
@@ -1109,7 +1101,6 @@ actions:
             output_dir.clone(),
             0.1,
             Some(1),
-            1,
             None,
             None,
             torc::models::ComputeNodesResources {

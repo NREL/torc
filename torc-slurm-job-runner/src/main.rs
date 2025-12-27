@@ -219,7 +219,6 @@ mod unix_main {
             }
         };
 
-        let database_poll_interval = 300; // TODO
         let unique_label = format!("{}_{}_{}", job_id, node_id, task_pid);
 
         let mut job_runner = JobRunner::new(
@@ -230,7 +229,6 @@ mod unix_main {
             args.output_dir.clone(),
             args.poll_interval as f64,
             args.max_parallel_jobs.map(|x| x as i64),
-            database_poll_interval,
             None, // time_limit
             Some(effective_end_time),
             resources,
