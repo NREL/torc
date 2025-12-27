@@ -1599,17 +1599,19 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             }
         }
 
-        // Step 4: Regenerate Slurm schedulers (this also marks old actions as executed)
-        info!("Regenerating Slurm schedulers...");
-        if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
-            warn!("Error regenerating schedulers: {}", e);
-            std::process::exit(1);
-        }
-
-        // Step 5: Reinitialize workflow (fires on_workflow_start actions - but old ones are now marked executed)
+        // Step 4: Reinitialize workflow first (before creating new allocations)
+        // Must happen before regenerate_and_submit because reset_workflow_status
+        // rejects requests when there are pending scheduled compute nodes.
         info!("Reinitializing workflow...");
         if let Err(e) = reinitialize_workflow(args.workflow_id) {
             warn!("Error reinitializing workflow: {}", e);
+            std::process::exit(1);
+        }
+
+        // Step 5: Regenerate Slurm schedulers (this also marks old actions as executed)
+        info!("Regenerating Slurm schedulers...");
+        if let Err(e) = regenerate_and_submit(args.workflow_id, &args.output_dir) {
+            warn!("Error regenerating schedulers: {}", e);
             std::process::exit(1);
         }
 

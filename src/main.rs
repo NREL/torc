@@ -321,6 +321,7 @@ fn main() {
             single_allocation,
             ignore_missing_data,
             skip_checks,
+            overwrite,
         } => {
             use torc::client::commands::slurm::generate_schedulers_for_workflow;
 
@@ -365,7 +366,7 @@ fn main() {
                 account,
                 *single_allocation,
                 true,
-                true,
+                *overwrite,
             ) {
                 Ok(result) => {
                     eprintln!(
@@ -377,7 +378,7 @@ fn main() {
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error generating schedulers: {}", e);
+                    eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }

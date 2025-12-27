@@ -190,6 +190,10 @@ pub enum Commands {
         /// Skip validation checks (e.g., scheduler node requirements). Use with caution.
         #[arg(long, default_value = "false")]
         skip_checks: bool,
+        /// Overwrite existing slurm_schedulers and actions in the spec file.
+        /// Without this flag, an error is returned if the spec already has schedulers.
+        #[arg(long, default_value = "false")]
+        overwrite: bool,
     },
     /// Watch a workflow and automatically recover from failures
     ///

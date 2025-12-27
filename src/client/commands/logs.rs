@@ -9,6 +9,7 @@ use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
@@ -308,9 +309,9 @@ struct ErrorPattern {
     severity: ErrorSeverity,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[allow(dead_code)]
-enum ErrorSeverity {
+/// Severity level for detected errors
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum ErrorSeverity {
     Error,
     Warning,
     Info,
@@ -326,14 +327,123 @@ impl std::fmt::Display for ErrorSeverity {
     }
 }
 
-/// Detected error in a log file
-#[derive(Debug)]
-struct DetectedError {
-    file: String,
-    line_number: usize,
-    pattern_name: String,
-    severity: ErrorSeverity,
-    line_content: String,
+/// A detected error in a log file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DetectedError {
+    pub file: String,
+    pub line_number: usize,
+    pub pattern_name: String,
+    pub severity: ErrorSeverity,
+    pub line_content: String,
+}
+
+/// Result of analyzing workflow logs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogAnalysisResult {
+    /// Workflow ID that was analyzed
+    pub workflow_id: Option<i64>,
+    /// Number of log files parsed
+    pub files_parsed: usize,
+    /// Total number of errors detected
+    pub error_count: usize,
+    /// Total number of warnings detected
+    pub warning_count: usize,
+    /// All detected errors
+    pub errors: Vec<DetectedError>,
+    /// Errors grouped by file
+    pub errors_by_file: HashMap<String, Vec<DetectedError>>,
+    /// Error counts by pattern type
+    pub errors_by_type: HashMap<String, usize>,
+}
+
+impl LogAnalysisResult {
+    /// Build the result from a list of detected errors
+    fn from_errors(
+        errors: Vec<DetectedError>,
+        files_parsed: usize,
+        workflow_id: Option<i64>,
+    ) -> Self {
+        let error_count = errors
+            .iter()
+            .filter(|e| e.severity == ErrorSeverity::Error)
+            .count();
+        let warning_count = errors
+            .iter()
+            .filter(|e| e.severity == ErrorSeverity::Warning)
+            .count();
+
+        // Group errors by file
+        let mut errors_by_file: HashMap<String, Vec<DetectedError>> = HashMap::new();
+        for error in &errors {
+            errors_by_file
+                .entry(error.file.clone())
+                .or_default()
+                .push(error.clone());
+        }
+
+        // Count errors by type
+        let mut errors_by_type: HashMap<String, usize> = HashMap::new();
+        for error in &errors {
+            if error.severity == ErrorSeverity::Error {
+                *errors_by_type
+                    .entry(error.pattern_name.clone())
+                    .or_default() += 1;
+            }
+        }
+
+        Self {
+            workflow_id,
+            files_parsed,
+            error_count,
+            warning_count,
+            errors,
+            errors_by_file,
+            errors_by_type,
+        }
+    }
+}
+
+/// Analyze logs for a workflow from an output directory.
+///
+/// This is the main public API for log analysis, suitable for use by the MCP server.
+///
+/// # Arguments
+/// * `output_dir` - The output directory where logs are stored (same as passed to `torc run`)
+/// * `workflow_id` - The workflow ID to analyze logs for
+///
+/// # Returns
+/// A `LogAnalysisResult` containing all detected errors and summary statistics.
+pub fn analyze_workflow_logs(
+    output_dir: &Path,
+    workflow_id: i64,
+) -> Result<LogAnalysisResult, String> {
+    if !output_dir.exists() {
+        return Err(format!(
+            "Output directory does not exist: {}",
+            output_dir.display()
+        ));
+    }
+
+    let wf_pattern = format!("wf{}", workflow_id);
+    let patterns = get_error_patterns();
+    let mut errors: Vec<DetectedError> = Vec::new();
+    let mut files_parsed = 0;
+
+    // Scan main directory
+    files_parsed += scan_directory_for_logs(output_dir, &wf_pattern, &patterns, &mut errors);
+
+    // Scan job_stdio subdirectory
+    let job_stdio_dir = output_dir.join("job_stdio");
+    if job_stdio_dir.exists() {
+        files_parsed +=
+            scan_directory_for_logs(&job_stdio_dir, &wf_pattern, &patterns, &mut errors);
+    }
+
+    Ok(LogAnalysisResult::from_errors(
+        errors,
+        files_parsed,
+        Some(workflow_id),
+    ))
 }
 
 /// Get the error patterns to search for in log files

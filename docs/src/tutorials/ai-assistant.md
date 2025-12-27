@@ -19,9 +19,9 @@ With Torc's AI integration, you can manage workflows using natural language:
 
 | Task             | Example                                            |
 | ---------------- | -------------------------------------------------- |
+| Create workflows | _"Create a workflow with 10 parallel jobs"_        |
 | Check status     | _"What's the status of workflow 42?"_              |
 | Debug failures   | _"Why did a job in workflow 5 fail?"_              |
-| Create workflows | _"Create a workflow with 10 parallel jobs"_        |
 | Fix problems     | _"Restart the failed jobs with doubled memory"_    |
 | Investigate      | _"Check if any jobs exceeded their memory limits"_ |
 
@@ -78,19 +78,86 @@ claude mcp list
 ## Example: Creating a Workflow
 
 ```
-You: Create a workflow with 3 stages: a preprocess script, 10 work jobs
-     that each take an index, and a postprocess job.
+> Create a workflow with 3 stages: a preprocess script, 10 work jobs that each take an index, and a postprocess job. The work jobs each require
+ 10 CPUs and 20 GB of memory. The other jobs have trivial resource requirements.
 
-Claude:
-● Created workflow ID 6 (three_stage_pipeline) with:
+⏺ I'll create a workflow spec file with the 3-stage fan-out/fan-in pattern you described.
 
-  | Stage          | Jobs                              | Dependencies                |
-  |----------------|-----------------------------------|-----------------------------|
-  | 1. Preprocess  | preprocess                        | None                        |
-  | 2. Work        | work_00 through work_09 (10 jobs) | Each depends on preprocess  |
-  | 3. Postprocess | postprocess                       | Depends on all 10 work jobs |
+⏺ Created the workflow spec at ./workflow.json with:
 
-● Workflow is ready with 12 jobs total. Would you like me to run or submit it?
+  Structure:
+  - Stage 1: preprocess - runs first, outputs preprocess_output.txt
+  - Stage 2: work_0 through work_9 - 10 parallel jobs, each reads preprocess output
+  - Stage 3: postprocess - waits for all work jobs to complete (fan-in pattern)
+
+  Resource Requirements:
+  | Name  | CPUs | Memory | Runtime |
+  |-------|------|--------|---------|
+  | small | 1    | 1g     | 1 hour  |
+  | large | 10   | 20g    | 2 hours |
+
+  Next steps:
+  1. Edit the spec to replace placeholder commands with your actual scripts
+  2. Run locally: torc run workflow.json
+  3. Or submit to Slurm: torc submit workflow.json (requires adding an account)
+```
+
+You can create much more complex workflows. Output is not shown, but this prompt will create a
+workflow with job dependencies defined implicitly through job-file relationships:
+
+```
+Create a workflow with four stages of jobs. There are 3 initial jobs each dependent on an input file. Each of those jobs fans out into 10 work jobs through
+  output files. Each of those jobs creates a file. In the third stage there is a script that aggregates each of the 10 jobs into one file. The final
+  postprocess job aggregates those three files into one. I will run it with Slurm: account=my_account. The work jobs require 10 cpus and 30 GB of
+  memory. The other jobs have trivial resource requirements.
+```
+
+---
+
+## Example: Adjusting jobs' resource requirements
+
+Suppose that jobs fail because they use too much CPU or memory.
+
+```
+> Check the resource utilization for workflow 20
+
+⏺ torc - check_resource_utilization (MCP)(workflow_id: 20)
+  ⎿  {
+       "over_utilization_count": 1,
+       "run_id": null,
+     … +17 lines (ctrl+o to expand)
+
+⏺ Resource Utilization for Workflow 20
+
+  Summary: 3 job results analyzed, 1 resource violation found
+
+  CPU Over-Utilization
+
+  | Job ID | Job Name      | Specified      | Peak Used | Over By |
+  |--------|---------------|----------------|-----------|---------|
+  | 264    | cpu_heavy_job | 3 cores (300%) | 602.5%    | +100.8% |
+
+  The cpu_heavy_job used approximately 6 CPU cores at peak, but was only allocated 3 cores.
+
+  Would you like me to update the resource requirements for this job? I can increase the CPU allocation to 7 cores to provide headroom for future runs.
+
+> yes
+
+⏺ torc - update_job_resources (MCP)(job_id: 264, num_cpus: 7)
+  ⎿  {
+       "job_id": 264,
+       "resource_requirements_id": 45,
+     … +8 lines (ctrl+o to expand)
+
+⏺ Done. Updated cpu_heavy_job (job 264) resources:
+
+  | Setting | Value      |
+  |---------|------------|
+  | CPUs    | 7 (was 3)  |
+  | Memory  | 1g         |
+  | Runtime | 15 minutes |
+
+  The job is now configured with enough CPU capacity for future runs.
 ```
 
 ---

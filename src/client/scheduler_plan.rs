@@ -60,7 +60,9 @@ pub struct PlannedAction {
     pub trigger_type: String,
     /// Scheduler name this action references
     pub scheduler_name: String,
-    /// Job name regex patterns (for on_jobs_ready triggers)
+    /// Exact job names for this action (preferred over patterns for expanded jobs)
+    pub job_names: Option<Vec<String>>,
+    /// Job name regex patterns (for on_jobs_ready triggers with unexpanded parameterized jobs)
     pub job_name_patterns: Option<Vec<String>>,
     /// Number of allocations to submit
     pub num_allocations: i64,
@@ -307,15 +309,20 @@ fn process_scheduler_group<RR: ResourceRequirements>(
     let action = if add_actions {
         let start_one_worker_per_node = nodes_per_alloc > 1;
 
-        let (trigger_type, job_name_patterns) = if group.has_dependencies {
-            ("on_jobs_ready", Some(group.job_name_patterns.clone()))
+        // For jobs with dependencies, we need to specify which jobs trigger the action.
+        // Use job_names (exact names) instead of job_name_patterns (regexes) because
+        // after parameter expansion, each job has an exact name and using regexes
+        // with individual exact-match patterns is wasteful and confusing.
+        let (trigger_type, job_names, job_name_patterns) = if group.has_dependencies {
+            ("on_jobs_ready", Some(group.job_names.clone()), None)
         } else {
-            ("on_workflow_start", None)
+            ("on_workflow_start", None, None)
         };
 
         Some(PlannedAction {
             trigger_type: trigger_type.to_string(),
             scheduler_name: scheduler_name.clone(),
+            job_names,
             job_name_patterns,
             num_allocations,
             start_one_worker_per_node,
@@ -405,6 +412,9 @@ pub fn apply_plan_to_spec(plan: &SchedulerPlan, spec: &mut WorkflowSpec) {
         .collect();
 
     // Convert planned actions to WorkflowActionSpec
+    // Prefer job_names (exact matches) over job_name_patterns (regexes) when available,
+    // since after parameter expansion we have exact job names and using regexes with
+    // individual exact-match patterns is wasteful and confusing.
     let actions: Vec<WorkflowActionSpec> = plan
         .actions
         .iter()
@@ -418,7 +428,7 @@ pub fn apply_plan_to_spec(plan: &SchedulerPlan, spec: &mut WorkflowSpec) {
             WorkflowActionSpec {
                 trigger_type: pa.trigger_type.clone(),
                 action_type: "schedule_nodes".to_string(),
-                jobs: None,
+                jobs: pa.job_names.clone(),
                 job_name_regexes: pa.job_name_patterns.clone(),
                 commands: None,
                 scheduler: Some(pa.scheduler_name.clone()),
