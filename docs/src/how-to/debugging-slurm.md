@@ -26,13 +26,16 @@ these additional log paths:
 {
   "job_stdout": "output/job_stdio/job_wf1_j456_r1.o",
   "job_stderr": "output/job_stdio/job_wf1_j456_r1.e",
-  "job_runner_log": "output/job_runner_slurm_sl12345_nnode01_pid67890.log",
-  "slurm_stdout": "output/slurm_output_sl12345.o",
-  "slurm_stderr": "output/slurm_output_sl12345.e",
-  "slurm_env_log": "output/slurm_env_sl12345_nnode01_pid67890.log",
-  "dmesg_log": "output/dmesg_slurm_sl12345_nnode01_pid67890.log"
+  "job_runner_log": "output/job_runner_slurm_wf1_sl12345_nnode01_pid67890.log",
+  "slurm_stdout": "output/slurm_output_wf1_sl12345.o",
+  "slurm_stderr": "output/slurm_output_wf1_sl12345.e",
+  "slurm_env_log": "output/slurm_env_wf1_sl12345_nnode01_pid67890.log",
+  "dmesg_log": "output/dmesg_slurm_wf1_sl12345_nnode01_pid67890.log"
 }
 ```
+
+All Slurm log files include the workflow ID (`wf<id>`) prefix, making it easy to identify and
+collect logs for a specific workflow.
 
 ### Log File Descriptions
 

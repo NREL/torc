@@ -31,11 +31,14 @@ pub enum SupportBundleCommands {
         #[arg(long, default_value = ".")]
         bundle_dir: PathBuf,
     },
-    /// Parse a support bundle and extract error information
+    /// Parse a support bundle or log directory and extract error information
     Parse {
-        /// Path to the support bundle tarball
+        /// Path to a support bundle tarball (.tar.gz) or log directory
         #[arg()]
-        bundle_path: PathBuf,
+        path: PathBuf,
+        /// Workflow ID to filter logs (required when parsing a directory with multiple workflows)
+        #[arg(short, long)]
+        workflow_id: Option<i64>,
     },
 }
 
@@ -49,8 +52,8 @@ pub fn handle_support_bundle_commands(config: &Configuration, command: &SupportB
         } => {
             collect_bundle(config, *workflow_id, output_dir, bundle_dir);
         }
-        SupportBundleCommands::Parse { bundle_path } => {
-            parse_bundle(bundle_path);
+        SupportBundleCommands::Parse { path, workflow_id } => {
+            parse_path(path, *workflow_id);
         }
     }
 }
@@ -337,29 +340,9 @@ struct DetectedError {
     line_content: String,
 }
 
-/// Parse a support bundle and extract error information
-fn parse_bundle(bundle_path: &Path) {
-    if !bundle_path.exists() {
-        eprintln!("Error: Bundle file not found: {}", bundle_path.display());
-        std::process::exit(1);
-    }
-
-    println!("Parsing support bundle: {}", bundle_path.display());
-    println!();
-
-    // Open and decompress the tarball
-    let file = match File::open(bundle_path) {
-        Ok(f) => f,
-        Err(e) => {
-            eprintln!("Error opening bundle: {}", e);
-            std::process::exit(1);
-        }
-    };
-    let decoder = GzDecoder::new(file);
-    let mut archive = Archive::new(decoder);
-
-    // Define error patterns to search for
-    let patterns = vec![
+/// Get the error patterns to search for in log files
+fn get_error_patterns() -> Vec<ErrorPattern> {
+    vec![
         ErrorPattern {
             name: "OOM Killed",
             pattern: Regex::new(r"(?i)(out of memory|oom|killed|cannot allocate memory)").unwrap(),
@@ -419,74 +402,40 @@ fn parse_bundle(bundle_path: &Path) {
                 .unwrap(),
             severity: ErrorSeverity::Error,
         },
-    ];
+    ]
+}
 
-    let mut errors: Vec<DetectedError> = Vec::new();
-    let mut files_parsed = 0;
-    let mut metadata: Option<serde_json::Value> = None;
-
-    // Process each file in the archive
-    let entries = match archive.entries() {
-        Ok(e) => e,
-        Err(e) => {
-            eprintln!("Error reading archive entries: {}", e);
-            std::process::exit(1);
-        }
-    };
-
-    for entry_result in entries {
-        let mut entry = match entry_result {
-            Ok(e) => e,
-            Err(e) => {
-                eprintln!("Warning: Error reading entry: {}", e);
-                continue;
-            }
-        };
-
-        let path = match entry.path() {
-            Ok(p) => p.to_path_buf(),
-            Err(_) => continue,
-        };
-        let filename = path.to_string_lossy().to_string();
-
-        // Check if this is the metadata file
-        if filename == "bundle_metadata.json" {
-            let mut content = String::new();
-            if entry.read_to_string(&mut content).is_ok() {
-                metadata = serde_json::from_str(&content).ok();
-            }
-            continue;
-        }
-
-        // Parse log files
-        if filename.ends_with(".log") || filename.ends_with(".o") || filename.ends_with(".e") {
-            files_parsed += 1;
-
-            // Read entry content into memory
-            let mut content = String::new();
-            if entry.read_to_string(&mut content).is_err() {
-                continue;
-            }
-
-            for (line_number, line) in content.lines().enumerate() {
-                for pattern in &patterns {
-                    if pattern.pattern.is_match(line) {
-                        errors.push(DetectedError {
-                            file: filename.clone(),
-                            line_number: line_number + 1,
-                            pattern_name: pattern.name.to_string(),
-                            severity: pattern.severity,
-                            line_content: truncate_line(line, 120),
-                        });
-                        break; // Only report first matching pattern per line
-                    }
-                }
+/// Scan file content for error patterns
+fn scan_content_for_errors(
+    filename: &str,
+    content: &str,
+    patterns: &[ErrorPattern],
+    errors: &mut Vec<DetectedError>,
+) {
+    for (line_number, line) in content.lines().enumerate() {
+        for pattern in patterns {
+            if pattern.pattern.is_match(line) {
+                errors.push(DetectedError {
+                    file: filename.to_string(),
+                    line_number: line_number + 1,
+                    pattern_name: pattern.name.to_string(),
+                    severity: pattern.severity,
+                    line_content: truncate_line(line, 120),
+                });
+                break; // Only report first matching pattern per line
             }
         }
     }
+}
 
+/// Print parse results (errors and summary)
+fn print_parse_results(
+    errors: &[DetectedError],
+    files_parsed: usize,
+    metadata: Option<&serde_json::Value>,
+) {
     // Print metadata if available
-    if let Some(meta) = &metadata {
+    if let Some(meta) = metadata {
         println!("Bundle Information:");
         println!(
             "  Workflow ID: {}",
@@ -519,7 +468,7 @@ fn parse_bundle(bundle_path: &Path) {
 
     // Group errors by file
     let mut errors_by_file: HashMap<String, Vec<&DetectedError>> = HashMap::new();
-    for error in &errors {
+    for error in errors {
         errors_by_file
             .entry(error.file.clone())
             .or_default()
@@ -558,7 +507,7 @@ fn parse_bundle(bundle_path: &Path) {
     // Summary of error types
     println!("Error Type Summary:");
     let mut pattern_counts: HashMap<String, usize> = HashMap::new();
-    for error in &errors {
+    for error in errors {
         if error.severity == ErrorSeverity::Error {
             *pattern_counts
                 .entry(error.pattern_name.clone())
@@ -568,6 +517,242 @@ fn parse_bundle(bundle_path: &Path) {
     for (pattern, count) in pattern_counts.iter() {
         println!("  {}: {} occurrence(s)", pattern, count);
     }
+}
+
+/// Dispatch to parse a bundle file or directory
+fn parse_path(path: &Path, workflow_id: Option<i64>) {
+    if !path.exists() {
+        eprintln!("Error: Path not found: {}", path.display());
+        std::process::exit(1);
+    }
+
+    if path.is_dir() {
+        parse_directory(path, workflow_id);
+    } else {
+        parse_bundle(path);
+    }
+}
+
+/// Parse a support bundle tarball and extract error information
+fn parse_bundle(bundle_path: &Path) {
+    println!("Parsing support bundle: {}", bundle_path.display());
+    println!();
+
+    // Open and decompress the tarball
+    let file = match File::open(bundle_path) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Error opening bundle: {}", e);
+            std::process::exit(1);
+        }
+    };
+    let decoder = GzDecoder::new(file);
+    let mut archive = Archive::new(decoder);
+
+    let patterns = get_error_patterns();
+    let mut errors: Vec<DetectedError> = Vec::new();
+    let mut files_parsed = 0;
+    let mut metadata: Option<serde_json::Value> = None;
+
+    // Process each file in the archive
+    let entries = match archive.entries() {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("Error reading archive entries: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    for entry_result in entries {
+        let mut entry = match entry_result {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("Warning: Error reading entry: {}", e);
+                continue;
+            }
+        };
+
+        let path = match entry.path() {
+            Ok(p) => p.to_path_buf(),
+            Err(_) => continue,
+        };
+        let filename = path.to_string_lossy().to_string();
+
+        // Check if this is the metadata file
+        if filename == "bundle_metadata.json" {
+            let mut content = String::new();
+            if entry.read_to_string(&mut content).is_ok() {
+                metadata = serde_json::from_str(&content).ok();
+            }
+            continue;
+        }
+
+        // Parse log files (skip slurm_env files - they contain environment variables, not error logs)
+        let is_log_file =
+            filename.ends_with(".log") || filename.ends_with(".o") || filename.ends_with(".e");
+        let is_env_file = filename.contains("slurm_env_");
+        if is_log_file && !is_env_file {
+            files_parsed += 1;
+
+            // Read entry content into memory
+            let mut content = String::new();
+            if entry.read_to_string(&mut content).is_err() {
+                continue;
+            }
+
+            scan_content_for_errors(&filename, &content, &patterns, &mut errors);
+        }
+    }
+
+    print_parse_results(&errors, files_parsed, metadata.as_ref());
+}
+
+/// Detect workflow IDs present in a directory by scanning filenames
+fn detect_workflow_ids(dir: &Path) -> Vec<i64> {
+    let wf_pattern = Regex::new(r"wf(\d+)").unwrap();
+    let mut workflow_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+
+    // Scan main directory
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let filename = entry.file_name().to_string_lossy().to_string();
+            for cap in wf_pattern.captures_iter(&filename) {
+                if let Ok(id) = cap[1].parse::<i64>() {
+                    workflow_ids.insert(id);
+                }
+            }
+        }
+    }
+
+    // Also scan job_stdio subdirectory
+    let job_stdio_dir = dir.join("job_stdio");
+    if let Ok(entries) = std::fs::read_dir(&job_stdio_dir) {
+        for entry in entries.flatten() {
+            let filename = entry.file_name().to_string_lossy().to_string();
+            for cap in wf_pattern.captures_iter(&filename) {
+                if let Ok(id) = cap[1].parse::<i64>() {
+                    workflow_ids.insert(id);
+                }
+            }
+        }
+    }
+
+    let mut ids: Vec<i64> = workflow_ids.into_iter().collect();
+    ids.sort();
+    ids
+}
+
+/// Parse a log directory and extract error information
+fn parse_directory(dir: &Path, workflow_id: Option<i64>) {
+    // Detect workflow IDs in the directory
+    let detected_ids = detect_workflow_ids(dir);
+
+    if detected_ids.is_empty() {
+        eprintln!(
+            "No workflow log files found in directory: {}",
+            dir.display()
+        );
+        std::process::exit(1);
+    }
+
+    // Determine which workflow ID to use
+    let wf_id = match workflow_id {
+        Some(id) => {
+            if !detected_ids.contains(&id) {
+                eprintln!(
+                    "Warning: Workflow {} not found in directory. Detected workflows: {:?}",
+                    id, detected_ids
+                );
+            }
+            id
+        }
+        None => {
+            if detected_ids.len() > 1 {
+                eprintln!(
+                    "Multiple workflows detected in directory: {:?}",
+                    detected_ids
+                );
+                eprintln!("Please specify a workflow ID with --workflow-id");
+                std::process::exit(1);
+            }
+            detected_ids[0]
+        }
+    };
+
+    let wf_pattern = format!("wf{}", wf_id);
+    println!("Parsing log directory: {}", dir.display());
+    println!("Workflow ID: {}", wf_id);
+    println!();
+
+    let patterns = get_error_patterns();
+    let mut errors: Vec<DetectedError> = Vec::new();
+    let mut files_parsed = 0;
+
+    // Scan main directory
+    files_parsed += scan_directory_for_logs(dir, &wf_pattern, &patterns, &mut errors);
+
+    // Scan job_stdio subdirectory
+    let job_stdio_dir = dir.join("job_stdio");
+    if job_stdio_dir.exists() {
+        files_parsed +=
+            scan_directory_for_logs(&job_stdio_dir, &wf_pattern, &patterns, &mut errors);
+    }
+
+    print_parse_results(&errors, files_parsed, None);
+}
+
+/// Scan a directory for log files matching the workflow pattern
+fn scan_directory_for_logs(
+    dir: &Path,
+    wf_pattern: &str,
+    patterns: &[ErrorPattern],
+    errors: &mut Vec<DetectedError>,
+) -> usize {
+    let mut files_parsed = 0;
+
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("Warning: Cannot read directory {}: {}", dir.display(), e);
+            return 0;
+        }
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let filename = path.file_name().unwrap_or_default().to_string_lossy();
+
+        // Check if file matches workflow pattern and is a log file
+        let is_log_file =
+            filename.ends_with(".log") || filename.ends_with(".o") || filename.ends_with(".e");
+        // Skip slurm_env files - they contain environment variables, not error logs
+        let is_env_file = filename.starts_with("slurm_env_");
+        if !is_log_file || !filename.contains(wf_pattern) || is_env_file {
+            continue;
+        }
+
+        files_parsed += 1;
+
+        // Read and scan file content
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            let display_name = if let Some(parent) = path.parent() {
+                if let Some(parent_name) = parent.file_name() {
+                    format!("{}/{}", parent_name.to_string_lossy(), filename)
+                } else {
+                    filename.to_string()
+                }
+            } else {
+                filename.to_string()
+            };
+            scan_content_for_errors(&display_name, &content, patterns, errors);
+        }
+    }
+
+    files_parsed
 }
 
 /// Truncate a line to a maximum length
