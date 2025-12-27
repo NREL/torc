@@ -76,9 +76,9 @@ fn test_async_cli_command_start_simple_command(start_server: &ServerProcess) {
     thread::sleep(Duration::from_millis(500));
     let _ = async_cmd.check_status();
 
-    // Verify output files were created (format: job_{workflow_id}_{job_id}_{run_id}.o/e)
-    let stdout_path = format!("{}/job_stdio/job_1_1_1.o", output_dir);
-    let stderr_path = format!("{}/job_stdio/job_1_1_1.e", output_dir);
+    // Verify output files were created (format: job_wf{workflow_id}_j{job_id}_r{run_id}.o/e)
+    let stdout_path = format!("{}/job_stdio/job_wf1_j1_r1.o", output_dir);
+    let stderr_path = format!("{}/job_stdio/job_wf1_j1_r1.e", output_dir);
     assert!(Path::new(&stdout_path).exists());
     assert!(Path::new(&stderr_path).exists());
 }
@@ -386,7 +386,7 @@ fn test_async_cli_command_with_invocation_script() {
     let _ = async_cmd.wait_for_completion();
 
     // Verify both invocation script and command were executed
-    let stdout_path = temp_dir.path().join("job_stdio").join("job_1_1_1.o");
+    let stdout_path = temp_dir.path().join("job_stdio").join("job_wf1_j1_r1.o");
     let contents = fs::read_to_string(stdout_path).expect("Failed to read stdout");
     assert!(contents.contains("Prefix:"));
     assert!(contents.contains("Hello"));
@@ -412,7 +412,7 @@ fn test_async_cli_command_environment_variables() {
     let _ = async_cmd.wait_for_completion();
 
     // Verify environment variables were set
-    let stdout_path = temp_dir.path().join("job_stdio").join("job_1_123_1.o");
+    let stdout_path = temp_dir.path().join("job_stdio").join("job_wf1_j123_r1.o");
     let contents = fs::read_to_string(stdout_path).expect("Failed to read stdout");
     assert!(contents.contains("1")); // workflow_id
     assert!(contents.contains("123")); // job_id
@@ -437,12 +437,12 @@ fn test_async_cli_command_stdout_stderr_separation() {
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
-    let stdout_path = temp_dir.path().join("job_stdio").join("job_1_1_1.o");
+    let stdout_path = temp_dir.path().join("job_stdio").join("job_wf1_j1_r1.o");
     let stdout_contents = fs::read_to_string(&stdout_path).expect("Failed to read stdout");
     assert!(stdout_contents.contains("stdout message"));
 
     // Check stderr
-    let stderr_path = temp_dir.path().join("job_stdio").join("job_1_1_1.e");
+    let stderr_path = temp_dir.path().join("job_stdio").join("job_wf1_j1_r1.e");
     let stderr_contents = fs::read_to_string(stderr_path).expect("Failed to read stderr");
     assert!(stderr_contents.contains("stderr message"));
 }
@@ -495,12 +495,12 @@ fn test_async_cli_command_multiple_jobs_same_workflow() {
     let _ = async_cmd3.wait_for_completion();
 
     // Verify all output files exist and have correct content
-    // File format: job_{workflow_id}_{job_id}_{run_id}.o
+    // File format: job_wf{workflow_id}_j{job_id}_r{run_id}.o
     for job_id in 1..=3 {
         let stdout_path = temp_dir
             .path()
             .join("job_stdio")
-            .join(format!("job_1_{}_1.o", job_id));
+            .join(format!("job_wf1_j{}_r1.o", job_id));
         assert!(stdout_path.exists());
         let contents = fs::read_to_string(stdout_path).expect("Failed to read stdout");
         assert!(contents.contains(&format!("Job {}", job_id)));
@@ -569,7 +569,7 @@ fn test_async_cli_command_complex_shell_command() {
     let _ = async_cmd.wait_for_completion();
 
     // Check the output
-    let stdout_path = temp_dir.path().join("job_stdio").join("job_1_1_1.o");
+    let stdout_path = temp_dir.path().join("job_stdio").join("job_wf1_j1_r1.o");
     let contents = fs::read_to_string(stdout_path).expect("Failed to read stdout");
     assert!(contents.contains("Number 1"));
     assert!(contents.contains("Number 2"));

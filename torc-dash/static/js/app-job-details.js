@@ -486,7 +486,7 @@ Object.assign(TorcDashboard.prototype, {
         const isStdout = (this._jobLogTab || 'stdout') === 'stdout';
 
         // Construct log file path based on naming convention
-        const stdioBase = `${outputDir}/job_stdio/job_${result.workflow_id}_${result.job_id}_${result.run_id}`;
+        const stdioBase = `${outputDir}/job_stdio/job_wf${result.workflow_id}_j${result.job_id}_r${result.run_id}`;
         const filePath = isStdout ? `${stdioBase}.o` : `${stdioBase}.e`;
 
         logPathEl.textContent = filePath;

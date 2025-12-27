@@ -707,11 +707,11 @@ Object.assign(TorcDashboard.prototype, {
         }
 
         // Construct the log file path based on the naming convention
-        // stdout: {output_dir}/slurm_output_{slurm_job_id}.o
-        // stderr: {output_dir}/slurm_output_{slurm_job_id}.e
+        // stdout: {output_dir}/slurm_output_sl{slurm_job_id}.o
+        // stderr: {output_dir}/slurm_output_sl{slurm_job_id}.e
         const outputDir = this.slurmLogsOutputDir || 'output';
         const extension = this.currentSlurmLogTab === 'stdout' ? 'o' : 'e';
-        const filePath = `${outputDir}/slurm_output_${this.currentSlurmJobId}.${extension}`;
+        const filePath = `${outputDir}/slurm_output_sl${this.currentSlurmJobId}.${extension}`;
 
         logPath.textContent = filePath;
         logContent.classList.toggle('stderr', this.currentSlurmLogTab !== 'stdout');

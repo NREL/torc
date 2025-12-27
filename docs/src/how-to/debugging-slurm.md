@@ -24,34 +24,34 @@ these additional log paths:
 
 ```json
 {
-  "job_stdout": "output/job_stdio/job_456.o",
-  "job_stderr": "output/job_stdio/job_456.e",
-  "job_runner_log": "output/job_runner_slurm_12345_node01_67890.log",
-  "slurm_stdout": "output/slurm_output_12345.o",
-  "slurm_stderr": "output/slurm_output_12345.e",
-  "slurm_env_log": "output/slurm_env_12345_node01_67890.log",
-  "dmesg_log": "output/dmesg_slurm_12345_node01_67890.log"
+  "job_stdout": "output/job_stdio/job_wf1_j456_r1.o",
+  "job_stderr": "output/job_stdio/job_wf1_j456_r1.e",
+  "job_runner_log": "output/job_runner_slurm_sl12345_nnode01_pid67890.log",
+  "slurm_stdout": "output/slurm_output_sl12345.o",
+  "slurm_stderr": "output/slurm_output_sl12345.e",
+  "slurm_env_log": "output/slurm_env_sl12345_nnode01_pid67890.log",
+  "dmesg_log": "output/dmesg_slurm_sl12345_nnode01_pid67890.log"
 }
 ```
 
 ### Log File Descriptions
 
-1. **slurm_stdout** (`output/slurm_output_<slurm_job_id>.o`):
+1. **slurm_stdout** (`output/slurm_output_sl<slurm_job_id>.o`):
    - Standard output from Slurm's perspective
    - Includes Slurm environment setup, job allocation info
    - **Use for**: Debugging Slurm job submission issues
 
-2. **slurm_stderr** (`output/slurm_output_<slurm_job_id>.e`):
+2. **slurm_stderr** (`output/slurm_output_sl<slurm_job_id>.e`):
    - Standard error from Slurm's perspective
    - Contains Slurm-specific errors (allocation failures, node issues)
    - **Use for**: Investigating Slurm scheduler problems
 
-3. **slurm_env_log** (`output/slurm_env_<slurm_job_id>_<node_id>_<task_pid>.log`):
+3. **slurm_env_log** (`output/slurm_env_sl<slurm_job_id>_n<node_id>_pid<task_pid>.log`):
    - All SLURM environment variables captured at job runner startup
    - Contains job allocation details, resource limits, node assignments
    - **Use for**: Verifying Slurm job configuration, debugging resource allocation issues
 
-4. **dmesg log** (`output/dmesg_slurm_<slurm_job_id>_<node_id>_<task_pid>.log`):
+4. **dmesg log** (`output/dmesg_slurm_sl<slurm_job_id>_n<node_id>_pid<task_pid>.log`):
    - Kernel message buffer captured when the Slurm job runner exits
    - Contains system-level events: OOM killer activity, hardware errors, kernel panics
    - **Use for**: Investigating job failures caused by system-level issues (e.g., out-of-memory
@@ -131,8 +131,8 @@ Found 2 error(s) in log files:
 ╭─────────────────────────────┬──────────────┬──────┬─────────────────────────────┬──────────┬──────────────────────────────╮
 │ File                        │ Slurm Job ID │ Line │ Pattern                     │ Severity │ Affected Torc Jobs           │
 ├─────────────────────────────┼──────────────┼──────┼─────────────────────────────┼──────────┼──────────────────────────────┤
-│ slurm_output_12345.e        │ 12345        │ 42   │ Out of Memory (OOM) Kill    │ critical │ process_data (ID: 456)       │
-│ slurm_output_12346.e        │ 12346        │ 15   │ CUDA out of memory          │ error    │ train_model (ID: 789)        │
+│ slurm_output_sl12345.e      │ 12345        │ 42   │ Out of Memory (OOM) Kill    │ critical │ process_data (ID: 456)       │
+│ slurm_output_sl12346.e      │ 12346        │ 15   │ CUDA out of memory          │ error    │ train_model (ID: 789)        │
 ╰─────────────────────────────┴──────────────┴──────┴─────────────────────────────┴──────────┴──────────────────────────────╯
 ```
 

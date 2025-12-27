@@ -19,6 +19,7 @@ use crate::client::commands::resource_requirements::ResourceRequirementsCommands
 use crate::client::commands::results::ResultCommands;
 use crate::client::commands::scheduled_compute_nodes::ScheduledComputeNodeCommands;
 use crate::client::commands::slurm::SlurmCommands;
+use crate::client::commands::support_bundles::SupportBundleCommands;
 use crate::client::commands::user_data::UserDataCommands;
 use crate::client::commands::workflows::WorkflowCommands;
 use crate::plot_resources_cmd;
@@ -286,6 +287,12 @@ pub enum Commands {
     Reports {
         #[command(subcommand)]
         command: ReportCommands,
+    },
+    /// Collect and analyze support bundles for debugging
+    #[command(name = "support-bundles")]
+    SupportBundles {
+        #[command(subcommand)]
+        command: SupportBundleCommands,
     },
     /// Manage configuration files and settings
     Config {
