@@ -551,7 +551,14 @@ USE CASES:
 
     /// Update resource requirements for a job.
     #[tool(
-        description = "Update a job's resource requirements (CPU, memory, runtime). Use before restarting a job that failed due to resource constraints."
+        description = "Update a job's resource requirements (CPU, memory, runtime). \
+        Use this for jobs that failed or will fail due to resource constraints. \
+        IMPORTANT: Update ALL jobs with over-utilization from check_resource_utilization, not just failed ones. \
+        After updating resources, tell user the command to restart: \
+        - torc recover <workflow_id>  (RECOMMENDED: automated Slurm recovery) \
+        - Or for manual recovery: torc workflows reset-status + reinitialize + submit. \
+        Use --dry-run first to preview: torc recover <workflow_id> --dry-run \
+        DO NOT suggest 'torc workflows restart' - that command does not exist."
     )]
     async fn update_job_resources(
         &self,

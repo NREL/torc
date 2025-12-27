@@ -162,6 +162,50 @@ Suppose that jobs fail because they use too much CPU or memory.
 
 ---
 
+## Example: Analyzing an auto-recovered workflow recovered through torc's auto-recovery system
+
+The workflow in `tests/workflows/timeout_auto_recovery_test` is used to test torc's auto-recovery of
+walltime timeouts. In this example, the workflow was left in a failed state.
+
+```
+> analyze the logs for workflow 6
+
+Workflow 6 Log Analysis Summary
+
+  Workflow: timeout_auto_recovery_test - Test workflow for automatic timeout recovery
+
+  Job Results
+
+  | Job | Name       | Status        | Runtime | Return Code  |
+  |-----|------------|---------------|---------|--------------|
+  | 31  | (fast job) | ✅ Completed  | 1.0 min | 0            |
+  | 32  | job_slow   | ⛔ Terminated | 5.9 min | -9 (SIGKILL) |
+
+  Terminated Job Details (job_slow)
+
+  The job was killed by signal 9 (SIGKILL) after running for ~6 minutes, which matches the expected behavior for a timeout test.
+
+  stdout log shows the job ran through minute 6 before being killed:
+  Slow job starting at Sat Dec 27 15:40:59 MST 2025
+  This job will run for 10 minutes (exceeds 5 min runtime and 8 min walltime)
+  It should be killed by Slurm and recovered by the watcher
+  Minute 1 of 10...
+  Minute 2 of 10...
+  ...
+  Minute 6 of 10...
+
+  stderr log: Empty (no errors written)
+
+  Conclusion
+
+  The timeout auto-recovery test is working as expected:
+  - The slow job exceeded its 5-minute runtime limit
+  - It was killed by the system (SIGKILL, return code -9) at ~6 minutes
+  - Peak memory usage was ~4.1 MB (no memory issues)
+```
+
+---
+
 ## Example: Debugging a Failure
 
 ```

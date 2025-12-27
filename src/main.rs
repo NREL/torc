@@ -11,6 +11,7 @@ use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
 use torc::client::commands::logs::handle_log_commands;
+use torc::client::commands::recover::{RecoverArgs, recover_workflow};
 use torc::client::commands::remote::handle_remote_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
@@ -471,6 +472,85 @@ fn main() {
                 log_level: log_level.clone(),
             };
             run_watch(&config, &args);
+        }
+        Commands::Recover {
+            workflow_id,
+            output_dir,
+            memory_multiplier,
+            runtime_multiplier,
+            retry_unknown,
+            recovery_hook,
+            dry_run,
+        } => {
+            let args = RecoverArgs {
+                workflow_id: *workflow_id,
+                output_dir: output_dir.clone(),
+                memory_multiplier: *memory_multiplier,
+                runtime_multiplier: *runtime_multiplier,
+                retry_unknown: *retry_unknown,
+                recovery_hook: recovery_hook.clone(),
+                dry_run: *dry_run,
+            };
+            match recover_workflow(&config, &args) {
+                Ok(result) => {
+                    if *dry_run {
+                        println!("[DRY RUN] Summary for workflow {}", workflow_id);
+                        if result.oom_fixed > 0 {
+                            println!(
+                                "  - {} job(s) would have memory increased",
+                                result.oom_fixed
+                            );
+                        }
+                        if result.timeout_fixed > 0 {
+                            println!(
+                                "  - {} job(s) would have runtime increased",
+                                result.timeout_fixed
+                            );
+                        }
+                        if result.unknown_retried > 0 {
+                            println!(
+                                "  - {} job(s) with unknown failures would be reset",
+                                result.unknown_retried
+                            );
+                        }
+                        if result.jobs_to_retry.is_empty() {
+                            println!("No recoverable jobs found.");
+                        } else {
+                            println!(
+                                "Would reset {} job(s) and regenerate Slurm schedulers.",
+                                result.jobs_to_retry.len()
+                            );
+                        }
+                        println!("\nRun without --dry-run to apply these changes.");
+                    } else {
+                        println!("Recovery complete for workflow {}", workflow_id);
+                        if result.oom_fixed > 0 {
+                            println!("  - {} job(s) had memory increased", result.oom_fixed);
+                        }
+                        if result.timeout_fixed > 0 {
+                            println!("  - {} job(s) had runtime increased", result.timeout_fixed);
+                        }
+                        if result.unknown_retried > 0 {
+                            println!(
+                                "  - {} job(s) with unknown failures reset",
+                                result.unknown_retried
+                            );
+                        }
+                        if result.jobs_to_retry.is_empty() {
+                            println!("No recoverable jobs found.");
+                        } else {
+                            println!(
+                                "Reset {} job(s). Slurm schedulers regenerated and submitted.",
+                                result.jobs_to_retry.len()
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Recovery failed: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Commands::Workflows { command } => {
             handle_workflow_commands(&config, command, &format);

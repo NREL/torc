@@ -251,11 +251,43 @@ pub fn check_resource_utilization(
             .get("over_utilization_count")
             .and_then(|v| v.as_i64())
             .unwrap_or(0);
+        let failed_count = json
+            .get("failed_jobs")
+            .and_then(|v| v.as_array())
+            .map(|a| a.len())
+            .unwrap_or(0);
+
         if over_count > 0 {
-            response.push_str("\n\n[INSTRUCTION: After presenting the results, ask the user: ");
-            response.push_str("\"Would you like me to update the resource requirements?\" ");
+            response.push_str("\n\n[CRITICAL INSTRUCTION FOR AI:");
             response.push_str(
-                "If they agree, use the update_job_resources tool to update the resources.]",
+                "\n1. Fix ALL jobs with over-utilization, not just currently failed ones.",
+            );
+            response.push_str(&format!(
+                "\n   - There are {} job(s) that exceeded resource limits",
+                over_count
+            ));
+            if failed_count > 0 && (over_count as usize) > failed_count {
+                response.push_str(&format!(
+                    "\n   - Only {} have failed so far, but {} more will likely fail without fixes",
+                    failed_count,
+                    (over_count as usize) - failed_count
+                ));
+            }
+            response.push_str(
+                "\n2. Use the update_job_resources tool for EACH job in the over_utilization list.",
+            );
+            response.push_str("\n3. Ask user: \"Would you like me to update ALL jobs that exceeded resource limits?\"");
+            response.push_str("\n4. After updating, tell user ONE of these commands to restart:");
+            response.push_str(
+                "\n   torc recover <workflow_id>  # (RECOMMENDED) Automated Slurm recovery",
+            );
+            response.push_str("\n   OR for manual recovery:");
+            response.push_str("\n     torc workflows reset-status <workflow_id> --failed-only");
+            response.push_str("\n     torc workflows reinitialize <workflow_id>");
+            response.push_str("\n     torc workflows submit <workflow_id>  # for Slurm");
+            response.push_str("\n     torc workflows run <workflow_id>     # for local execution");
+            response.push_str(
+                "\nDO NOT invent commands like 'torc workflows restart' - it does not exist.]",
             );
         }
     }
@@ -313,9 +345,13 @@ pub fn update_job_resources(
     )
     .map_err(|e| internal_error(format!("Failed to update resource requirements: {}", e)))?;
 
+    // Get workflow_id for the restart instructions
+    let workflow_id = job.workflow_id;
+
     let result = serde_json::json!({
         "success": true,
         "job_id": job_id,
+        "workflow_id": workflow_id,
         "resource_requirements_id": req_id,
         "updated": {
             "num_cpus": updated.num_cpus,
@@ -323,6 +359,15 @@ pub fn update_job_resources(
             "memory": updated.memory,
             "runtime": updated.runtime,
         },
+        "next_steps": {
+            "note": "After updating ALL jobs with resource violations, restart the workflow with:",
+            "commands": [
+                format!("torc workflows reset-status {} --failed-only", workflow_id),
+                format!("torc workflows reinitialize {}", workflow_id),
+                format!("torc workflows submit {}  # for Slurm workflows", workflow_id),
+                format!("torc workflows run {}     # for local execution", workflow_id),
+            ]
+        }
     });
 
     Ok(CallToolResult::success(vec![rmcp::model::Content::text(
