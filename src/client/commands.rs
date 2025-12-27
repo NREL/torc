@@ -5,6 +5,7 @@ pub mod files;
 pub mod hpc;
 pub mod job_dependencies;
 pub mod jobs;
+pub mod logs;
 pub mod output;
 pub mod pagination;
 pub mod remote;

@@ -1421,8 +1421,8 @@ fn extract_node_from_line(line: &str) -> Option<String> {
 
 /// Extract Slurm job ID from filename
 fn extract_slurm_job_id_from_filename(filename: &str) -> Option<String> {
-    // Pattern: slurm_output_12345.o or slurm_output_12345.e
-    let re = Regex::new(r"slurm_output_(\d+)\.[oe]$").ok()?;
+    // Pattern: slurm_output_sl12345.o or slurm_output_sl12345.e
+    let re = Regex::new(r"slurm_output_sl(\d+)\.[oe]$").ok()?;
     re.captures(filename)
         .and_then(|caps| caps.get(1))
         .map(|m| m.as_str().to_string())

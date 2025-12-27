@@ -10,6 +10,7 @@ use torc::client::commands::files::handle_file_commands;
 use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
+use torc::client::commands::logs::handle_log_commands;
 use torc::client::commands::remote::handle_remote_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
@@ -512,6 +513,9 @@ fn main() {
         }
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &format);
+        }
+        Commands::Logs { command } => {
+            handle_log_commands(&config, command);
         }
         Commands::Config { command } => {
             handle_config_commands(command);

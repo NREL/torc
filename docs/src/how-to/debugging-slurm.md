@@ -24,41 +24,49 @@ these additional log paths:
 
 ```json
 {
-  "job_stdout": "output/job_stdio/job_456.o",
-  "job_stderr": "output/job_stdio/job_456.e",
-  "job_runner_log": "output/job_runner_slurm_12345_node01_67890.log",
-  "slurm_stdout": "output/slurm_output_12345.o",
-  "slurm_stderr": "output/slurm_output_12345.e",
-  "slurm_env_log": "output/slurm_env_12345_node01_67890.log",
-  "dmesg_log": "output/dmesg_slurm_12345_node01_67890.log"
+  "job_stdout": "output/job_stdio/job_wf1_j456_r1.o",
+  "job_stderr": "output/job_stdio/job_wf1_j456_r1.e",
+  "job_runner_log": "output/job_runner_slurm_wf1_sl12345_n0_pid67890.log",
+  "slurm_stdout": "output/slurm_output_wf1_sl12345.o",
+  "slurm_stderr": "output/slurm_output_wf1_sl12345.e",
+  "slurm_env_log": "output/slurm_env_wf1_sl12345_n0_pid67890.log",
+  "dmesg_log": "output/dmesg_slurm_wf1_sl12345_n0_pid67890.log"
 }
 ```
 
+All Slurm log files include the workflow ID (`wf<id>`) prefix, making it easy to identify and
+collect logs for a specific workflow.
+
 ### Log File Descriptions
 
-1. **slurm_stdout** (`output/slurm_output_<slurm_job_id>.o`):
+1. **slurm_stdout** (`output/slurm_output_wf<workflow_id>_sl<slurm_job_id>.o`):
    - Standard output from Slurm's perspective
    - Includes Slurm environment setup, job allocation info
    - **Use for**: Debugging Slurm job submission issues
 
-2. **slurm_stderr** (`output/slurm_output_<slurm_job_id>.e`):
+2. **slurm_stderr** (`output/slurm_output_wf<workflow_id>_sl<slurm_job_id>.e`):
    - Standard error from Slurm's perspective
    - Contains Slurm-specific errors (allocation failures, node issues)
    - **Use for**: Investigating Slurm scheduler problems
 
-3. **slurm_env_log** (`output/slurm_env_<slurm_job_id>_<node_id>_<task_pid>.log`):
+3. **job_runner_log** (`output/job_runner_slurm_wf<id>_sl<slurm_job_id>_n<node>_pid<pid>.log`):
+   - Log output from the Torc Slurm job runner process
+   - Contains job execution details, status updates, and runner-level errors
+   - **Use for**: Debugging job runner issues, understanding job execution flow
+
+4. **slurm_env_log** (`output/slurm_env_wf<id>_sl<slurm_job_id>_n<node_id>_pid<task_pid>.log`):
    - All SLURM environment variables captured at job runner startup
    - Contains job allocation details, resource limits, node assignments
    - **Use for**: Verifying Slurm job configuration, debugging resource allocation issues
 
-4. **dmesg log** (`output/dmesg_slurm_<slurm_job_id>_<node_id>_<task_pid>.log`):
-   - Kernel message buffer captured when the Slurm job runner exits
+5. **dmesg_log** (`output/dmesg_slurm_wf<id>_sl<slurm_job_id>_n<node_id>_pid<task_pid>.log`):
+   - Kernel message buffer captured when the Slurm job runner exits (only on failure)
    - Contains system-level events: OOM killer activity, hardware errors, kernel panics
    - **Use for**: Investigating job failures caused by system-level issues (e.g., out-of-memory
      kills, hardware failures)
 
-**Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID in the filename for
-correlation with Slurm's own logs.
+**Note**: All Slurm log files include the workflow ID, Slurm job ID, node ID, and task PID in the
+filename for easy filtering and correlation with Slurm's own logs.
 
 ## Parsing Slurm Log Files for Errors
 
@@ -131,8 +139,8 @@ Found 2 error(s) in log files:
 ╭─────────────────────────────┬──────────────┬──────┬─────────────────────────────┬──────────┬──────────────────────────────╮
 │ File                        │ Slurm Job ID │ Line │ Pattern                     │ Severity │ Affected Torc Jobs           │
 ├─────────────────────────────┼──────────────┼──────┼─────────────────────────────┼──────────┼──────────────────────────────┤
-│ slurm_output_12345.e        │ 12345        │ 42   │ Out of Memory (OOM) Kill    │ critical │ process_data (ID: 456)       │
-│ slurm_output_12346.e        │ 12346        │ 15   │ CUDA out of memory          │ error    │ train_model (ID: 789)        │
+│ slurm_output_sl12345.e      │ 12345        │ 42   │ Out of Memory (OOM) Kill    │ critical │ process_data (ID: 456)       │
+│ slurm_output_sl12346.e      │ 12346        │ 15   │ CUDA out of memory          │ error    │ train_model (ID: 789)        │
 ╰─────────────────────────────┴──────────────┴──────┴─────────────────────────────┴──────────┴──────────────────────────────╯
 ```
 
@@ -242,8 +250,8 @@ The `torc tui` terminal interface also supports Slurm log viewing:
 
 The log viewer shows:
 
-- **stdout tab**: Slurm job standard output (`slurm_output_<id>.o`)
-- **stderr tab**: Slurm job standard error (`slurm_output_<id>.e`)
+- **stdout tab**: Slurm job standard output (`slurm_output_wf<id>_sl<slurm_job_id>.o`)
+- **stderr tab**: Slurm job standard error (`slurm_output_wf<id>_sl<slurm_job_id>.e`)
 
 Use Tab to switch between stdout/stderr, arrow keys to scroll, `/` to search, and `q` to close.
 
@@ -265,7 +273,7 @@ When a Slurm job fails, follow this debugging workflow:
 3. **View the specific Slurm log files:**
    - Use torc-dash: Details → Scheduled Nodes → View Logs
    - Or use TUI: Scheduled Nodes tab → press `l`
-   - Or directly: `cat output/slurm_output_<slurm_job_id>.e`
+   - Or directly: `cat output/slurm_output_wf<workflow_id>_sl<slurm_job_id>.e`
 
 4. **Check the job's own stderr for application errors:**
    ```bash
@@ -275,7 +283,7 @@ When a Slurm job fails, follow this debugging workflow:
 
 5. **Review dmesg logs for system-level issues:**
    ```bash
-   cat output/dmesg_slurm_<slurm_job_id>_*.log
+   cat output/dmesg_slurm_wf<workflow_id>_sl<slurm_job_id>_*.log
    ```
 
 ## Common Slurm Issues and Solutions
@@ -332,8 +340,60 @@ When a Slurm job fails, follow this debugging workflow:
 - Check GPU memory with `nvidia-smi` in job script
 - Ensure correct CUDA version is loaded
 
+## Log Bundles
+
+For sharing logs with others or archiving for later analysis, use log bundles:
+
+### Bundling Logs
+
+```bash
+# Bundle all logs for a workflow into a compressed tarball
+torc logs bundle <workflow_id>
+
+# Specify custom output directory
+torc logs bundle <workflow_id> --output-dir /path/to/output
+
+# Save bundle to a specific directory
+torc logs bundle <workflow_id> --bundle-dir /path/to/bundles
+```
+
+This creates a `wf<id>.tar.gz` file containing:
+
+- All job stdout/stderr files (`job_wf*_j*_r*.o/e`)
+- Job runner logs (`job_runner_*.log`)
+- Slurm output files (`slurm_output_wf*_sl*.o/e`)
+- Slurm environment logs (`slurm_env_wf*_sl*.log`)
+- dmesg logs (`dmesg_slurm_wf*_sl*.log`)
+- Bundle metadata (workflow info, collection timestamp)
+
+### Analyzing Logs
+
+```bash
+# Analyze a log bundle tarball
+torc logs analyze wf123.tar.gz
+
+# Analyze a log directory directly (auto-detects workflow if only one present)
+torc logs analyze output/
+
+# Analyze a directory with multiple workflows (specify which one)
+torc logs analyze output/ --workflow-id 123
+```
+
+The analyzer scans all log files for known error patterns (OOM kills, timeouts, segfaults, Slurm
+errors, Python exceptions, etc.) and reports:
+
+- Files with detected errors
+- Error type and severity
+- Line numbers and content
+- Summary of error types found
+
+**Note**: Environment variable files (`slurm_env_*.log`) are excluded from error analysis since they
+contain configuration data, not error logs.
+
 ## Related Commands
 
+- **`torc logs bundle`**: Bundle workflow logs into a compressed tarball
+- **`torc logs analyze`**: Analyze logs for known error patterns
 - **`torc slurm parse-logs`**: Parse Slurm logs for known error patterns
 - **`torc slurm sacct`**: Collect Slurm accounting data for workflow jobs
 - **`torc reports results`**: Generate debug report with all log file paths

@@ -24,6 +24,7 @@
 //! After calling `terminate()` or `cancel()`, call `wait_for_completion()` to wait
 //! for the process to exit and capture its exit code.
 
+use crate::client::log_paths::{get_job_stderr_path, get_job_stdout_path};
 use crate::client::resource_monitor::ResourceMonitor;
 use crate::models::{JobModel, JobStatus, ResultModel};
 use chrono::{DateTime, Utc};
@@ -91,14 +92,12 @@ impl AsyncCliCommand {
         let job_id_str = self.job_id.to_string();
         let workflow_id_str = workflow_id.to_string();
 
-        // Create output file paths
+        // Create output file paths using consistent naming from log_paths
         let stdio_dir = output_dir.join(JOB_STDIO_DIR);
         std::fs::create_dir_all(&stdio_dir)?;
 
-        let stdout_path =
-            stdio_dir.join(format!("job_{}_{}_{}.o", workflow_id, self.job_id, run_id));
-        let stderr_path =
-            stdio_dir.join(format!("job_{}_{}_{}.e", workflow_id, self.job_id, run_id));
+        let stdout_path = get_job_stdout_path(output_dir, workflow_id, self.job_id, run_id);
+        let stderr_path = get_job_stderr_path(output_dir, workflow_id, self.job_id, run_id);
 
         let stdout_file = File::create(&stdout_path)?;
         let stderr_file = File::create(&stderr_path)?;

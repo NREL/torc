@@ -708,6 +708,7 @@ fn generate_results_report(
 
                             let log_path = get_slurm_job_runner_log_file(
                                 output_dir.to_path_buf(),
+                                wf_id,
                                 slurm_job_id_str,
                                 node_id,
                                 task_pid,
@@ -716,8 +717,10 @@ fn generate_results_report(
                             record["job_runner_log"] = serde_json::json!(log_path);
 
                             // Add slurm stdout/stderr paths
-                            let slurm_stdout = get_slurm_stdout_path(output_dir, slurm_job_id_str);
-                            let slurm_stderr = get_slurm_stderr_path(output_dir, slurm_job_id_str);
+                            let slurm_stdout =
+                                get_slurm_stdout_path(output_dir, wf_id, slurm_job_id_str);
+                            let slurm_stderr =
+                                get_slurm_stderr_path(output_dir, wf_id, slurm_job_id_str);
                             check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
                             check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
                             record["slurm_stdout"] = serde_json::json!(slurm_stdout);

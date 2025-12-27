@@ -91,6 +91,7 @@ mod unix_main {
         // Now we can configure the logger with the specific log file path
         let log_file_path = get_slurm_job_runner_log_file(
             args.output_dir.clone(),
+            args.workflow_id,
             &job_id,
             &node_id,
             task_pid as usize,
@@ -127,6 +128,7 @@ mod unix_main {
         // Capture SLURM environment variables for debugging
         let slurm_env_path = get_slurm_env_log_file(
             args.output_dir.clone(),
+            args.workflow_id,
             &job_id,
             &node_id,
             task_pid as usize,
@@ -277,6 +279,7 @@ mod unix_main {
                     info!("Capturing dmesg output due to job failures or terminations");
                     let dmesg_path = get_slurm_dmesg_log_file(
                         args.output_dir.clone(),
+                        args.workflow_id,
                         &job_id,
                         &node_id,
                         task_pid as usize,
@@ -289,6 +292,7 @@ mod unix_main {
                 // Capture dmesg on error as well
                 let dmesg_path = get_slurm_dmesg_log_file(
                     args.output_dir.clone(),
+                    args.workflow_id,
                     &job_id,
                     &node_id,
                     task_pid as usize,
