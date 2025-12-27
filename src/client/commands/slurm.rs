@@ -1030,8 +1030,31 @@ pub fn schedule_slurm_nodes(
 
     std::fs::create_dir_all(output)?;
 
-    for job_num in 1..num_hpc_jobs + 1 {
-        let job_name = format!("{}_{}_{}", job_prefix, scheduler_config_id, job_num);
+    for _job_num in 1..num_hpc_jobs + 1 {
+        // Create the scheduled compute node record first so we can use its ID in the Slurm job name.
+        // This allows us to correlate the Slurm job with the scheduled compute node record.
+        // We use scheduler_id=0 as a placeholder since we don't have the Slurm job ID yet.
+        let scheduled_compute_node = models::ScheduledComputeNodesModel::new(
+            workflow_id,
+            0, // Placeholder - will be updated after submission
+            scheduler_config_id,
+            "slurm".to_string(),
+            "pending".to_string(),
+        );
+        let created_scn =
+            match default_api::create_scheduled_compute_node(config, scheduled_compute_node) {
+                Ok(scn) => scn,
+                Err(e) => {
+                    error!("Failed to create scheduled compute node: {}", e);
+                    return Err(format!("Failed to create scheduled compute node: {}", e).into());
+                }
+            };
+        let scn_id = created_scn
+            .id
+            .expect("Created scheduled compute node should have an ID");
+
+        // Use the scheduled compute node ID in the job name for correlation
+        let job_name = format!("{}_{}", job_prefix, scn_id);
         let script_path = format!("{}/{}.sh", output, job_name);
 
         if let Err(e) = slurm_interface.create_submission_script(
@@ -1046,44 +1069,60 @@ pub fn schedule_slurm_nodes(
             start_one_worker_per_node,
         ) {
             error!("Error creating submission script: {}", e);
+            // Clean up the scheduled compute node record since submission failed
+            if let Err(del_err) = default_api::delete_scheduled_compute_node(config, scn_id, None) {
+                error!(
+                    "Failed to delete scheduled compute node after script creation failure: {}",
+                    del_err
+                );
+            }
             return Err(e.into());
         }
 
         match slurm_interface.submit(Path::new(&script_path)) {
-            Ok((return_code, job_id, stderr)) => {
+            Ok((return_code, slurm_job_id, stderr)) => {
                 if return_code != 0 {
                     error!("Error submitting job: {}", stderr);
+                    // Clean up the scheduled compute node record since submission failed
+                    if let Err(del_err) =
+                        default_api::delete_scheduled_compute_node(config, scn_id, None)
+                    {
+                        error!(
+                            "Failed to delete scheduled compute node after submission failure: {}",
+                            del_err
+                        );
+                    }
                     return Err(format!("Job submission failed: {}", stderr).into());
                 }
-                let job_id_int = job_id
+                let slurm_job_id_int: i64 = slurm_job_id
                     .parse()
-                    .unwrap_or_else(|_| panic!("Failed to parse Slurm job ID {}", job_id));
+                    .unwrap_or_else(|_| panic!("Failed to parse Slurm job ID {}", slurm_job_id));
                 info!(
-                    "Submitted Slurm job name={} with ID={}",
-                    job_name, job_id_int
+                    "Submitted Slurm job name={} with ID={} (scheduled_compute_node_id={})",
+                    job_name, slurm_job_id_int, scn_id
                 );
+
+                // Update the scheduled compute node with the actual Slurm job ID
+                let mut updated_scn = created_scn.clone();
+                updated_scn.scheduler_id = slurm_job_id_int;
+                if let Err(e) =
+                    default_api::update_scheduled_compute_node(config, scn_id, updated_scn)
+                {
+                    error!(
+                        "Failed to update scheduled compute node with Slurm job ID: {}",
+                        e
+                    );
+                }
 
                 let event_data = serde_json::json!({
                     "category": "scheduler",
-                    "slurm_job_id": job_id,
+                    "slurm_job_id": slurm_job_id,
                     "slurm_job_name": job_name,
                     "scheduler_config_id": scheduler_config_id,
+                    "scheduled_compute_node_id": scn_id,
                     "num_nodes": scheduler.nodes,
                 });
 
-                // TODO: move this before submission and set the Slurm name to this ID.
-                let scheduled_compute_node = models::ScheduledComputeNodesModel::new(
-                    workflow_id,
-                    job_id_int,
-                    scheduler_config_id,
-                    "slurm".to_string(),
-                    "pending".to_string(),
-                );
-                if let Err(e) =
-                    default_api::create_scheduled_compute_node(config, scheduled_compute_node)
-                {
-                    error!("Failed to create scheduled compute node: {}", e);
-                }
                 let event = models::EventModel::new(workflow_id, event_data);
                 if let Err(e) = default_api::create_event(config, event) {
                     error!("Failed to create event: {}", e);
@@ -1091,6 +1130,15 @@ pub fn schedule_slurm_nodes(
             }
             Err(e) => {
                 error!("Error submitting job: {}", e);
+                // Clean up the scheduled compute node record since submission failed
+                if let Err(del_err) =
+                    default_api::delete_scheduled_compute_node(config, scn_id, None)
+                {
+                    error!(
+                        "Failed to delete scheduled compute node after submission error: {}",
+                        del_err
+                    );
+                }
                 return Err(e.into());
             }
         }
