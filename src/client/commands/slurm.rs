@@ -305,9 +305,9 @@ pub enum SlurmCommands {
         #[arg(long)]
         no_actions: bool,
 
-        /// Force overwrite of existing schedulers in the workflow
+        /// Overwrite existing schedulers in the workflow
         #[arg(long)]
-        force: bool,
+        overwrite: bool,
     },
     /// Regenerate Slurm schedulers for an existing workflow based on pending jobs
     ///
@@ -376,27 +376,40 @@ pub fn secs_to_walltime(secs: u64) -> String {
 /// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode).
 ///   If false (default), create N allocations with 1 node each (N×1 mode).
 /// * `add_actions` - Whether to add workflow actions for scheduling
-/// * `force` - Force overwrite of existing schedulers
+/// * `overwrite` - If true, overwrite existing schedulers/actions. If false, error when they exist.
 pub fn generate_schedulers_for_workflow(
     spec: &mut WorkflowSpec,
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
     add_actions: bool,
-    force: bool,
+    overwrite: bool,
 ) -> Result<GenerateResult, String> {
     // Check if workflow already has schedulers or actions
-    if !force {
-        if spec.slurm_schedulers.is_some() && !spec.slurm_schedulers.as_ref().unwrap().is_empty() {
-            return Err(
-                "Workflow already has slurm_schedulers defined. Use a workflow spec without schedulers (e.g., *_no_slurm.* variants).".to_string(),
-            );
+    let has_schedulers =
+        spec.slurm_schedulers.is_some() && !spec.slurm_schedulers.as_ref().unwrap().is_empty();
+    let has_actions = spec.actions.is_some() && !spec.actions.as_ref().unwrap().is_empty();
+
+    if has_schedulers || has_actions {
+        if !overwrite {
+            // Error out - user must explicitly use --overwrite to replace existing schedulers
+            let mut msg = String::from("Workflow spec already has ");
+            if has_schedulers && has_actions {
+                msg.push_str("slurm_schedulers and actions");
+            } else if has_schedulers {
+                msg.push_str("slurm_schedulers");
+            } else {
+                msg.push_str("actions");
+            }
+            msg.push_str(" defined.\n\nOptions:\n");
+            msg.push_str("  1. Use --overwrite to generate new schedulers (replaces existing)\n");
+            msg.push_str("  2. Use 'torc submit' to use the existing schedulers as-is\n");
+            msg.push_str("  3. Remove schedulers/actions from the spec and run submit-slurm again");
+            return Err(msg);
         }
-        if spec.actions.is_some() && !spec.actions.as_ref().unwrap().is_empty() {
-            return Err(
-                "Workflow already has actions defined. Use a workflow spec without actions (e.g., *_no_slurm.* variants).".to_string(),
-            );
-        }
+        // overwrite=true: Clear existing and regenerate
+        spec.slurm_schedulers = None;
+        spec.actions = None;
     }
 
     use crate::client::scheduler_plan::{apply_plan_to_spec, generate_scheduler_plan};
@@ -925,7 +938,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             output,
             single_allocation,
             no_actions,
-            force,
+            overwrite,
         } => {
             handle_generate(
                 workflow_file,
@@ -934,7 +947,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 output.as_ref(),
                 *single_allocation,
                 *no_actions,
-                *force,
+                *overwrite,
                 format,
             );
         }
@@ -2753,23 +2766,30 @@ fn handle_regenerate(
             };
 
         // Get job IDs for this action's jobs
-        let job_ids: Vec<i64> = action
-            .job_name_patterns
-            .as_ref()
-            .map(|patterns| {
-                pending_jobs
-                    .iter()
-                    .filter(|j| {
-                        patterns.iter().any(|p| {
-                            regex::Regex::new(p)
-                                .map(|re| re.is_match(&j.name))
-                                .unwrap_or(false)
-                        })
+        // Prefer exact job_names over job_name_patterns (regexes) when available
+        let job_ids: Vec<i64> = if let Some(ref names) = action.job_names {
+            // Use exact name matching
+            pending_jobs
+                .iter()
+                .filter(|j| names.contains(&j.name))
+                .filter_map(|j| j.id)
+                .collect()
+        } else if let Some(ref patterns) = action.job_name_patterns {
+            // Fall back to regex patterns
+            pending_jobs
+                .iter()
+                .filter(|j| {
+                    patterns.iter().any(|p| {
+                        regex::Regex::new(p)
+                            .map(|re| re.is_match(&j.name))
+                            .unwrap_or(false)
                     })
-                    .filter_map(|j| j.id)
-                    .collect()
-            })
-            .unwrap_or_default();
+                })
+                .filter_map(|j| j.id)
+                .collect()
+        } else {
+            Vec::new()
+        };
 
         if job_ids.is_empty() {
             continue;

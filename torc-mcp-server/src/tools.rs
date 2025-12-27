@@ -2,7 +2,7 @@
 
 use rmcp::{Error as McpError, model::CallToolResult};
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use std::process::Command;
 
 use torc::client::apis::configuration::Configuration;
@@ -113,7 +113,7 @@ pub fn get_job_details(config: &Configuration, job_id: i64) -> Result<CallToolRe
 
 /// Read job logs.
 pub fn get_job_logs(
-    output_dir: &PathBuf,
+    output_dir: &Path,
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
@@ -243,8 +243,25 @@ pub fn check_resource_utilization(
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON to check for over-utilization violations and add guidance
+    let mut response = stdout.to_string();
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
+        let over_count = json
+            .get("over_utilization_count")
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0);
+        if over_count > 0 {
+            response.push_str("\n\n[INSTRUCTION: After presenting the results, ask the user: ");
+            response.push_str("\"Would you like me to update the resource requirements?\" ");
+            response.push_str(
+                "If they agree, use the update_job_resources tool to update the resources.]",
+            );
+        }
+    }
+
     Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        stdout.to_string(),
+        response,
     )]))
 }
 
@@ -316,7 +333,7 @@ pub fn update_job_resources(
 /// Create a workflow from a JSON specification.
 ///
 /// Supports:
-/// - action: "create_workflow" (create in database) or "save_spec_file" (save to filesystem)
+/// - action: "validate" (validate only), "create_workflow" (create in database) or "save_spec_file" (save to filesystem)
 /// - workflow_type: "local" or "slurm"
 #[allow(clippy::too_many_arguments)]
 pub fn create_workflow(
@@ -330,11 +347,12 @@ pub fn create_workflow(
     output_path: Option<&str>,
 ) -> Result<CallToolResult, McpError> {
     use std::io::Write;
+    use torc::client::workflow_spec::WorkflowSpec;
 
     // Validate action
-    if action != "create_workflow" && action != "save_spec_file" {
+    if action != "create_workflow" && action != "save_spec_file" && action != "validate" {
         return Err(invalid_params(
-            "action must be 'create_workflow' or 'save_spec_file'",
+            "action must be 'validate', 'create_workflow' or 'save_spec_file'",
         ));
     }
 
@@ -446,6 +464,42 @@ pub fn create_workflow(
         .map_err(|e| internal_error(format!("Failed to write spec to temp file: {}", e)))?;
 
     let temp_path = temp_file.path();
+
+    // Handle validate action - returns validation results without creating anything
+    if action == "validate" {
+        let validation_result = WorkflowSpec::validate_spec(temp_path);
+
+        let result = serde_json::json!({
+            "action": "validate",
+            "valid": validation_result.valid,
+            "errors": validation_result.errors,
+            "warnings": validation_result.warnings,
+            "summary": {
+                "workflow_name": validation_result.summary.workflow_name,
+                "workflow_description": validation_result.summary.workflow_description,
+                "job_count": validation_result.summary.job_count,
+                "job_count_before_expansion": validation_result.summary.job_count_before_expansion,
+                "file_count": validation_result.summary.file_count,
+                "file_count_before_expansion": validation_result.summary.file_count_before_expansion,
+                "user_data_count": validation_result.summary.user_data_count,
+                "resource_requirements_count": validation_result.summary.resource_requirements_count,
+                "slurm_scheduler_count": validation_result.summary.slurm_scheduler_count,
+                "action_count": validation_result.summary.action_count,
+                "has_schedule_nodes_action": validation_result.summary.has_schedule_nodes_action,
+                "job_names": validation_result.summary.job_names,
+                "scheduler_names": validation_result.summary.scheduler_names,
+            },
+            "next_steps": if validation_result.valid {
+                "Validation passed! Call this tool again with action='create_workflow' to create the workflow."
+            } else {
+                "Please fix the errors listed above and call validate again."
+            }
+        });
+
+        return Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+            serde_json::to_string_pretty(&result).unwrap_or_default(),
+        )]));
+    }
 
     match (action, workflow_type) {
         ("create_workflow", "local") => {
@@ -566,92 +620,236 @@ pub fn create_workflow(
     }
 }
 
-/// Reset failed jobs and reinitialize a workflow by running the CLI command.
-pub fn reset_and_reinitialize_workflow(workflow_id: i64) -> Result<CallToolResult, McpError> {
-    let output = Command::new("torc")
-        .args([
-            "-f",
-            "json",
-            "workflows",
-            "reset-status",
-            &workflow_id.to_string(),
-            "--failed-only",
-            "--reinitialize",
-            "--no-prompts",
-        ])
-        .output()
-        .map_err(|e| internal_error(format!("Failed to execute torc command: {}", e)))?;
+/// Get the execution plan for a workflow.
+///
+/// Accepts either:
+/// - A workflow ID (integer as string) for existing workflows
+/// - A JSON workflow specification string for previewing before creation
+pub fn get_execution_plan(
+    config: &Configuration,
+    spec_or_id: &str,
+) -> Result<CallToolResult, McpError> {
+    use std::io::Write;
+    use torc::client::commands::pagination::resource_requirements::{
+        ResourceRequirementsListParams, paginate_resource_requirements,
+    };
+    use torc::client::commands::pagination::slurm_schedulers::{
+        SlurmSchedulersListParams, paginate_slurm_schedulers,
+    };
+    use torc::client::execution_plan::ExecutionPlan;
+    use torc::client::workflow_spec::WorkflowSpec;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(internal_error(format!(
-            "torc command failed: {}",
-            stderr.trim()
-        )));
+    // Try to parse as workflow ID first
+    if let Ok(workflow_id) = spec_or_id.parse::<i64>() {
+        // Get execution plan for existing workflow from database
+        let workflow = default_api::get_workflow(config, workflow_id)
+            .map_err(|e| internal_error(format!("Failed to get workflow: {}", e)))?;
+
+        let jobs = paginate_jobs(
+            config,
+            workflow_id,
+            JobListParams::new().with_include_relationships(true),
+        )
+        .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
+
+        let actions = default_api::get_workflow_actions(config, workflow_id)
+            .map_err(|e| internal_error(format!("Failed to get workflow actions: {}", e)))?;
+
+        let slurm_schedulers =
+            paginate_slurm_schedulers(config, workflow_id, SlurmSchedulersListParams::new())
+                .unwrap_or_default();
+
+        let resource_requirements = paginate_resource_requirements(
+            config,
+            workflow_id,
+            ResourceRequirementsListParams::new(),
+        )
+        .unwrap_or_default();
+
+        let plan = ExecutionPlan::from_database_models(
+            &workflow,
+            &jobs,
+            &actions,
+            &slurm_schedulers,
+            &resource_requirements,
+        )
+        .map_err(|e| internal_error(format!("Failed to build execution plan: {}", e)))?;
+
+        // Build output JSON
+        let events_json: Vec<serde_json::Value> = plan
+            .events
+            .values()
+            .map(|event| {
+                serde_json::json!({
+                    "id": event.id,
+                    "trigger": event.trigger,
+                    "trigger_description": event.trigger_description,
+                    "scheduler_allocations": event.scheduler_allocations.iter().map(|alloc| {
+                        serde_json::json!({
+                            "scheduler": alloc.scheduler,
+                            "scheduler_type": alloc.scheduler_type,
+                            "num_allocations": alloc.num_allocations,
+                            "jobs": alloc.jobs,
+                        })
+                    }).collect::<Vec<_>>(),
+                    "jobs_becoming_ready": event.jobs_becoming_ready,
+                    "depends_on_events": event.depends_on_events,
+                    "unlocks_events": event.unlocks_events,
+                })
+            })
+            .collect();
+
+        let result = serde_json::json!({
+            "source": "database",
+            "workflow_id": workflow_id,
+            "workflow_name": workflow.name,
+            "total_events": plan.events.len(),
+            "total_jobs": jobs.len(),
+            "root_events": plan.root_events,
+            "leaf_events": plan.leaf_events,
+            "events": events_json,
+        });
+
+        Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+            serde_json::to_string_pretty(&result).unwrap_or_default(),
+        )]))
+    } else {
+        // Try to parse as JSON workflow specification
+        // Write spec to a temp file for WorkflowSpec::from_spec_file
+        let mut temp_file = tempfile::NamedTempFile::new()
+            .map_err(|e| internal_error(format!("Failed to create temp file: {}", e)))?;
+
+        temp_file
+            .write_all(spec_or_id.as_bytes())
+            .map_err(|e| internal_error(format!("Failed to write spec to temp file: {}", e)))?;
+
+        let temp_path = temp_file.path();
+
+        // Parse the workflow spec
+        let mut spec = WorkflowSpec::from_spec_file(temp_path).map_err(|e| {
+            internal_error(format!("Failed to parse workflow specification: {}", e))
+        })?;
+
+        // Expand parameters
+        spec.expand_parameters()
+            .map_err(|e| internal_error(format!("Failed to expand parameters: {}", e)))?;
+
+        // Validate actions
+        spec.validate_actions()
+            .map_err(|e| internal_error(format!("Failed to validate actions: {}", e)))?;
+
+        // Perform variable substitution
+        spec.substitute_variables()
+            .map_err(|e| internal_error(format!("Failed to substitute variables: {}", e)))?;
+
+        // Build execution plan from spec
+        let plan = ExecutionPlan::from_spec(&spec)
+            .map_err(|e| internal_error(format!("Failed to build execution plan: {}", e)))?;
+
+        // Build output JSON
+        let events_json: Vec<serde_json::Value> = plan
+            .events
+            .values()
+            .map(|event| {
+                serde_json::json!({
+                    "id": event.id,
+                    "trigger": event.trigger,
+                    "trigger_description": event.trigger_description,
+                    "scheduler_allocations": event.scheduler_allocations.iter().map(|alloc| {
+                        serde_json::json!({
+                            "scheduler": alloc.scheduler,
+                            "scheduler_type": alloc.scheduler_type,
+                            "num_allocations": alloc.num_allocations,
+                            "jobs": alloc.jobs,
+                        })
+                    }).collect::<Vec<_>>(),
+                    "jobs_becoming_ready": event.jobs_becoming_ready,
+                    "depends_on_events": event.depends_on_events,
+                    "unlocks_events": event.unlocks_events,
+                })
+            })
+            .collect();
+
+        let result = serde_json::json!({
+            "source": "spec",
+            "workflow_name": spec.name,
+            "total_events": plan.events.len(),
+            "total_jobs": spec.jobs.len(),
+            "root_events": plan.root_events,
+            "leaf_events": plan.leaf_events,
+            "events": events_json,
+        });
+
+        Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+            serde_json::to_string_pretty(&result).unwrap_or_default(),
+        )]))
     }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        stdout.to_string(),
-    )]))
 }
 
-/// Resubmit a workflow by regenerating Slurm schedulers and submitting allocations.
-pub fn resubmit_workflow(
-    output_dir: &PathBuf,
+/// Analyze workflow logs for errors.
+///
+/// Scans all log files for a workflow and detects common error patterns like:
+/// OOM, timeout, segfaults, permission denied, disk full, connection errors,
+/// Python exceptions, Rust panics, and Slurm errors.
+pub fn analyze_workflow_logs(
+    output_dir: &Path,
     workflow_id: i64,
-    account: Option<String>,
-    profile: Option<String>,
-    dry_run: bool,
 ) -> Result<CallToolResult, McpError> {
-    let mut cmd = Command::new("torc");
-    cmd.args(["-f", "json", "slurm", "regenerate"]);
-    cmd.arg(workflow_id.to_string());
+    use torc::client::commands::logs::analyze_workflow_logs as analyze_logs;
 
-    if let Some(acct) = &account {
-        cmd.args(["--account", acct]);
-    }
+    let result = analyze_logs(output_dir, workflow_id)
+        .map_err(|e| internal_error(format!("Failed to analyze logs: {}", e)))?;
 
-    if let Some(prof) = &profile {
-        cmd.args(["--profile", prof]);
-    }
-
-    cmd.args(["--output-dir", output_dir.to_str().unwrap_or("output")]);
-
-    if !dry_run {
-        cmd.arg("--submit");
-    }
-
-    let output = cmd
-        .output()
-        .map_err(|e| internal_error(format!("Failed to run torc command: {}", e)))?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if !output.status.success() {
-        return Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-            format!(
-                "{{\"success\": false, \"error\": \"Command failed\", \"stderr\": {:?}}}",
-                stderr.trim()
-            ),
-        )]));
-    }
-
-    // The CLI outputs JSON, pass it through
-    let content = if stdout.trim().is_empty() {
-        serde_json::json!({
-            "success": true,
-            "workflow_id": workflow_id,
-            "dry_run": dry_run,
-            "message": if dry_run { "Preview complete" } else { "Allocations submitted" }
-        })
-        .to_string()
+    // Build a concise summary for the AI
+    let summary = if result.error_count == 0 && result.warning_count == 0 {
+        "No errors or warnings detected in log files.".to_string()
     } else {
-        stdout.to_string()
+        format!(
+            "Found {} error(s) and {} warning(s) across {} log files.",
+            result.error_count, result.warning_count, result.files_parsed
+        )
     };
 
+    // Group errors by type for easy reading
+    let errors_by_type: Vec<serde_json::Value> = result
+        .errors_by_type
+        .iter()
+        .map(|(pattern, count)| {
+            serde_json::json!({
+                "type": pattern,
+                "count": count,
+            })
+        })
+        .collect();
+
+    // Get sample errors (limit to 10 to avoid overwhelming the AI)
+    let sample_errors: Vec<serde_json::Value> = result
+        .errors
+        .iter()
+        .filter(|e| e.severity == torc::client::commands::logs::ErrorSeverity::Error)
+        .take(10)
+        .map(|e| {
+            serde_json::json!({
+                "file": e.file,
+                "line": e.line_number,
+                "type": e.pattern_name,
+                "content": e.line_content,
+            })
+        })
+        .collect();
+
+    let response = serde_json::json!({
+        "workflow_id": workflow_id,
+        "summary": summary,
+        "files_parsed": result.files_parsed,
+        "error_count": result.error_count,
+        "warning_count": result.warning_count,
+        "errors_by_type": errors_by_type,
+        "sample_errors": sample_errors,
+        "files_with_errors": result.errors_by_file.keys().collect::<Vec<_>>(),
+    });
+
     Ok(CallToolResult::success(vec![rmcp::model::Content::text(
-        content,
+        serde_json::to_string_pretty(&response).unwrap_or_default(),
     )]))
 }

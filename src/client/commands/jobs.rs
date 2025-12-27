@@ -33,6 +33,8 @@ struct JobResourceRequirementsTableRow {
     job_id: i64,
     #[tabled(rename = "Job Name")]
     job_name: String,
+    #[tabled(rename = "RR ID")]
+    rr_id: i64,
     #[tabled(rename = "RR Name")]
     rr_name: String,
     #[tabled(rename = "CPUs")]
@@ -716,6 +718,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                                 serde_json::json!({
                                     "job_id": job.id,
                                     "job_name": &job.name,
+                                    "rr_id": rr_id,
                                     "rr_name": &rr.name,
                                     "workflow_id": rr.workflow_id,
                                     "num_cpus": rr.num_cpus,
@@ -741,6 +744,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                                 .map(|rr| JobResourceRequirementsTableRow {
                                     job_id: job.id.unwrap_or(-1),
                                     job_name: job.name.clone(),
+                                    rr_id,
                                     rr_name: rr.name.clone(),
                                     num_cpus: rr.num_cpus,
                                     num_gpus: rr.num_gpus,

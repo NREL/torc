@@ -109,7 +109,7 @@ pub struct CreateWorkflowParams {
     #[schemars(description = "User that owns the workflow (optional, defaults to current user)")]
     pub user: Option<String>,
     #[schemars(
-        description = "Action to perform: 'create_workflow' to create in the database, 'save_spec_file' to save to filesystem only"
+        description = "Action to perform: 'create_workflow' to create in the database, 'save_spec_file' to save to filesystem only, 'validate' to validate without creating"
     )]
     pub action: String,
     #[schemars(description = "Workflow type: 'local' for local execution, 'slurm' for Slurm HPC")]
@@ -137,52 +137,172 @@ pub struct CheckResourceUtilizationParams {
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ResetAndRestartWorkflowParams {
-    #[schemars(description = "The workflow ID")]
-    pub workflow_id: i64,
+pub struct GetExecutionPlanParams {
+    #[schemars(
+        description = "Either a workflow ID (integer) to get plan for existing workflow, or a JSON workflow specification string to preview execution plan before creating"
+    )]
+    pub spec_or_id: String,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct ResubmitWorkflowParams {
-    #[schemars(description = "The workflow ID")]
+pub struct AnalyzeWorkflowLogsParams {
+    #[schemars(description = "Workflow ID to analyze logs for")]
     pub workflow_id: i64,
     #[schemars(
-        description = "Slurm account to use (defaults to account from existing schedulers)"
+        description = "Output directory where logs are stored (the same directory passed to `torc run`). Defaults to 'output'."
     )]
-    pub account: Option<String>,
-    #[schemars(description = "HPC profile to use (auto-detected if not specified)")]
-    pub profile: Option<String>,
-    #[schemars(description = "Preview what would be submitted without actually submitting")]
-    pub dry_run: Option<bool>,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct RestartJobsParams {
-    #[schemars(description = "The workflow ID")]
-    pub workflow_id: i64,
-    #[schemars(description = "Only restart failed jobs (default: true)")]
-    pub failed_only: Option<bool>,
-    #[schemars(
-        description = "Specific job IDs to restart (optional, restarts all failed if not specified)"
-    )]
-    pub job_ids: Option<Vec<i64>>,
+    pub output_dir: Option<String>,
 }
 
 // Tool implementations using #[tool(tool_box)]
+// Tools are ordered by workflow lifecycle: create → plan → inspect → monitor → analyze → fix
 
 #[tool(tool_box)]
 impl TorcMcpServer {
-    /// Get the status of a workflow including job counts by status.
-    #[tool(
-        description = "Get workflow status summary with job counts by status (completed, failed, running, etc.)"
-    )]
-    async fn get_workflow_status(
+    /// Create a workflow from a specification.
+    #[tool(description = r#"Create a workflow specification file or workflow.
+
+IMPORTANT - DEFAULT TO SAVING FILES, NOT CREATING WORKFLOWS:
+- AI-generated specs are TEMPLATES with placeholder commands - users must customize them
+- ALWAYS use action="save_spec_file" unless user explicitly says "run", "submit", or "execute"
+- "create a workflow" or "create a workflow file" -> save_spec_file (user wants a file to edit)
+- "run this workflow" or "submit to slurm" -> create_workflow (user wants immediate execution)
+- Ask user for output filename if not specified (suggest: workflow_name.json in current directory)
+
+CRITICAL: When user mentions FILES or DATA FLOW -> use "files" section with input_files/output_files on jobs.
+
+ACTIONS:
+- "validate" - Check spec for errors without saving/creating (use first to catch issues)
+- "save_spec_file" - DEFAULT: Save spec to a .json file for user to review/edit before running
+- "create_workflow" - ONLY when user explicitly wants to run/submit immediately
+
+AFTER SAVING A SPEC FILE - tell users:
+1. Edit the spec to replace placeholder commands with actual scripts/commands
+2. Ensure input files exist at the specified paths
+3. Run with: "torc run <file>" (local) or "torc submit <file>" (Slurm - schedulers are already in the spec)
+IMPORTANT: Do NOT fabricate CLI commands or options. Only use the exact commands shown above.
+
+WORKFLOW_TYPE: "local" or "slurm" (slurm requires account)
+
+SPEC STRUCTURE:
+{
+  "name": "workflow_name",
+  "files": [
+    {"name": "input_data", "path": "input.txt", "st_mtime": 1234567890.0},
+    {"name": "output_data", "path": "output.txt", "st_mtime": null}
+  ],
+  "jobs": [
+    {"name": "job1", "command": "cmd", "input_files": ["input_data"], "output_files": ["output_data"], "resource_requirements": "small"},
+    {"name": "job2_{i}", "command": "work {i}", "input_files": ["output_data"], "resource_requirements": "large", "parameters": {"i": "0:9"}}
+  ],
+  "resource_requirements": [
+    {"name": "small", "num_cpus": 1, "memory": "4g", "runtime": "PT1H", "num_gpus": 0, "num_nodes": 1}
+  ]
+}
+
+FILES (use when user mentions input/output files, data flow):
+- "files": define with name, path, st_mtime (null for outputs, timestamp for inputs)
+- "input_files": exact file names job reads (creates automatic dependency on producer job)
+- "output_files": exact file names job writes
+- "input_file_regexes": regex patterns for FAN-IN (collecting many files into one job)
+- Files with parameters: {"name": "out_{i}", "path": "out_{i}.txt", "st_mtime": null, "parameters": {"i": "0:9"}}
+
+PARAMETERIZATION (use for N similar jobs):
+- parameters: {"i": "0:9"} generates i=0,1,2,...,9
+- Use {i} in name/command: "job_{i}", "python work.py {i}"
+- Formats: {i:03d} for zero-padding
+
+FAN-IN PATTERN (aggregating multiple files):
+When a NON-parameterized job needs to consume files from parameterized jobs, use input_file_regexes:
+- WRONG: {"name": "aggregate", "input_files": ["work_out_{i}"]} -- {i} won't expand!
+- RIGHT: {"name": "aggregate", "input_file_regexes": ["^work_out_\\d+$"]} -- matches all work_out_0, work_out_1, etc.
+
+EXAMPLE - Fan-out/Fan-in with files (3 groups, 10 workers each, aggregation):
+{
+  "files": [
+    {"name": "input_{g}", "path": "input_{g}.txt", "st_mtime": 1234567890.0, "parameters": {"g": "0:2"}},
+    {"name": "work_{g}_{i}", "path": "work_{g}_{i}.txt", "st_mtime": null, "parameters": {"g": "0:2", "i": "0:9"}},
+    {"name": "agg_{g}", "path": "agg_{g}.txt", "st_mtime": null, "parameters": {"g": "0:2"}},
+    {"name": "final", "path": "final.txt", "st_mtime": null}
+  ],
+  "jobs": [
+    {"name": "init_{g}", "command": "prep {g}", "output_files": ["input_{g}"], "resource_requirements": "small", "parameters": {"g": "0:2"}},
+    {"name": "work_{g}_{i}", "command": "work {g} {i}", "input_files": ["input_{g}"], "output_files": ["work_{g}_{i}"], "resource_requirements": "large", "parameters": {"g": "0:2", "i": "0:9"}},
+    {"name": "aggregate_{g}", "command": "agg {g}", "input_file_regexes": ["^work_{g}_\\d+$"], "output_files": ["agg_{g}"], "resource_requirements": "small", "parameters": {"g": "0:2"}},
+    {"name": "final", "command": "finalize", "input_file_regexes": ["^agg_\\d+$"], "output_files": ["final"], "resource_requirements": "small"}
+  ]
+}"#)]
+    async fn create_workflow(
         &self,
-        #[tool(aggr)] params: WorkflowIdParam,
+        #[tool(aggr)] params: CreateWorkflowParams,
     ) -> Result<CallToolResult, McpError> {
         let config = self.config.clone();
-        let workflow_id = params.workflow_id;
-        tokio::task::spawn_blocking(move || tools::get_workflow_status(&config, workflow_id))
+        let spec_json = params.spec_json;
+        let user = params
+            .user
+            .unwrap_or_else(|| std::env::var("USER").unwrap_or_else(|_| "unknown".to_string()));
+        let action = params.action;
+        let workflow_type = params.workflow_type;
+        let account = params.account;
+        let hpc_profile = params.hpc_profile;
+        let output_path = params.output_path;
+        tokio::task::spawn_blocking(move || {
+            tools::create_workflow(
+                &config,
+                &spec_json,
+                &user,
+                &action,
+                &workflow_type,
+                account.as_deref(),
+                hpc_profile.as_deref(),
+                output_path.as_deref(),
+            )
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Get the execution plan for a workflow, showing what will happen when it runs.
+    #[tool(
+        description = r#"Get the execution plan for a workflow, showing the DAG of events and job execution order.
+
+This tool shows:
+- What jobs run at each stage
+- Dependencies between jobs
+- Scheduler allocations that will be triggered
+- Which jobs become ready after each event
+
+INPUT OPTIONS:
+1. Workflow ID (integer as string): Get plan for an existing workflow in the database
+   Example: "123"
+
+2. Workflow spec JSON: Preview execution plan before creating the workflow
+   Example: {"name": "my_workflow", "jobs": [...]}
+
+OUTPUT:
+Returns a DAG (directed acyclic graph) of execution events showing:
+- root_events: Entry points (typically "Workflow Start")
+- leaf_events: Exit points (final jobs)
+- events: Map of event_id -> event details
+  - trigger: What triggers this event (WorkflowStart or JobsComplete)
+  - jobs_becoming_ready: Jobs that can run when this event fires
+  - scheduler_allocations: Slurm allocations triggered
+  - depends_on_events: Events that must complete first
+  - unlocks_events: Events that depend on this one
+
+USE CASES:
+- Preview workflow execution before creating it
+- Understand job dependencies and parallelism
+- Debug why jobs aren't starting
+- Verify scheduler allocation timing"#
+    )]
+    async fn get_execution_plan(
+        &self,
+        #[tool(aggr)] params: GetExecutionPlanParams,
+    ) -> Result<CallToolResult, McpError> {
+        let config = self.config.clone();
+        let spec_or_id = params.spec_or_id;
+        tokio::task::spawn_blocking(move || tools::get_execution_plan(&config, &spec_or_id))
             .await
             .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
@@ -198,6 +318,62 @@ impl TorcMcpServer {
         let config = self.config.clone();
         let job_id = params.job_id;
         tokio::task::spawn_blocking(move || tools::get_job_details(&config, job_id))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// List jobs filtered by status.
+    #[tool(
+        description = "List jobs in a workflow filtered by status (uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled)"
+    )]
+    async fn list_jobs_by_status(
+        &self,
+        #[tool(aggr)] params: ListJobsByStatusParams,
+    ) -> Result<CallToolResult, McpError> {
+        let config = self.config.clone();
+        let workflow_id = params.workflow_id;
+        let status = params.status;
+        tokio::task::spawn_blocking(move || {
+            tools::list_jobs_by_status(&config, workflow_id, &status)
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Get the status of a workflow including job counts by status.
+    #[tool(
+        description = "Get workflow status summary with job counts by status (completed, failed, running, etc.)"
+    )]
+    async fn get_workflow_status(
+        &self,
+        #[tool(aggr)] params: WorkflowIdParam,
+    ) -> Result<CallToolResult, McpError> {
+        let config = self.config.clone();
+        let workflow_id = params.workflow_id;
+        tokio::task::spawn_blocking(move || tools::get_workflow_status(&config, workflow_id))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Analyze workflow logs for errors.
+    #[tool(
+        description = "Scan all log files for a workflow and detect common error patterns. \
+        Detects: OOM (out of memory), timeout/walltime exceeded, segmentation faults, \
+        permission denied, file not found, disk full, connection errors, Python exceptions, \
+        Rust panics, and Slurm errors. Returns a summary with error counts by type and sample error lines. \
+        Use this to quickly diagnose why jobs failed without reading each log file individually."
+    )]
+    async fn analyze_workflow_logs(
+        &self,
+        #[tool(aggr)] params: AnalyzeWorkflowLogsParams,
+    ) -> Result<CallToolResult, McpError> {
+        let output_dir = self.output_dir.clone();
+        let output_path = params
+            .output_dir
+            .map(std::path::PathBuf::from)
+            .unwrap_or(output_dir);
+        let workflow_id = params.workflow_id;
+        tokio::task::spawn_blocking(move || tools::analyze_workflow_logs(&output_path, workflow_id))
             .await
             .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
@@ -245,27 +421,11 @@ impl TorcMcpServer {
             .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
 
-    /// List jobs filtered by status.
-    #[tool(
-        description = "List jobs in a workflow filtered by status (uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled)"
-    )]
-    async fn list_jobs_by_status(
-        &self,
-        #[tool(aggr)] params: ListJobsByStatusParams,
-    ) -> Result<CallToolResult, McpError> {
-        let config = self.config.clone();
-        let workflow_id = params.workflow_id;
-        let status = params.status;
-        tokio::task::spawn_blocking(move || {
-            tools::list_jobs_by_status(&config, workflow_id, &status)
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-    }
-
     /// Check resource utilization for a workflow.
     #[tool(
-        description = "Check resource utilization and identify jobs that exceeded their limits (memory, CPU, runtime). Use --include-failed to analyze failed jobs for recovery diagnostics."
+        description = "Check resource utilization and identify jobs that exceeded their limits (memory, CPU, runtime). \
+        Use include_failed=true to analyze failed jobs for recovery diagnostics. \
+        To update resources for jobs that exceeded limits, use the update_job_resources tool (not a CLI command)."
     )]
     async fn check_resource_utilization(
         &self,
@@ -278,20 +438,6 @@ impl TorcMcpServer {
         })
         .await
         .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-    }
-
-    /// Reset failed jobs and restart the workflow.
-    #[tool(
-        description = "Reset all failed jobs in a workflow and restart it. This resets job statuses to uninitialized and re-initializes the workflow. Use after updating resource requirements for failed jobs."
-    )]
-    async fn reset_and_reinitialize_workflow(
-        &self,
-        #[tool(aggr)] params: ResetAndRestartWorkflowParams,
-    ) -> Result<CallToolResult, McpError> {
-        let workflow_id = params.workflow_id;
-        tokio::task::spawn_blocking(move || tools::reset_and_reinitialize_workflow(workflow_id))
-            .await
-            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
 
     /// Update resource requirements for a job.
@@ -313,161 +459,6 @@ impl TorcMcpServer {
         .await
         .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
     }
-
-    /// Create a workflow from a specification.
-    #[tool(description = r#"Create a workflow from a JSON specification.
-
-ACTIONS:
-- action="create_workflow": Create the workflow in the database (ready to run)
-- action="save_spec_file": Save the spec to a file (requires output_path and file_format)
-
-WORKFLOW TYPES:
-- workflow_type="local": For local execution
-- workflow_type="slurm": For Slurm HPC (requires account - ASK USER if not provided)
-
-WORKFLOW SPEC FORMAT:
-The spec_json parameter must be a JSON object. Use .json extension for output_path (e.g., workflow.json).
-Structure:
-
-{
-  "name": "workflow_name",
-  "jobs": [
-    {
-      "name": "job_name",
-      "command": "command to run",
-      "depends_on": ["other_job_name"],  // optional, list of job names this depends on
-      "resource_requirements": "req_name",  // required for slurm, references a name from resource_requirements
-      "parameters": {"i": "0:9"}  // optional, for parameterized jobs (see PARAMETERIZATION below)
-    }
-  ],
-  "resource_requirements": [  // required for slurm workflows
-    {
-      "name": "req_name",
-      "num_cpus": 1,
-      "memory": "4g",        // e.g., "512m", "4g", "64g"
-      "runtime": "PT1H",     // ISO8601: PT30M=30min, PT2H=2hrs, P1D=1day
-      "num_gpus": 0,
-      "num_nodes": 1
-    }
-  ]
-}
-
-PARAMETERIZATION - Use this to generate multiple jobs from a single template:
-When users ask for "N jobs" or "jobs with an index", USE PARAMETERIZATION instead of listing jobs manually.
-
-Job parameters field format:
-- Integer range: "0:9" generates 0,1,2,...,9 (10 values, inclusive)
-- Integer range with step: "0:100:10" generates 0,10,20,...,100
-- List of values: "[1,5,10]" or "['train','test','val']"
-
-Template substitution in name/command:
-- {param} - substitutes the parameter value
-- {param:03d} - zero-padded integer (e.g., 001, 042)
-- {param:.2f} - float with precision
-
-Dependencies on parameterized jobs:
-- Use the BASE name (without parameter suffix) in depends_on
-- Torc automatically expands to depend on ALL generated jobs
-
-EXAMPLE - Using parameterization (PREFERRED for multiple similar jobs):
-User asks: "Create a workflow with preprocess, 10 work jobs (each receiving an index), and postprocess."
-
-{
-  "name": "data_pipeline",
-  "resource_requirements": [
-    {"name": "small", "num_cpus": 1, "memory": "1g", "runtime": "PT1H", "num_gpus": 0, "num_nodes": 1},
-    {"name": "worker", "num_cpus": 10, "memory": "50g", "runtime": "PT2H", "num_gpus": 0, "num_nodes": 1}
-  ],
-  "jobs": [
-    {
-      "name": "preprocess",
-      "command": "python preprocess.py",
-      "resource_requirements": "small"
-    },
-    {
-      "name": "work_{i}",
-      "command": "python work.py {i}",
-      "depends_on": ["preprocess"],
-      "resource_requirements": "worker",
-      "parameters": {"i": "0:9"}
-    },
-    {
-      "name": "postprocess",
-      "command": "python postprocess.py",
-      "depends_on": ["work_{i}"],
-      "resource_requirements": "small"
-    }
-  ]
-}
-
-This creates: preprocess -> work_0, work_1, ..., work_9 -> postprocess
-The postprocess job automatically waits for ALL work_* jobs to complete.
-
-MORE PARAMETERIZATION EXAMPLES:
-- 100 jobs: "parameters": {"i": "0:99"}
-- Jobs for multiple datasets: "parameters": {"dataset": "['train','test','validation']"}
-- Hyperparameter sweep: "parameters": {"lr": "[0.001,0.01,0.1]", "batch": "[32,64,128]"} (creates 9 jobs)
-
-ACTIONS (optional, for workflow lifecycle events):
-Actions reference jobs using job_names OR job_name_regexes:
-- "job_names": ["preprocess", "postprocess", "work_0", "work_1"] - list of exact job names
-- "job_name_regexes": ["^work_\\d+$"] - only use if ONE regex matches ALL parameterized jobs
-
-TIPS:
-- ALWAYS use parameterization when user asks for multiple similar jobs with indices
-- Jobs with depends_on wait for those jobs to complete first
-- Multiple jobs can share the same resource_requirements by name
-- Use save_spec_file when user wants to review/edit before creating
-- Use create_workflow when user wants to run immediately"#)]
-    async fn create_workflow(
-        &self,
-        #[tool(aggr)] params: CreateWorkflowParams,
-    ) -> Result<CallToolResult, McpError> {
-        let config = self.config.clone();
-        let spec_json = params.spec_json;
-        let user = params
-            .user
-            .unwrap_or_else(|| std::env::var("USER").unwrap_or_else(|_| "unknown".to_string()));
-        let action = params.action;
-        let workflow_type = params.workflow_type;
-        let account = params.account;
-        let hpc_profile = params.hpc_profile;
-        let output_path = params.output_path;
-        tokio::task::spawn_blocking(move || {
-            tools::create_workflow(
-                &config,
-                &spec_json,
-                &user,
-                &action,
-                &workflow_type,
-                account.as_deref(),
-                hpc_profile.as_deref(),
-                output_path.as_deref(),
-            )
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-    }
-
-    /// Resubmit a workflow by regenerating Slurm schedulers and submitting allocations.
-    #[tool(
-        description = "Regenerate Slurm schedulers for pending jobs and submit allocations. Use after resetting failed jobs to get new Slurm allocations. Analyzes job resource requirements and calculates the minimum allocations needed."
-    )]
-    async fn resubmit_workflow(
-        &self,
-        #[tool(aggr)] params: ResubmitWorkflowParams,
-    ) -> Result<CallToolResult, McpError> {
-        let output_dir = self.output_dir.clone();
-        let workflow_id = params.workflow_id;
-        let account = params.account;
-        let profile = params.profile;
-        let dry_run = params.dry_run.unwrap_or(false);
-        tokio::task::spawn_blocking(move || {
-            tools::resubmit_workflow(&output_dir, workflow_id, account, profile, dry_run)
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-    }
 }
 
 #[tool(tool_box)]
@@ -478,14 +469,20 @@ impl ServerHandler for TorcMcpServer {
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
-                "Torc MCP Server - Manage computational workflows. \
-                 Use get_workflow_status to check workflow progress, \
-                 list_failed_jobs to find failures, \
-                 get_job_logs to diagnose issues, \
-                 check_resource_utilization to identify resource problems, \
-                 update_job_resources to fix resource limits, \
-                 restart_jobs to reset and restart failed jobs, \
-                 and resubmit_workflow to regenerate Slurm schedulers and submit new allocations."
+                "Torc MCP Server - Manage computational workflows.\n\n\
+                 WORKFLOW CREATION - SAVE FILES BY DEFAULT:\n\
+                 - When user asks to 'create a workflow', save a spec FILE (action=save_spec_file)\n\
+                 - AI-generated specs have placeholder commands - users must customize before running\n\
+                 - Only use action=create_workflow when user explicitly says 'run' or 'submit'\n\n\
+                 FILE-BASED DEPENDENCIES:\n\
+                 1. Add a 'files' section defining each file with name, path, st_mtime\n\
+                 2. Add 'input_files' to jobs that read files (exact names)\n\
+                 3. Add 'output_files' to jobs that write files (exact names)\n\
+                 4. For FAN-IN (aggregating multiple files into one job), use 'input_file_regexes' with a regex pattern\n\
+                    Example: input_file_regexes: [\"^work_out_\\\\d+$\"] matches work_out_0, work_out_1, etc.\n\n\
+                 Tools: get_execution_plan (preview execution), get_workflow_status (check progress), \
+                 list_failed_jobs, get_job_logs, analyze_workflow_logs (scan all logs for errors), \
+                 check_resource_utilization, update_job_resources."
                     .to_string(),
             ),
         }
