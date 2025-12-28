@@ -2496,7 +2496,7 @@ pub struct RegenerateResult {
 }
 
 /// Information about a planned scheduler (for dry run output)
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlannedSchedulerInfo {
     pub name: String,
     pub account: String,
@@ -2511,7 +2511,7 @@ pub struct PlannedSchedulerInfo {
 }
 
 /// Dry run result for regenerate command
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegenerateDryRunResult {
     pub dry_run: bool,
     pub workflow_id: i64,

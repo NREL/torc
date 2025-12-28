@@ -38,9 +38,10 @@ pub struct RecoveryResult {
     /// Detailed resource adjustments (for JSON output)
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub adjustments: Vec<ResourceAdjustmentReport>,
-    /// Planned schedulers (only in dry-run mode)
+    /// Slurm scheduler dry-run result (only in dry-run mode)
+    /// Memory values are updated to reflect the adjusted values from recovery heuristics.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub planned_schedulers: Option<Vec<PlannedSchedulerPreview>>,
+    pub slurm_dry_run: Option<RegenerateDryRunResult>,
 }
 
 /// Detailed report of a resource adjustment for JSON output
@@ -84,29 +85,6 @@ pub struct RecoveryReport {
     /// The diagnosis data (failed jobs info)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diagnosis: Option<ResourceUtilizationReport>,
-}
-
-/// Preview of a scheduler that would be created during recovery
-#[derive(Debug, Clone, Serialize)]
-pub struct PlannedSchedulerPreview {
-    /// Resource requirements ID
-    pub resource_requirements_id: i64,
-    /// Number of jobs using this scheduler
-    pub job_count: usize,
-    /// Job IDs
-    pub job_ids: Vec<i64>,
-    /// Job names
-    pub job_names: Vec<String>,
-    /// Memory allocation (after adjustment)
-    pub memory: Option<String>,
-    /// Runtime/walltime (after adjustment)
-    pub runtime: Option<String>,
-    /// Number of CPUs
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cpus: Option<i64>,
-    /// Number of GPUs
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub gpus: Option<i64>,
 }
 
 /// Information about Slurm logs for a job
@@ -258,7 +236,34 @@ pub fn recover_workflow(
             // Get the real scheduler plan using slurm regenerate --dry-run --include-job-ids
             info!("[DRY RUN] Slurm schedulers that would be created:");
             match get_scheduler_dry_run(args.workflow_id, &args.output_dir, &result.jobs_to_retry) {
-                Ok(dry_run_result) => {
+                Ok(mut dry_run_result) => {
+                    // Apply the adjusted memory/runtime values to the scheduler info.
+                    // slurm regenerate reads from the database, but in dry-run mode
+                    // the adjustments haven't been applied yet. We need to update
+                    // the scheduler memory/runtime to reflect what would be used.
+                    for sched in &mut dry_run_result.planned_schedulers {
+                        // Find if any of the jobs in this scheduler have adjustments
+                        for adj in &result.adjustments {
+                            // Check if any job in this scheduler matches the adjustment
+                            let has_matching_job = sched
+                                .job_names
+                                .iter()
+                                .any(|name| adj.job_names.contains(name));
+
+                            if has_matching_job {
+                                // Apply memory adjustment
+                                if adj.memory_adjusted
+                                    && let Some(ref new_mem) = adj.new_memory
+                                {
+                                    sched.mem = Some(new_mem.clone());
+                                }
+                                // Note: walltime is determined by partition max, not by
+                                // resource requirements runtime, so we don't update it here
+                                break;
+                            }
+                        }
+                    }
+
                     for sched in &dry_run_result.planned_schedulers {
                         let deps = if sched.has_dependencies {
                             " (deferred)"
@@ -283,27 +288,8 @@ pub fn recover_workflow(
                         dry_run_result.total_allocations
                     );
 
-                    // Convert to our PlannedSchedulerPreview format for the result
-                    let planned_schedulers: Vec<PlannedSchedulerPreview> = dry_run_result
-                        .planned_schedulers
-                        .iter()
-                        .map(|s| PlannedSchedulerPreview {
-                            resource_requirements_id: 0, // Not available from slurm regenerate
-                            job_count: s.job_count,
-                            job_ids: Vec::new(), // Not available from slurm regenerate
-                            job_names: s.job_names.clone(),
-                            memory: s.mem.clone(),
-                            runtime: Some(s.walltime.clone()),
-                            cpus: None, // Would need to parse from slurm scheduler
-                            gpus: None,
-                        })
-                        .collect();
-
-                    result.planned_schedulers = if planned_schedulers.is_empty() {
-                        None
-                    } else {
-                        Some(planned_schedulers)
-                    };
+                    // Include the full dry-run result for JSON output
+                    result.slurm_dry_run = Some(dry_run_result);
                 }
                 Err(e) => {
                     warn!("  Could not get scheduler preview: {}", e);
@@ -876,7 +862,7 @@ pub fn apply_recovery_heuristics(
         other_failures,
         jobs_to_retry,
         adjustments: adjustment_reports,
-        planned_schedulers: None, // Set in recover_workflow dry_run block
+        slurm_dry_run: None, // Set in recover_workflow dry_run block
     })
 }
 

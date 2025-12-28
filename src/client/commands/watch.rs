@@ -1101,7 +1101,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
                     other_failures: 0,
                     jobs_to_retry: Vec::new(),
                     adjustments: Vec::new(),
-                    planned_schedulers: None,
+                    slurm_dry_run: None,
                 }
             }
         };
