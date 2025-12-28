@@ -1782,6 +1782,8 @@ fn test_slurm_generate_group_by_strategy() {
             "--group-by",
             "partition",
             "--dry-run",
+            "--profile",
+            "kestrel",
         ])
         .output()
         .expect("Failed to execute slurm generate with --group-by partition");
@@ -1817,6 +1819,8 @@ fn test_slurm_generate_group_by_strategy() {
             "--group-by",
             "resource-requirements",
             "--dry-run",
+            "--profile",
+            "kestrel",
         ])
         .output()
         .expect("Failed to execute slurm generate with --group-by resource-requirements");
@@ -1849,6 +1853,8 @@ fn test_slurm_generate_group_by_strategy() {
             "--account",
             "dsgrid",
             "--dry-run",
+            "--profile",
+            "kestrel",
         ])
         .output()
         .expect("Failed to execute slurm generate without --group-by");
