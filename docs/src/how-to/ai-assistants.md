@@ -1,6 +1,6 @@
-# AI Assistant Reference
+# Configuring AI Assistants
 
-Complete reference for configuring AI assistants (Claude Code, GitHub Copilot) to work with Torc.
+Complete guide for configuring AI assistants (Claude Code, GitHub Copilot) to work with Torc.
 
 ## Overview
 
@@ -267,5 +267,5 @@ remains in Torc's database.
 ## See Also
 
 - [AI-Assisted Workflow Management Tutorial](../tutorials/ai-assistant.md)
-- [Configuration Reference](./configuration.md)
-- [HPC Deployment](./hpc-deployment.md)
+- [Configuration Reference](../reference/configuration.md)
+- [HPC Deployment](../reference/hpc-deployment.md)
