@@ -784,6 +784,63 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         }
     };
 
+    // Check if workflow is complete
+    let completion_status = match default_api::is_workflow_complete(config, workflow_id) {
+        Ok(status) => Some(status),
+        Err(e) => {
+            eprintln!("Warning: could not check workflow completion status: {}", e);
+            None
+        }
+    };
+
+    // Get active compute nodes count
+    let active_compute_nodes = match default_api::list_compute_nodes(
+        config,
+        workflow_id,
+        None,       // offset
+        Some(1),    // limit - we only need the count
+        None,       // sort_by
+        None,       // reverse_sort
+        None,       // hostname
+        Some(true), // is_active = true
+        None,       // scheduled_compute_node_id
+    ) {
+        Ok(response) => response.total_count,
+        Err(_) => 0,
+    };
+
+    // Get pending scheduled compute nodes count
+    let pending_scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,            // offset
+        Some(1),         // limit - we only need the count
+        None,            // sort_by
+        None,            // reverse_sort
+        None,            // scheduler_id
+        None,            // scheduler_config_id
+        Some("pending"), // status
+    ) {
+        Ok(response) => response.total_count,
+        Err(_) => 0,
+    };
+
+    // Get active scheduled compute nodes count
+    let active_scheduled_nodes = match default_api::list_scheduled_compute_nodes(
+        config,
+        workflow_id,
+        None,           // offset
+        Some(1),        // limit - we only need the count
+        None,           // sort_by
+        None,           // reverse_sort
+        None,           // scheduler_id
+        None,           // scheduler_config_id
+        Some("active"), // status
+    ) {
+        Ok(response) => response.total_count,
+        Err(_) => 0,
+    };
+
     // Fetch all jobs to get total count
     let jobs =
         match pagination::paginate_jobs(config, workflow_id, pagination::JobListParams::new()) {
@@ -894,7 +951,15 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             },
             "total_exec_time_minutes": total_exec_time_minutes,
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
+            "active_compute_nodes": active_compute_nodes,
+            "pending_scheduled_nodes": pending_scheduled_nodes,
+            "active_scheduled_nodes": active_scheduled_nodes,
         });
+
+        if let Some(status) = &completion_status {
+            report["is_complete"] = serde_json::json!(status.is_complete);
+            report["is_canceled"] = serde_json::json!(status.is_canceled);
+        }
 
         if let Some(walltime) = walltime_seconds {
             report["walltime_seconds"] = serde_json::json!(walltime);
@@ -950,8 +1015,39 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             println!("Walltime:             {}", format_duration(walltime));
         }
 
-        if completed_count == total_jobs {
+        // Show compute resources if any are active
+        if active_compute_nodes > 0 || pending_scheduled_nodes > 0 || active_scheduled_nodes > 0 {
             println!();
+            println!("Compute Resources:");
+            if active_compute_nodes > 0 {
+                println!("  Active workers:           {}", active_compute_nodes);
+            }
+            if active_scheduled_nodes > 0 {
+                println!("  Active Slurm allocations: {}", active_scheduled_nodes);
+            }
+            if pending_scheduled_nodes > 0 {
+                println!("  Pending Slurm allocations: {}", pending_scheduled_nodes);
+            }
+        }
+
+        // Show workflow status
+        println!();
+        if let Some(status) = &completion_status {
+            if status.is_complete {
+                if failed_count > 0 || terminated_count > 0 || canceled_count > 0 {
+                    println!(
+                        "✗ Workflow complete with failures ({} failed, {} terminated, {} canceled)",
+                        failed_count, terminated_count, canceled_count
+                    );
+                } else {
+                    println!("✓ Workflow complete - all jobs finished successfully!");
+                }
+            } else if status.is_canceled {
+                println!("⊘ Workflow was canceled");
+            } else {
+                println!("◷ Workflow in progress...");
+            }
+        } else if completed_count == total_jobs {
             println!("✓ All jobs completed successfully!");
         }
     }

@@ -5,15 +5,51 @@ and when to use automatic vs manual recovery.
 
 ## Overview
 
-Torc provides **automatic failure recovery** through the `torc watch --recover` command. When jobs
-fail, the system:
+Torc provides **automatic failure recovery** through two commands:
+
+- **`torc recover`** - One-shot recovery for Slurm workflows
+- **`torc watch --recover`** - Continuous monitoring with automatic recovery
+
+When jobs fail, the system:
 
 1. Diagnoses the failure cause (OOM, timeout, or unknown)
 2. Applies heuristics to adjust resource requirements
 3. Resets failed jobs and submits new Slurm allocations
-4. Resumes monitoring until completion or max retries
+4. (watch only) Resumes monitoring until completion or max retries
 
 This deterministic approach handles the majority of HPC failures without human intervention.
+
+## The `torc recover` Command
+
+For one-shot recovery of a completed workflow with failures:
+
+```bash
+# Preview what would be done
+torc recover <workflow_id> --dry-run
+
+# Execute recovery
+torc recover <workflow_id>
+```
+
+This command:
+
+1. Checks preconditions (workflow complete, no active workers)
+2. Diagnoses failures using resource utilization data
+3. Applies recovery heuristics (increase memory/runtime)
+4. Runs optional recovery hook for custom logic
+5. Resets failed jobs and regenerates Slurm schedulers
+6. Submits new allocations
+
+### Recovery Options
+
+```bash
+torc recover <workflow_id> \
+  --memory-multiplier 1.5 \     # Memory increase factor for OOM (default: 1.5)
+  --runtime-multiplier 1.4 \    # Runtime increase factor for timeout (default: 1.4)
+  --retry-unknown \             # Also retry jobs with unknown failure causes
+  --recovery-hook "bash fix.sh" \  # Custom script for unknown failures
+  --dry-run                     # Preview without making changes
+```
 
 ## Design Principles
 
@@ -89,9 +125,19 @@ After adjusting resources, the system regenerates Slurm schedulers:
 
 This is handled by `torc slurm regenerate --submit`.
 
+## Choosing Between `recover` and `watch --recover`
+
+| Use Case                          | Command                  |
+| --------------------------------- | ------------------------ |
+| One-shot recovery after failure   | `torc recover`           |
+| Continuous monitoring             | `torc watch -r`          |
+| Preview what recovery would do    | `torc recover --dry-run` |
+| Production long-running workflows | `torc watch -r`          |
+| Manual investigation, then retry  | `torc recover`           |
+
 ## Configuration
 
-### Command-Line Options
+### Watch Command Options
 
 ```bash
 torc watch <workflow_id> \

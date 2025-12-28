@@ -9,10 +9,10 @@ fn main() {
 #[cfg(unix)]
 mod unix_main {
     use chrono::Duration;
+    use chrono::Local;
     use clap::{Parser, builder::styling};
     use env_logger::Builder;
     use log::{LevelFilter, debug, error, info};
-    use serde_json;
     use signal_hook::consts::SIGTERM;
     use signal_hook::iterator::Signals;
     use std::fs::File;
@@ -75,6 +75,9 @@ mod unix_main {
     pub fn main() {
         let args = Args::parse();
 
+        // Record start time for dmesg filtering (with 60-minute buffer)
+        let dmesg_cutoff = Local::now() - chrono::Duration::minutes(60);
+
         // Create Slurm interface to get environment info
         let slurm_interface = match SlurmInterface::new() {
             Ok(interface) => interface,
@@ -94,7 +97,7 @@ mod unix_main {
             args.workflow_id,
             &job_id,
             &node_id,
-            task_pid as usize,
+            task_pid,
         );
 
         let log_file = match File::create(&log_file_path) {
@@ -131,7 +134,7 @@ mod unix_main {
             args.workflow_id,
             &job_id,
             &node_id,
-            task_pid as usize,
+            task_pid,
         );
         utils::capture_env_vars(std::path::Path::new(&slurm_env_path), "SLURM");
 
@@ -186,10 +189,10 @@ mod unix_main {
         let scheduled_compute_node =
             get_scheduled_compute_node(&config, args.workflow_id, &slurm_interface);
 
-        if slurm_interface.is_head_node() {
-            if let Some(ref node) = scheduled_compute_node {
-                set_scheduled_compute_node_status(&config, node, "active");
-            }
+        if slurm_interface.is_head_node()
+            && let Some(ref node) = scheduled_compute_node
+        {
+            set_scheduled_compute_node_status(&config, node, "active");
         }
 
         let scheduler_id = scheduled_compute_node.as_ref().map(|node| node.id);
@@ -280,9 +283,9 @@ mod unix_main {
                         args.workflow_id,
                         &job_id,
                         &node_id,
-                        task_pid as usize,
+                        task_pid,
                     );
-                    utils::capture_dmesg(std::path::Path::new(&dmesg_path));
+                    utils::capture_dmesg(std::path::Path::new(&dmesg_path), Some(dmesg_cutoff));
                 }
             }
             Err(e) => {
@@ -293,17 +296,17 @@ mod unix_main {
                     args.workflow_id,
                     &job_id,
                     &node_id,
-                    task_pid as usize,
+                    task_pid,
                 );
-                utils::capture_dmesg(std::path::Path::new(&dmesg_path));
+                utils::capture_dmesg(std::path::Path::new(&dmesg_path), Some(dmesg_cutoff));
                 std::process::exit(1);
             }
         }
 
-        if slurm_interface.is_head_node() {
-            if let Some(ref node) = scheduled_compute_node {
-                set_scheduled_compute_node_status(&config, node, "complete");
-            }
+        if slurm_interface.is_head_node()
+            && let Some(ref node) = scheduled_compute_node
+        {
+            set_scheduled_compute_node_status(&config, node, "complete");
         }
     }
 

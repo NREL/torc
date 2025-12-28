@@ -43,6 +43,7 @@ const HELP_TEMPLATE: &str = "\
   \x1b[1;36msubmit\x1b[0m                   Submit a workflow to scheduler
   \x1b[1;36msubmit-slurm\x1b[0m             Submit to Slurm with auto-generated schedulers
   \x1b[1;36mwatch\x1b[0m                    Watch workflow and recover from failures
+  \x1b[1;36mrecover\x1b[0m                  Recover a Slurm workflow from failures
 
 \x1b[1;32mWorkflow Management:\x1b[0m
   \x1b[1;36mworkflows\x1b[0m                Workflow management commands
@@ -269,6 +270,62 @@ pub enum Commands {
         /// server load for large workflows. Only use for debugging or small workflows.
         #[arg(short, long)]
         show_job_counts: bool,
+    },
+    /// Recover a Slurm workflow from failures
+    ///
+    /// Diagnoses job failures (OOM, timeout), adjusts resource requirements,
+    /// and resubmits jobs. Use after a workflow has completed with failures.
+    ///
+    /// This command:
+    /// 1. Checks preconditions (workflow complete, no active workers)
+    /// 2. Diagnoses failures using resource utilization data
+    /// 3. Applies recovery heuristics (increase memory/runtime)
+    /// 4. Runs optional recovery hook for custom logic
+    /// 5. Resets failed jobs and regenerates Slurm schedulers
+    /// 6. Submits new allocations
+    ///
+    /// For continuous monitoring with automatic recovery, use `torc watch --recover`.
+    #[command(hide = true)]
+    Recover {
+        /// Workflow ID to recover
+        #[arg()]
+        workflow_id: i64,
+
+        /// Output directory for job files
+        #[arg(short, long, default_value = "output")]
+        output_dir: PathBuf,
+
+        /// Memory multiplier for OOM failures (default: 1.5 = 50% increase)
+        #[arg(long, default_value = "1.5")]
+        memory_multiplier: f64,
+
+        /// Runtime multiplier for timeout failures (default: 1.4 = 40% increase)
+        #[arg(long, default_value = "1.4")]
+        runtime_multiplier: f64,
+
+        /// Retry jobs with unknown failure causes (not OOM or timeout)
+        ///
+        /// By default, only jobs that failed due to OOM or timeout are retried.
+        /// Enable this to also retry jobs with unknown failures.
+        #[arg(long)]
+        retry_unknown: bool,
+
+        /// Custom recovery hook command for unknown failures
+        ///
+        /// When jobs fail with unknown causes, this command is executed before
+        /// resetting jobs. The workflow ID is passed as both an argument and
+        /// the TORC_WORKFLOW_ID environment variable.
+        ///
+        /// Example: --recovery-hook "bash fix-cluster.sh"
+        #[arg(long)]
+        recovery_hook: Option<String>,
+
+        /// Show what would be done without making any changes
+        ///
+        /// Diagnoses failures and shows proposed resource adjustments, but does
+        /// not actually update resources, reset jobs, or submit allocations.
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Interactive terminal UI for managing workflows
     #[command(hide = true)]

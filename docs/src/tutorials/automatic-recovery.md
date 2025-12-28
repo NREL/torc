@@ -1,8 +1,7 @@
 # Tutorial: Automatic Failure Recovery
 
-This tutorial shows how to use `torc watch` with automatic recovery to handle workflow failures
-without manual intervention. This tutorial shows how to use `torc watch` with automatic recovery to
-handle workflow failures without manual intervention.
+This tutorial shows how to use Torc's automatic recovery features to handle workflow failures
+without manual intervention.
 
 ## Learning Objectives
 
@@ -10,6 +9,7 @@ By the end of this tutorial, you will:
 
 - Understand automatic vs manual recovery options
 - Know how to configure automatic recovery heuristics
+- Choose between one-shot recovery (`torc recover`) and continuous monitoring (`torc watch -r`)
 - Monitor workflows with automatic failure handling
 
 ## Prerequisites
@@ -18,7 +18,65 @@ By the end of this tutorial, you will:
 - A running Torc server
 - Workflows submitted to Slurm
 
-## Automatic Recovery
+## Two Recovery Commands
+
+Torc provides two commands for automatic failure recovery:
+
+| Command                | Use Case                                                      |
+| ---------------------- | ------------------------------------------------------------- |
+| `torc recover`         | One-shot recovery after a workflow completes with failures    |
+| `torc watch --recover` | Continuous monitoring with automatic recovery on each failure |
+
+## The `torc recover` Command
+
+For one-shot recovery when a workflow has failed:
+
+```bash
+# Preview what would be done (recommended first step)
+torc recover 42 --dry-run
+
+# Execute the recovery
+torc recover 42
+```
+
+This command:
+
+1. Checks that the workflow is complete and no workers are active
+2. Diagnoses failure causes (OOM, timeout, etc.)
+3. Adjusts resource requirements based on heuristics
+4. Resets failed jobs
+5. Regenerates Slurm schedulers and submits new allocations
+
+### Recovery Options
+
+```bash
+torc recover 42 \
+  --memory-multiplier 1.5 \     # Memory increase factor for OOM (default: 1.5)
+  --runtime-multiplier 1.4 \    # Runtime increase factor for timeout (default: 1.4)
+  --retry-unknown \             # Also retry jobs with unknown failure causes
+  --recovery-hook "bash fix.sh" \  # Custom script for unknown failures
+  --dry-run                     # Preview without making changes
+```
+
+### Example Output
+
+```
+Diagnosing failures...
+Applying recovery heuristics...
+  Job 107 (train_model): OOM detected, increasing memory 8g -> 12g
+  Applied fixes: 1 OOM, 0 timeout
+Resetting 1 job(s) for retry...
+  Reset 1 job(s)
+Reinitializing workflow...
+Regenerating Slurm schedulers...
+  Submitted Slurm allocation with 1 job
+
+Recovery complete for workflow 42
+  - 1 job(s) had memory increased
+Reset 1 job(s). Slurm schedulers regenerated and submitted.
+```
+
+## The `torc watch --recover` Command
 
 The `torc watch` command can automatically recover from common failures:
 
@@ -366,7 +424,23 @@ If jobs are requesting more resources than partitions allow:
 
 ## Summary
 
-The `torc watch -r` (or `--recover`) command provides:
+Torc provides two commands for automatic failure recovery:
+
+**`torc recover <workflow_id>`** - One-shot recovery:
+
+- Use after a workflow completes with failures
+- Preview first with `--dry-run` to see what would change
+- Checks preconditions (no active workers)
+- Great for manual workflows or after investigating failures
+
+**`torc watch --recover`** - Continuous monitoring:
+
+- Polls workflow until completion
+- Automatically recovers on each failure
+- Best for long-running production workflows
+- Set `--max-retries` to prevent infinite loops
+
+Both commands provide:
 
 - **Automatic OOM handling**: Detects memory issues and increases allocations
 - **Automatic timeout handling**: Detects slow jobs and increases runtime
@@ -375,9 +449,7 @@ The `torc watch -r` (or `--recover`) command provides:
 - **Custom recovery hooks**: Use `--recovery-hook` to run your own recovery script for unknown
   failures
 - **Configurable heuristics**: Adjust multipliers for your workload
-- **Retry limits**: Prevent infinite retry loops
 - **Graceful degradation**: Falls back to manual recovery when needed
-- **Persistent logging**: All output logged to file for later review
 
 By default, jobs with unknown failure causes (likely script or data bugs) are skipped to avoid
 wasting HPC allocation time on jobs that will keep failing.
