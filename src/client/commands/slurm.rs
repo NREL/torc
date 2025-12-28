@@ -1531,13 +1531,16 @@ fn extract_node_from_line(line: &str) -> Option<String> {
     None
 }
 
-/// Extract Slurm job ID from filename
-fn extract_slurm_job_id_from_filename(filename: &str) -> Option<String> {
-    // Pattern: slurm_output_sl12345.o or slurm_output_sl12345.e
-    let re = Regex::new(r"slurm_output_sl(\d+)\.[oe]$").ok()?;
-    re.captures(filename)
-        .and_then(|caps| caps.get(1))
-        .map(|m| m.as_str().to_string())
+/// Extract workflow ID and Slurm job ID from filename
+/// Returns (workflow_id, slurm_job_id) if successful
+fn extract_slurm_job_id_from_filename(filename: &str) -> Option<(i64, String)> {
+    // Pattern: slurm_output_wf1234_sl12345.o or slurm_output_wf1234_sl12345.e
+    let re = Regex::new(r"slurm_output_wf(\d+)_sl(\d+)\.[oe]$").ok()?;
+    re.captures(filename).and_then(|caps| {
+        let wf_id = caps.get(1)?.as_str().parse::<i64>().ok()?;
+        let slurm_id = caps.get(2)?.as_str().to_string();
+        Some((wf_id, slurm_id))
+    })
 }
 
 /// Build a map of Slurm job ID -> affected Torc jobs
@@ -1790,10 +1793,19 @@ pub fn parse_slurm_logs(
             continue;
         }
 
-        let slurm_job_id = match extract_slurm_job_id_from_filename(filename) {
-            Some(id) => id,
+        let (file_wf_id, slurm_job_id) = match extract_slurm_job_id_from_filename(filename) {
+            Some(ids) => ids,
             None => continue,
         };
+
+        // Only process log files for this workflow
+        if file_wf_id != workflow_id {
+            debug!(
+                "Skipping log file {} - workflow ID {} does not match {}",
+                filename, file_wf_id, workflow_id
+            );
+            continue;
+        }
 
         // Only process log files for Slurm jobs belonging to this workflow
         if !valid_slurm_job_ids.contains(&slurm_job_id) {
