@@ -1100,6 +1100,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
                     unknown_retried: 0,
                     other_failures: 0,
                     jobs_to_retry: Vec::new(),
+                    adjustments: Vec::new(),
                 }
             }
         };
