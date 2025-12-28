@@ -83,7 +83,18 @@ Total Execution Time: 45m 30s
 
 Only non-zero status counts are displayed.
 
-For JSON output (useful for scripting):
+### Continuous Monitoring
+
+This command can be very convenient, but be mindful of your workflow size (number of jobs) and
+network load if you are using a shared server.
+
+```bash
+watch -n 10 torc reports summary <workflow_id>
+```
+
+### JSON Output
+
+This is useful for scripts:
 
 ```bash
 torc reports summary <workflow_id> -f json
@@ -112,22 +123,6 @@ torc reports summary <workflow_id> -f json
   "walltime_seconds": 11742.0,
   "walltime_formatted": "3h 15m 42s"
 }
-```
-
-## Handle Incomplete Workflows
-
-If you try to generate a summary for an incomplete workflow, the command will exit with an error:
-
-```bash
-$ torc reports summary 42
-Error: Workflow 42 is not complete.
-Wait for the workflow to finish before generating a summary.
-```
-
-To check workflow progress instead, use:
-
-```bash
-torc workflows status <workflow_id>
 ```
 
 ## Use in Scripts

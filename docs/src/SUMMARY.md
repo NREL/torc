@@ -59,6 +59,7 @@
   - [Troubleshooting]()
     - [Debugging Workflows](./how-to/debugging.md)
     - [Debugging Slurm Workflows](./how-to/debugging-slurm.md)
+    - [Working with Logs](./how-to/working-with-logs.md)
 
 - [Reference](./reference/README.md)
   - [CLI Reference](./reference/cli.md)

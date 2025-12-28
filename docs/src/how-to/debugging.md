@@ -7,6 +7,8 @@ help you identify and resolve issues. The primary debugging tools are:
   failure)
 - **`torc reports results`**: Generates a detailed JSON report containing job results and all
   associated log file paths
+- **`torc logs analyze <output-dir>`**: Analyzes log files for known error patterns (see
+  [Working with Logs](working-with-logs.md))
 - **torc-dash Debug tab**: Interactive web interface for visual debugging with log file viewer
 
 ## Overview
@@ -502,5 +504,7 @@ torc reports results <workflow_id> --output-dir <correct_path>
 - **`torc-dash`**: Launch web interface with interactive Debugging tab
 - **`torc tui`**: Launch terminal UI for workflow monitoring
 
-For Slurm-specific debugging tools (`torc slurm parse-logs`, `torc slurm sacct`, etc.), see
-[Debugging Slurm Workflows](debugging-slurm.md).
+## See Also
+
+- [Working with Logs](working-with-logs.md) — Bundling and analyzing logs
+- [Debugging Slurm Workflows](debugging-slurm.md) — Slurm-specific debugging tools

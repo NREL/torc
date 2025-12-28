@@ -340,60 +340,8 @@ When a Slurm job fails, follow this debugging workflow:
 - Check GPU memory with `nvidia-smi` in job script
 - Ensure correct CUDA version is loaded
 
-## Log Bundles
-
-For sharing logs with others or archiving for later analysis, use log bundles:
-
-### Bundling Logs
-
-```bash
-# Bundle all logs for a workflow into a compressed tarball
-torc logs bundle <workflow_id>
-
-# Specify custom output directory
-torc logs bundle <workflow_id> --output-dir /path/to/output
-
-# Save bundle to a specific directory
-torc logs bundle <workflow_id> --bundle-dir /path/to/bundles
-```
-
-This creates a `wf<id>.tar.gz` file containing:
-
-- All job stdout/stderr files (`job_wf*_j*_r*.o/e`)
-- Job runner logs (`job_runner_*.log`)
-- Slurm output files (`slurm_output_wf*_sl*.o/e`)
-- Slurm environment logs (`slurm_env_wf*_sl*.log`)
-- dmesg logs (`dmesg_slurm_wf*_sl*.log`)
-- Bundle metadata (workflow info, collection timestamp)
-
-### Analyzing Logs
-
-```bash
-# Analyze a log bundle tarball
-torc logs analyze wf123.tar.gz
-
-# Analyze a log directory directly (auto-detects workflow if only one present)
-torc logs analyze output/
-
-# Analyze a directory with multiple workflows (specify which one)
-torc logs analyze output/ --workflow-id 123
-```
-
-The analyzer scans all log files for known error patterns (OOM kills, timeouts, segfaults, Slurm
-errors, Python exceptions, etc.) and reports:
-
-- Files with detected errors
-- Error type and severity
-- Line numbers and content
-- Summary of error types found
-
-**Note**: Environment variable files (`slurm_env_*.log`) are excluded from error analysis since they
-contain configuration data, not error logs.
-
 ## Related Commands
 
-- **`torc logs bundle`**: Bundle workflow logs into a compressed tarball
-- **`torc logs analyze`**: Analyze logs for known error patterns
 - **`torc slurm parse-logs`**: Parse Slurm logs for known error patterns
 - **`torc slurm sacct`**: Collect Slurm accounting data for workflow jobs
 - **`torc reports results`**: Generate debug report with all log file paths
@@ -401,4 +349,7 @@ contain configuration data, not error logs.
 - **`torc-dash`**: Launch web interface with Slurm log viewing
 - **`torc tui`**: Launch terminal UI with Slurm log viewing
 
-For general debugging tools and workflows, see [Debugging Workflows](debugging.md).
+## See Also
+
+- [Debugging Workflows](debugging.md) — General debugging tools and workflows
+- [Working with Logs](working-with-logs.md) — Bundling and analyzing logs

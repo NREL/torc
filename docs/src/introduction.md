@@ -31,41 +31,77 @@ This expands to 100 jobs.
 
 ### Implicit Dependencies
 
-Dependencies between jobs are automatically inferred based on file relationships:
+Dependencies between jobs are automatically inferred from file relationships. Consider this diamond
+workflow where one job fans out to parallel jobs, which then converge:
 
 ```yaml
-name: my_workflow
+name: diamond_workflow
 jobs:
   - name: preprocess
-    command: "preprocess.sh -i ${files.input.f1} -o ${files.output.f2}"
+    command: "preprocess.sh -i ${files.input.f1} -o ${files.output.f2} -o ${files.output.f3}"
 
-  - name: process
-    command: "process.sh -i ${files.input.f2} -o ${files.output.f3}"
+  - name: work1
+    command: "work.sh -i ${files.input.f2} -o ${files.output.f4}"
+
+  - name: work2
+    command: "work.sh -i ${files.input.f3} -o ${files.output.f5}"
+
+  - name: postprocess
+    command: "postprocess.sh -i ${files.input.f4} -i ${files.input.f5} -o ${files.output.f6}"
 
 files:
   - name: f1
     path: input.json
   - name: f2
-    path: intermediate.json
+    path: intermediate_a.json
   - name: f3
-    path: output.json
+    path: intermediate_b.json
+  - name: f4
+    path: result_a.json
+  - name: f5
+    path: result_b.json
+  - name: f6
+    path: final_output.json
 ```
 
-Torc automatically determines that `process` depends on `preprocess` because `f2` is an output of
-one and input of the other.
+Torc analyzes which jobs produce and consume each file, automatically building the dependency graph:
 
-### Slurm Integration
+```mermaid
+flowchart TD
+    f1([input.json])
+    preprocess[preprocess]
+    f2([intermediate_a.json])
+    f3([intermediate_b.json])
+    work1[work1]
+    work2[work2]
+    f4([result_a.json])
+    f5([result_b.json])
+    postprocess[postprocess]
+    f6([final_output.json])
 
-Native support for HPC clusters:
+    f1 --> preprocess
+    preprocess --> f2 & f3
+    f2 --> work1
+    f3 --> work2
+    work1 --> f4
+    work2 --> f5
+    f4 & f5 --> postprocess
+    postprocess --> f6
 
-```yaml
-slurm_schedulers:
-  - name: big memory nodes
-    partition: bigmem
-    account: myproject
-    walltime: 04:00:00
-    num_nodes: 5
+    style f1 fill:#d4edda,stroke:#28a745,color:#155724
+    style f2 fill:#d4edda,stroke:#28a745,color:#155724
+    style f3 fill:#d4edda,stroke:#28a745,color:#155724
+    style f4 fill:#d4edda,stroke:#28a745,color:#155724
+    style f5 fill:#d4edda,stroke:#28a745,color:#155724
+    style f6 fill:#d4edda,stroke:#28a745,color:#155724
+    style preprocess fill:#4a9eff,color:#fff
+    style work1 fill:#4a9eff,color:#fff
+    style work2 fill:#4a9eff,color:#fff
+    style postprocess fill:#4a9eff,color:#fff
 ```
+
+No explicit `depends_on` declarations needed — Torc infers that `work1` and `work2` depend on
+`preprocess`, and `postprocess` waits for both to complete.
 
 ## Who Should Use Torc?
 

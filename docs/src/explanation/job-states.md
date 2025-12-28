@@ -35,4 +35,3 @@ stateDiagram-v2
 - **canceled** (7) - Explicitly canceled by user or system
 - **terminated** (8) - Explicitly terminated by system, such as for checkpointing before wall-time
   timeout
-- **disabled** (9) - Explicitly disabled by user
