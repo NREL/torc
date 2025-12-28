@@ -1,5 +1,5 @@
 use chrono::Utc;
-use clap::Subcommand;
+use clap::{Subcommand, ValueEnum};
 use log::{debug, error, info, warn};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -33,6 +33,34 @@ use crate::client::workflow_spec::{ResourceRequirementsSpec, WorkflowSpec};
 use crate::config::TorcConfig;
 use crate::models;
 use tabled::Tabled;
+
+/// Strategy for grouping jobs into Slurm schedulers
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum GroupByStrategy {
+    /// Group by resource requirements name (default)
+    ///
+    /// Each unique resource_requirements creates a separate scheduler.
+    /// This preserves the user's intent and provides fine-grained control.
+    #[default]
+    #[value(name = "resource-requirements")]
+    ResourceRequirements,
+
+    /// Group by partition
+    ///
+    /// Jobs whose resource requirements map to the same partition are grouped together.
+    /// This reduces the number of schedulers and can improve resource utilization.
+    #[value(name = "partition")]
+    Partition,
+}
+
+impl std::fmt::Display for GroupByStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GroupByStrategy::ResourceRequirements => write!(f, "resource-requirements"),
+            GroupByStrategy::Partition => write!(f, "partition"),
+        }
+    }
+}
 
 #[derive(Tabled)]
 struct SlurmSchedulerTableRow {
@@ -280,7 +308,7 @@ pub enum SlurmCommands {
         workflow_file: PathBuf,
 
         /// Slurm account to use
-        #[arg(long)]
+        #[arg(short, long)]
         account: String,
 
         /// HPC profile to use (if not specified, tries to detect current system)
@@ -300,6 +328,15 @@ pub enum SlurmCommands {
         /// which requires all nodes to be available simultaneously but uses a single sbatch.
         #[arg(long)]
         single_allocation: bool,
+
+        /// Strategy for grouping jobs into schedulers
+        ///
+        /// - resource-requirements: Each unique resource_requirements creates a separate
+        ///   scheduler. This preserves user intent and provides fine-grained control.
+        /// - partition: Jobs whose resource requirements map to the same partition are
+        ///   grouped together, reducing the number of schedulers.
+        #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
+        group_by: GroupByStrategy,
 
         /// Don't add workflow actions for scheduling nodes
         #[arg(long)]
@@ -327,7 +364,7 @@ pub enum SlurmCommands {
         workflow_id: i64,
 
         /// Slurm account to use (defaults to account from existing schedulers)
-        #[arg(long)]
+        #[arg(short, long)]
         account: Option<String>,
 
         /// HPC profile to use (if not specified, tries to detect current system)
@@ -337,6 +374,10 @@ pub enum SlurmCommands {
         /// Bundle all nodes into a single Slurm allocation per scheduler
         #[arg(long)]
         single_allocation: bool,
+
+        /// Strategy for grouping jobs into schedulers
+        #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
+        group_by: GroupByStrategy,
 
         /// Submit the generated allocations immediately
         #[arg(long)]
@@ -388,6 +429,7 @@ pub fn secs_to_walltime(secs: u64) -> String {
 /// * `account` - Slurm account to use
 /// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode).
 ///   If false (default), create N allocations with 1 node each (N×1 mode).
+/// * `group_by` - Strategy for grouping jobs into schedulers
 /// * `add_actions` - Whether to add workflow actions for scheduling
 /// * `overwrite` - If true, overwrite existing schedulers/actions. If false, error when they exist.
 pub fn generate_schedulers_for_workflow(
@@ -395,6 +437,7 @@ pub fn generate_schedulers_for_workflow(
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
+    group_by: GroupByStrategy,
     add_actions: bool,
     overwrite: bool,
 ) -> Result<GenerateResult, String> {
@@ -465,6 +508,7 @@ pub fn generate_schedulers_for_workflow(
         profile,
         account,
         single_allocation,
+        group_by,
         add_actions,
         None,  // No suffix for regular generation (uses "_scheduler")
         false, // Not a recovery scenario
@@ -950,6 +994,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             profile: profile_name,
             output,
             single_allocation,
+            group_by,
             no_actions,
             overwrite,
             dry_run,
@@ -960,6 +1005,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 profile_name.as_deref(),
                 output.as_ref(),
                 *single_allocation,
+                *group_by,
                 *no_actions,
                 *overwrite,
                 *dry_run,
@@ -971,6 +1017,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             account,
             profile: profile_name,
             single_allocation,
+            group_by,
             submit,
             output_dir,
             poll_interval,
@@ -983,6 +1030,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 account.as_deref(),
                 profile_name.as_deref(),
                 *single_allocation,
+                *group_by,
                 *submit,
                 output_dir,
                 *poll_interval,
@@ -2303,6 +2351,7 @@ fn handle_generate(
     profile_name: Option<&str>,
     output: Option<&PathBuf>,
     single_allocation: bool,
+    group_by: GroupByStrategy,
     no_actions: bool,
     force: bool,
     dry_run: bool,
@@ -2347,6 +2396,7 @@ fn handle_generate(
         profile,
         account,
         single_allocation,
+        group_by,
         !no_actions,
         force,
     ) {
@@ -2561,6 +2611,7 @@ fn handle_regenerate(
     account: Option<&str>,
     profile_name: Option<&str>,
     single_allocation: bool,
+    group_by: GroupByStrategy,
     submit: bool,
     output_dir: &PathBuf,
     poll_interval: i32,
@@ -2802,6 +2853,7 @@ fn handle_regenerate(
         profile,
         &account_to_use,
         single_allocation,
+        group_by,
         true, // add_actions (we'll create them as recovery actions)
         Some(&format!("regen_{}", timestamp)),
         true, // is_recovery

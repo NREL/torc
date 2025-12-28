@@ -19,7 +19,7 @@ use crate::client::commands::reports::ReportCommands;
 use crate::client::commands::resource_requirements::ResourceRequirementsCommands;
 use crate::client::commands::results::ResultCommands;
 use crate::client::commands::scheduled_compute_nodes::ScheduledComputeNodeCommands;
-use crate::client::commands::slurm::SlurmCommands;
+use crate::client::commands::slurm::{GroupByStrategy, SlurmCommands};
 use crate::client::commands::user_data::UserDataCommands;
 use crate::client::commands::workflows::WorkflowCommands;
 use crate::plot_resources_cmd;
@@ -171,7 +171,7 @@ pub enum Commands {
         #[arg()]
         workflow_spec: String,
         /// Slurm account to use for allocations
-        #[arg(long)]
+        #[arg(short, long)]
         account: String,
         /// HPC profile to use (auto-detected if not specified)
         #[arg(long)]
@@ -185,6 +185,14 @@ pub enum Commands {
         /// which requires all nodes to be available simultaneously but uses a single sbatch.
         #[arg(long)]
         single_allocation: bool,
+        /// Strategy for grouping jobs into schedulers
+        ///
+        /// - resource-requirements: Each unique resource_requirements creates a separate
+        ///   scheduler. This preserves user intent and provides fine-grained control.
+        /// - partition: Jobs whose resource requirements map to the same partition are
+        ///   grouped together, reducing the number of schedulers.
+        #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
+        group_by: GroupByStrategy,
         /// Ignore missing data (defaults to false)
         #[arg(short, long, default_value = "false")]
         ignore_missing_data: bool,

@@ -10,7 +10,7 @@ use crate::client::commands::pagination::{
     SlurmSchedulersListParams, WorkflowListParams, paginate_jobs, paginate_resource_requirements,
     paginate_scheduled_compute_nodes, paginate_slurm_schedulers, paginate_workflows,
 };
-use crate::client::commands::slurm::generate_schedulers_for_workflow;
+use crate::client::commands::slurm::{GroupByStrategy, generate_schedulers_for_workflow};
 use crate::client::commands::{
     get_env_user_name, get_user_name, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -106,7 +106,7 @@ pub enum WorkflowCommands {
         #[arg()]
         file: String,
         /// Slurm account to use for allocations
-        #[arg(long)]
+        #[arg(short, long)]
         account: String,
         /// HPC profile to use (auto-detected if not specified)
         #[arg(long)]
@@ -120,9 +120,14 @@ pub enum WorkflowCommands {
         /// which requires all nodes to be available simultaneously but uses a single sbatch.
         #[arg(long)]
         single_allocation: bool,
-        /// User that owns the workflow (defaults to USER environment variable)
-        #[arg(short, long, env = "USER")]
-        user: String,
+        /// Strategy for grouping jobs into schedulers
+        ///
+        /// - resource-requirements: Each unique resource_requirements creates a separate
+        ///   scheduler. This preserves user intent and provides fine-grained control.
+        /// - partition: Jobs whose resource requirements map to the same partition are
+        ///   grouped together, reducing the number of schedulers.
+        #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
+        group_by: GroupByStrategy,
         /// Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
         #[arg(long, default_value = "false")]
         no_resource_monitoring: bool,
@@ -2141,12 +2146,13 @@ fn handle_create_slurm(
     account: &str,
     hpc_profile: Option<&str>,
     single_allocation: bool,
-    user: &str,
+    group_by: GroupByStrategy,
     no_resource_monitoring: bool,
     skip_checks: bool,
     dry_run: bool,
     format: &str,
 ) {
+    let user = std::env::var("USER").unwrap_or_else(|_| "unknown".to_string());
     // Handle dry-run mode first
     if dry_run {
         let result = WorkflowSpec::validate_spec(file);
@@ -2235,6 +2241,7 @@ fn handle_create_slurm(
         profile,
         account,
         single_allocation,
+        group_by,
         true,
         false,
     ) {
@@ -2270,7 +2277,7 @@ fn handle_create_slurm(
     match WorkflowSpec::create_workflow_from_spec(
         config,
         &temp_file,
-        user,
+        &user,
         !no_resource_monitoring,
         skip_checks,
     ) {
@@ -2360,7 +2367,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             account,
             hpc_profile,
             single_allocation,
-            user,
+            group_by,
             no_resource_monitoring,
             skip_checks,
             dry_run,
@@ -2371,7 +2378,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 account,
                 hpc_profile.as_deref(),
                 *single_allocation,
-                user,
+                *group_by,
                 *no_resource_monitoring,
                 *skip_checks,
                 *dry_run,
