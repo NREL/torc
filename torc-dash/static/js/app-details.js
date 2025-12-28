@@ -62,6 +62,37 @@ Object.assign(TorcDashboard.prototype, {
         document.getElementById('btn-recover-workflow')?.addEventListener('click', () => {
             if (this.selectedWorkflowId) this.recoverWorkflow(this.selectedWorkflowId);
         });
+
+        document.getElementById('btn-cancel-workflow')?.addEventListener('click', () => {
+            if (this.selectedWorkflowId) this.cancelWorkflow(this.selectedWorkflowId);
+        });
+    },
+
+    async cancelWorkflow(workflowId) {
+        if (!confirm('Cancel this workflow? This will terminate all running Slurm jobs.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/cli/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workflow_id: workflowId.toString() })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showToast('Workflow canceled', 'success');
+                // Refresh workflow data
+                await this.loadWorkflows();
+                await this.loadWorkflowDetails(workflowId);
+            } else {
+                this.showToast('Error: ' + (result.stderr || result.stdout || 'Cancel failed'), 'error');
+            }
+        } catch (error) {
+            this.showToast('Error canceling workflow: ' + error.message, 'error');
+        }
     },
 
     async reinitializeWorkflow(workflowId, force = false) {

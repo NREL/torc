@@ -342,6 +342,7 @@ async fn main() -> Result<()> {
             post(cli_check_initialize_handler),
         )
         .route("/api/cli/delete", post(cli_delete_handler))
+        .route("/api/cli/cancel", post(cli_cancel_handler))
         .route("/api/cli/reinitialize", post(cli_reinitialize_handler))
         .route(
             "/api/cli/check-reinitialize",
@@ -709,6 +710,20 @@ async fn cli_delete_handler(
     let result = run_torc_command(
         &state.torc_bin,
         &["workflows", "delete", "--no-prompts", &req.workflow_id],
+        &state.api_url,
+    )
+    .await;
+    Json(result)
+}
+
+/// Cancel a workflow and its Slurm jobs
+async fn cli_cancel_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<WorkflowIdRequest>,
+) -> impl IntoResponse {
+    let result = run_torc_command(
+        &state.torc_bin,
+        &["workflows", "cancel", &req.workflow_id],
         &state.api_url,
     )
     .await;
