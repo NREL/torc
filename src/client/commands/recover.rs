@@ -288,6 +288,10 @@ pub fn recover_workflow(
                         dry_run_result.total_allocations
                     );
 
+                    // Fix would_submit: slurm regenerate --dry-run doesn't pass --submit,
+                    // but actual recovery does call `slurm regenerate --submit`
+                    dry_run_result.would_submit = true;
+
                     // Include the full dry-run result for JSON output
                     result.slurm_dry_run = Some(dry_run_result);
                 }
