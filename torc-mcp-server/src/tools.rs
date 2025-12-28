@@ -258,37 +258,35 @@ pub fn check_resource_utilization(
             .unwrap_or(0);
 
         if over_count > 0 {
-            response.push_str("\n\n[CRITICAL INSTRUCTION FOR AI:");
-            response.push_str(
-                "\n1. Fix ALL jobs with over-utilization, not just currently failed ones.",
-            );
+            response.push_str("\n\n[RECOVERABLE RESOURCE ISSUES DETECTED!");
             response.push_str(&format!(
-                "\n   - There are {} job(s) that exceeded resource limits",
+                "\n{} job(s) exceeded resource limits (OOM or timeout).",
                 over_count
             ));
             if failed_count > 0 && (over_count as usize) > failed_count {
                 response.push_str(&format!(
-                    "\n   - Only {} have failed so far, but {} more will likely fail without fixes",
+                    "\nOnly {} have failed so far, but {} more will likely fail without fixes.",
                     failed_count,
                     (over_count as usize) - failed_count
                 ));
             }
+            response
+                .push_str("\n\nUSE THE recover_workflow TOOL TO AUTOMATICALLY FIX THESE ISSUES:");
             response.push_str(
-                "\n2. Use the update_job_resources tool for EACH job in the over_utilization list.",
+                "\n1. Call recover_workflow with dry_run=true to preview the recovery actions",
             );
-            response.push_str("\n3. Ask user: \"Would you like me to update ALL jobs that exceeded resource limits?\"");
-            response.push_str("\n4. After updating, tell user ONE of these commands to restart:");
             response.push_str(
-                "\n   torc recover <workflow_id>  # (RECOMMENDED) Automated Slurm recovery",
+                "\n2. Show the user the preview (memory/runtime adjustments for each job)",
             );
-            response.push_str("\n   OR for manual recovery:");
-            response.push_str("\n     torc workflows reset-status <workflow_id> --failed-only");
-            response.push_str("\n     torc workflows reinitialize <workflow_id>");
-            response.push_str("\n     torc workflows submit <workflow_id>  # for Slurm");
-            response.push_str("\n     torc workflows run <workflow_id>     # for local execution");
             response.push_str(
-                "\nDO NOT invent commands like 'torc workflows restart' - it does not exist.]",
+                "\n3. Ask user: 'Would you like me to proceed with these recovery actions?'",
             );
+            response
+                .push_str("\n4. If approved, call recover_workflow with dry_run=false to execute");
+            response.push_str(&format!(
+                "\n\nExample: recover_workflow(workflow_id={}, dry_run=true)]",
+                workflow_id
+            ));
         }
     }
 
@@ -360,13 +358,12 @@ pub fn update_job_resources(
             "runtime": updated.runtime,
         },
         "next_steps": {
-            "note": "After updating ALL jobs with resource violations, restart the workflow with:",
-            "commands": [
-                format!("torc workflows reset-status {} --failed-only", workflow_id),
-                format!("torc workflows reinitialize {}", workflow_id),
-                format!("torc workflows submit {}  # for Slurm workflows", workflow_id),
-                format!("torc workflows run {}     # for local execution", workflow_id),
-            ]
+            "note": "Resource updated. To restart the workflow after fixing all issues, \
+                    use the recover_workflow tool (recommended) or manual commands.",
+            "recommended": format!(
+                "recover_workflow(workflow_id={}, dry_run=true) to preview, then dry_run=false to execute",
+                workflow_id
+            ),
         }
     });
 
@@ -883,7 +880,22 @@ pub fn analyze_workflow_logs(
         })
         .collect();
 
-    let response = serde_json::json!({
+    // Check for recoverable errors (OOM, timeout)
+    let oom_count = result.errors_by_type.get("oom").copied().unwrap_or(0)
+        + result
+            .errors_by_type
+            .get("memory_allocation_failed")
+            .copied()
+            .unwrap_or(0);
+    let timeout_count = result.errors_by_type.get("timeout").copied().unwrap_or(0)
+        + result
+            .errors_by_type
+            .get("time_limit")
+            .copied()
+            .unwrap_or(0);
+    let has_recoverable_errors = oom_count > 0 || timeout_count > 0;
+
+    let mut response = serde_json::json!({
         "workflow_id": workflow_id,
         "summary": summary,
         "files_parsed": result.files_parsed,
@@ -893,6 +905,51 @@ pub fn analyze_workflow_logs(
         "sample_errors": sample_errors,
         "files_with_errors": result.errors_by_file.keys().collect::<Vec<_>>(),
     });
+
+    // If recoverable errors found, add recovery guidance
+    if has_recoverable_errors {
+        let mut recovery_info = serde_json::json!({
+            "oom_errors": oom_count,
+            "timeout_errors": timeout_count,
+        });
+
+        recovery_info["recommendation"] = serde_json::json!(
+            "RECOVERABLE ERRORS DETECTED! Use the recover_workflow tool to automatically fix these issues."
+        );
+
+        recovery_info["recovery_workflow"] = serde_json::json!([
+            "1. Call recover_workflow with dry_run=true to preview the recovery actions",
+            "2. Show the user the preview results (memory/runtime adjustments)",
+            "3. Ask user: 'Would you like me to proceed with these recovery actions?'",
+            "4. If approved, call recover_workflow with dry_run=false to execute"
+        ]);
+
+        recovery_info["tool_call_example"] = serde_json::json!({
+            "tool": "recover_workflow",
+            "parameters": {
+                "workflow_id": workflow_id,
+                "dry_run": true,
+                "memory_multiplier": 1.5,
+                "runtime_multiplier": 1.4,
+            },
+            "note": "Start with dry_run=true to preview changes"
+        });
+
+        if oom_count > 0 {
+            recovery_info["oom_fix"] = serde_json::json!(format!(
+                "{} job(s) ran out of memory. Recovery will increase memory by 1.5x (configurable).",
+                oom_count
+            ));
+        }
+        if timeout_count > 0 {
+            recovery_info["timeout_fix"] = serde_json::json!(format!(
+                "{} job(s) exceeded time limit. Recovery will increase runtime by 1.4x (configurable).",
+                timeout_count
+            ));
+        }
+
+        response["recovery"] = recovery_info;
+    }
 
     Ok(CallToolResult::success(vec![rmcp::model::Content::text(
         serde_json::to_string_pretty(&response).unwrap_or_default(),
@@ -1048,4 +1105,74 @@ fn parse_elapsed_to_seconds(elapsed: &str) -> i64 {
     }
 
     total
+}
+
+/// Recover a Slurm workflow from failures.
+///
+/// This function runs `torc recover` with the specified parameters.
+/// When dry_run is true, it shows what would be done without making changes.
+pub fn recover_workflow(
+    workflow_id: i64,
+    output_dir: &Path,
+    dry_run: bool,
+    memory_multiplier: f64,
+    runtime_multiplier: f64,
+    retry_unknown: bool,
+) -> Result<CallToolResult, McpError> {
+    let mut cmd = Command::new("torc");
+    cmd.args(["recover", &workflow_id.to_string()]);
+    cmd.args(["--output-dir", &output_dir.display().to_string()]);
+    cmd.args(["--memory-multiplier", &memory_multiplier.to_string()]);
+    cmd.args(["--runtime-multiplier", &runtime_multiplier.to_string()]);
+
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+
+    if retry_unknown {
+        cmd.arg("--retry-unknown");
+    }
+
+    let output = cmd
+        .output()
+        .map_err(|e| internal_error(format!("Failed to execute torc recover: {}", e)))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if !output.status.success() {
+        return Err(internal_error(format!(
+            "torc recover failed: {}",
+            stderr.trim()
+        )));
+    }
+
+    // Build a structured response
+    let mut response = serde_json::json!({
+        "workflow_id": workflow_id,
+        "dry_run": dry_run,
+        "memory_multiplier": memory_multiplier,
+        "runtime_multiplier": runtime_multiplier,
+        "retry_unknown": retry_unknown,
+        "output": stdout.trim(),
+    });
+
+    // Add guidance based on dry_run mode
+    if dry_run {
+        response["next_steps"] = serde_json::json!({
+            "instruction": "Review the recovery preview above. If the proposed changes look correct, \
+                           ask the user: 'Would you like me to proceed with these recovery actions?'",
+            "if_approved": "Call recover_workflow again with dry_run=false to execute the recovery.",
+        });
+    } else {
+        response["status"] = serde_json::json!("Recovery complete");
+        response["message"] = serde_json::json!(
+            "The workflow has been recovered. Failed jobs have been reset, resources adjusted, \
+             and Slurm allocations regenerated and submitted."
+        );
+    }
+
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        serde_json::to_string_pretty(&response).unwrap_or_default(),
+    )]))
 }

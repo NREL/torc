@@ -192,6 +192,32 @@ pub struct GetSlurmSacctParams {
     pub workflow_id: i64,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct RecoverWorkflowParams {
+    #[schemars(description = "The workflow ID to recover")]
+    pub workflow_id: i64,
+    #[schemars(
+        description = "If true, shows what would be done without making any changes. \
+        ALWAYS use dry_run=true first to preview recovery actions, then confirm with user before running with dry_run=false."
+    )]
+    pub dry_run: bool,
+    #[schemars(
+        description = "Memory multiplier for OOM failures (default: 1.5 = 50% increase). \
+        Jobs that failed due to OOM will have their memory increased by this factor."
+    )]
+    pub memory_multiplier: Option<f64>,
+    #[schemars(
+        description = "Runtime multiplier for timeout failures (default: 1.4 = 40% increase). \
+        Jobs that timed out will have their runtime increased by this factor."
+    )]
+    pub runtime_multiplier: Option<f64>,
+    #[schemars(
+        description = "If true, also retry jobs with unknown failure causes (not OOM or timeout). \
+        Default is false - only retry jobs with diagnosable resource issues."
+    )]
+    pub retry_unknown: Option<bool>,
+}
+
 // Tool implementations using #[tool(tool_box)]
 // Tools are ordered by workflow lifecycle: create → plan → inspect → monitor → analyze → fix
 
@@ -554,10 +580,9 @@ USE CASES:
         description = "Update a job's resource requirements (CPU, memory, runtime). \
         Use this for jobs that failed or will fail due to resource constraints. \
         IMPORTANT: Update ALL jobs with over-utilization from check_resource_utilization, not just failed ones. \
-        After updating resources, tell user the command to restart: \
+        After updating resources, use the recover_workflow tool or tell user the command: \
         - torc recover <workflow_id>  (RECOMMENDED: automated Slurm recovery) \
         - Or for manual recovery: torc workflows reset-status + reinitialize + submit. \
-        Use --dry-run first to preview: torc recover <workflow_id> --dry-run \
         DO NOT suggest 'torc workflows restart' - that command does not exist."
     )]
     async fn update_job_resources(
@@ -571,6 +596,46 @@ USE CASES:
         let runtime = params.runtime;
         tokio::task::spawn_blocking(move || {
             tools::update_job_resources(&config, job_id, num_cpus, memory, runtime)
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Recover a Slurm workflow from failures.
+    #[tool(
+        description = "Automatically recover a Slurm workflow from failures (OOM, timeout). \
+        This tool diagnoses failures, adjusts resource requirements, resets failed jobs, \
+        and resubmits Slurm allocations. \
+        \n\nIMPORTANT WORKFLOW: \
+        \n1. ALWAYS call with dry_run=true FIRST to preview what will be changed \
+        \n2. Show the user the preview results in a clear format \
+        \n3. Ask user: 'Would you like me to proceed with these recovery actions?' \
+        \n4. Only if user confirms, call again with dry_run=false to execute \
+        \n\nThe tool will: \
+        \n- Diagnose OOM failures and increase memory (default: 1.5x) \
+        \n- Diagnose timeout failures and increase runtime (default: 1.4x) \
+        \n- Reset failed jobs and reinitialize the workflow \
+        \n- Regenerate Slurm schedulers and submit new allocations"
+    )]
+    async fn recover_workflow(
+        &self,
+        #[tool(aggr)] params: RecoverWorkflowParams,
+    ) -> Result<CallToolResult, McpError> {
+        let output_dir = self.output_dir.clone();
+        let workflow_id = params.workflow_id;
+        let dry_run = params.dry_run;
+        let memory_multiplier = params.memory_multiplier.unwrap_or(1.5);
+        let runtime_multiplier = params.runtime_multiplier.unwrap_or(1.4);
+        let retry_unknown = params.retry_unknown.unwrap_or(false);
+        tokio::task::spawn_blocking(move || {
+            tools::recover_workflow(
+                workflow_id,
+                &output_dir,
+                dry_run,
+                memory_multiplier,
+                runtime_multiplier,
+                retry_unknown,
+            )
         })
         .await
         .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?

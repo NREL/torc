@@ -542,14 +542,46 @@ pub fn apply_recovery_heuristics(
         let mut updated = false;
         let mut new_rr = rr.clone();
 
-        // Apply OOM heuristic
-        if likely_oom && let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
-            let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
+        // Apply OOM heuristic - use peak observed memory if available
+        if likely_oom {
+            // Get peak memory from diagnosis (preferred) or fall back to multiplying current
+            // Note: peak_memory_bytes is i64 in the model, so use as_i64() and convert
+            let peak_memory_bytes = job_info
+                .get("peak_memory_bytes")
+                .and_then(|v| v.as_i64())
+                .filter(|&v| v > 0)
+                .map(|v| v as u64);
+
+            let new_bytes = if let Some(peak_bytes) = peak_memory_bytes {
+                // Use peak observed memory * multiplier
+                (peak_bytes as f64 * memory_multiplier) as u64
+            } else if let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
+                // Fall back to current specified * multiplier
+                (current_bytes as f64 * memory_multiplier) as u64
+            } else {
+                warn!(
+                    "  Job {} ({}): OOM detected but couldn't determine new memory",
+                    job_id, job.name
+                );
+                continue;
+            };
+
             let new_memory = format_memory_bytes_short(new_bytes);
-            info!(
-                "  Job {} ({}): OOM detected, increasing memory {} -> {}",
-                job_id, job.name, rr.memory, new_memory
-            );
+            if let Some(peak_bytes) = peak_memory_bytes {
+                info!(
+                    "  Job {} ({}): OOM detected, peak usage {} -> allocating {} ({}x)",
+                    job_id,
+                    job.name,
+                    format_memory_bytes_short(peak_bytes),
+                    new_memory,
+                    memory_multiplier
+                );
+            } else {
+                info!(
+                    "  Job {} ({}): OOM detected, increasing memory {} -> {} ({}x, no peak data)",
+                    job_id, job.name, rr.memory, new_memory, memory_multiplier
+                );
+            }
             new_rr.memory = new_memory;
             updated = true;
             oom_fixed += 1;
