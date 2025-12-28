@@ -219,8 +219,8 @@ impl HpcInterface for SlurmInterface {
              #SBATCH --account={}\n\
              #SBATCH --job-name={}\n\
              #SBATCH --time={}\n\
-             #SBATCH --output={}/slurm_output_%j.o\n\
-             #SBATCH --error={}/slurm_output_%j.e\n",
+             #SBATCH --output={}/slurm_output_wf{}_sl%j.o\n\
+             #SBATCH --error={}/slurm_output_wf{}_sl%j.e\n",
             config
                 .get("account")
                 .context("Missing 'account' in config")?,
@@ -229,7 +229,9 @@ impl HpcInterface for SlurmInterface {
                 .get("walltime")
                 .context("Missing 'walltime' in config")?,
             output_path,
-            output_path
+            workflow_id,
+            output_path,
+            workflow_id
         );
 
         // Add other SBATCH parameters

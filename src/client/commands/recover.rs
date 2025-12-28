@@ -5,12 +5,14 @@
 //! - `torc watch --recover` automatic recovery
 
 use log::{debug, info, warn};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::slurm::RegenerateDryRunResult;
 use crate::client::report_models::{ResourceUtilizationReport, ResultsReport};
 use crate::time_utils::duration_string_to_seconds;
 
@@ -26,12 +28,63 @@ pub struct RecoverArgs {
 }
 
 /// Result of applying recovery heuristics
+#[derive(Debug, Clone, Serialize)]
 pub struct RecoveryResult {
     pub oom_fixed: usize,
     pub timeout_fixed: usize,
     pub unknown_retried: usize,
     pub other_failures: usize,
     pub jobs_to_retry: Vec<i64>,
+    /// Detailed resource adjustments (for JSON output)
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub adjustments: Vec<ResourceAdjustmentReport>,
+    /// Slurm scheduler dry-run result (only in dry-run mode)
+    /// Memory values are updated to reflect the adjusted values from recovery heuristics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slurm_dry_run: Option<RegenerateDryRunResult>,
+}
+
+/// Detailed report of a resource adjustment for JSON output
+#[derive(Debug, Clone, Serialize)]
+pub struct ResourceAdjustmentReport {
+    /// The resource_requirements_id being adjusted
+    pub resource_requirements_id: i64,
+    /// Job IDs that share this resource requirement
+    pub job_ids: Vec<i64>,
+    /// Job names for reference
+    pub job_names: Vec<String>,
+    /// Whether memory was adjusted
+    pub memory_adjusted: bool,
+    /// Original memory setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_memory: Option<String>,
+    /// New memory setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub new_memory: Option<String>,
+    /// Maximum peak memory observed (bytes)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_peak_memory_bytes: Option<u64>,
+    /// Whether runtime was adjusted
+    pub runtime_adjusted: bool,
+    /// Original runtime setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_runtime: Option<String>,
+    /// New runtime setting
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub new_runtime: Option<String>,
+}
+
+/// Full recovery report for JSON output
+#[derive(Debug, Clone, Serialize)]
+pub struct RecoveryReport {
+    pub workflow_id: i64,
+    pub dry_run: bool,
+    pub memory_multiplier: f64,
+    pub runtime_multiplier: f64,
+    pub result: RecoveryResult,
+    /// The diagnosis data (failed jobs info)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnosis: Option<ResourceUtilizationReport>,
 }
 
 /// Information about Slurm logs for a job
@@ -179,7 +232,77 @@ pub fn recover_workflow(
                 result.jobs_to_retry.len()
             );
             info!("[DRY RUN] Would reinitialize workflow");
-            info!("[DRY RUN] Would regenerate Slurm schedulers and submit");
+
+            // Get the real scheduler plan using slurm regenerate --dry-run --include-job-ids
+            info!("[DRY RUN] Slurm schedulers that would be created:");
+            match get_scheduler_dry_run(args.workflow_id, &args.output_dir, &result.jobs_to_retry) {
+                Ok(mut dry_run_result) => {
+                    // Apply the adjusted memory/runtime values to the scheduler info.
+                    // slurm regenerate reads from the database, but in dry-run mode
+                    // the adjustments haven't been applied yet. We need to update
+                    // the scheduler memory/runtime to reflect what would be used.
+                    for sched in &mut dry_run_result.planned_schedulers {
+                        // Find if any of the jobs in this scheduler have adjustments
+                        for adj in &result.adjustments {
+                            // Check if any job in this scheduler matches the adjustment
+                            let has_matching_job = sched
+                                .job_names
+                                .iter()
+                                .any(|name| adj.job_names.contains(name));
+
+                            if has_matching_job {
+                                // Apply memory adjustment
+                                if adj.memory_adjusted
+                                    && let Some(ref new_mem) = adj.new_memory
+                                {
+                                    sched.mem = Some(new_mem.clone());
+                                }
+                                // Note: walltime is determined by partition max, not by
+                                // resource requirements runtime, so we don't update it here
+                                break;
+                            }
+                        }
+                    }
+
+                    for sched in &dry_run_result.planned_schedulers {
+                        let deps = if sched.has_dependencies {
+                            " (deferred)"
+                        } else {
+                            ""
+                        };
+                        info!(
+                            "  {} - {} job(s), {} allocation(s){}",
+                            sched.name, sched.job_count, sched.num_allocations, deps
+                        );
+                        info!(
+                            "    Account: {}, Partition: {}, Walltime: {}, Nodes: {}, Mem: {}",
+                            sched.account,
+                            sched.partition.as_deref().unwrap_or("default"),
+                            sched.walltime,
+                            sched.nodes,
+                            sched.mem.as_deref().unwrap_or("default")
+                        );
+                    }
+                    info!(
+                        "[DRY RUN] Total: {} allocation(s) would be submitted",
+                        dry_run_result.total_allocations
+                    );
+
+                    // Fix would_submit: slurm regenerate --dry-run doesn't pass --submit,
+                    // but actual recovery does call `slurm regenerate --submit`
+                    dry_run_result.would_submit = true;
+
+                    // Include the full dry-run result for JSON output
+                    result.slurm_dry_run = Some(dry_run_result);
+                }
+                Err(e) => {
+                    warn!("  Could not get scheduler preview: {}", e);
+                    info!(
+                        "[DRY RUN] Would submit Slurm allocations for {} job(s)",
+                        result.jobs_to_retry.len()
+                    );
+                }
+            }
         }
         return Ok(result);
     }
@@ -426,9 +549,37 @@ fn correlate_slurm_logs(
     failed_log_map
 }
 
+/// Aggregated resource adjustment data for a single resource_requirements_id.
+/// When multiple jobs share the same resource requirements, we take the maximum
+/// peak memory and runtime to ensure all jobs can succeed on retry.
+#[derive(Debug)]
+struct ResourceAdjustment {
+    /// The resource_requirements_id
+    rr_id: i64,
+    /// Job IDs that share this resource requirement and need retry
+    job_ids: Vec<i64>,
+    /// Job names for logging
+    job_names: Vec<String>,
+    /// Maximum peak memory observed across all OOM jobs (in bytes)
+    max_peak_memory_bytes: Option<u64>,
+    /// Whether any job had OOM without peak data (fall back to multiplier)
+    has_oom_without_peak: bool,
+    /// Whether any job had a timeout
+    has_timeout: bool,
+    /// Current memory setting (for fallback calculation)
+    current_memory: String,
+    /// Current runtime setting
+    current_runtime: String,
+}
+
 /// Apply recovery heuristics and update job resources
 ///
 /// If `dry_run` is true, shows what would be done without making changes.
+///
+/// When multiple jobs share the same `resource_requirements_id`, this function
+/// finds the maximum peak memory across all OOM jobs in that group and applies
+/// that (with multiplier) to the shared resource requirement. This ensures all
+/// jobs in the group can succeed on retry.
 #[allow(clippy::too_many_arguments)]
 pub fn apply_recovery_heuristics(
     config: &Configuration,
@@ -460,6 +611,11 @@ pub fn apply_recovery_heuristics(
         }
     };
 
+    // Phase 1: Collect and aggregate data by resource_requirements_id
+    // This ensures that when multiple jobs share the same RR, we use the
+    // maximum peak memory across all of them.
+    let mut rr_adjustments: HashMap<i64, ResourceAdjustment> = HashMap::new();
+
     for job_info in &diagnosis.failed_jobs {
         let job_id = job_info.job_id;
         let likely_oom = job_info.likely_oom;
@@ -470,6 +626,15 @@ pub fn apply_recovery_heuristics(
             && let Some(slurm_job_id) = &slurm_info.slurm_job_id
         {
             debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
+        }
+
+        // Handle unknown failures (no OOM or timeout detected)
+        if !likely_oom && !likely_timeout {
+            other_failures += 1;
+            if retry_unknown {
+                jobs_to_retry.push(job_id);
+            }
+            continue;
         }
 
         // Get current job to find resource requirements
@@ -490,7 +655,79 @@ pub fn apply_recovery_heuristics(
             }
         };
 
-        // Get current resource requirements
+        // Get or create the adjustment entry for this resource_requirements_id
+        let adjustment = rr_adjustments.entry(rr_id).or_insert_with(|| {
+            // Fetch current resource requirements (only once per rr_id)
+            let (current_memory, current_runtime) =
+                match default_api::get_resource_requirements(config, rr_id) {
+                    Ok(rr) => (rr.memory, rr.runtime),
+                    Err(e) => {
+                        warn!(
+                            "  Warning: couldn't get resource requirements {}: {}",
+                            rr_id, e
+                        );
+                        (String::new(), String::new())
+                    }
+                };
+            ResourceAdjustment {
+                rr_id,
+                job_ids: Vec::new(),
+                job_names: Vec::new(),
+                max_peak_memory_bytes: None,
+                has_oom_without_peak: false,
+                has_timeout: false,
+                current_memory,
+                current_runtime,
+            }
+        });
+
+        // Skip if we couldn't fetch the resource requirements
+        if adjustment.current_memory.is_empty() {
+            continue;
+        }
+
+        adjustment.job_ids.push(job_id);
+        adjustment.job_names.push(job.name.clone());
+
+        // Track OOM data
+        if likely_oom {
+            let peak_bytes = job_info
+                .peak_memory_bytes
+                .filter(|&v| v > 0)
+                .map(|v| v as u64);
+
+            if let Some(peak) = peak_bytes {
+                // Update max if this job used more memory
+                adjustment.max_peak_memory_bytes = Some(
+                    adjustment
+                        .max_peak_memory_bytes
+                        .map_or(peak, |current_max| current_max.max(peak)),
+                );
+            } else {
+                adjustment.has_oom_without_peak = true;
+            }
+        }
+
+        // Track timeout
+        if likely_timeout {
+            adjustment.has_timeout = true;
+        }
+    }
+
+    // Phase 2: Apply adjustments once per resource_requirements_id
+    let mut adjustment_reports = Vec::new();
+
+    for adjustment in rr_adjustments.values() {
+        let rr_id = adjustment.rr_id;
+        let mut updated = false;
+        let mut memory_adjusted = false;
+        let mut runtime_adjusted = false;
+        let mut original_memory = None;
+        let mut new_memory_str = None;
+        let mut original_runtime = None;
+        let mut new_runtime_str = None;
+
+        // Fetch current resource requirements for update
         let rr = match default_api::get_resource_requirements(config, rr_id) {
             Ok(r) => r,
             Err(e) => {
@@ -501,84 +738,125 @@ pub fn apply_recovery_heuristics(
                 continue;
             }
         };
-
-        let mut updated = false;
         let mut new_rr = rr.clone();
 
-        // Apply OOM heuristic - use peak observed memory if available
-        if likely_oom {
-            // Get peak memory from diagnosis (preferred) or fall back to multiplying current
-            let peak_memory_bytes = job_info
-                .peak_memory_bytes
-                .filter(|&v| v > 0)
-                .map(|v| v as u64);
-
-            let new_bytes = if let Some(peak_bytes) = peak_memory_bytes {
-                // Use peak observed memory * multiplier
-                (peak_bytes as f64 * memory_multiplier) as u64
-            } else if let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
+        // Apply OOM fix using maximum peak memory across all jobs sharing this RR
+        if adjustment.max_peak_memory_bytes.is_some() || adjustment.has_oom_without_peak {
+            let new_bytes = if let Some(max_peak) = adjustment.max_peak_memory_bytes {
+                // Use the maximum observed peak memory * multiplier
+                (max_peak as f64 * memory_multiplier) as u64
+            } else if let Some(current_bytes) = parse_memory_bytes(&adjustment.current_memory) {
                 // Fall back to current specified * multiplier
                 (current_bytes as f64 * memory_multiplier) as u64
             } else {
                 warn!(
-                    "  Job {} ({}): OOM detected but couldn't determine new memory",
-                    job_id, job.name
+                    "  RR {}: OOM detected but couldn't determine new memory",
+                    rr_id
                 );
                 continue;
             };
 
             let new_memory = format_memory_bytes_short(new_bytes);
-            if let Some(peak_bytes) = peak_memory_bytes {
-                info!(
-                    "  Job {} ({}): OOM detected, peak usage {} -> allocating {} ({}x)",
-                    job_id,
-                    job.name,
-                    format_memory_bytes_short(peak_bytes),
-                    new_memory,
-                    memory_multiplier
-                );
+            let job_count = adjustment.job_ids.len();
+
+            if let Some(max_peak) = adjustment.max_peak_memory_bytes {
+                if job_count > 1 {
+                    info!(
+                        "  {} job(s) with RR {}: OOM detected, max peak usage {} -> allocating {} ({}x)",
+                        job_count,
+                        rr_id,
+                        format_memory_bytes_short(max_peak),
+                        new_memory,
+                        memory_multiplier
+                    );
+                    debug!("    Jobs: {:?}", adjustment.job_names);
+                } else if let (Some(job_id), Some(job_name)) =
+                    (adjustment.job_ids.first(), adjustment.job_names.first())
+                {
+                    info!(
+                        "  Job {} ({}): OOM detected, peak usage {} -> allocating {} ({}x)",
+                        job_id,
+                        job_name,
+                        format_memory_bytes_short(max_peak),
+                        new_memory,
+                        memory_multiplier
+                    );
+                }
             } else {
                 info!(
-                    "  Job {} ({}): OOM detected, increasing memory {} -> {} ({}x, no peak data)",
-                    job_id, job.name, rr.memory, new_memory, memory_multiplier
+                    "  {} job(s) with RR {}: OOM detected, increasing memory {} -> {} ({}x, no peak data)",
+                    job_count, rr_id, adjustment.current_memory, new_memory, memory_multiplier
                 );
             }
+
+            // Track for JSON report
+            original_memory = Some(adjustment.current_memory.clone());
+            new_memory_str = Some(new_memory.clone());
+            memory_adjusted = true;
+
             new_rr.memory = new_memory;
             updated = true;
-            oom_fixed += 1;
+            oom_fixed += adjustment.job_ids.len();
         }
 
-        // Apply timeout heuristic
-        if likely_timeout && let Ok(current_secs) = duration_string_to_seconds(&rr.runtime) {
+        // Apply timeout fix
+        if adjustment.has_timeout
+            && let Ok(current_secs) = duration_string_to_seconds(&adjustment.current_runtime)
+        {
             let new_secs = (current_secs as f64 * runtime_multiplier) as u64;
             let new_runtime = format_duration_iso8601(new_secs);
-            info!(
-                "  Job {} ({}): Timeout detected, increasing runtime {} -> {}",
-                job_id, job.name, rr.runtime, new_runtime
-            );
+            let job_count = adjustment.job_ids.len();
+
+            if job_count > 1 {
+                info!(
+                    "  {} job(s) with RR {}: Timeout detected, increasing runtime {} -> {}",
+                    job_count, rr_id, adjustment.current_runtime, new_runtime
+                );
+            } else if let (Some(job_id), Some(job_name)) =
+                (adjustment.job_ids.first(), adjustment.job_names.first())
+            {
+                info!(
+                    "  Job {} ({}): Timeout detected, increasing runtime {} -> {}",
+                    job_id, job_name, adjustment.current_runtime, new_runtime
+                );
+            }
+
+            // Track for JSON report
+            original_runtime = Some(adjustment.current_runtime.clone());
+            new_runtime_str = Some(new_runtime.clone());
+            runtime_adjusted = true;
+
             new_rr.runtime = new_runtime;
             updated = true;
-            timeout_fixed += 1;
+            timeout_fixed += adjustment.job_ids.len();
         }
 
-        // Update resource requirements if changed
+        // Update resource requirements if changed (only once per rr_id)
         if updated {
             if !dry_run
                 && let Err(e) = default_api::update_resource_requirements(config, rr_id, new_rr)
             {
                 warn!(
-                    "  Warning: failed to update resource requirements for job {}: {}",
-                    job_id, e
+                    "  Warning: failed to update resource requirements {}: {}",
+                    rr_id, e
                 );
             }
-            // Job had OOM or timeout - always retry
-            jobs_to_retry.push(job_id);
-        } else if !likely_oom && !likely_timeout {
-            // Unknown failure - only retry if retry_unknown is enabled
-            other_failures += 1;
-            if retry_unknown {
-                jobs_to_retry.push(job_id);
-            }
+            // All jobs sharing this RR should be retried
+            jobs_to_retry.extend(&adjustment.job_ids);
+
+            // Create adjustment report for JSON output
+            adjustment_reports.push(ResourceAdjustmentReport {
+                resource_requirements_id: rr_id,
+                job_ids: adjustment.job_ids.clone(),
+                job_names: adjustment.job_names.clone(),
+                memory_adjusted,
+                original_memory,
+                new_memory: new_memory_str,
+                max_peak_memory_bytes: adjustment.max_peak_memory_bytes,
+                runtime_adjusted,
+                original_runtime,
+                new_runtime: new_runtime_str,
+            });
         }
     }
 
@@ -588,6 +866,8 @@ pub fn apply_recovery_heuristics(
         unknown_retried: 0, // Will be set in recover_workflow if retry_unknown is true
         other_failures,
         jobs_to_retry,
+        adjustments: adjustment_reports,
+        slurm_dry_run: None, // Set in recover_workflow dry_run block
     })
 }
 
@@ -738,6 +1018,45 @@ pub fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), 
     }
 
     Ok(())
+}
+
+/// Get a dry-run preview of what schedulers would be created, including specific job IDs
+fn get_scheduler_dry_run(
+    workflow_id: i64,
+    output_dir: &Path,
+    job_ids: &[i64],
+) -> Result<RegenerateDryRunResult, String> {
+    // Build the --include-job-ids argument
+    let job_ids_str = job_ids
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let output = Command::new("torc")
+        .args([
+            "-f",
+            "json",
+            "slurm",
+            "regenerate",
+            &workflow_id.to_string(),
+            "--dry-run",
+            "--include-job-ids",
+            &job_ids_str,
+            "-o",
+            output_dir.to_str().unwrap_or("output"),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run slurm regenerate --dry-run: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("slurm regenerate --dry-run failed: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse slurm regenerate dry-run output: {}", e))
 }
 
 #[cfg(test)]

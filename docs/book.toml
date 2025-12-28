@@ -17,7 +17,8 @@ git-repository-url = "https://github.com/NREL/torc"
 edit-url-template = "https://github.com/NREL/torc/edit/main/docs/{path}"
 site-url = "/torc/"
 cname = ""
-additional-js = ["mermaid.min.js", "mermaid-init.js"]
+additional-css = ["custom.css"]
+additional-js = ["mermaid.min.js", "mermaid-init.js", "sidebar-toggle.js"]
 
 [output.html.print]
 enable = true

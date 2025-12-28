@@ -11,7 +11,9 @@ use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
 use torc::client::commands::jobs::handle_job_commands;
 use torc::client::commands::logs::handle_log_commands;
-use torc::client::commands::recover::{RecoverArgs, recover_workflow};
+use torc::client::commands::recover::{
+    RecoverArgs, RecoveryReport, diagnose_failures, recover_workflow,
+};
 use torc::client::commands::remote::handle_remote_commands;
 use torc::client::commands::reports::handle_report_commands;
 use torc::client::commands::resource_requirements::handle_resource_requirements_commands;
@@ -491,9 +493,33 @@ fn main() {
                 recovery_hook: recovery_hook.clone(),
                 dry_run: *dry_run,
             };
+
+            // For JSON output, get diagnosis data to include in the report
+            let diagnosis = if format == "json" {
+                diagnose_failures(*workflow_id, output_dir).ok()
+            } else {
+                None
+            };
+
             match recover_workflow(&config, &args) {
                 Ok(result) => {
-                    if *dry_run {
+                    if format == "json" {
+                        // Output structured JSON report
+                        let report = RecoveryReport {
+                            workflow_id: *workflow_id,
+                            dry_run: *dry_run,
+                            memory_multiplier: *memory_multiplier,
+                            runtime_multiplier: *runtime_multiplier,
+                            result,
+                            diagnosis,
+                        };
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&report).unwrap_or_else(|e| {
+                                format!("{{\"error\": \"Failed to serialize: {}\"}}", e)
+                            })
+                        );
+                    } else if *dry_run {
                         println!("[DRY RUN] Summary for workflow {}", workflow_id);
                         if result.oom_fixed > 0 {
                             println!(
@@ -547,8 +573,20 @@ fn main() {
                     }
                 }
                 Err(e) => {
-                    eprintln!("Recovery failed: {}", e);
-                    std::process::exit(1);
+                    if format == "json" {
+                        println!(
+                            "{}",
+                            serde_json::json!({
+                                "error": e,
+                                "workflow_id": workflow_id,
+                                "dry_run": dry_run,
+                            })
+                        );
+                        std::process::exit(1);
+                    } else {
+                        eprintln!("Recovery failed: {}", e);
+                        std::process::exit(1);
+                    }
                 }
             }
         }

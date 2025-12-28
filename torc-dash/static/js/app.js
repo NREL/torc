@@ -93,6 +93,7 @@ class TorcDashboard {
         this.setupExecutionPlanModal();
         this.setupInitConfirmModal();
         this.setupReinitConfirmModal();
+        this.setupRecoverModal();
         this.setupFileViewerModal();
         this.setupJobDetailsModal();
         this.setupSlurmLogsModal();

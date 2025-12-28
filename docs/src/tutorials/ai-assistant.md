@@ -340,7 +340,7 @@ allocations have been submitted and will execute these jobs automatically.
 
 ## Next Steps
 
-- [AI Assistant Reference](../reference/ai-assistant.md) — Full configuration options, all tools,
+- [Configuring AI Assistants](../how-to/ai-assistants.md) — Full configuration options, all tools,
   troubleshooting
 - [Automatic Failure Recovery](./automatic-recovery.md) — Use `torc watch` for automated recovery
 - [Configuration Files](./configuration.md) — Set up Torc configuration
