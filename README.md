@@ -10,20 +10,16 @@ centralized SQLite database for state management and coordination.
 
 ## Project Status
 
-The software is currently being ported from Python + JavaScript + ArangoDB to Rust + SQLite. This
-increases portability, especially for local environments. Previous releases are still available and
-supported.
+We recently re-developed this software package in Rust with SQLite as the backend database,
+increasing portability and stability. We also added many new features. The code is tested and ready
+for user adoption. Interfaces are somewhat stable. Over the next 1-2 months we would like to receive
+user feedback and will consider changes. Our goal is to have a 1.0 release by March 2026.
 
-Most functionality is currently available, but the interfaces should not be treated as stable.
-Validation is not complete, and so the tool should not be used for production workloads. We expect
-the port to be ready for use by January 2026.
-
-Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc/discussions).
+Please post comments or new ideas for Torc in the
+[discussions](https://github.com/NREL/torc/discussions).
 
 ## Features
 
-- **AI-Assisted Management** - Use Claude Code or GitHub Copilot to create, debug, and manage
-  workflows through natural language
 - **Declarative Workflow Specifications** - Define workflows in YAML, JSON5, JSON, or KDL
 - **Automatic Dependency Resolution** - Dependencies inferred from file and data relationships
 - **Job Parameterization** - Create parameter sweeps and grid searches with simple syntax
@@ -33,6 +29,8 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 - **Workflow Resumption** - Restart workflows after failures without losing progress
 - **Change Detection** - Automatically detect input changes and re-run affected jobs
 - **Resource Management** - Track CPU, memory, and GPU usage across all jobs
+- **AI-Assisted Management** - Use Claude Code or GitHub Copilot to create, debug, and manage
+  workflows through natural language
 - **RESTful API** - Complete OpenAPI-specified REST API for integration
 
 ## Quick Start
