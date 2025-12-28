@@ -11,6 +11,7 @@ use std::process::Command;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::report_models::{ResourceUtilizationReport, ResultsReport};
 use crate::time_utils::duration_string_to_seconds;
 
 /// Arguments for workflow recovery
@@ -341,11 +342,11 @@ fn check_recovery_preconditions(config: &Configuration, workflow_id: i64) -> Res
     Ok(())
 }
 
-/// Diagnose failures and return job IDs that need resource adjustments
+/// Diagnose failures and return resource utilization report
 pub fn diagnose_failures(
     workflow_id: i64,
     _output_dir: &Path,
-) -> Result<serde_json::Value, String> {
+) -> Result<ResourceUtilizationReport, String> {
     let output = Command::new("torc")
         .args([
             "-f",
@@ -369,7 +370,7 @@ pub fn diagnose_failures(
 }
 
 /// Get Slurm log information for failed jobs
-fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<serde_json::Value, String> {
+fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<ResultsReport, String> {
     let output = Command::new("torc")
         .args([
             "-f",
@@ -395,51 +396,30 @@ fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<serde_json:
 
 /// Correlate failed jobs with their Slurm allocation logs
 fn correlate_slurm_logs(
-    diagnosis: &serde_json::Value,
-    slurm_info: &serde_json::Value,
+    diagnosis: &ResourceUtilizationReport,
+    slurm_info: &ResultsReport,
 ) -> HashMap<i64, SlurmLogInfo> {
     let mut log_map = HashMap::new();
 
-    // Build map from job_id to slurm log paths
-    if let Some(jobs) = slurm_info.get("jobs").and_then(|v| v.as_array()) {
-        for job in jobs {
-            if let Some(job_id) = job.get("job_id").and_then(|v| v.as_i64()) {
-                let slurm_stdout = job
-                    .get("slurm_stdout")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-                let slurm_stderr = job
-                    .get("slurm_stderr")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-                let slurm_job_id = job
-                    .get("slurm_job_id")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-
-                if slurm_stdout.is_some() || slurm_stderr.is_some() {
-                    log_map.insert(
-                        job_id,
-                        SlurmLogInfo {
-                            slurm_job_id,
-                            slurm_stdout,
-                            slurm_stderr,
-                        },
-                    );
-                }
-            }
+    // Build map from job_id to slurm log paths (using `results` field, not `jobs`)
+    for result in &slurm_info.results {
+        if result.slurm_stdout.is_some() || result.slurm_stderr.is_some() {
+            log_map.insert(
+                result.job_id,
+                SlurmLogInfo {
+                    slurm_job_id: result.slurm_job_id.clone(),
+                    slurm_stdout: result.slurm_stdout.clone(),
+                    slurm_stderr: result.slurm_stderr.clone(),
+                },
+            );
         }
     }
 
     // Filter to only failed jobs
     let mut failed_log_map = HashMap::new();
-    if let Some(failed_jobs) = diagnosis.get("failed_jobs").and_then(|v| v.as_array()) {
-        for job_info in failed_jobs {
-            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64())
-                && let Some(log_info) = log_map.remove(&job_id)
-            {
-                failed_log_map.insert(job_id, log_info);
-            }
+    for failed_job in &diagnosis.failed_jobs {
+        if let Some(log_info) = log_map.remove(&failed_job.job_id) {
+            failed_log_map.insert(failed_job.job_id, log_info);
         }
     }
 
@@ -453,7 +433,7 @@ fn correlate_slurm_logs(
 pub fn apply_recovery_heuristics(
     config: &Configuration,
     workflow_id: i64,
-    diagnosis: &serde_json::Value,
+    diagnosis: &ResourceUtilizationReport,
     memory_multiplier: f64,
     runtime_multiplier: f64,
     retry_unknown: bool,
@@ -480,27 +460,10 @@ pub fn apply_recovery_heuristics(
         }
     };
 
-    // Get failed jobs info from diagnosis
-    let failed_jobs = diagnosis
-        .get("failed_jobs")
-        .and_then(|v| v.as_array())
-        .cloned()
-        .unwrap_or_default();
-
-    for job_info in &failed_jobs {
-        let job_id = job_info.get("job_id").and_then(|v| v.as_i64()).unwrap_or(0);
-        let likely_oom = job_info
-            .get("likely_oom")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-        let likely_timeout = job_info
-            .get("likely_timeout")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        if job_id == 0 {
-            continue;
-        }
+    for job_info in &diagnosis.failed_jobs {
+        let job_id = job_info.job_id;
+        let likely_oom = job_info.likely_oom;
+        let likely_timeout = job_info.likely_timeout;
 
         // Log Slurm info if available
         if let Some(slurm_info) = slurm_log_map.get(&job_id)
@@ -545,10 +508,8 @@ pub fn apply_recovery_heuristics(
         // Apply OOM heuristic - use peak observed memory if available
         if likely_oom {
             // Get peak memory from diagnosis (preferred) or fall back to multiplying current
-            // Note: peak_memory_bytes is i64 in the model, so use as_i64() and convert
             let peak_memory_bytes = job_info
-                .get("peak_memory_bytes")
-                .and_then(|v| v.as_i64())
+                .peak_memory_bytes
                 .filter(|&v| v > 0)
                 .map(|v| v as u64);
 

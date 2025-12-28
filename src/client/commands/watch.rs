@@ -18,6 +18,7 @@ use super::recover::{
     RecoveryResult, apply_recovery_heuristics, diagnose_failures, regenerate_and_submit,
     reinitialize_workflow, reset_failed_jobs, run_recovery_hook,
 };
+use crate::client::report_models::ResourceUtilizationReport;
 
 /// Default wait time for database connectivity issues (in minutes)
 const WAIT_FOR_HEALTHY_DATABASE_MINUTES: u64 = 20;
@@ -939,6 +940,21 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
 
     let mut retry_count = 0u32;
 
+    // Early check: verify this workflow has scheduled compute nodes
+    // The watch command is designed for Slurm/scheduler-based workflows.
+    // For workflows run with `torc run` or `torc remote run`, use those commands directly.
+    if !has_any_scheduled_compute_nodes(config, args.workflow_id) {
+        error!(
+            "No scheduled compute nodes found for workflow {}.",
+            args.workflow_id
+        );
+        error!("");
+        error!("The 'watch' command is designed for scheduler-based workflows (e.g., Slurm).");
+        error!("For local execution, use: torc run <workflow_id>");
+        error!("For remote execution, use: torc remote run <workflow_id>");
+        std::process::exit(1);
+    }
+
     info!(
         "Watching workflow {} (poll interval: {}s{}{})",
         args.workflow_id,
@@ -1020,7 +1036,15 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             Err(e) => {
                 warn!("Warning: Could not diagnose failures: {}", e);
                 warn!("Attempting retry without resource adjustments...");
-                serde_json::json!({"failed_jobs": []})
+                ResourceUtilizationReport {
+                    workflow_id: args.workflow_id,
+                    run_id: None,
+                    total_results: 0,
+                    over_utilization_count: 0,
+                    violations: Vec::new(),
+                    failed_jobs_count: 0,
+                    failed_jobs: Vec::new(),
+                }
             }
         };
 

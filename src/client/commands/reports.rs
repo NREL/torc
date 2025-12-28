@@ -9,6 +9,9 @@ use crate::client::log_paths::{
     get_job_runner_log_file, get_job_stderr_path, get_job_stdout_path,
     get_slurm_job_runner_log_file, get_slurm_stderr_path, get_slurm_stdout_path,
 };
+use crate::client::report_models::{
+    FailedJobInfo, JobResultRecord, ResourceUtilizationReport, ResourceViolation, ResultsReport,
+};
 use crate::models;
 use crate::time_utils::duration_string_to_seconds;
 use chrono::{DateTime, FixedOffset};
@@ -246,7 +249,7 @@ fn check_resource_utilization(
     // Analyze each result
     let mut rows = Vec::new();
     let mut over_util_count = 0;
-    let mut failed_jobs_info: Vec<serde_json::Value> = Vec::new();
+    let mut failed_jobs_info: Vec<FailedJobInfo> = Vec::new();
 
     for result in &results {
         let job_id = result.job_id;
@@ -287,45 +290,36 @@ fn check_resource_utilization(
 
         // Track failed jobs separately with their resource info
         if is_failed {
-            let mut failed_info = serde_json::json!({
-                "job_id": job_id,
-                "job_name": job_name.clone(),
-                "return_code": result.return_code,
-                "exec_time_minutes": result.exec_time_minutes,
-                "configured_memory": resource_req.memory.clone(),
-                "configured_runtime": resource_req.runtime.clone(),
-                "configured_cpus": resource_req.num_cpus,
-            });
-
             let mut likely_oom = false;
+            let mut oom_reason: Option<String> = None;
+            let mut memory_over_utilization: Option<String> = None;
+            let mut likely_timeout = false;
+            let mut timeout_reason: Option<String> = None;
+            let mut runtime_utilization: Option<String> = None;
+
+            let peak_memory_bytes = result.peak_memory_bytes;
+            let peak_memory_formatted = peak_memory_bytes.map(format_memory_bytes);
 
             // Add resource usage if available
-            if let Some(peak_mem) = result.peak_memory_bytes {
-                failed_info["peak_memory_bytes"] = serde_json::json!(peak_mem);
-                failed_info["peak_memory_formatted"] =
-                    serde_json::json!(format_memory_bytes(peak_mem));
-
+            if let Some(peak_mem) = peak_memory_bytes {
                 // Check if it's an OOM issue based on memory usage
                 let specified_memory_bytes = parse_memory_string(&resource_req.memory);
                 if peak_mem > specified_memory_bytes {
                     likely_oom = true;
-                    failed_info["oom_reason"] = serde_json::json!("memory_exceeded");
+                    oom_reason = Some("memory_exceeded".to_string());
                     let over_pct =
                         ((peak_mem as f64 / specified_memory_bytes as f64) - 1.0) * 100.0;
-                    failed_info["memory_over_utilization"] =
-                        serde_json::json!(format!("+{:.1}%", over_pct));
+                    memory_over_utilization = Some(format!("+{:.1}%", over_pct));
                 }
             }
 
             // Check if runtime exceeded (do this before OOM detection to distinguish)
             let exec_time_seconds = result.exec_time_minutes * 60.0;
-            let mut likely_timeout = false;
             if let Ok(specified_runtime_seconds) = duration_string_to_seconds(&resource_req.runtime)
             {
                 let specified_runtime_seconds = specified_runtime_seconds as f64;
                 let pct_of_runtime = (exec_time_seconds / specified_runtime_seconds) * 100.0;
-                failed_info["runtime_utilization"] =
-                    serde_json::json!(format!("{:.1}%", pct_of_runtime));
+                runtime_utilization = Some(format!("{:.1}%", pct_of_runtime));
 
                 if exec_time_seconds > specified_runtime_seconds * 0.9 {
                     // If job ran for > 90% of its runtime, it might be a timeout
@@ -336,12 +330,8 @@ fn check_resource_utilization(
                 // Return code 152 (128 + SIGXCPU) indicates CPU time limit exceeded
                 if result.return_code == 152 {
                     likely_timeout = true;
-                    failed_info["timeout_reason"] = serde_json::json!("sigxcpu_152");
+                    timeout_reason = Some("sigxcpu_152".to_string());
                 }
-            }
-
-            if likely_timeout {
-                failed_info["likely_timeout"] = serde_json::json!(true);
             }
 
             // Check for OOM via return code 137 (128 + SIGKILL)
@@ -360,20 +350,32 @@ fn check_resource_utilization(
                     // If job ran for less than 80% of its runtime, likely OOM not timeout
                     if pct_of_runtime < 80.0 {
                         likely_oom = true;
-                        failed_info["oom_reason"] = serde_json::json!("sigkill_137");
+                        oom_reason = Some("sigkill_137".to_string());
                     }
                 } else {
                     // Can't determine runtime percentage, assume OOM if SIGKILL
                     likely_oom = true;
-                    failed_info["oom_reason"] = serde_json::json!("sigkill_137");
+                    oom_reason = Some("sigkill_137".to_string());
                 }
             }
 
-            if likely_oom {
-                failed_info["likely_oom"] = serde_json::json!(true);
-            }
-
-            failed_jobs_info.push(failed_info);
+            failed_jobs_info.push(FailedJobInfo {
+                job_id,
+                job_name: job_name.clone(),
+                return_code: result.return_code,
+                exec_time_minutes: result.exec_time_minutes,
+                configured_memory: resource_req.memory.clone(),
+                configured_runtime: resource_req.runtime.clone(),
+                configured_cpus: resource_req.num_cpus,
+                peak_memory_bytes,
+                peak_memory_formatted,
+                likely_oom,
+                oom_reason,
+                memory_over_utilization,
+                likely_timeout,
+                timeout_reason,
+                runtime_utilization,
+            });
         }
 
         // Check memory over-utilization
@@ -472,30 +474,27 @@ fn check_resource_utilization(
     // Output results
     match format {
         "json" => {
-            let mut json_output = serde_json::json!({
-                "workflow_id": wf_id,
-                "run_id": run_id,
-                "total_results": results.len(),
-                "over_utilization_count": over_util_count,
-                "violations": rows.iter().map(|r| {
-                    serde_json::json!({
-                        "job_id": r.job_id,
-                        "job_name": r.job_name,
-                        "resource_type": r.resource_type,
-                        "specified": r.specified,
-                        "peak_used": r.peak_used,
-                        "over_utilization": r.over_utilization,
+            let report = ResourceUtilizationReport {
+                workflow_id: wf_id,
+                run_id,
+                total_results: results.len(),
+                over_utilization_count: over_util_count,
+                violations: rows
+                    .iter()
+                    .map(|r| ResourceViolation {
+                        job_id: r.job_id,
+                        job_name: r.job_name.clone(),
+                        resource_type: r.resource_type.clone(),
+                        specified: r.specified.clone(),
+                        peak_used: r.peak_used.clone(),
+                        over_utilization: r.over_utilization.clone(),
                     })
-                }).collect::<Vec<_>>(),
-            });
+                    .collect(),
+                failed_jobs_count: failed_jobs_info.len(),
+                failed_jobs: failed_jobs_info,
+            };
 
-            // Add failed jobs section if there are any
-            if !failed_jobs_info.is_empty() {
-                json_output["failed_jobs_count"] = serde_json::json!(failed_jobs_info.len());
-                json_output["failed_jobs"] = serde_json::json!(failed_jobs_info);
-            }
-
-            print_json(&json_output, "resource utilization");
+            print_json(&report, "resource utilization");
         }
         _ => {
             if rows.is_empty() {
@@ -637,7 +636,7 @@ fn generate_results_report(
     }
 
     // Build result records
-    let mut result_records = Vec::new();
+    let mut result_records: Vec<JobResultRecord> = Vec::new();
 
     for result in &results {
         let job_id = result.job_id;
@@ -651,34 +650,26 @@ fn generate_results_report(
             }
         };
 
-        // Build base result record
-        let mut record = serde_json::json!({
-            "job_id": job_id,
-            "job_name": job.name,
-            "status": format!("{:?}", result.status),
-            "run_id": result.run_id,
-            "return_code": result.return_code,
-            "completion_time": result.completion_time,
-            "exec_time_minutes": result.exec_time_minutes,
-            "compute_node_id": result.compute_node_id,
-        });
-
         // Add job stdio log paths
         let job_stdout = get_job_stdout_path(output_dir, wf_id, job_id, result.run_id);
         let job_stderr = get_job_stderr_path(output_dir, wf_id, job_id, result.run_id);
         check_log_file_exists(&job_stdout, "job stdout", job_id);
         check_log_file_exists(&job_stderr, "job stderr", job_id);
-        record["job_stdout"] = serde_json::json!(job_stdout);
-        record["job_stderr"] = serde_json::json!(job_stderr);
+
+        // Initialize optional fields
+        let mut compute_node_type: Option<String> = None;
+        let mut job_runner_log: Option<String> = None;
+        let mut slurm_job_id: Option<String> = None;
+        let mut slurm_stdout: Option<String> = None;
+        let mut slurm_stderr: Option<String> = None;
 
         // Get compute node and determine log file paths
         let compute_node_id = result.compute_node_id;
         match default_api::get_compute_node(config, compute_node_id) {
             Ok(compute_node) => {
-                let compute_node_type = &compute_node.compute_node_type;
-                record["compute_node_type"] = serde_json::json!(compute_node_type);
+                compute_node_type = Some(compute_node.compute_node_type.clone());
 
-                match compute_node_type.as_str() {
+                match compute_node.compute_node_type.as_str() {
                     "local" => {
                         // For local runner, we need hostname, workflow_id, and run_id
                         let log_path = get_job_runner_log_file(
@@ -688,20 +679,17 @@ fn generate_results_report(
                             result.run_id,
                         );
                         check_log_file_exists(&log_path, "job runner", job_id);
-                        record["job_runner_log"] = serde_json::json!(log_path);
+                        job_runner_log = Some(log_path);
                     }
                     "slurm" => {
                         // For slurm runner, extract slurm job ID from scheduler JSON
                         if let Some(scheduler_value) = &compute_node.scheduler
-                            && let Some(slurm_job_id) = scheduler_value.get("slurm_job_id")
-                            && let Some(slurm_job_id_str) = slurm_job_id.as_str()
+                            && let Some(slurm_job_id_val) = scheduler_value.get("slurm_job_id")
+                            && let Some(slurm_job_id_str) = slurm_job_id_val.as_str()
                         {
-                            // Build slurm job runner log path
-                            // We need node_id and task_pid from the scheduler data
-                            // The slurm job runner uses format: job_runner_slurm_{job_id}_{node_id}_{task_pid}.log
-                            // We can extract node_id and task_pid from environment during slurm execution
-                            // For now, we'll try to get it from the hostname or compute_node.pid
+                            slurm_job_id = Some(slurm_job_id_str.to_string());
 
+                            // Build slurm job runner log path
                             // Use hostname as node_id and pid as task_pid for the log path
                             let node_id = &compute_node.hostname;
                             let task_pid = compute_node.pid as usize;
@@ -714,22 +702,21 @@ fn generate_results_report(
                                 task_pid,
                             );
                             check_log_file_exists(&log_path, "slurm job runner", job_id);
-                            record["job_runner_log"] = serde_json::json!(log_path);
+                            job_runner_log = Some(log_path);
 
                             // Add slurm stdout/stderr paths
-                            let slurm_stdout =
+                            let stdout_path =
                                 get_slurm_stdout_path(output_dir, wf_id, slurm_job_id_str);
-                            let slurm_stderr =
+                            let stderr_path =
                                 get_slurm_stderr_path(output_dir, wf_id, slurm_job_id_str);
-                            check_log_file_exists(&slurm_stdout, "slurm stdout", job_id);
-                            check_log_file_exists(&slurm_stderr, "slurm stderr", job_id);
-                            record["slurm_stdout"] = serde_json::json!(slurm_stdout);
-                            record["slurm_stderr"] = serde_json::json!(slurm_stderr);
+                            check_log_file_exists(&stdout_path, "slurm stdout", job_id);
+                            check_log_file_exists(&stderr_path, "slurm stderr", job_id);
+                            slurm_stdout = Some(stdout_path);
+                            slurm_stderr = Some(stderr_path);
                         }
                     }
                     _ => {
-                        // Unknown compute node type
-                        record["job_runner_log"] = serde_json::Value::Null;
+                        // Unknown compute node type - job_runner_log stays None
                     }
                 }
             }
@@ -738,23 +725,38 @@ fn generate_results_report(
                     "Warning: Could not fetch compute node {}: {}",
                     compute_node_id, e
                 );
-                record["compute_node_type"] = serde_json::Value::Null;
-                record["job_runner_log"] = serde_json::Value::Null;
+                // compute_node_type and job_runner_log stay None
             }
         }
 
-        result_records.push(record);
+        result_records.push(JobResultRecord {
+            job_id,
+            job_name: job.name.clone(),
+            status: format!("{:?}", result.status),
+            run_id: result.run_id,
+            return_code: result.return_code,
+            completion_time: result.completion_time.clone(),
+            exec_time_minutes: result.exec_time_minutes,
+            compute_node_id: result.compute_node_id,
+            job_stdout: Some(job_stdout),
+            job_stderr: Some(job_stderr),
+            compute_node_type,
+            job_runner_log,
+            slurm_job_id,
+            slurm_stdout,
+            slurm_stderr,
+        });
     }
 
     // Build final JSON report
-    let report = serde_json::json!({
-        "workflow_id": wf_id,
-        "workflow_name": workflow.name,
-        "workflow_user": workflow.user,
-        "all_runs": all_runs,
-        "total_results": result_records.len(),
-        "results": result_records,
-    });
+    let report = ResultsReport {
+        workflow_id: wf_id,
+        workflow_name: workflow.name.clone(),
+        workflow_user: workflow.user.clone(),
+        all_runs,
+        total_results: result_records.len(),
+        results: result_records,
+    };
 
     // Output JSON
     print_json(&report, "results report");

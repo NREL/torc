@@ -12,6 +12,8 @@ dependencies, mixed resource requirements, and multiple stages.
 - **Resource Management** — Track CPU, memory, and GPU usage across all jobs
 - **Automatic Failure Recovery** — Detect OOM/timeout failures and retry with adjusted resources
 - **Fault Tolerance** — Resume workflows after failures without losing progress
+- **AI-assisted configuration and management** — Use AI tools like Claude Code and Copilot to
+  configure workflows and diagnose problems.
 
 ### Job Parameterization
 
