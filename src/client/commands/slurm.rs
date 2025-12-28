@@ -2600,19 +2600,36 @@ fn handle_regenerate(
 
     if pending_jobs.is_empty() {
         if format == "json" {
-            print_json(
-                &RegenerateResult {
-                    workflow_id,
-                    pending_jobs: 0,
-                    schedulers_created: Vec::new(),
-                    total_allocations: 0,
-                    allocations_submitted: 0,
-                    allocations_deferred: 0,
-                    warnings: vec!["No pending jobs found".to_string()],
-                    submitted: false,
-                },
-                "regenerate result",
-            );
+            if dry_run {
+                print_json(
+                    &RegenerateDryRunResult {
+                        dry_run: true,
+                        workflow_id,
+                        pending_jobs: 0,
+                        profile_name: profile.name.clone(),
+                        profile_display_name: profile.display_name.clone(),
+                        planned_schedulers: Vec::new(),
+                        total_allocations: 0,
+                        would_submit: submit,
+                        warnings: vec!["No pending jobs found".to_string()],
+                    },
+                    "dry run result",
+                );
+            } else {
+                print_json(
+                    &RegenerateResult {
+                        workflow_id,
+                        pending_jobs: 0,
+                        schedulers_created: Vec::new(),
+                        total_allocations: 0,
+                        allocations_submitted: 0,
+                        allocations_deferred: 0,
+                        warnings: vec!["No pending jobs found".to_string()],
+                        submitted: false,
+                    },
+                    "regenerate result",
+                );
+            }
         } else {
             println!(
                 "No pending jobs (uninitialized, ready, or blocked) found in workflow {}",
@@ -2756,19 +2773,36 @@ fn handle_regenerate(
 
     if plan.schedulers.is_empty() {
         if format == "json" {
-            print_json(
-                &RegenerateResult {
-                    workflow_id,
-                    pending_jobs: pending_jobs.len(),
-                    schedulers_created: Vec::new(),
-                    total_allocations: 0,
-                    allocations_submitted: 0,
-                    allocations_deferred: 0,
-                    warnings,
-                    submitted: false,
-                },
-                "regenerate result",
-            );
+            if dry_run {
+                print_json(
+                    &RegenerateDryRunResult {
+                        dry_run: true,
+                        workflow_id,
+                        pending_jobs: pending_jobs.len(),
+                        profile_name: profile.name.clone(),
+                        profile_display_name: profile.display_name.clone(),
+                        planned_schedulers: Vec::new(),
+                        total_allocations: 0,
+                        would_submit: submit,
+                        warnings: warnings.clone(),
+                    },
+                    "dry run result",
+                );
+            } else {
+                print_json(
+                    &RegenerateResult {
+                        workflow_id,
+                        pending_jobs: pending_jobs.len(),
+                        schedulers_created: Vec::new(),
+                        total_allocations: 0,
+                        allocations_submitted: 0,
+                        allocations_deferred: 0,
+                        warnings,
+                        submitted: false,
+                    },
+                    "regenerate result",
+                );
+            }
         } else {
             println!("No pending jobs with resource requirements found");
             for warning in &warnings {
