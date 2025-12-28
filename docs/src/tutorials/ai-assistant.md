@@ -162,7 +162,7 @@ Suppose that jobs fail because they use too much CPU or memory.
 
 ---
 
-## Example: Analyzing an auto-recovered workflow recovered through torc's auto-recovery system
+## Example: Recovering a failed workflow
 
 The workflow in `tests/workflows/timeout_auto_recovery_test` is used to test torc's auto-recovery of
 walltime timeouts. In this example, the workflow was left in a failed state.
