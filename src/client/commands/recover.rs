@@ -106,8 +106,6 @@ pub struct PlannedSchedulerPreview {
     /// Number of GPUs
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gpus: Option<i64>,
-    /// Number of allocations that would be submitted
-    pub num_allocations: usize,
 }
 
 /// Information about Slurm logs for a job
@@ -302,7 +300,6 @@ pub fn recover_workflow(
                         runtime: final_runtime.clone(),
                         cpus,
                         gpus,
-                        num_allocations: adj.job_ids.len(),
                     };
 
                     // Log details
@@ -325,7 +322,7 @@ pub fn recover_workflow(
                     planned_schedulers.push(preview);
                 }
                 info!(
-                    "[DRY RUN] Total: {} allocation(s) would be submitted",
+                    "[DRY RUN] Would submit Slurm allocations for {} job(s)",
                     result.jobs_to_retry.len()
                 );
             }
