@@ -8,6 +8,7 @@ pub mod jobs;
 pub mod logs;
 pub mod output;
 pub mod pagination;
+pub mod recover;
 pub mod remote;
 pub mod reports;
 pub mod resource_requirements;

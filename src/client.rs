@@ -23,6 +23,7 @@ pub mod job_runner;
 pub mod log_paths;
 pub mod parameter_expansion;
 pub mod remote;
+pub mod report_models;
 pub mod resource_monitor;
 pub mod scheduler_plan;
 pub mod utils;
@@ -43,4 +44,9 @@ pub use utils::send_with_retries;
 pub use workflow_manager::WorkflowManager;
 pub use workflow_spec::{
     FileSpec, JobSpec, ResourceRequirementsSpec, SlurmSchedulerSpec, UserDataSpec, WorkflowSpec,
+};
+
+// Report model types for inter-command data sharing
+pub use report_models::{
+    FailedJobInfo, JobResultRecord, ResourceUtilizationReport, ResourceViolation, ResultsReport,
 };

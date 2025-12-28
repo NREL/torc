@@ -19,6 +19,7 @@
 //! # }
 //! ```
 
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 use log::{debug, error, info, warn};
 use std::fs::File;
 use std::io::Write;
@@ -258,17 +259,33 @@ pub fn capture_env_vars(file_path: &Path, substring: &str) {
 ///
 /// # Arguments
 /// * `file_path` - Path where the dmesg output will be written
+/// * `filter_after` - If provided, only include log lines with timestamps after this time
 ///
 /// # Note
 /// Errors are logged but do not cause the function to fail, since dmesg capture
 /// is informational and should not block process exit.
-pub fn capture_dmesg(file_path: &Path) {
+pub fn capture_dmesg(file_path: &Path, filter_after: Option<DateTime<Local>>) {
     info!("Capturing dmesg output to: {}", file_path.display());
+    if let Some(cutoff) = filter_after {
+        info!(
+            "Filtering dmesg to only include messages after: {}",
+            cutoff.format("%Y-%m-%d %H:%M:%S")
+        );
+    }
 
     match Command::new("dmesg").arg("--ctime").output() {
         Ok(output) => match File::create(file_path) {
             Ok(mut file) => {
-                if let Err(e) = file.write_all(&output.stdout) {
+                let stdout_str = String::from_utf8_lossy(&output.stdout);
+
+                // Filter lines if a cutoff time is provided
+                let filtered_output = if let Some(cutoff) = filter_after {
+                    filter_dmesg_by_time(&stdout_str, cutoff)
+                } else {
+                    stdout_str.to_string()
+                };
+
+                if let Err(e) = file.write_all(filtered_output.as_bytes()) {
                     error!("Error writing dmesg stdout to file: {}", e);
                 }
                 if !output.stderr.is_empty() {
@@ -288,5 +305,111 @@ pub fn capture_dmesg(file_path: &Path) {
         Err(e) => {
             error!("Error running dmesg command: {}", e);
         }
+    }
+}
+
+/// Filter dmesg output to only include lines after a given cutoff time.
+///
+/// Parses timestamps in the format `[Day Mon DD HH:MM:SS YYYY]` from dmesg --ctime output.
+/// Lines without parseable timestamps are included (they may be continuation lines).
+fn filter_dmesg_by_time(dmesg_output: &str, cutoff: DateTime<Local>) -> String {
+    let mut filtered_lines = Vec::new();
+    let mut include_following = false;
+
+    for line in dmesg_output.lines() {
+        // Try to parse the timestamp from the line
+        // Format: [Day Mon DD HH:MM:SS YYYY] message
+        // Example: [Tue Nov 25 10:11:08 2025] BIOS-e820: ...
+        if let Some(timestamp) = parse_dmesg_timestamp(line) {
+            include_following = timestamp >= cutoff;
+        }
+
+        // Include line if it's after the cutoff (or if we couldn't parse a timestamp,
+        // include it if the previous timestamped line was included)
+        if include_following {
+            filtered_lines.push(line);
+        }
+    }
+
+    if filtered_lines.is_empty() {
+        format!(
+            "# No dmesg messages found after {}\n",
+            cutoff.format("%Y-%m-%d %H:%M:%S")
+        )
+    } else {
+        filtered_lines.join("\n") + "\n"
+    }
+}
+
+/// Parse a timestamp from a dmesg --ctime output line.
+///
+/// Expected format: `[Day Mon DD HH:MM:SS YYYY] message`
+/// Example: `[Tue Nov 25 10:11:08 2025] BIOS-e820: ...`
+fn parse_dmesg_timestamp(line: &str) -> Option<DateTime<Local>> {
+    // Find the timestamp between [ and ]
+    let start = line.find('[')?;
+    let end = line.find(']')?;
+    if start >= end {
+        return None;
+    }
+
+    let timestamp_str = &line[start + 1..end];
+
+    // Parse format: "Day Mon DD HH:MM:SS YYYY"
+    // Example: "Tue Nov 25 10:11:08 2025"
+    let naive = NaiveDateTime::parse_from_str(timestamp_str, "%a %b %e %H:%M:%S %Y").ok()?;
+
+    // Convert to local timezone
+    Local.from_local_datetime(&naive).single()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_dmesg_timestamp() {
+        // Standard format
+        let line = "[Tue Nov 25 10:11:08 2025] BIOS-e820: some message";
+        let ts = parse_dmesg_timestamp(line);
+        assert!(ts.is_some());
+
+        // Single digit day (with space padding)
+        let line = "[Mon Dec  1 09:05:00 2025] kernel: message";
+        let ts = parse_dmesg_timestamp(line);
+        assert!(ts.is_some());
+
+        // Invalid format
+        let line = "No timestamp here";
+        let ts = parse_dmesg_timestamp(line);
+        assert!(ts.is_none());
+
+        // Malformed timestamp
+        let line = "[invalid timestamp] message";
+        let ts = parse_dmesg_timestamp(line);
+        assert!(ts.is_none());
+    }
+
+    #[test]
+    fn test_filter_dmesg_by_time() {
+        let dmesg = "\
+[Tue Nov 25 08:00:00 2025] old message 1
+[Tue Nov 25 09:00:00 2025] old message 2
+[Tue Nov 25 10:00:00 2025] new message 1
+[Tue Nov 25 11:00:00 2025] new message 2
+";
+        // Create a cutoff at 9:30
+        let naive =
+            NaiveDateTime::parse_from_str("Tue Nov 25 09:30:00 2025", "%a %b %e %H:%M:%S %Y")
+                .unwrap();
+        let cutoff = Local.from_local_datetime(&naive).single().unwrap();
+
+        let filtered = filter_dmesg_by_time(dmesg, cutoff);
+
+        // Should only include messages at 10:00 and 11:00
+        assert!(filtered.contains("new message 1"));
+        assert!(filtered.contains("new message 2"));
+        assert!(!filtered.contains("old message 1"));
+        assert!(!filtered.contains("old message 2"));
     }
 }

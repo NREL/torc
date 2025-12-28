@@ -162,42 +162,173 @@ Suppose that jobs fail because they use too much CPU or memory.
 
 ---
 
-## Example: Debugging a Failure
+## Example: Recovering a failed workflow that timed out
+
+The workflow in `tests/workflows/timeout_auto_recovery_test` is used to test torc's auto-recovery of
+walltime timeouts. In this example, the workflow was left in a failed state.
+
+Here is a conversation in Claude Code after running the workflow:
 
 ```
-You: Why did a job in workflow 5 fail?
+> analyze the logs for workflow 6
 
-Claude:
-● The job failed due to an Out of Memory (OOM) kill:
+Workflow 6 Log Analysis Summary
 
-  Job Details:
-  - Name: work_job
-  - Command: python work.py
-  - Return code: 137 (SIGKILL from OOM killer)
+  Workflow: timeout_auto_recovery_test - Test workflow for automatic timeout recovery
 
-  What happened:
-  1. The job was configured with a 200GB memory limit
-  2. The script allocated 230GB before being killed
-  3. The Linux OOM killer terminated the process
+  Job Results
 
-  Recommendation: Increase memory to 256GB and retry.
+  | Job | Name       | Status        | Runtime | Return Code  |
+  |-----|------------|---------------|---------|--------------|
+  | 31  | (fast job) | ✅ Completed  | 1.0 min | 0            |
+  | 32  | job_slow   | ⛔ Terminated | 5.9 min | -9 (SIGKILL) |
+
+  Terminated Job Details (job_slow)
+
+  The job was killed by signal 9 (SIGKILL) after running for ~6 minutes, which matches the expected behavior for a timeout test.
+
+  stdout log shows the job ran through minute 6 before being killed:
+  Slow job starting at Sat Dec 27 15:40:59 MST 2025
+  This job will run for 10 minutes (exceeds 5 min runtime and 8 min walltime)
+  It should be killed by Slurm and recovered by the watcher
+  Minute 1 of 10...
+  Minute 2 of 10...
+  ...
+  Minute 6 of 10...
+
+  stderr log: Empty (no errors written)
+
+  Conclusion
+
+  The timeout auto-recovery test is working as expected:
+  - The slow job exceeded its 5-minute runtime limit
+  - It was killed by the system (SIGKILL, return code -9) at ~6 minutes
+  - Peak memory usage was ~4.1 MB (no memory issues)
 ```
 
 ---
 
-## Example: Fixing and Retrying
+## Example: Debugging a failed workflow with over-consumption of memory
 
-```
-You: Increase the memory to 256GB and restart the failed jobs.
+The workflow in `tests/workflows/oom_auto_recovery_test` is used to test torc's diagnosis of memory
+over-consumption errors.
 
-Claude:
-● Updated job 5 resource requirements:
-  - Memory: 200g → 256g
+Here is a conversation in Claude Code after running the workflow:
 
-● Reset job status from "failed" to "ready"
+> Analyze the logs for workflow 16
 
-● The job is now queued for execution. Would you like me to submit it to Slurm?
-```
+● torc - analyze_workflow_logs (MCP)(workflow_id: 16) ⎿  { "error_count": 0, "errors_by_type": [], …
++7 lines (ctrl+o to expand)
+
+● torc - get_workflow_status (MCP)(workflow_id: 16) ⎿  { "description": "Test workflow with an OOM",
+"job_counts_by_status": { … +8 lines (ctrl+o to expand)
+
+● The workflow has 3 failed jobs out of 10 total, but the log analyzer didn't find error patterns.
+Let me dig deeper:
+
+● torc - list_failed_jobs (MCP)(workflow_id: 16) ⎿  { "failed_job_count": 3, "failed_jobs": [ … +18
+lines (ctrl+o to expand)
+
+● torc - check_resource_utilization (MCP)(workflow_id: 16, include_failed: true) ⎿  { "failed_jobs":
+[ { … +137 lines (ctrl+o to expand)
+
+● Workflow 16 Analysis Summary
+
+Workflow: oom_test - "Test workflow with an OOM" Status: 7 completed, 3 failed (10 total jobs)
+
+Root Cause: Out of Memory (OOM)
+
+All 3 failed jobs were killed due to OOM (return code 137):
+
+| Job ID | Name   | Peak Memory        | Configured | Over-Utilization |
+| ------ | ------ | ------------------ | ---------- | ---------------- |
+| 103    | work_1 | N/A (killed early) | 10g        | SIGKILL 137      |
+| 109    | work_7 | 29.91 GB           | 10g        | +199.1%          |
+| 110    | work_8 | 26.89 GB           | 10g        | +168.9%          |
+
+Critical Warning: More Failures Expected
+
+9 jobs exceeded their 10 GB memory limit - including 6 jobs that happened to complete but used ~30
+GB each:
+
+- work_2 through work_6, work_9, work_10 all peaked at ~30.01 GB (+200.1% over limit)
+- These completed due to available system memory but are also misconfigured
+
+Recommendation
+
+1. Increase memory allocation to 32g for all work jobs
+2. Use automated recovery - I can run a dry-run of the recovery tool to preview fixes
+
+Would you like me to run recover_workflow with dry_run=true to preview the recovery actions?
+
+> yes
+
+● torc - recover_workflow (MCP)(workflow_id: 16, dry_run: true) ⎿  { "dry_run": true,
+"memory_multiplier": 1.5, … +9 lines (ctrl+o to expand)
+
+● Recovery Preview (Dry Run)
+
+Proposed Actions:
+
+- 3 failed jobs would have memory increased (1.5x multiplier: 10g → 15g)
+- Failed jobs would be reset to ready status
+- Slurm schedulers would be regenerated
+
+⚠️ Important Consideration
+
+The default 1.5x memory multiplier would increase memory from 10g → 15g, but the jobs actually
+peaked at ~30 GB. This means:
+
+- 15g may still cause OOM failures
+- A 3.5x multiplier (10g → 35g) would be safer based on actual usage
+
+Would you like me to proceed with:
+
+1. Default recovery (1.5x = 15g) - may require another recovery cycle
+2. Custom recovery with a higher memory multiplier (e.g., 3.5x = 35g)
+
+> 2
+
+● torc - recover_workflow (MCP)(workflow_id: 16, dry_run: true, memory_multiplier: 3.5) ⎿  {
+"dry_run": true, "memory_multiplier": 3.5, … +9 lines (ctrl+o to expand)
+
+● Recovery Preview (3.5x Memory Multiplier)
+
+Proposed Actions:
+
+- 3 failed jobs would have memory increased: 10g → 35g
+- Failed jobs would be reset to ready status
+- Slurm schedulers would be regenerated
+
+This should safely cover the ~30 GB peak memory usage observed.
+
+Would you like me to proceed with these recovery actions?
+
+> yes
+
+● torc - recover_workflow (MCP)(workflow_id: 16, dry_run: false, memory_multiplier: 3.5) ⎿  {
+"dry_run": false, "memory_multiplier": 3.5, … +7 lines (ctrl+o to expand)
+
+● Recovery Complete ✓
+
+Actions taken:
+
+- 3 jobs had memory increased from 10g → 35g
+- Failed jobs reset to ready status
+- Slurm schedulers regenerated and submitted
+
+● torc - get_workflow_status (MCP)(workflow_id: 16) ⎿  { "description": "Test workflow with an OOM",
+"job_counts_by_status": { … +8 lines (ctrl+o to expand)
+
+● Current Status:
+
+| Status    | Count |
+| --------- | ----- |
+| Completed | 7     |
+| Ready     | 3     |
+
+The 3 previously failed jobs (work_1, work_7, work_8) are now ready to run with 35g memory. Slurm
+allocations have been submitted and will execute these jobs automatically.
 
 ---
 

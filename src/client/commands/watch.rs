@@ -6,13 +6,19 @@ use log::{LevelFilter, debug, error, info, warn};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::utils;
+
+// Re-export shared recovery types and functions from the recover module
+use super::recover::{
+    RecoveryResult, apply_recovery_heuristics, diagnose_failures, regenerate_and_submit,
+    reinitialize_workflow, reset_failed_jobs, run_recovery_hook,
+};
+use crate::client::report_models::ResourceUtilizationReport;
 
 /// Default wait time for database connectivity issues (in minutes)
 const WAIT_FOR_HEALTHY_DATABASE_MINUTES: u64 = 20;
@@ -35,7 +41,6 @@ use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::hpc::slurm_interface::SlurmInterface;
 use crate::client::log_paths::get_watch_log_file;
 use crate::models;
-use crate::time_utils::duration_string_to_seconds;
 
 /// A writer that writes to both stdout and a file
 struct MultiWriter {
@@ -75,56 +80,6 @@ pub struct WatchArgs {
     pub output_dir: PathBuf,
     pub show_job_counts: bool,
     pub log_level: String,
-}
-
-/// Parse memory string (e.g., "8g", "512m", "1024k") to bytes
-pub fn parse_memory_bytes(mem: &str) -> Option<u64> {
-    let mem = mem.trim().to_lowercase();
-    let (num_str, multiplier) = if mem.ends_with("gb") {
-        (mem.trim_end_matches("gb"), 1024u64 * 1024 * 1024)
-    } else if mem.ends_with("g") {
-        (mem.trim_end_matches("g"), 1024u64 * 1024 * 1024)
-    } else if mem.ends_with("mb") {
-        (mem.trim_end_matches("mb"), 1024u64 * 1024)
-    } else if mem.ends_with("m") {
-        (mem.trim_end_matches("m"), 1024u64 * 1024)
-    } else if mem.ends_with("kb") {
-        (mem.trim_end_matches("kb"), 1024u64)
-    } else if mem.ends_with("k") {
-        (mem.trim_end_matches("k"), 1024u64)
-    } else {
-        (mem.as_str(), 1u64)
-    };
-    num_str
-        .parse::<f64>()
-        .ok()
-        .map(|n| (n * multiplier as f64) as u64)
-}
-
-/// Format bytes to memory string (e.g., "12g", "512m")
-pub fn format_memory_bytes_short(bytes: u64) -> String {
-    if bytes >= 1024 * 1024 * 1024 {
-        format!("{}g", bytes / (1024 * 1024 * 1024))
-    } else if bytes >= 1024 * 1024 {
-        format!("{}m", bytes / (1024 * 1024))
-    } else if bytes >= 1024 {
-        format!("{}k", bytes / 1024)
-    } else {
-        format!("{}b", bytes)
-    }
-}
-
-/// Format seconds to ISO8601 duration (e.g., "PT2H30M")
-pub fn format_duration_iso8601(secs: u64) -> String {
-    let hours = secs / 3600;
-    let mins = (secs % 3600) / 60;
-    if hours > 0 && mins > 0 {
-        format!("PT{}H{}M", hours, mins)
-    } else if hours > 0 {
-        format!("PT{}H", hours)
-    } else {
-        format!("PT{}M", mins.max(1))
-    }
 }
 
 /// Get job counts by status for a workflow
@@ -924,441 +879,6 @@ fn poll_until_complete(
     get_job_counts(config, workflow_id)
 }
 
-/// Diagnose failures and return job IDs that need resource adjustments
-fn diagnose_failures(workflow_id: i64, _output_dir: &Path) -> Result<serde_json::Value, String> {
-    // Run check-resource-utilization command
-    // Note: This command doesn't take an output_dir argument - it reads from the database
-    let output = Command::new("torc")
-        .args([
-            "-f",
-            "json",
-            "reports",
-            "check-resource-utilization",
-            &workflow_id.to_string(),
-            "--include-failed",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to run check-resource-utilization: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("check-resource-utilization failed: {}", stderr));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout)
-        .map_err(|e| format!("Failed to parse resource utilization output: {}", e))
-}
-
-/// Get Slurm log information for failed jobs
-fn get_slurm_log_info(workflow_id: i64, output_dir: &Path) -> Result<serde_json::Value, String> {
-    // Run reports results command to get log paths
-    let output = Command::new("torc")
-        .args([
-            "-f",
-            "json",
-            "reports",
-            "results",
-            &workflow_id.to_string(),
-            "-o",
-            output_dir.to_str().unwrap_or("output"),
-        ])
-        .output()
-        .map_err(|e| format!("Failed to run reports results: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("reports results failed: {}", stderr));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    serde_json::from_str(&stdout)
-        .map_err(|e| format!("Failed to parse reports results output: {}", e))
-}
-
-/// Correlate failed jobs with their Slurm allocation logs
-fn correlate_slurm_logs(
-    diagnosis: &serde_json::Value,
-    slurm_info: &serde_json::Value,
-) -> HashMap<i64, SlurmLogInfo> {
-    let mut log_map = HashMap::new();
-
-    // Build map from job_id to slurm log paths
-    if let Some(jobs) = slurm_info.get("jobs").and_then(|v| v.as_array()) {
-        for job in jobs {
-            if let Some(job_id) = job.get("job_id").and_then(|v| v.as_i64()) {
-                let slurm_stdout = job
-                    .get("slurm_stdout")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-                let slurm_stderr = job
-                    .get("slurm_stderr")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-                let slurm_job_id = job
-                    .get("slurm_job_id")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-
-                if slurm_stdout.is_some() || slurm_stderr.is_some() {
-                    log_map.insert(
-                        job_id,
-                        SlurmLogInfo {
-                            slurm_job_id,
-                            slurm_stdout,
-                            slurm_stderr,
-                        },
-                    );
-                }
-            }
-        }
-    }
-
-    // Filter to only failed jobs
-    let mut failed_log_map = HashMap::new();
-    if let Some(failed_jobs) = diagnosis.get("failed_jobs").and_then(|v| v.as_array()) {
-        for job_info in failed_jobs {
-            if let Some(job_id) = job_info.get("job_id").and_then(|v| v.as_i64())
-                && let Some(log_info) = log_map.remove(&job_id)
-            {
-                failed_log_map.insert(job_id, log_info);
-            }
-        }
-    }
-
-    failed_log_map
-}
-
-/// Information about Slurm logs for a job
-#[derive(Debug)]
-pub struct SlurmLogInfo {
-    pub slurm_job_id: Option<String>,
-    pub slurm_stdout: Option<String>,
-    pub slurm_stderr: Option<String>,
-}
-
-/// Result of applying recovery heuristics
-pub struct RecoveryResult {
-    pub oom_fixed: usize,
-    pub timeout_fixed: usize,
-    pub other_failures: usize,
-    pub jobs_to_retry: Vec<i64>,
-}
-
-/// Apply recovery heuristics and update job resources
-fn apply_recovery_heuristics(
-    config: &Configuration,
-    workflow_id: i64,
-    diagnosis: &serde_json::Value,
-    memory_multiplier: f64,
-    runtime_multiplier: f64,
-    retry_unknown: bool,
-    output_dir: &Path,
-) -> Result<RecoveryResult, String> {
-    let mut oom_fixed = 0;
-    let mut timeout_fixed = 0;
-    let mut other_failures = 0;
-    let mut jobs_to_retry = Vec::new();
-
-    // Try to get Slurm log info for correlation
-    let slurm_log_map = match get_slurm_log_info(workflow_id, output_dir) {
-        Ok(slurm_info) => {
-            let log_map = correlate_slurm_logs(diagnosis, &slurm_info);
-            if !log_map.is_empty() {
-                info!("  Found Slurm logs for {} failed job(s)", log_map.len());
-            }
-            log_map
-        }
-        Err(e) => {
-            log::debug!("Could not get Slurm log info: {}", e);
-            HashMap::new()
-        }
-    };
-
-    // Get failed jobs info from diagnosis
-    let failed_jobs = diagnosis
-        .get("failed_jobs")
-        .and_then(|v| v.as_array())
-        .cloned()
-        .unwrap_or_default();
-
-    for job_info in &failed_jobs {
-        let job_id = job_info.get("job_id").and_then(|v| v.as_i64()).unwrap_or(0);
-        let likely_oom = job_info
-            .get("likely_oom")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-        let likely_timeout = job_info
-            .get("likely_timeout")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        if job_id == 0 {
-            continue;
-        }
-
-        // Log Slurm info if available
-        if let Some(slurm_info) = slurm_log_map.get(&job_id)
-            && let Some(slurm_job_id) = &slurm_info.slurm_job_id
-        {
-            log::debug!("  Job {} ran in Slurm allocation {}", job_id, slurm_job_id);
-        }
-
-        // Get current job to find resource requirements
-        let job = match default_api::get_job(config, job_id) {
-            Ok(j) => j,
-            Err(e) => {
-                warn!("  Warning: couldn't get job {}: {}", job_id, e);
-                continue;
-            }
-        };
-
-        let rr_id = match job.resource_requirements_id {
-            Some(id) => id,
-            None => {
-                warn!("  Warning: job {} has no resource requirements", job_id);
-                other_failures += 1;
-                continue;
-            }
-        };
-
-        // Get current resource requirements
-        let rr = match default_api::get_resource_requirements(config, rr_id) {
-            Ok(r) => r,
-            Err(e) => {
-                warn!(
-                    "  Warning: couldn't get resource requirements {}: {}",
-                    rr_id, e
-                );
-                continue;
-            }
-        };
-
-        let mut updated = false;
-        let mut new_rr = rr.clone();
-
-        // Apply OOM heuristic
-        if likely_oom && let Some(current_bytes) = parse_memory_bytes(&rr.memory) {
-            let new_bytes = (current_bytes as f64 * memory_multiplier) as u64;
-            let new_memory = format_memory_bytes_short(new_bytes);
-            info!(
-                "  Job {} ({}): OOM detected, increasing memory {} -> {}",
-                job_id, job.name, rr.memory, new_memory
-            );
-            new_rr.memory = new_memory;
-            updated = true;
-            oom_fixed += 1;
-        }
-
-        // Apply timeout heuristic
-        if likely_timeout {
-            // Use duration_string_to_seconds from time_utils
-            if let Ok(current_secs) = duration_string_to_seconds(&rr.runtime) {
-                let new_secs = (current_secs as f64 * runtime_multiplier) as u64;
-                let new_runtime = format_duration_iso8601(new_secs);
-                info!(
-                    "  Job {} ({}): Timeout detected, increasing runtime {} -> {}",
-                    job_id, job.name, rr.runtime, new_runtime
-                );
-                new_rr.runtime = new_runtime;
-                updated = true;
-                timeout_fixed += 1;
-            }
-        }
-
-        // Update resource requirements if changed
-        if updated {
-            if let Err(e) = default_api::update_resource_requirements(config, rr_id, new_rr) {
-                warn!(
-                    "  Warning: failed to update resource requirements for job {}: {}",
-                    job_id, e
-                );
-            }
-            // Job had OOM or timeout - always retry
-            jobs_to_retry.push(job_id);
-        } else if !likely_oom && !likely_timeout {
-            // Unknown failure - only retry if retry_unknown is enabled
-            // Unknown failure - only retry if retry_unknown is enabled
-            other_failures += 1;
-            if retry_unknown {
-                jobs_to_retry.push(job_id);
-            }
-        }
-    }
-
-    Ok(RecoveryResult {
-        oom_fixed,
-        timeout_fixed,
-        other_failures,
-        jobs_to_retry,
-    })
-}
-
-/// Reset specific failed jobs for retry (without reinitializing)
-///
-/// Note: We intentionally do NOT use --reinitialize here. The order matters:
-/// 1. Reset failed jobs (this function)
-/// 2. Regenerate schedulers (marks old on_workflow_start actions as executed)
-/// 3. Reinitialize workflow (fires actions - but old ones are already marked executed)
-///
-/// If we used --reinitialize here, the old on_workflow_start action would fire
-/// BEFORE regenerate has a chance to mark it as executed.
-fn reset_failed_jobs(
-    _config: &Configuration,
-    workflow_id: i64,
-    job_ids: &[i64],
-) -> Result<usize, String> {
-    if job_ids.is_empty() {
-        return Ok(0);
-    }
-
-    let job_count = job_ids.len();
-
-    // Reset failed jobs WITHOUT --reinitialize (we'll reinitialize after regenerate)
-    let output = Command::new("torc")
-        .args([
-            "workflows",
-            "reset-status",
-            &workflow_id.to_string(),
-            "--failed-only",
-            "--no-prompts",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to run workflow reset-status: {}", e))?;
-
-    // Print stdout so user sees what was reset
-    if !output.stdout.is_empty() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        for line in stdout.lines() {
-            info!("  {}", line);
-        }
-    }
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("workflow reset-status failed: {}", stderr));
-    }
-
-    Ok(job_count)
-}
-
-/// Reinitialize the workflow (set up dependencies and fire on_workflow_start actions)
-///
-/// Uses `reinitialize` instead of `initialize` because:
-/// - We're re-initializing after jobs have been reset
-/// - It handles canceled/terminated jobs appropriately
-/// - It's designed for recovery scenarios
-fn reinitialize_workflow(workflow_id: i64) -> Result<(), String> {
-    let output = Command::new("torc")
-        .args(["workflows", "reinitialize", &workflow_id.to_string()])
-        .output()
-        .map_err(|e| format!("Failed to run workflow reinitialize: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("workflow reinitialize failed: {}", stderr));
-    }
-
-    Ok(())
-}
-
-/// Run the user's custom recovery hook command
-///
-/// The hook receives the workflow ID as both an argument and environment variable,
-/// allowing users to run custom recovery logic (e.g., adjusting Spark cluster sizes).
-fn run_recovery_hook(workflow_id: i64, hook_command: &str) -> Result<(), String> {
-    info!("Running recovery hook: {}", hook_command);
-
-    // Parse the command using shell-like quoting rules (handles "quoted arguments")
-    let parts = shlex::split(hook_command)
-        .ok_or_else(|| format!("Invalid quoting in recovery hook command: {}", hook_command))?;
-    if parts.is_empty() {
-        return Err("Recovery hook command is empty".to_string());
-    }
-
-    // If the program doesn't contain a path separator and exists in the current directory,
-    // prepend "./" so it's found (Command::new searches PATH, not CWD)
-    let program = &parts[0];
-    let program_path = if !program.contains('/') && std::path::Path::new(program).exists() {
-        format!("./{}", program)
-    } else {
-        program.to_string()
-    };
-    let mut cmd = Command::new(&program_path);
-
-    // Add any arguments from the hook command
-    if parts.len() > 1 {
-        cmd.args(&parts[1..]);
-    }
-
-    // Add workflow ID as final argument
-    cmd.arg(workflow_id.to_string());
-
-    // Also set as environment variable for convenience
-    cmd.env("TORC_WORKFLOW_ID", workflow_id.to_string());
-
-    let output = cmd
-        .output()
-        .map_err(|e| format!("Failed to execute recovery hook '{}': {}", hook_command, e))?;
-
-    // Log stdout if present
-    if !output.stdout.is_empty() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        for line in stdout.lines() {
-            info!("  [hook] {}", line);
-        }
-    }
-
-    // Log stderr if present
-    if !output.stderr.is_empty() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        for line in stderr.lines() {
-            warn!("  [hook] {}", line);
-        }
-    }
-
-    if !output.status.success() {
-        let exit_code = output.status.code().unwrap_or(-1);
-        return Err(format!(
-            "Recovery hook '{}' failed with exit code {}",
-            hook_command, exit_code
-        ));
-    }
-
-    info!("Recovery hook completed successfully");
-    Ok(())
-}
-
-/// Regenerate Slurm schedulers and submit allocations
-fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), String> {
-    let output = Command::new("torc")
-        .args([
-            "slurm",
-            "regenerate",
-            &workflow_id.to_string(),
-            "--submit",
-            "-o",
-            output_dir.to_str().unwrap_or("output"),
-        ])
-        .output()
-        .map_err(|e| format!("Failed to run slurm regenerate: {}", e))?;
-
-    // Print stdout so user sees what schedulers were created and submitted
-    if !output.stdout.is_empty() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        for line in stdout.lines() {
-            info!("  {}", line);
-        }
-    }
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("slurm regenerate failed: {}", stderr));
-    }
-
-    Ok(())
-}
-
 /// Run the watch command
 pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     let hostname = hostname::get()
@@ -1419,6 +939,21 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     info!("Log file: {}", log_file_path);
 
     let mut retry_count = 0u32;
+
+    // Early check: verify this workflow has scheduled compute nodes
+    // The watch command is designed for Slurm/scheduler-based workflows.
+    // For workflows run with `torc run` or `torc remote run`, use those commands directly.
+    if !has_any_scheduled_compute_nodes(config, args.workflow_id) {
+        error!(
+            "No scheduled compute nodes found for workflow {}.",
+            args.workflow_id
+        );
+        error!("");
+        error!("The 'watch' command is designed for scheduler-based workflows (e.g., Slurm).");
+        error!("For local execution, use: torc run <workflow_id>");
+        error!("For remote execution, use: torc remote run <workflow_id>");
+        std::process::exit(1);
+    }
 
     info!(
         "Watching workflow {} (poll interval: {}s{}{})",
@@ -1501,7 +1036,15 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             Err(e) => {
                 warn!("Warning: Could not diagnose failures: {}", e);
                 warn!("Attempting retry without resource adjustments...");
-                serde_json::json!({"failed_jobs": []})
+                ResourceUtilizationReport {
+                    workflow_id: args.workflow_id,
+                    run_id: None,
+                    total_results: 0,
+                    over_utilization_count: 0,
+                    violations: Vec::new(),
+                    failed_jobs_count: 0,
+                    failed_jobs: Vec::new(),
+                }
             }
         };
 
@@ -1518,6 +1061,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
             args.runtime_multiplier,
             retry_unknown,
             &args.output_dir,
+            false, // dry_run - always execute for watch
         ) {
             Ok(result) => {
                 if result.oom_fixed > 0 || result.timeout_fixed > 0 {
@@ -1553,6 +1097,7 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
                 RecoveryResult {
                     oom_fixed: 0,
                     timeout_fixed: 0,
+                    unknown_retried: 0,
                     other_failures: 0,
                     jobs_to_retry: Vec::new(),
                 }
@@ -1619,39 +1164,5 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_memory_bytes() {
-        assert_eq!(parse_memory_bytes("1g"), Some(1024 * 1024 * 1024));
-        assert_eq!(parse_memory_bytes("2gb"), Some(2 * 1024 * 1024 * 1024));
-        assert_eq!(parse_memory_bytes("512m"), Some(512 * 1024 * 1024));
-        assert_eq!(parse_memory_bytes("512mb"), Some(512 * 1024 * 1024));
-        assert_eq!(parse_memory_bytes("1024k"), Some(1024 * 1024));
-        assert_eq!(parse_memory_bytes("1024kb"), Some(1024 * 1024));
-        assert_eq!(parse_memory_bytes("1024"), Some(1024));
-        assert_eq!(parse_memory_bytes("invalid"), None);
-    }
-
-    #[test]
-    fn test_format_memory_bytes_short() {
-        assert_eq!(format_memory_bytes_short(1024 * 1024 * 1024), "1g");
-        assert_eq!(format_memory_bytes_short(2 * 1024 * 1024 * 1024), "2g");
-        assert_eq!(format_memory_bytes_short(512 * 1024 * 1024), "512m");
-        assert_eq!(format_memory_bytes_short(1024 * 1024), "1m");
-        assert_eq!(format_memory_bytes_short(1024), "1k");
-        assert_eq!(format_memory_bytes_short(512), "512b");
-    }
-
-    #[test]
-    fn test_format_duration_iso8601() {
-        assert_eq!(format_duration_iso8601(3600), "PT1H");
-        assert_eq!(format_duration_iso8601(7200), "PT2H");
-        assert_eq!(format_duration_iso8601(5400), "PT1H30M");
-        assert_eq!(format_duration_iso8601(1800), "PT30M");
-        assert_eq!(format_duration_iso8601(60), "PT1M");
-        assert_eq!(format_duration_iso8601(30), "PT1M"); // rounds up to minimum 1 minute
-    }
-}
+// Tests for parse_memory_bytes, format_memory_bytes_short, format_duration_iso8601
+// are in the recover module

@@ -33,7 +33,7 @@ sed -i 's/PLACEHOLDER_ACCOUNT/your_account/g' workflow.yaml
 ### 2. Submit the workflow
 
 ```bash
-torc submit-slurm --account <your_account> workflow.yaml
+torc submit workflow.yaml
 ```
 
 Note the workflow ID from the output.
