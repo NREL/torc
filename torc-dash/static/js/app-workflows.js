@@ -99,8 +99,7 @@ Object.assign(TorcDashboard.prototype, {
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-success" onclick="app.runWorkflow('${workflow.id}')" title="Run Locally">Run</button>
                         <button class="btn btn-sm btn-primary" onclick="app.submitWorkflow('${workflow.id}')" title="Submit to Scheduler">Submit</button>
-                        <button class="btn btn-sm btn-warning" onclick="app.recoverWorkflow('${workflow.id}')" title="Recover Failed Jobs">Recover</button>
-                        <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
+                                                <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewDAG('${workflow.id}')" title="View DAG">DAG</button>
                         <button class="btn btn-sm btn-danger" onclick="app.deleteWorkflow('${workflow.id}')" title="Delete">Del</button>
                     </div>

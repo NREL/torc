@@ -58,6 +58,10 @@ Object.assign(TorcDashboard.prototype, {
         document.getElementById('btn-show-plan')?.addEventListener('click', () => {
             if (this.selectedWorkflowId) this.showExecutionPlan(this.selectedWorkflowId);
         });
+
+        document.getElementById('btn-recover-workflow')?.addEventListener('click', () => {
+            if (this.selectedWorkflowId) this.recoverWorkflow(this.selectedWorkflowId);
+        });
     },
 
     async reinitializeWorkflow(workflowId, force = false) {
