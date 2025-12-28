@@ -144,6 +144,7 @@ Object.assign(TorcDashboard.prototype, {
             'execution-plan-modal',
             'init-confirm-modal',
             'reinit-confirm-modal',
+            'recover-modal',
             'file-viewer-modal',
             'job-details-modal',
             'keyboard-help-modal'

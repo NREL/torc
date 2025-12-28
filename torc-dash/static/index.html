@@ -729,6 +729,25 @@
         </div>
     </div>
 
+    <!-- Recovery Modal -->
+    <div class="modal" id="recover-modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
+            <div class="modal-header">
+                <h3>Recovery Analysis</h3>
+                <button class="modal-close" id="recover-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <div id="recover-content">
+                    <div class="placeholder-message">Analyzing workflow...</div>
+                </div>
+            </div>
+            <div class="modal-footer" id="recover-modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-recover">Cancel</button>
+                <button class="btn btn-success" id="btn-confirm-recover">Apply Recovery</button>
+            </div>
+        </div>
+    </div>
+
     <!-- File Viewer Modal -->
     <div class="modal" id="file-viewer-modal">
         <div class="modal-content" style="max-width: 900px; max-height: 80vh;">

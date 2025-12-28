@@ -252,6 +252,29 @@ Object.assign(TorcDashboard.prototype, {
         });
     },
 
+    setupRecoverModal() {
+        document.getElementById('recover-modal-close')?.addEventListener('click', () => {
+            this.hideModal('recover-modal');
+        });
+
+        document.getElementById('btn-cancel-recover')?.addEventListener('click', () => {
+            this.hideModal('recover-modal');
+        });
+
+        document.getElementById('btn-confirm-recover')?.addEventListener('click', async () => {
+            if (this.pendingRecoverWorkflowId) {
+                await this.executeRecovery(this.pendingRecoverWorkflowId);
+                this.pendingRecoverWorkflowId = null;
+            }
+        });
+
+        document.getElementById('recover-modal')?.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.hideModal('recover-modal');
+            }
+        });
+    },
+
     setupFileViewerModal() {
         // Close button handlers
         document.getElementById('file-viewer-modal-close')?.addEventListener('click', () => {

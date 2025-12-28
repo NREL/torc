@@ -721,6 +721,141 @@ textarea.text-input {
     border-top: 1px solid var(--border-color);
 }
 
+/* Recovery Modal Styles */
+.recover-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.recover-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recover-section:last-child {
+    margin-bottom: 0;
+}
+
+.recover-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.recover-stat {
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.recover-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.recover-stat-value.warning {
+    color: var(--warning-color);
+}
+
+.recover-stat-value.danger {
+    color: var(--danger-color);
+}
+
+.recover-stat-value.success {
+    color: var(--success-color);
+}
+
+.recover-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.recover-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.recover-table th,
+.recover-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.recover-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.recover-table tr:last-child td {
+    border-bottom: none;
+}
+
+.recover-table code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.recover-adjustment {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.recover-adjustment .arrow {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.recover-no-data {
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 10px 0;
+}
+
+.recover-error {
+    color: var(--danger-color);
+    padding: 20px;
+    text-align: center;
+}
+
+.recover-slurm-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+}
+
+.recover-slurm-info span {
+    color: var(--text-secondary);
+}
+
+.recover-slurm-info strong {
+    color: var(--text-primary);
+}
+
 /* Toast notifications */
 .toast-container {
     position: fixed;

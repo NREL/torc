@@ -272,10 +272,19 @@ Object.assign(TorcDashboard.prototype, {
     },
 
     async recoverWorkflow(workflowId) {
-        // First run dry-run to show what would be done
-        this.showExecutionPanel();
-        this.appendExecutionOutput(`Analyzing workflow ${workflowId} for recovery...\n`, 'info');
-        this.hideExecutionCancelButton();
+        // Store for use in confirm handler
+        this.pendingRecoverWorkflowId = workflowId;
+
+        // Show modal with loading state
+        const content = document.getElementById('recover-content');
+        const footer = document.getElementById('recover-modal-footer');
+        if (content) {
+            content.innerHTML = '<div class="placeholder-message">Analyzing workflow for recovery...</div>';
+        }
+        if (footer) {
+            footer.style.display = 'none'; // Hide buttons until we have data
+        }
+        this.showModal('recover-modal');
 
         try {
             const response = await fetch('/api/cli/recover', {
@@ -290,104 +299,171 @@ Object.assign(TorcDashboard.prototype, {
             const result = await response.json();
 
             if (!result.success) {
-                this.appendExecutionOutput(`\nError: ${result.error || 'Recovery check failed'}\n`, 'error');
-                this.showToast('Recovery check failed', 'error');
+                content.innerHTML = `<div class="recover-error">Error: ${this.escapeHtml(result.error || 'Recovery check failed')}</div>`;
                 return;
             }
 
-            // Display dry-run results
             const data = result.data;
             if (!data || !data.result) {
-                this.appendExecutionOutput(`\nNo recovery data available.\n`, 'error');
+                content.innerHTML = '<div class="recover-error">No recovery data available.</div>';
                 return;
             }
 
-            const r = data.result;
-            this.appendExecutionOutput(`\n[DRY RUN] Recovery Analysis for Workflow ${workflowId}\n`, 'info');
-            this.appendExecutionOutput(`${'─'.repeat(50)}\n`, 'info');
+            // Build the formatted content
+            content.innerHTML = this.buildRecoveryContent(data);
 
-            if (r.jobs_to_retry && r.jobs_to_retry.length > 0) {
-                this.appendExecutionOutput(`\nJobs to retry: ${r.jobs_to_retry.length}\n`, 'stdout');
-
-                if (r.oom_fixed > 0) {
-                    this.appendExecutionOutput(`  • ${r.oom_fixed} job(s) would have memory increased\n`, 'stdout');
-                }
-                if (r.timeout_fixed > 0) {
-                    this.appendExecutionOutput(`  • ${r.timeout_fixed} job(s) would have runtime increased\n`, 'stdout');
-                }
-                if (r.unknown_retried > 0) {
-                    this.appendExecutionOutput(`  • ${r.unknown_retried} job(s) with unknown failures would be reset\n`, 'stdout');
-                }
-
-                // Show detailed adjustments if available
-                if (r.adjustments && r.adjustments.length > 0) {
-                    this.appendExecutionOutput(`\nResource Adjustments:\n`, 'info');
-                    for (const adj of r.adjustments) {
-                        const jobNames = adj.job_names.slice(0, 3).join(', ');
-                        const moreJobs = adj.job_names.length > 3 ? ` (+${adj.job_names.length - 3} more)` : '';
-                        this.appendExecutionOutput(`  RR #${adj.resource_requirements_id}: ${jobNames}${moreJobs}\n`, 'stdout');
-                        if (adj.memory_adjusted) {
-                            this.appendExecutionOutput(`    Memory: ${adj.original_memory} → ${adj.new_memory}\n`, 'stdout');
-                        }
-                        if (adj.runtime_adjusted) {
-                            this.appendExecutionOutput(`    Runtime: ${adj.original_runtime} → ${adj.new_runtime}\n`, 'stdout');
-                        }
-                    }
-                }
-
-                this.appendExecutionOutput(`\n${'─'.repeat(50)}\n`, 'info');
-                this.appendExecutionOutput(`Would reset ${r.jobs_to_retry.length} job(s) and regenerate Slurm schedulers.\n`, 'info');
-
-                // Show confirm/cancel buttons
-                this.appendExecutionOutput(`\n`, 'stdout');
-                this.showRecoverConfirmButtons(workflowId);
-            } else {
-                if (r.other_failures > 0) {
-                    this.appendExecutionOutput(`\n${r.other_failures} job(s) failed with unknown causes.\n`, 'stderr');
-                    this.appendExecutionOutput(`Use --retry-unknown flag to retry these jobs.\n`, 'info');
-                } else {
-                    this.appendExecutionOutput(`\nNo recoverable jobs found.\n`, 'info');
-                }
+            // Show/hide confirm button based on whether there are jobs to retry
+            if (data.result.jobs_to_retry && data.result.jobs_to_retry.length > 0) {
+                footer.style.display = 'flex';
             }
 
         } catch (error) {
-            this.appendExecutionOutput(`\nError: ${error.message}\n`, 'error');
-            this.showToast('Recovery check failed', 'error');
+            content.innerHTML = `<div class="recover-error">Error: ${this.escapeHtml(error.message)}</div>`;
         }
     },
 
-    showRecoverConfirmButtons(workflowId) {
-        const output = document.getElementById('execution-output');
-        if (!output) return;
+    buildRecoveryContent(data) {
+        const r = data.result;
+        const diagnosis = data.diagnosis;
+        let html = '';
 
-        // Create button container
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'recover-confirm-buttons';
-        btnContainer.style.cssText = 'margin-top: 10px; display: flex; gap: 10px;';
+        // Summary section
+        html += '<div class="recover-section">';
+        html += '<h4>Summary</h4>';
+        html += '<div class="recover-summary">';
+        html += `<div class="recover-stat">
+            <div class="recover-stat-value ${r.jobs_to_retry?.length > 0 ? 'warning' : ''}">${r.jobs_to_retry?.length || 0}</div>
+            <div class="recover-stat-label">Jobs to Retry</div>
+        </div>`;
+        html += `<div class="recover-stat">
+            <div class="recover-stat-value ${r.oom_fixed > 0 ? 'danger' : ''}">${r.oom_fixed || 0}</div>
+            <div class="recover-stat-label">OOM Fixes</div>
+        </div>`;
+        html += `<div class="recover-stat">
+            <div class="recover-stat-value ${r.timeout_fixed > 0 ? 'warning' : ''}">${r.timeout_fixed || 0}</div>
+            <div class="recover-stat-label">Timeout Fixes</div>
+        </div>`;
+        html += `<div class="recover-stat">
+            <div class="recover-stat-value">${r.other_failures || 0}</div>
+            <div class="recover-stat-label">Unknown Failures</div>
+        </div>`;
+        html += '</div></div>';
 
-        const confirmBtn = document.createElement('button');
-        confirmBtn.className = 'btn btn-success';
-        confirmBtn.textContent = 'Apply Recovery';
-        confirmBtn.onclick = () => this.executeRecovery(workflowId, btnContainer);
+        // Failed Jobs section
+        if (diagnosis?.failed_jobs?.length > 0) {
+            html += '<div class="recover-section">';
+            html += '<h4>Failed Jobs</h4>';
+            html += '<table class="recover-table">';
+            html += '<thead><tr><th>Job</th><th>Return Code</th><th>Reason</th><th>Details</th></tr></thead>';
+            html += '<tbody>';
+            for (const job of diagnosis.failed_jobs) {
+                let reason = '';
+                let details = '';
+                if (job.likely_oom) {
+                    reason = '<span style="color: var(--danger-color)">OOM</span>';
+                    details = job.oom_reason || '';
+                    if (job.peak_memory_formatted && job.peak_memory_formatted !== '0.0 MB') {
+                        details += ` (peak: ${job.peak_memory_formatted})`;
+                    }
+                } else if (job.likely_timeout) {
+                    reason = '<span style="color: var(--warning-color)">Timeout</span>';
+                    details = job.timeout_reason || '';
+                } else {
+                    reason = 'Unknown';
+                }
+                html += `<tr>
+                    <td><code>${this.escapeHtml(job.job_name)}</code></td>
+                    <td>${job.return_code}</td>
+                    <td>${reason}</td>
+                    <td>${this.escapeHtml(details)}</td>
+                </tr>`;
+            }
+            html += '</tbody></table></div>';
+        }
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'btn btn-secondary';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            this.appendExecutionOutput('\nRecovery cancelled.\n', 'info');
-            btnContainer.remove();
-        };
+        // Resource Adjustments section
+        if (r.adjustments?.length > 0) {
+            html += '<div class="recover-section">';
+            html += '<h4>Resource Adjustments</h4>';
+            html += '<table class="recover-table">';
+            html += '<thead><tr><th>Jobs</th><th>Memory</th><th>Runtime</th></tr></thead>';
+            html += '<tbody>';
+            for (const adj of r.adjustments) {
+                const jobNames = adj.job_names.slice(0, 3).map(n => this.escapeHtml(n)).join(', ');
+                const moreJobs = adj.job_names.length > 3 ? ` <em>(+${adj.job_names.length - 3} more)</em>` : '';
 
-        btnContainer.appendChild(confirmBtn);
-        btnContainer.appendChild(cancelBtn);
-        output.appendChild(btnContainer);
+                let memoryCell = '-';
+                if (adj.memory_adjusted) {
+                    memoryCell = `<div class="recover-adjustment">
+                        <code>${adj.original_memory}</code>
+                        <span class="arrow">→</span>
+                        <code>${adj.new_memory}</code>
+                    </div>`;
+                }
+
+                let runtimeCell = '-';
+                if (adj.runtime_adjusted) {
+                    runtimeCell = `<div class="recover-adjustment">
+                        <code>${adj.original_runtime}</code>
+                        <span class="arrow">→</span>
+                        <code>${adj.new_runtime}</code>
+                    </div>`;
+                }
+
+                html += `<tr>
+                    <td>${jobNames}${moreJobs}</td>
+                    <td>${memoryCell}</td>
+                    <td>${runtimeCell}</td>
+                </tr>`;
+            }
+            html += '</tbody></table></div>';
+        }
+
+        // Slurm Schedulers section
+        if (r.slurm_dry_run?.planned_schedulers?.length > 0) {
+            html += '<div class="recover-section">';
+            html += '<h4>Slurm Allocations to Create</h4>';
+            for (const sched of r.slurm_dry_run.planned_schedulers) {
+                html += `<div style="margin-bottom: 10px;"><strong>${this.escapeHtml(sched.name)}</strong>`;
+                html += ` <span style="color: var(--text-secondary)">(${sched.job_count} job(s), ${sched.num_allocations} allocation(s))</span></div>`;
+                html += '<div class="recover-slurm-info">';
+                html += `<div><span>Account:</span> <strong>${this.escapeHtml(sched.account || '-')}</strong></div>`;
+                html += `<div><span>Partition:</span> <strong>${this.escapeHtml(sched.partition || 'default')}</strong></div>`;
+                html += `<div><span>Walltime:</span> <strong>${this.escapeHtml(sched.walltime || '-')}</strong></div>`;
+                html += `<div><span>Memory:</span> <strong>${this.escapeHtml(sched.mem || '-')}</strong></div>`;
+                html += `<div><span>Nodes:</span> <strong>${sched.nodes || 1}</strong></div>`;
+                html += '</div>';
+            }
+            html += `<div style="margin-top: 12px; color: var(--text-secondary);">Total: ${r.slurm_dry_run.total_allocations} allocation(s) would be submitted</div>`;
+            html += '</div>';
+        }
+
+        // No recoverable jobs message
+        if (!r.jobs_to_retry || r.jobs_to_retry.length === 0) {
+            html += '<div class="recover-section">';
+            html += '<div class="recover-no-data">';
+            if (r.other_failures > 0) {
+                html += `${r.other_failures} job(s) failed with unknown causes. Use the CLI with --retry-unknown to retry these jobs.`;
+            } else {
+                html += 'No recoverable jobs found. The workflow may have completed successfully or all failures require manual intervention.';
+            }
+            html += '</div></div>';
+        }
+
+        return html;
     },
 
-    async executeRecovery(workflowId, btnContainer) {
-        // Remove the confirm buttons
-        if (btnContainer) btnContainer.remove();
+    async executeRecovery(workflowId) {
+        const content = document.getElementById('recover-content');
+        const footer = document.getElementById('recover-modal-footer');
 
-        this.appendExecutionOutput(`\nApplying recovery to workflow ${workflowId}...\n`, 'info');
+        // Show processing state
+        if (content) {
+            content.innerHTML = '<div class="placeholder-message">Applying recovery...</div>';
+        }
+        if (footer) {
+            footer.style.display = 'none';
+        }
 
         try {
             const response = await fetch('/api/cli/recover', {
@@ -402,36 +478,46 @@ Object.assign(TorcDashboard.prototype, {
             const result = await response.json();
 
             if (!result.success) {
-                this.appendExecutionOutput(`\nError: ${result.error || 'Recovery failed'}\n`, 'error');
+                content.innerHTML = `<div class="recover-error">Recovery failed: ${this.escapeHtml(result.error || 'Unknown error')}</div>`;
                 this.showToast('Recovery failed', 'error');
                 return;
             }
 
-            const data = result.data;
-            const r = data.result;
+            const r = result.data.result;
 
-            this.appendExecutionOutput(`\n✓ Recovery complete!\n`, 'success');
+            // Show success
+            let successHtml = '<div class="recover-section" style="border-color: var(--success-color);">';
+            successHtml += '<h4 style="color: var(--success-color);">✓ Recovery Complete</h4>';
+            successHtml += '<ul style="margin: 0; padding-left: 20px;">';
             if (r.oom_fixed > 0) {
-                this.appendExecutionOutput(`  • ${r.oom_fixed} job(s) had memory increased\n`, 'success');
+                successHtml += `<li>${r.oom_fixed} job(s) had memory increased</li>`;
             }
             if (r.timeout_fixed > 0) {
-                this.appendExecutionOutput(`  • ${r.timeout_fixed} job(s) had runtime increased\n`, 'success');
+                successHtml += `<li>${r.timeout_fixed} job(s) had runtime increased</li>`;
             }
             if (r.unknown_retried > 0) {
-                this.appendExecutionOutput(`  • ${r.unknown_retried} job(s) with unknown failures reset\n`, 'success');
+                successHtml += `<li>${r.unknown_retried} job(s) with unknown failures reset</li>`;
             }
-            if (r.jobs_to_retry && r.jobs_to_retry.length > 0) {
-                this.appendExecutionOutput(`  • Reset ${r.jobs_to_retry.length} job(s). Slurm schedulers regenerated and submitted.\n`, 'success');
+            if (r.jobs_to_retry?.length > 0) {
+                successHtml += `<li>Reset ${r.jobs_to_retry.length} job(s)</li>`;
+                successHtml += '<li>Slurm schedulers regenerated and submitted</li>';
             }
+            successHtml += '</ul></div>';
 
+            content.innerHTML = successHtml;
             this.showToast('Recovery complete', 'success');
 
             // Refresh workflow data
             this.loadWorkflows();
             this.loadWorkflowDetails(workflowId);
 
+            // Auto-close after a delay
+            setTimeout(() => {
+                this.hideModal('recover-modal');
+            }, 3000);
+
         } catch (error) {
-            this.appendExecutionOutput(`\nError: ${error.message}\n`, 'error');
+            content.innerHTML = `<div class="recover-error">Error: ${this.escapeHtml(error.message)}</div>`;
             this.showToast('Recovery failed', 'error');
         }
     },
