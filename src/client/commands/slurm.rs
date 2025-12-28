@@ -353,6 +353,11 @@ pub enum SlurmCommands {
         /// Show what would be created without making changes
         #[arg(long)]
         dry_run: bool,
+
+        /// Include specific job IDs in planning regardless of their status
+        /// (useful for recovery dry-run to include failed jobs)
+        #[arg(long, value_delimiter = ',')]
+        include_job_ids: Option<Vec<i64>>,
     },
 }
 
@@ -970,6 +975,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             output_dir,
             poll_interval,
             dry_run,
+            include_job_ids,
         } => {
             handle_regenerate(
                 config,
@@ -981,6 +987,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 output_dir,
                 *poll_interval,
                 *dry_run,
+                include_job_ids.as_deref(),
                 format,
             );
         }
@@ -2546,6 +2553,7 @@ fn handle_regenerate(
     output_dir: &PathBuf,
     poll_interval: i32,
     dry_run: bool,
+    include_job_ids: Option<&[i64]>,
     format: &str,
 ) {
     // Load HPC config and registry
@@ -2594,6 +2602,25 @@ fn handle_regenerate(
             Err(e) => {
                 print_error(&format!("listing {:?} jobs", status), &e);
                 std::process::exit(1);
+            }
+        }
+    }
+
+    // Include additional job IDs (e.g., failed jobs for recovery dry-run)
+    if let Some(job_ids) = include_job_ids {
+        let existing_ids: std::collections::HashSet<i64> =
+            pending_jobs.iter().filter_map(|j| j.id).collect();
+
+        for &job_id in job_ids {
+            if !existing_ids.contains(&job_id) {
+                match default_api::get_job(config, job_id) {
+                    Ok(job) => {
+                        pending_jobs.push(job);
+                    }
+                    Err(e) => {
+                        debug!("Could not fetch job {}: {:?}", job_id, e);
+                    }
+                }
             }
         }
     }

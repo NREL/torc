@@ -12,6 +12,7 @@ use std::process::Command;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::slurm::RegenerateDryRunResult;
 use crate::client::report_models::{ResourceUtilizationReport, ResultsReport};
 use crate::time_utils::duration_string_to_seconds;
 
@@ -254,84 +255,64 @@ pub fn recover_workflow(
             );
             info!("[DRY RUN] Would reinitialize workflow");
 
-            // Build planned scheduler previews from adjustments
-            let mut planned_schedulers = Vec::new();
-
+            // Get the real scheduler plan using slurm regenerate --dry-run --include-job-ids
             info!("[DRY RUN] Slurm schedulers that would be created:");
-            if result.adjustments.is_empty() {
-                // Jobs being retried without resource adjustments
-                info!(
-                    "  {} job(s) would be scheduled with existing resource requirements",
-                    result.jobs_to_retry.len()
-                );
-            } else {
-                // Build scheduler previews from adjustments
-                for adj in &result.adjustments {
-                    // Look up resource requirements to get full details
-                    let (cpus, gpus, runtime) = match default_api::get_resource_requirements(
-                        config,
-                        adj.resource_requirements_id,
-                    ) {
-                        Ok(rr) => (
-                            Some(rr.num_cpus),
-                            if rr.num_gpus > 0 {
-                                Some(rr.num_gpus)
-                            } else {
-                                None
-                            },
-                            Some(rr.runtime.clone()),
-                        ),
-                        Err(_) => (None, None, None),
-                    };
-
-                    // Use adjusted values if available, otherwise use original
-                    let memory = adj
-                        .new_memory
-                        .clone()
-                        .or_else(|| adj.original_memory.clone());
-                    let final_runtime = adj.new_runtime.clone().or(runtime);
-
-                    let preview = PlannedSchedulerPreview {
-                        resource_requirements_id: adj.resource_requirements_id,
-                        job_count: adj.job_ids.len(),
-                        job_ids: adj.job_ids.clone(),
-                        job_names: adj.job_names.clone(),
-                        memory,
-                        runtime: final_runtime.clone(),
-                        cpus,
-                        gpus,
-                    };
-
-                    // Log details
-                    let mem_str = preview.memory.as_deref().unwrap_or("(default)");
-                    let runtime_str = preview.runtime.as_deref().unwrap_or("(default)");
-                    let cpus_str = cpus.map(|c| format!(", cpus: {}", c)).unwrap_or_default();
-                    let gpus_str = gpus.map(|g| format!(", gpus: {}", g)).unwrap_or_default();
-
+            match get_scheduler_dry_run(args.workflow_id, &args.output_dir, &result.jobs_to_retry) {
+                Ok(dry_run_result) => {
+                    for sched in &dry_run_result.planned_schedulers {
+                        let deps = if sched.has_dependencies {
+                            " (deferred)"
+                        } else {
+                            ""
+                        };
+                        info!(
+                            "  {} - {} job(s), {} allocation(s){}",
+                            sched.name, sched.job_count, sched.num_allocations, deps
+                        );
+                        info!(
+                            "    Account: {}, Partition: {}, Walltime: {}, Nodes: {}, Mem: {}",
+                            sched.account,
+                            sched.partition.as_deref().unwrap_or("default"),
+                            sched.walltime,
+                            sched.nodes,
+                            sched.mem.as_deref().unwrap_or("default")
+                        );
+                    }
                     info!(
-                        "  RR {} - {} job(s): memory: {}, runtime: {}{}{}",
-                        adj.resource_requirements_id,
-                        adj.job_ids.len(),
-                        mem_str,
-                        runtime_str,
-                        cpus_str,
-                        gpus_str
+                        "[DRY RUN] Total: {} allocation(s) would be submitted",
+                        dry_run_result.total_allocations
                     );
-                    info!("    Jobs: {}", adj.job_names.join(", "));
 
-                    planned_schedulers.push(preview);
+                    // Convert to our PlannedSchedulerPreview format for the result
+                    let planned_schedulers: Vec<PlannedSchedulerPreview> = dry_run_result
+                        .planned_schedulers
+                        .iter()
+                        .map(|s| PlannedSchedulerPreview {
+                            resource_requirements_id: 0, // Not available from slurm regenerate
+                            job_count: s.job_count,
+                            job_ids: Vec::new(), // Not available from slurm regenerate
+                            job_names: s.job_names.clone(),
+                            memory: s.mem.clone(),
+                            runtime: Some(s.walltime.clone()),
+                            cpus: None, // Would need to parse from slurm scheduler
+                            gpus: None,
+                        })
+                        .collect();
+
+                    result.planned_schedulers = if planned_schedulers.is_empty() {
+                        None
+                    } else {
+                        Some(planned_schedulers)
+                    };
                 }
-                info!(
-                    "[DRY RUN] Would submit Slurm allocations for {} job(s)",
-                    result.jobs_to_retry.len()
-                );
+                Err(e) => {
+                    warn!("  Could not get scheduler preview: {}", e);
+                    info!(
+                        "[DRY RUN] Would submit Slurm allocations for {} job(s)",
+                        result.jobs_to_retry.len()
+                    );
+                }
             }
-
-            result.planned_schedulers = if planned_schedulers.is_empty() {
-                None
-            } else {
-                Some(planned_schedulers)
-            };
         }
         return Ok(result);
     }
@@ -1046,6 +1027,45 @@ pub fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), 
     }
 
     Ok(())
+}
+
+/// Get a dry-run preview of what schedulers would be created, including specific job IDs
+fn get_scheduler_dry_run(
+    workflow_id: i64,
+    output_dir: &Path,
+    job_ids: &[i64],
+) -> Result<RegenerateDryRunResult, String> {
+    // Build the --include-job-ids argument
+    let job_ids_str = job_ids
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let output = Command::new("torc")
+        .args([
+            "-f",
+            "json",
+            "slurm",
+            "regenerate",
+            &workflow_id.to_string(),
+            "--dry-run",
+            "--include-job-ids",
+            &job_ids_str,
+            "-o",
+            output_dir.to_str().unwrap_or("output"),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run slurm regenerate --dry-run: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("slurm regenerate --dry-run failed: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse slurm regenerate dry-run output: {}", e))
 }
 
 #[cfg(test)]
