@@ -12,6 +12,7 @@ use std::process::Command;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
+use crate::client::commands::slurm::RegenerateDryRunResult;
 use crate::client::report_models::{ResourceUtilizationReport, ResultsReport};
 use crate::time_utils::duration_string_to_seconds;
 
@@ -227,7 +228,39 @@ pub fn recover_workflow(
                 result.jobs_to_retry.len()
             );
             info!("[DRY RUN] Would reinitialize workflow");
-            info!("[DRY RUN] Would regenerate Slurm schedulers and submit");
+
+            // Get the scheduler plan using dry-run mode
+            info!("[DRY RUN] Slurm schedulers that would be created:");
+            match get_scheduler_dry_run(args.workflow_id, &args.output_dir) {
+                Ok(dry_run_result) => {
+                    for sched in &dry_run_result.planned_schedulers {
+                        let deps = if sched.has_dependencies {
+                            " (deferred)"
+                        } else {
+                            ""
+                        };
+                        info!(
+                            "  {} - {} job(s), {} allocation(s){}",
+                            sched.name, sched.job_count, sched.num_allocations, deps
+                        );
+                        info!(
+                            "    Account: {}, Partition: {}, Walltime: {}, Nodes: {}",
+                            sched.account,
+                            sched.partition.as_deref().unwrap_or("default"),
+                            sched.walltime,
+                            sched.nodes
+                        );
+                    }
+                    info!(
+                        "[DRY RUN] Total allocations: {}",
+                        dry_run_result.total_allocations
+                    );
+                }
+                Err(e) => {
+                    warn!("  Could not get scheduler preview: {}", e);
+                    info!("[DRY RUN] Would regenerate Slurm schedulers and submit");
+                }
+            }
         }
         return Ok(result);
     }
@@ -941,6 +974,35 @@ pub fn regenerate_and_submit(workflow_id: i64, output_dir: &Path) -> Result<(), 
     }
 
     Ok(())
+}
+
+/// Get a dry-run preview of what schedulers would be created
+fn get_scheduler_dry_run(
+    workflow_id: i64,
+    output_dir: &Path,
+) -> Result<RegenerateDryRunResult, String> {
+    let output = Command::new("torc")
+        .args([
+            "-f",
+            "json",
+            "slurm",
+            "regenerate",
+            &workflow_id.to_string(),
+            "--dry-run",
+            "-o",
+            output_dir.to_str().unwrap_or("output"),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to run slurm regenerate --dry-run: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("slurm regenerate --dry-run failed: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse slurm regenerate dry-run output: {}", e))
 }
 
 #[cfg(test)]

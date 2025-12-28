@@ -308,6 +308,10 @@ pub enum SlurmCommands {
         /// Overwrite existing schedulers in the workflow
         #[arg(long)]
         overwrite: bool,
+
+        /// Show what would be generated without writing to output
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Regenerate Slurm schedulers for an existing workflow based on pending jobs
     ///
@@ -345,6 +349,10 @@ pub enum SlurmCommands {
         /// Poll interval in seconds (used when submitting)
         #[arg(short, long, default_value = "60")]
         poll_interval: i32,
+
+        /// Show what would be created without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -939,6 +947,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             single_allocation,
             no_actions,
             overwrite,
+            dry_run,
         } => {
             handle_generate(
                 workflow_file,
@@ -948,6 +957,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 *single_allocation,
                 *no_actions,
                 *overwrite,
+                *dry_run,
                 format,
             );
         }
@@ -959,6 +969,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             submit,
             output_dir,
             poll_interval,
+            dry_run,
         } => {
             handle_regenerate(
                 config,
@@ -969,6 +980,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 *submit,
                 output_dir,
                 *poll_interval,
+                *dry_run,
                 format,
             );
         }
@@ -2274,6 +2286,7 @@ fn handle_generate(
     single_allocation: bool,
     no_actions: bool,
     force: bool,
+    dry_run: bool,
     format: &str,
 ) {
     // Load HPC config and registry
@@ -2324,6 +2337,69 @@ fn handle_generate(
             std::process::exit(1);
         }
     };
+
+    // In dry run mode, show what would be generated without writing to output
+    if dry_run {
+        #[derive(Serialize)]
+        struct GenerateDryRunResult<'a> {
+            dry_run: bool,
+            scheduler_count: usize,
+            action_count: usize,
+            profile_name: &'a str,
+            profile_display_name: &'a str,
+            slurm_schedulers: &'a Option<Vec<crate::client::workflow_spec::SlurmSchedulerSpec>>,
+            actions: &'a Option<Vec<crate::client::workflow_spec::WorkflowActionSpec>>,
+            warnings: &'a [String],
+        }
+
+        let dry_run_result = GenerateDryRunResult {
+            dry_run: true,
+            scheduler_count: result.scheduler_count,
+            action_count: result.action_count,
+            profile_name: &profile.name,
+            profile_display_name: &profile.display_name,
+            slurm_schedulers: &spec.slurm_schedulers,
+            actions: &spec.actions,
+            warnings: &result.warnings,
+        };
+
+        if format == "json" {
+            print_json(&dry_run_result, "dry run result");
+        } else {
+            println!("[DRY RUN] Would generate the following Slurm schedulers:");
+            println!();
+            if let Some(schedulers) = &spec.slurm_schedulers {
+                for sched in schedulers {
+                    println!(
+                        "  Scheduler: {} (account: {}, partition: {}, walltime: {}, nodes: {})",
+                        sched.name.as_deref().unwrap_or("unnamed"),
+                        sched.account,
+                        sched.partition.as_deref().unwrap_or("default"),
+                        sched.walltime,
+                        sched.nodes
+                    );
+                }
+            }
+            if !no_actions {
+                println!();
+                println!(
+                    "[DRY RUN] Would add {} workflow action(s)",
+                    result.action_count
+                );
+            }
+            println!();
+            println!("Profile: {} ({})", profile.display_name, profile.name);
+
+            if !result.warnings.is_empty() {
+                println!();
+                println!("Warnings:");
+                for warning in &result.warnings {
+                    println!("  - {}", warning);
+                }
+            }
+        }
+        return;
+    }
 
     // Determine output format: use output file extension if provided, otherwise match input format
     let format_ext = if let Some(out_path) = output {
@@ -2412,6 +2488,35 @@ pub struct RegenerateResult {
     pub submitted: bool,
 }
 
+/// Information about a planned scheduler (for dry run output)
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlannedSchedulerInfo {
+    pub name: String,
+    pub account: String,
+    pub partition: Option<String>,
+    pub walltime: String,
+    pub mem: Option<String>,
+    pub nodes: i64,
+    pub num_allocations: i64,
+    pub job_count: usize,
+    pub job_names: Vec<String>,
+    pub has_dependencies: bool,
+}
+
+/// Dry run result for regenerate command
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RegenerateDryRunResult {
+    pub dry_run: bool,
+    pub workflow_id: i64,
+    pub pending_jobs: usize,
+    pub profile_name: String,
+    pub profile_display_name: String,
+    pub planned_schedulers: Vec<PlannedSchedulerInfo>,
+    pub total_allocations: i64,
+    pub would_submit: bool,
+    pub warnings: Vec<String>,
+}
+
 /// Information about a created scheduler
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SchedulerInfo {
@@ -2440,6 +2545,7 @@ fn handle_regenerate(
     submit: bool,
     output_dir: &PathBuf,
     poll_interval: i32,
+    dry_run: bool,
     format: &str,
 ) {
     // Load HPC config and registry
@@ -2667,6 +2773,84 @@ fn handle_regenerate(
             println!("No pending jobs with resource requirements found");
             for warning in &warnings {
                 println!("  Warning: {}", warning);
+            }
+        }
+        return;
+    }
+
+    // In dry run mode, show what would be created without making changes
+    if dry_run {
+        // Build planned scheduler info without IDs (since nothing is created)
+        let planned_schedulers: Vec<PlannedSchedulerInfo> = plan
+            .schedulers
+            .iter()
+            .map(|p| PlannedSchedulerInfo {
+                name: p.name.clone(),
+                account: p.account.clone(),
+                partition: p.partition.clone(),
+                walltime: p.walltime.clone(),
+                mem: p.mem.clone(),
+                nodes: p.nodes,
+                num_allocations: p.num_allocations,
+                job_count: p.job_count,
+                job_names: p.job_names.clone(),
+                has_dependencies: p.has_dependencies,
+            })
+            .collect();
+
+        let total_allocations: i64 = plan.schedulers.iter().map(|p| p.num_allocations).sum();
+
+        let dry_run_result = RegenerateDryRunResult {
+            dry_run: true,
+            workflow_id,
+            pending_jobs: pending_jobs.len(),
+            profile_name: profile.name.clone(),
+            profile_display_name: profile.display_name.clone(),
+            planned_schedulers,
+            total_allocations,
+            would_submit: submit,
+            warnings: warnings.clone(),
+        };
+
+        if format == "json" {
+            print_json(&dry_run_result, "dry run result");
+        } else {
+            println!("[DRY RUN] Would create the following Slurm schedulers:");
+            println!();
+            for sched in &dry_run_result.planned_schedulers {
+                let deps = if sched.has_dependencies {
+                    " (deferred - has dependencies)"
+                } else {
+                    ""
+                };
+                println!(
+                    "  {} - {} job(s), {} allocation(s){}",
+                    sched.name, sched.job_count, sched.num_allocations, deps
+                );
+                println!(
+                    "    Account: {}, Partition: {}, Walltime: {}, Nodes: {}",
+                    sched.account,
+                    sched.partition.as_deref().unwrap_or("default"),
+                    sched.walltime,
+                    sched.nodes
+                );
+                if let Some(mem) = &sched.mem {
+                    println!("    Memory: {}", mem);
+                }
+            }
+            println!();
+            println!("Total allocations: {}", dry_run_result.total_allocations);
+            if submit {
+                println!("[DRY RUN] Would submit allocations immediately");
+            }
+            println!("Profile: {} ({})", profile.display_name, profile.name);
+
+            if !warnings.is_empty() {
+                println!();
+                println!("Warnings:");
+                for warning in &warnings {
+                    println!("  - {}", warning);
+                }
             }
         }
         return;
