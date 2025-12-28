@@ -770,11 +770,13 @@ pub fn apply_recovery_heuristics(
                         memory_multiplier
                     );
                     debug!("    Jobs: {:?}", adjustment.job_names);
-                } else {
+                } else if let (Some(job_id), Some(job_name)) =
+                    (adjustment.job_ids.first(), adjustment.job_names.first())
+                {
                     info!(
                         "  Job {} ({}): OOM detected, peak usage {} -> allocating {} ({}x)",
-                        adjustment.job_ids[0],
-                        adjustment.job_names[0],
+                        job_id,
+                        job_name,
                         format_memory_bytes_short(max_peak),
                         new_memory,
                         memory_multiplier
@@ -810,13 +812,12 @@ pub fn apply_recovery_heuristics(
                     "  {} job(s) with RR {}: Timeout detected, increasing runtime {} -> {}",
                     job_count, rr_id, adjustment.current_runtime, new_runtime
                 );
-            } else {
+            } else if let (Some(job_id), Some(job_name)) =
+                (adjustment.job_ids.first(), adjustment.job_names.first())
+            {
                 info!(
                     "  Job {} ({}): Timeout detected, increasing runtime {} -> {}",
-                    adjustment.job_ids[0],
-                    adjustment.job_names[0],
-                    adjustment.current_runtime,
-                    new_runtime
+                    job_id, job_name, adjustment.current_runtime, new_runtime
                 );
             }
 

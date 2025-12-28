@@ -99,7 +99,7 @@ Object.assign(TorcDashboard.prototype, {
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-success" onclick="app.runWorkflow('${workflow.id}')" title="Run Locally">Run</button>
                         <button class="btn btn-sm btn-primary" onclick="app.submitWorkflow('${workflow.id}')" title="Submit to Scheduler">Submit</button>
-                                                <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
+                        <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewDAG('${workflow.id}')" title="View DAG">DAG</button>
                         <button class="btn btn-sm btn-danger" onclick="app.deleteWorkflow('${workflow.id}')" title="Delete">Del</button>
                     </div>
@@ -312,9 +312,11 @@ Object.assign(TorcDashboard.prototype, {
             // Build the formatted content
             content.innerHTML = this.buildRecoveryContent(data);
 
-            // Show/hide confirm button based on whether there are jobs to retry
-            if (data.result.jobs_to_retry && data.result.jobs_to_retry.length > 0) {
-                footer.style.display = 'flex';
+            // Always show footer (cancel button available), but only show confirm if jobs to retry
+            footer.style.display = 'flex';
+            const confirmBtn = document.getElementById('btn-confirm-recover');
+            if (confirmBtn) {
+                confirmBtn.style.display = (data.result.jobs_to_retry && data.result.jobs_to_retry.length > 0) ? 'inline-block' : 'none';
             }
 
         } catch (error) {
@@ -357,24 +359,28 @@ Object.assign(TorcDashboard.prototype, {
             html += '<thead><tr><th>Job</th><th>Return Code</th><th>Reason</th><th>Details</th></tr></thead>';
             html += '<tbody>';
             for (const job of diagnosis.failed_jobs) {
-                let reason = '';
+                let reasonText = '';
+                let reasonStyle = '';
                 let details = '';
                 if (job.likely_oom) {
-                    reason = '<span style="color: var(--danger-color)">OOM</span>';
+                    reasonText = 'OOM';
+                    reasonStyle = 'color: var(--danger-color)';
                     details = job.oom_reason || '';
                     if (job.peak_memory_formatted && job.peak_memory_formatted !== '0.0 MB') {
                         details += ` (peak: ${job.peak_memory_formatted})`;
                     }
                 } else if (job.likely_timeout) {
-                    reason = '<span style="color: var(--warning-color)">Timeout</span>';
+                    reasonText = 'Timeout';
+                    reasonStyle = 'color: var(--warning-color)';
                     details = job.timeout_reason || '';
                 } else {
-                    reason = 'Unknown';
+                    reasonText = 'Unknown';
                 }
+                const reasonStyleAttr = reasonStyle ? ` style="${reasonStyle}"` : '';
                 html += `<tr>
                     <td><code>${this.escapeHtml(job.job_name)}</code></td>
                     <td>${job.return_code}</td>
-                    <td>${reason}</td>
+                    <td${reasonStyleAttr}>${this.escapeHtml(reasonText)}</td>
                     <td>${this.escapeHtml(details)}</td>
                 </tr>`;
             }
@@ -390,7 +396,7 @@ Object.assign(TorcDashboard.prototype, {
             html += '<tbody>';
             for (const adj of r.adjustments) {
                 const jobNames = adj.job_names.slice(0, 3).map(n => this.escapeHtml(n)).join(', ');
-                const moreJobs = adj.job_names.length > 3 ? ` <em>(+${adj.job_names.length - 3} more)</em>` : '';
+                const moreJobsHtml = adj.job_names.length > 3 ? ` <em>(+${adj.job_names.length - 3} more)</em>` : '';
 
                 let memoryCell = '-';
                 if (adj.memory_adjusted) {
@@ -411,7 +417,7 @@ Object.assign(TorcDashboard.prototype, {
                 }
 
                 html += `<tr>
-                    <td>${jobNames}${moreJobs}</td>
+                    <td>${jobNames}${moreJobsHtml}</td>
                     <td>${memoryCell}</td>
                     <td>${runtimeCell}</td>
                 </tr>`;
