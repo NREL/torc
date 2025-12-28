@@ -99,7 +99,7 @@ Object.assign(TorcDashboard.prototype, {
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-success" onclick="app.runWorkflow('${workflow.id}')" title="Run Locally">Run</button>
                         <button class="btn btn-sm btn-primary" onclick="app.submitWorkflow('${workflow.id}')" title="Submit to Scheduler">Submit</button>
-                        <button class="btn btn-sm btn-warning" onclick="app.watchWorkflow('${workflow.id}')" title="Watch with Auto-Recovery">Watch</button>
+                        <button class="btn btn-sm btn-warning" onclick="app.recoverWorkflow('${workflow.id}')" title="Recover Failed Jobs">Recover</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewWorkflow('${workflow.id}')" title="View Details">View</button>
                         <button class="btn btn-sm btn-secondary" onclick="app.viewDAG('${workflow.id}')" title="View DAG">DAG</button>
                         <button class="btn btn-sm btn-danger" onclick="app.deleteWorkflow('${workflow.id}')" title="Delete">Del</button>
@@ -272,65 +272,169 @@ Object.assign(TorcDashboard.prototype, {
         };
     },
 
-    async watchWorkflow(workflowId) {
-        // Show the execution output panel
+    async recoverWorkflow(workflowId) {
+        // First run dry-run to show what would be done
         this.showExecutionPanel();
-        this.appendExecutionOutput(`Starting watch for workflow ${workflowId} (with auto-recovery)...\n`, 'info');
+        this.appendExecutionOutput(`Analyzing workflow ${workflowId} for recovery...\n`, 'info');
+        this.hideExecutionCancelButton();
 
-        // Create EventSource for streaming
-        const eventSource = new EventSource(`/api/cli/watch-stream?workflow_id=${workflowId}`);
-        this.currentEventSource = eventSource;
+        try {
+            const response = await fetch('/api/cli/recover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workflow_id: workflowId.toString(),
+                    dry_run: true
+                })
+            });
 
-        eventSource.addEventListener('start', (e) => {
-            this.appendExecutionOutput(`${e.data}\n`, 'info');
-        });
+            const result = await response.json();
 
-        eventSource.addEventListener('stdout', (e) => {
-            this.appendExecutionOutput(`${e.data}\n`, 'stdout');
-        });
-
-        eventSource.addEventListener('stderr', (e) => {
-            this.appendExecutionOutput(`${e.data}\n`, 'stderr');
-        });
-
-        eventSource.addEventListener('status', (e) => {
-            // Status updates from periodic API polling - shown in a different color
-            this.appendExecutionOutput(`[Status] ${e.data}\n`, 'info');
-        });
-
-        eventSource.addEventListener('error', (e) => {
-            if (e.data) {
-                this.appendExecutionOutput(`Error: ${e.data}\n`, 'error');
-            }
-        });
-
-        eventSource.addEventListener('end', (e) => {
-            const status = e.data;
-            if (status === 'success') {
-                this.appendExecutionOutput(`\n✓ Watch completed - workflow finished successfully\n`, 'success');
-                this.showToast('Workflow watch completed', 'success');
-            } else {
-                this.appendExecutionOutput(`\n✗ Watch ${status}\n`, 'error');
-                this.showToast(`Watch ${status}`, 'error');
-            }
-            eventSource.close();
-            this.currentEventSource = null;
-            this.hideExecutionCancelButton();
-            // Refresh workflow details
-            this.loadWorkflows();
-            this.loadWorkflowDetails(workflowId);
-        });
-
-        eventSource.onerror = (e) => {
-            if (eventSource.readyState === EventSource.CLOSED) {
-                // Normal close
+            if (!result.success) {
+                this.appendExecutionOutput(`\nError: ${result.error || 'Recovery check failed'}\n`, 'error');
+                this.showToast('Recovery check failed', 'error');
                 return;
             }
-            this.appendExecutionOutput(`\nConnection error\n`, 'error');
-            eventSource.close();
-            this.currentEventSource = null;
-            this.hideExecutionCancelButton();
+
+            // Display dry-run results
+            const data = result.data;
+            if (!data || !data.result) {
+                this.appendExecutionOutput(`\nNo recovery data available.\n`, 'error');
+                return;
+            }
+
+            const r = data.result;
+            this.appendExecutionOutput(`\n[DRY RUN] Recovery Analysis for Workflow ${workflowId}\n`, 'info');
+            this.appendExecutionOutput(`${'─'.repeat(50)}\n`, 'info');
+
+            if (r.jobs_to_retry && r.jobs_to_retry.length > 0) {
+                this.appendExecutionOutput(`\nJobs to retry: ${r.jobs_to_retry.length}\n`, 'stdout');
+
+                if (r.oom_fixed > 0) {
+                    this.appendExecutionOutput(`  • ${r.oom_fixed} job(s) would have memory increased\n`, 'stdout');
+                }
+                if (r.timeout_fixed > 0) {
+                    this.appendExecutionOutput(`  • ${r.timeout_fixed} job(s) would have runtime increased\n`, 'stdout');
+                }
+                if (r.unknown_retried > 0) {
+                    this.appendExecutionOutput(`  • ${r.unknown_retried} job(s) with unknown failures would be reset\n`, 'stdout');
+                }
+
+                // Show detailed adjustments if available
+                if (r.adjustments && r.adjustments.length > 0) {
+                    this.appendExecutionOutput(`\nResource Adjustments:\n`, 'info');
+                    for (const adj of r.adjustments) {
+                        const jobNames = adj.job_names.slice(0, 3).join(', ');
+                        const moreJobs = adj.job_names.length > 3 ? ` (+${adj.job_names.length - 3} more)` : '';
+                        this.appendExecutionOutput(`  RR #${adj.resource_requirements_id}: ${jobNames}${moreJobs}\n`, 'stdout');
+                        if (adj.memory_adjusted) {
+                            this.appendExecutionOutput(`    Memory: ${adj.original_memory} → ${adj.new_memory}\n`, 'stdout');
+                        }
+                        if (adj.runtime_adjusted) {
+                            this.appendExecutionOutput(`    Runtime: ${adj.original_runtime} → ${adj.new_runtime}\n`, 'stdout');
+                        }
+                    }
+                }
+
+                this.appendExecutionOutput(`\n${'─'.repeat(50)}\n`, 'info');
+                this.appendExecutionOutput(`Would reset ${r.jobs_to_retry.length} job(s) and regenerate Slurm schedulers.\n`, 'info');
+
+                // Show confirm/cancel buttons
+                this.appendExecutionOutput(`\n`, 'stdout');
+                this.showRecoverConfirmButtons(workflowId);
+            } else {
+                if (r.other_failures > 0) {
+                    this.appendExecutionOutput(`\n${r.other_failures} job(s) failed with unknown causes.\n`, 'stderr');
+                    this.appendExecutionOutput(`Use --retry-unknown flag to retry these jobs.\n`, 'info');
+                } else {
+                    this.appendExecutionOutput(`\nNo recoverable jobs found.\n`, 'info');
+                }
+            }
+
+        } catch (error) {
+            this.appendExecutionOutput(`\nError: ${error.message}\n`, 'error');
+            this.showToast('Recovery check failed', 'error');
+        }
+    },
+
+    showRecoverConfirmButtons(workflowId) {
+        const output = document.getElementById('execution-output');
+        if (!output) return;
+
+        // Create button container
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'recover-confirm-buttons';
+        btnContainer.style.cssText = 'margin-top: 10px; display: flex; gap: 10px;';
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'btn btn-success';
+        confirmBtn.textContent = 'Apply Recovery';
+        confirmBtn.onclick = () => this.executeRecovery(workflowId, btnContainer);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            this.appendExecutionOutput('\nRecovery cancelled.\n', 'info');
+            btnContainer.remove();
         };
+
+        btnContainer.appendChild(confirmBtn);
+        btnContainer.appendChild(cancelBtn);
+        output.appendChild(btnContainer);
+    },
+
+    async executeRecovery(workflowId, btnContainer) {
+        // Remove the confirm buttons
+        if (btnContainer) btnContainer.remove();
+
+        this.appendExecutionOutput(`\nApplying recovery to workflow ${workflowId}...\n`, 'info');
+
+        try {
+            const response = await fetch('/api/cli/recover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workflow_id: workflowId.toString(),
+                    dry_run: false
+                })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                this.appendExecutionOutput(`\nError: ${result.error || 'Recovery failed'}\n`, 'error');
+                this.showToast('Recovery failed', 'error');
+                return;
+            }
+
+            const data = result.data;
+            const r = data.result;
+
+            this.appendExecutionOutput(`\n✓ Recovery complete!\n`, 'success');
+            if (r.oom_fixed > 0) {
+                this.appendExecutionOutput(`  • ${r.oom_fixed} job(s) had memory increased\n`, 'success');
+            }
+            if (r.timeout_fixed > 0) {
+                this.appendExecutionOutput(`  • ${r.timeout_fixed} job(s) had runtime increased\n`, 'success');
+            }
+            if (r.unknown_retried > 0) {
+                this.appendExecutionOutput(`  • ${r.unknown_retried} job(s) with unknown failures reset\n`, 'success');
+            }
+            if (r.jobs_to_retry && r.jobs_to_retry.length > 0) {
+                this.appendExecutionOutput(`  • Reset ${r.jobs_to_retry.length} job(s). Slurm schedulers regenerated and submitted.\n`, 'success');
+            }
+
+            this.showToast('Recovery complete', 'success');
+
+            // Refresh workflow data
+            this.loadWorkflows();
+            this.loadWorkflowDetails(workflowId);
+
+        } catch (error) {
+            this.appendExecutionOutput(`\nError: ${error.message}\n`, 'error');
+            this.showToast('Recovery failed', 'error');
+        }
     },
 
     showExecutionPanel() {
