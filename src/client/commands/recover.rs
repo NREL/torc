@@ -37,6 +37,9 @@ pub struct RecoveryResult {
     /// Detailed resource adjustments (for JSON output)
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub adjustments: Vec<ResourceAdjustmentReport>,
+    /// Planned schedulers (only in dry-run mode)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub planned_schedulers: Option<Vec<PlannedSchedulerPreview>>,
 }
 
 /// Detailed report of a resource adjustment for JSON output
@@ -80,6 +83,31 @@ pub struct RecoveryReport {
     /// The diagnosis data (failed jobs info)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diagnosis: Option<ResourceUtilizationReport>,
+}
+
+/// Preview of a scheduler that would be created during recovery
+#[derive(Debug, Clone, Serialize)]
+pub struct PlannedSchedulerPreview {
+    /// Resource requirements ID
+    pub resource_requirements_id: i64,
+    /// Number of jobs using this scheduler
+    pub job_count: usize,
+    /// Job IDs
+    pub job_ids: Vec<i64>,
+    /// Job names
+    pub job_names: Vec<String>,
+    /// Memory allocation (after adjustment)
+    pub memory: Option<String>,
+    /// Runtime/walltime (after adjustment)
+    pub runtime: Option<String>,
+    /// Number of CPUs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpus: Option<i64>,
+    /// Number of GPUs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gpus: Option<i64>,
+    /// Number of allocations that would be submitted
+    pub num_allocations: usize,
 }
 
 /// Information about Slurm logs for a job
@@ -228,8 +256,9 @@ pub fn recover_workflow(
             );
             info!("[DRY RUN] Would reinitialize workflow");
 
-            // Show scheduler preview based on jobs that would be retried
-            // Group by resource requirements (each RR group becomes one scheduler)
+            // Build planned scheduler previews from adjustments
+            let mut planned_schedulers = Vec::new();
+
             info!("[DRY RUN] Slurm schedulers that would be created:");
             if result.adjustments.is_empty() {
                 // Jobs being retried without resource adjustments
@@ -238,40 +267,74 @@ pub fn recover_workflow(
                     result.jobs_to_retry.len()
                 );
             } else {
-                // Show schedulers based on resource requirement groups
+                // Build scheduler previews from adjustments
                 for adj in &result.adjustments {
-                    let mem_info = if let Some(ref new_mem) = adj.new_memory {
-                        format!("memory: {}", new_mem)
-                    } else if let Some(ref orig_mem) = adj.original_memory {
-                        format!("memory: {}", orig_mem)
-                    } else {
-                        "memory: (default)".to_string()
+                    // Look up resource requirements to get full details
+                    let (cpus, gpus, runtime) = match default_api::get_resource_requirements(
+                        config,
+                        adj.resource_requirements_id,
+                    ) {
+                        Ok(rr) => (
+                            Some(rr.num_cpus),
+                            if rr.num_gpus > 0 {
+                                Some(rr.num_gpus)
+                            } else {
+                                None
+                            },
+                            Some(rr.runtime.clone()),
+                        ),
+                        Err(_) => (None, None, None),
                     };
-                    let runtime_info = if let Some(ref new_rt) = adj.new_runtime {
-                        format!("runtime: {}", new_rt)
-                    } else if let Some(ref orig_rt) = adj.original_runtime {
-                        format!("runtime: {}", orig_rt)
-                    } else {
-                        String::new()
+
+                    // Use adjusted values if available, otherwise use original
+                    let memory = adj
+                        .new_memory
+                        .clone()
+                        .or_else(|| adj.original_memory.clone());
+                    let final_runtime = adj.new_runtime.clone().or(runtime);
+
+                    let preview = PlannedSchedulerPreview {
+                        resource_requirements_id: adj.resource_requirements_id,
+                        job_count: adj.job_ids.len(),
+                        job_ids: adj.job_ids.clone(),
+                        job_names: adj.job_names.clone(),
+                        memory,
+                        runtime: final_runtime.clone(),
+                        cpus,
+                        gpus,
+                        num_allocations: adj.job_ids.len(),
                     };
-                    let resource_info = if runtime_info.is_empty() {
-                        mem_info
-                    } else {
-                        format!("{}, {}", mem_info, runtime_info)
-                    };
+
+                    // Log details
+                    let mem_str = preview.memory.as_deref().unwrap_or("(default)");
+                    let runtime_str = preview.runtime.as_deref().unwrap_or("(default)");
+                    let cpus_str = cpus.map(|c| format!(", cpus: {}", c)).unwrap_or_default();
+                    let gpus_str = gpus.map(|g| format!(", gpus: {}", g)).unwrap_or_default();
+
                     info!(
-                        "  RR {} - {} job(s): {}",
+                        "  RR {} - {} job(s): memory: {}, runtime: {}{}{}",
                         adj.resource_requirements_id,
                         adj.job_ids.len(),
-                        resource_info
+                        mem_str,
+                        runtime_str,
+                        cpus_str,
+                        gpus_str
                     );
                     info!("    Jobs: {}", adj.job_names.join(", "));
+
+                    planned_schedulers.push(preview);
                 }
                 info!(
                     "[DRY RUN] Total: {} allocation(s) would be submitted",
                     result.jobs_to_retry.len()
                 );
             }
+
+            result.planned_schedulers = if planned_schedulers.is_empty() {
+                None
+            } else {
+                Some(planned_schedulers)
+            };
         }
         return Ok(result);
     }
@@ -835,6 +898,7 @@ pub fn apply_recovery_heuristics(
         other_failures,
         jobs_to_retry,
         adjustments: adjustment_reports,
+        planned_schedulers: None, // Set in recover_workflow dry_run block
     })
 }
 
