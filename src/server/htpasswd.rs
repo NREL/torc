@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 /// Represents an htpasswd file with user credentials
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct HtpasswdFile {
     /// Map of username to bcrypt password hash
     users: HashMap<String, String>,
@@ -137,7 +137,7 @@ mod tests {
             file,
             "user2:$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
         )?;
-        writeln!(file, "")?; // Empty line
+        writeln!(file)?; // Empty line
         writeln!(
             file,
             "user3:$2y$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"

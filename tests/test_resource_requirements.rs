@@ -235,7 +235,7 @@ fn test_resource_requirements_list_pagination(start_server: &ServerProcess) {
         "Should respect limit parameter"
     );
     assert!(
-        requirements_array.len() >= 1,
+        !requirements_array.is_empty(),
         "Should have at least one requirement"
     );
 
@@ -259,7 +259,7 @@ fn test_resource_requirements_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        requirements_with_offset.len() >= 1,
+        !requirements_with_offset.is_empty(),
         "Should have requirements with offset"
     );
 }
@@ -549,10 +549,12 @@ fn test_resource_requirements_memory_formats(start_server: &ServerProcess) {
             memory_format,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
-            "Failed to create requirement with memory format {}",
-            memory_format
-        ));
+        let json_output = run_cli_with_json(&args, start_server, None).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create requirement with memory format {}",
+                memory_format
+            )
+        });
 
         assert_eq!(json_output.get("memory").unwrap(), &json!(memory_format));
     }
@@ -586,10 +588,12 @@ fn test_resource_requirements_runtime_formats(start_server: &ServerProcess) {
             runtime_format,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
-            "Failed to create requirement with runtime format {}",
-            runtime_format
-        ));
+        let json_output = run_cli_with_json(&args, start_server, None).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create requirement with runtime format {}",
+                runtime_format
+            )
+        });
 
         assert_eq!(json_output.get("runtime").unwrap(), &json!(runtime_format));
     }
@@ -630,10 +634,12 @@ fn test_resource_requirements_extreme_values(start_server: &ServerProcess) {
             runtime,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
-            "Failed to create requirement with extreme values for {}",
-            name
-        ));
+        let json_output = run_cli_with_json(&args, start_server, None).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create requirement with extreme values for {}",
+                name
+            )
+        });
 
         assert_eq!(json_output.get("name").unwrap(), &json!(name));
         assert_eq!(json_output.get("num_cpus").unwrap(), &json!(cpus));
@@ -768,7 +774,7 @@ fn test_resource_requirements_variations(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, None)
-            .expect(&format!("Failed to create requirement with name: {}", name));
+            .unwrap_or_else(|_| panic!("Failed to create requirement with name: {}", name));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(name));
     }

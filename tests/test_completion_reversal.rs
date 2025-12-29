@@ -1,6 +1,5 @@
 mod common;
 
-use chrono;
 use common::{ServerProcess, create_test_compute_node, create_test_workflow, start_server};
 use rstest::rstest;
 use serial_test::serial;
@@ -268,7 +267,7 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)
-            .expect(&format!("Failed to complete job {}", job_id));
+            .unwrap_or_else(|_| panic!("Failed to complete job {}", job_id));
     }
 
     // Verify all jobs are completed
@@ -285,8 +284,8 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
     // Since job1 failed and all other jobs depend on it (directly or indirectly),
     // they should all be reset to Uninitialized
     for job_id in [job1_id, job2_id, job3_id, job4_id] {
-        let job =
-            default_api::get_job(config, job_id).expect(&format!("Failed to get job {}", job_id));
+        let job = default_api::get_job(config, job_id)
+            .unwrap_or_else(|_| panic!("Failed to get job {}", job_id));
         assert_eq!(
             job.status.unwrap(),
             JobStatus::Uninitialized,
@@ -378,7 +377,7 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)
-            .expect(&format!("Failed to complete job {}", job_id));
+            .unwrap_or_else(|_| panic!("Failed to complete job {}", job_id));
     }
 
     // Reset failed jobs only

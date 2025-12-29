@@ -120,7 +120,7 @@ fn create_multi_stage_workflow(
 
     // Stage 2: work jobs (depend on preprocess via file)
     let mut work_jobs = Vec::new();
-    for i in 0..num_work_jobs {
+    for (i, work_output) in work_outputs.iter().enumerate() {
         let mut work = models::JobModel::new(
             workflow_id,
             format!("work_{}", i),
@@ -128,7 +128,7 @@ fn create_multi_stage_workflow(
         );
         work.resource_requirements_id = Some(rr_id);
         work.input_file_ids = Some(vec![prep_output.id.unwrap()]);
-        work.output_file_ids = Some(vec![work_outputs[i].id.unwrap()]);
+        work.output_file_ids = Some(vec![work_output.id.unwrap()]);
         let work = default_api::create_job(config, work).expect("Failed to create work job");
         work_jobs.push(work);
     }

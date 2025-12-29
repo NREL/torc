@@ -380,63 +380,48 @@ impl std::str::FromStr for ComputeNodeModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "hostname" => intermediate_rep.hostname.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "pid" => intermediate_rep.pid.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "start_time" => intermediate_rep.start_time.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "duration_seconds" => intermediate_rep.duration_seconds.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "is_active" => intermediate_rep.is_active.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_cpus" => intermediate_rep.num_cpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "memory_gb" => intermediate_rep.memory_gb.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_gpus" => intermediate_rep.num_gpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_nodes" => intermediate_rep.num_nodes.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "time_limit" => intermediate_rep.time_limit.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_config_id" => intermediate_rep.scheduler_config_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_type" => intermediate_rep.compute_node_type.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler" => intermediate_rep.scheduler.push(
                         <serde_json::Value as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
@@ -715,19 +700,15 @@ impl std::str::FromStr for ComputeNodeSchedule {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "max_parallel_jobs" => intermediate_rep.max_parallel_jobs.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_jobs" => intermediate_rep.num_jobs.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_id" => intermediate_rep.scheduler_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "start_one_worker_per_node" => intermediate_rep.start_one_worker_per_node.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -993,31 +974,24 @@ impl std::str::FromStr for ComputeNodesResources {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_cpus" => intermediate_rep.num_cpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "memory_gb" => intermediate_rep.memory_gb.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_gpus" => intermediate_rep.num_gpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_nodes" => intermediate_rep.num_nodes.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "time_limit" => intermediate_rep.time_limit.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_config_id" => intermediate_rep.scheduler_config_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -1258,20 +1232,16 @@ impl std::str::FromStr for ErrorResponse {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "error" => intermediate_rep.error.push(
                         <serde_json::Value as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "errorNum" => intermediate_rep.error_num.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "errorMessage" => intermediate_rep.error_message.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "code" => intermediate_rep.code.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -1502,19 +1472,15 @@ impl std::str::FromStr for EventModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "timestamp" => intermediate_rep.timestamp.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "data" => intermediate_rep.data.push(
                         <serde_json::Value as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
@@ -1758,23 +1724,18 @@ impl std::str::FromStr for FileModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "path" => intermediate_rep.path.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "st_mtime" => intermediate_rep.st_mtime.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -1973,7 +1934,6 @@ impl std::str::FromStr for GetDotGraphResponse {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "graph" => intermediate_rep.graph.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -2212,27 +2172,21 @@ impl std::str::FromStr for GetReadyJobRequirementsResponse {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "num_jobs" => intermediate_rep.num_jobs.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_cpus" => intermediate_rep.num_cpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_gpus" => intermediate_rep.num_gpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "memory_gb" => intermediate_rep.memory_gb.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_num_nodes" => intermediate_rep.max_num_nodes.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_runtime" => intermediate_rep.max_runtime.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -2479,15 +2433,12 @@ impl std::str::FromStr for IsCompleteResponse {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "is_canceled" => intermediate_rep.is_canceled.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "is_complete" => intermediate_rep.is_complete.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "needs_to_run_completion_script" => {
                         intermediate_rep.needs_to_run_completion_script.push(
                             <bool as std::str::FromStr>::from_str(val)
@@ -2903,44 +2854,35 @@ impl std::str::FromStr for JobModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "command" => intermediate_rep.command.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "invocation_script" => intermediate_rep.invocation_script.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "status" => intermediate_rep.status.push(
                         <JobStatus as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "schedule_compute_nodes" => intermediate_rep.schedule_compute_nodes.push(
                         <models::ComputeNodeSchedule as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "cancel_on_blocking_job_failure" => {
                         intermediate_rep.cancel_on_blocking_job_failure.push(
                             <bool as std::str::FromStr>::from_str(val)
                                 .map_err(|x| x.to_string())?,
                         )
                     }
-                    #[allow(clippy::redundant_clone)]
                     "supports_termination" => intermediate_rep.supports_termination.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -2974,11 +2916,9 @@ impl std::str::FromStr for JobModel {
                                 .to_string(),
                         );
                     }
-                    #[allow(clippy::redundant_clone)]
                     "resource_requirements_id" => intermediate_rep.resource_requirements_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_id" => intermediate_rep.scheduler_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -3804,15 +3744,10 @@ impl std::str::FromStr for ListComputeNodesResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListComputeNodesResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListComputeNodesResponse".to_string())
                 }
@@ -4069,23 +4004,18 @@ impl std::str::FromStr for ListEventsResponse {
                         "Parsing a container in this style is not supported in ListEventsResponse"
                             .to_string(),
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -4348,23 +4278,18 @@ impl std::str::FromStr for ListFilesResponse {
                         "Parsing a container in this style is not supported in ListFilesResponse"
                             .to_string(),
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -4627,23 +4552,18 @@ impl std::str::FromStr for ListJobsResponse {
                         "Parsing a container in this style is not supported in ListJobsResponse"
                             .to_string(),
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -4903,15 +4823,10 @@ impl std::str::FromStr for ListLocalSchedulersResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListLocalSchedulersResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListLocalSchedulersResponse".to_string())
                 }
@@ -5539,15 +5454,10 @@ impl std::str::FromStr for ListResourceRequirementsResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListResourceRequirementsResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListResourceRequirementsResponse".to_string())
                 }
@@ -5810,23 +5720,18 @@ impl std::str::FromStr for ListResultsResponse {
                         "Parsing a container in this style is not supported in ListResultsResponse"
                             .to_string(),
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -6086,15 +5991,10 @@ impl std::str::FromStr for ListScheduledComputeNodesResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListScheduledComputeNodesResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListScheduledComputeNodesResponse".to_string())
                 }
@@ -6354,15 +6254,10 @@ impl std::str::FromStr for ListSlurmSchedulersResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListSlurmSchedulersResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListSlurmSchedulersResponse".to_string())
                 }
@@ -6616,15 +6511,10 @@ impl std::str::FromStr for ListUserDataResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListUserDataResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListUserDataResponse".to_string())
                 }
@@ -6878,15 +6768,10 @@ impl std::str::FromStr for ListWorkflowsResponse {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "items" => return std::result::Result::Err("Parsing a container in this style is not supported in ListWorkflowsResponse".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "offset" => intermediate_rep.offset.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "max_limit" => intermediate_rep.max_limit.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "count" => intermediate_rep.count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "total_count" => intermediate_rep.total_count.push(<i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
-                    #[allow(clippy::redundant_clone)]
                     "has_more" => intermediate_rep.has_more.push(<bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ListWorkflowsResponse".to_string())
                 }
@@ -7134,23 +7019,18 @@ impl std::str::FromStr for LocalSchedulerModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "memory" => intermediate_rep.memory.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_cpus" => intermediate_rep.num_cpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -7361,7 +7241,6 @@ impl std::str::FromStr for ClaimJobsBasedOnResources {
                 #[allow(clippy::match_single_binding)]
                 match key {
                     "jobs" => return std::result::Result::Err("Parsing a container in this style is not supported in ClaimJobsBasedOnResources".to_string()),
-                    #[allow(clippy::redundant_clone)]
                     "reason" => intermediate_rep.reason.push(<String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?),
                     _ => return std::result::Result::Err("Unexpected key while parsing ClaimJobsBasedOnResources".to_string())
                 }
@@ -8127,35 +8006,27 @@ impl std::str::FromStr for ResourceRequirementsModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_cpus" => intermediate_rep.num_cpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_gpus" => intermediate_rep.num_gpus.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "num_nodes" => intermediate_rep.num_nodes.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "memory" => intermediate_rep.memory.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "runtime" => intermediate_rep.runtime.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -8482,39 +8353,30 @@ impl std::str::FromStr for ResultModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "job_id" => intermediate_rep.job_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "run_id" => intermediate_rep.run_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_id" => intermediate_rep.compute_node_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "return_code" => intermediate_rep.return_code.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "exec_time_minutes" => intermediate_rep.exec_time_minutes.push(
                         <f64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "completion_time" => intermediate_rep.completion_time.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "status" => intermediate_rep.status.push(
                         <JobStatus as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
@@ -8794,27 +8656,21 @@ impl std::str::FromStr for ScheduledComputeNodesModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_id" => intermediate_rep.scheduler_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_config_id" => intermediate_rep.scheduler_config_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "scheduler_type" => intermediate_rep.scheduler_type.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "status" => intermediate_rep.status.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -9155,55 +9011,42 @@ impl std::str::FromStr for SlurmSchedulerModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "account" => intermediate_rep.account.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "gres" => intermediate_rep.gres.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "mem" => intermediate_rep.mem.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "nodes" => intermediate_rep.nodes.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "ntasks_per_node" => intermediate_rep.ntasks_per_node.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "partition" => intermediate_rep.partition.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "qos" => intermediate_rep.qos.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "tmp" => intermediate_rep.tmp.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "walltime" => intermediate_rep.walltime.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "extra" => intermediate_rep.extra.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -9458,23 +9301,18 @@ impl std::str::FromStr for UserDataModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "workflow_id" => intermediate_rep.workflow_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "is_ephemeral" => intermediate_rep.is_ephemeral.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "data" => intermediate_rep.data.push(
                         <serde_json::Value as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
@@ -9822,63 +9660,51 @@ impl std::str::FromStr for WorkflowModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "name" => intermediate_rep.name.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "user" => intermediate_rep.user.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "description" => intermediate_rep.description.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "timestamp" => intermediate_rep.timestamp.push(
                         <String as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_expiration_buffer_seconds" => intermediate_rep
                         .compute_node_expiration_buffer_seconds
                         .push(
                             <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                         ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_wait_for_new_jobs_seconds" => intermediate_rep
                         .compute_node_wait_for_new_jobs_seconds
                         .push(
                             <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                         ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_ignore_workflow_completion" => intermediate_rep
                         .compute_node_ignore_workflow_completion
                         .push(
                             <bool as std::str::FromStr>::from_str(val)
                                 .map_err(|x| x.to_string())?,
                         ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_wait_for_healthy_database_minutes" => intermediate_rep
                         .compute_node_wait_for_healthy_database_minutes
                         .push(
                             <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                         ),
-                    #[allow(clippy::redundant_clone)]
                     "compute_node_min_time_for_new_jobs_seconds" => intermediate_rep
                         .compute_node_min_time_for_new_jobs_seconds
                         .push(
                             <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                         ),
-                    #[allow(clippy::redundant_clone)]
                     "jobs_sort_method" => intermediate_rep.jobs_sort_method.push(
                         <models::ClaimJobsSortMethod as std::str::FromStr>::from_str(val)
                             .map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "status_id" => intermediate_rep.status_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
@@ -10147,23 +9973,18 @@ impl std::str::FromStr for WorkflowStatusModel {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    #[allow(clippy::redundant_clone)]
                     "id" => intermediate_rep.id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "is_canceled" => intermediate_rep.is_canceled.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "is_archived" => intermediate_rep.is_archived.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "run_id" => intermediate_rep.run_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    #[allow(clippy::redundant_clone)]
                     "has_detected_need_to_run_completion_script" => intermediate_rep
                         .has_detected_need_to_run_completion_script
                         .push(

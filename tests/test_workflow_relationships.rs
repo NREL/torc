@@ -289,7 +289,7 @@ fn test_list_job_file_relationships_pagination(start_server: &ServerProcess) {
 
     assert_eq!(result_page1.total_count, 5, "Total count should be 5");
     assert_eq!(result_page1.count, 3, "First page should have 3 items");
-    assert_eq!(result_page1.has_more, true, "Should have more items");
+    assert!(result_page1.has_more, "Should have more items");
 
     // Get second page
     let result_page2 = default_api::list_job_file_relationships(
@@ -301,7 +301,7 @@ fn test_list_job_file_relationships_pagination(start_server: &ServerProcess) {
     .expect("Failed to list second page");
 
     assert_eq!(result_page2.count, 2, "Second page should have 2 items");
-    assert_eq!(result_page2.has_more, false, "Should not have more items");
+    assert!(!result_page2.has_more, "Should not have more items");
 }
 
 #[rstest]

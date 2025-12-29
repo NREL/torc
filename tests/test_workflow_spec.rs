@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 use common::{ServerProcess, start_server};
 use rstest::rstest;
-use serde_json;
 use tempfile::NamedTempFile;
 use torc::client::default_api;
 use torc::client::workflow_spec::{
@@ -260,13 +259,13 @@ fn test_from_json_file() {
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow =
-        WorkflowSpec::from_spec_file(&temp_file.path()).expect("Failed to read from JSON file");
+        WorkflowSpec::from_spec_file(temp_file.path()).expect("Failed to read from JSON file");
 
     assert_eq!(workflow.name, "file_test_workflow");
     assert_eq!(workflow.user, Some("file_user".to_string()));
@@ -281,9 +280,9 @@ fn test_from_json_file() {
 #[test]
 fn test_from_json_file_invalid_json() {
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), "{ invalid json }").expect("Failed to write temp file");
+    fs::write(temp_file.path(), "{ invalid json }").expect("Failed to write temp file");
 
-    let result = WorkflowSpec::from_spec_file(&temp_file.path());
+    let result = WorkflowSpec::from_spec_file(temp_file.path());
     assert!(result.is_err());
 }
 
@@ -297,12 +296,12 @@ fn test_from_json_file_missing_required_fields() {
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::from_spec_file(&temp_file.path());
+    let result = WorkflowSpec::from_spec_file(temp_file.path());
     assert!(result.is_err());
 }
 
@@ -321,13 +320,13 @@ fn test_empty_jobs_list() {
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow =
-        WorkflowSpec::from_spec_file(&temp_file.path()).expect("Failed to read from JSON file");
+        WorkflowSpec::from_spec_file(temp_file.path()).expect("Failed to read from JSON file");
 
     assert_eq!(workflow.jobs.len(), 0);
 }
@@ -476,14 +475,14 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -543,14 +542,14 @@ fn test_create_workflow_from_json_file_with_files(start_server: &ServerProcess) 
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -604,14 +603,14 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -660,14 +659,14 @@ fn test_create_workflow_from_json_file_duplicate_file_names(start_server: &Serve
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -712,14 +711,14 @@ fn test_create_workflow_from_json_file_missing_file_reference(start_server: &Ser
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -764,14 +763,14 @@ fn test_create_workflow_from_json_file_missing_job_dependency(start_server: &Ser
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         workflow_data["user"].as_str().unwrap(),
         false,
         false,
@@ -816,11 +815,11 @@ fn test_create_workflow_from_json5_file(start_server: &ServerProcess) {
     }"#;
 
     let temp_file = NamedTempFile::with_suffix(".json5").expect("Failed to create temp file");
-    fs::write(&temp_file.path(), workflow_data).expect("Failed to write temp file");
+    fs::write(temp_file.path(), workflow_data).expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "json5_user",
         false,
         false,
@@ -857,11 +856,11 @@ slurm_schedulers: null
 "#;
 
     let temp_file = NamedTempFile::with_suffix(".yaml").expect("Failed to create temp file");
-    fs::write(&temp_file.path(), workflow_data).expect("Failed to write temp file");
+    fs::write(temp_file.path(), workflow_data).expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "yaml_user",
         false,
         false,
@@ -898,11 +897,11 @@ slurm_schedulers: null
 "#;
 
     let temp_file = NamedTempFile::with_suffix(".yaml").expect("Failed to create temp file");
-    fs::write(&temp_file.path(), workflow_data).expect("Failed to write temp file");
+    fs::write(temp_file.path(), workflow_data).expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "yaml_user",
         false,
         false,
@@ -943,14 +942,14 @@ fn test_create_workflow_from_spec_auto_detect_json(start_server: &ServerProcess)
     // Create file without extension to test auto-detection
     let temp_file = NamedTempFile::with_suffix(".spec").expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "auto_user",
         false,
         false,
@@ -975,10 +974,10 @@ fn test_from_spec_file_json5_format() {
     }"#;
 
     let temp_file = NamedTempFile::with_suffix(".json5").expect("Failed to create temp file");
-    fs::write(&temp_file.path(), json5_content).expect("Failed to write temp file");
+    fs::write(temp_file.path(), json5_content).expect("Failed to write temp file");
 
     let spec =
-        WorkflowSpec::from_spec_file(&temp_file.path()).expect("Failed to parse JSON5 spec file");
+        WorkflowSpec::from_spec_file(temp_file.path()).expect("Failed to parse JSON5 spec file");
 
     assert_eq!(spec.name, "test_workflow");
     assert_eq!(spec.user, Some("test_user".to_string()));
@@ -1000,10 +999,10 @@ slurm_schedulers: null
 "#;
 
     let temp_file = NamedTempFile::with_suffix(".yaml").expect("Failed to create temp file");
-    fs::write(&temp_file.path(), yaml_content).expect("Failed to write temp file");
+    fs::write(temp_file.path(), yaml_content).expect("Failed to write temp file");
 
     let spec =
-        WorkflowSpec::from_spec_file(&temp_file.path()).expect("Failed to parse YAML spec file");
+        WorkflowSpec::from_spec_file(temp_file.path()).expect("Failed to parse YAML spec file");
 
     assert_eq!(spec.name, "test_workflow");
     assert_eq!(spec.user, Some("test_user".to_string()));
@@ -1395,14 +1394,14 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "rollback_user",
         false,
         false,
@@ -1481,14 +1480,14 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "regex_user",
         false,
         false,
@@ -1575,14 +1574,14 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "regex_user",
         false,
         false,
@@ -1662,14 +1661,14 @@ fn test_create_workflow_with_regex_user_data_dependencies(start_server: &ServerP
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "regex_user",
         false,
         false,
@@ -1752,14 +1751,14 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let workflow_id = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "regex_user",
         false,
         false,
@@ -1958,14 +1957,14 @@ fn test_scheduler_node_validation_fails_with_mismatched_nodes(start_server: &Ser
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "test_user",
         false,
         false, // skip_checks = false
@@ -2034,14 +2033,14 @@ fn test_scheduler_node_validation_passes_with_start_one_worker_per_node(
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "test_user",
         false,
         false, // skip_checks = false
@@ -2105,14 +2104,14 @@ fn test_scheduler_node_validation_passes_with_matching_nodes(start_server: &Serv
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "test_user",
         false,
         false, // skip_checks = false
@@ -2176,14 +2175,14 @@ fn test_scheduler_node_validation_skipped_with_skip_checks(start_server: &Server
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "test_user",
         false,
         true, // skip_checks = true
@@ -2238,14 +2237,14 @@ fn test_scheduler_node_validation_passes_with_single_node_scheduler(start_server
 
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
     let result = WorkflowSpec::create_workflow_from_spec(
         &start_server.config,
-        &temp_file.path(),
+        temp_file.path(),
         "test_user",
         false,
         false, // skip_checks = false
@@ -2285,12 +2284,12 @@ fn test_validate_spec_basic_workflow() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(result.valid, "Expected validation to pass");
     assert!(result.errors.is_empty(), "Expected no errors");
@@ -2326,12 +2325,12 @@ fn test_validate_spec_with_parameterization() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(result.valid, "Expected validation to pass");
     assert!(result.errors.is_empty(), "Expected no errors");
@@ -2367,12 +2366,12 @@ fn test_validate_spec_with_invalid_actions() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     assert!(!result.errors.is_empty(), "Expected errors");
@@ -2429,12 +2428,12 @@ fn test_validate_spec_with_scheduler_error() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     // Should fail validation with errors (matches create behavior with skip_checks=false)
     assert!(!result.valid, "Expected validation to fail");
@@ -2455,9 +2454,9 @@ fn test_validate_spec_with_invalid_file() {
         .suffix(".json")
         .tempfile()
         .expect("Failed to create temp file");
-    fs::write(&temp_file.path(), "not valid json {{{").expect("Failed to write temp file");
+    fs::write(temp_file.path(), "not valid json {{{").expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     assert!(!result.errors.is_empty(), "Expected errors");
@@ -2522,12 +2521,12 @@ fn test_validate_spec_complete_workflow() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(result.valid, "Expected validation to pass");
     assert_eq!(result.summary.job_count, 2);
@@ -2559,12 +2558,12 @@ fn test_validate_spec_duplicate_job_names() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2594,12 +2593,12 @@ fn test_validate_spec_duplicate_file_names() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2625,12 +2624,12 @@ fn test_validate_spec_nonexistent_dependency() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2657,12 +2656,12 @@ fn test_validate_spec_nonexistent_resource_requirements() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2689,12 +2688,12 @@ fn test_validate_spec_nonexistent_scheduler() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2721,12 +2720,12 @@ fn test_validate_spec_nonexistent_input_file() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2753,12 +2752,12 @@ fn test_validate_spec_circular_dependency() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2785,12 +2784,12 @@ fn test_validate_spec_invalid_regex() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2824,12 +2823,12 @@ fn test_validate_spec_action_nonexistent_job() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2863,12 +2862,12 @@ fn test_validate_spec_action_nonexistent_scheduler() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(!result.valid, "Expected validation to fail");
     let error_text = result.errors.join(" ");
@@ -2925,12 +2924,12 @@ fn test_validate_spec_heterogeneous_schedulers_warning() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     // Should be valid but with warnings
     assert!(result.valid, "Expected validation to pass");
@@ -2990,12 +2989,12 @@ fn test_validate_spec_no_warning_with_sort_method() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(result.valid, "Expected validation to pass");
     assert!(
@@ -3051,12 +3050,12 @@ fn test_validate_spec_no_warning_with_scheduler_assignments() {
         .tempfile()
         .expect("Failed to create temp file");
     fs::write(
-        &temp_file.path(),
+        temp_file.path(),
         serde_json::to_string_pretty(&workflow_data).unwrap(),
     )
     .expect("Failed to write temp file");
 
-    let result = WorkflowSpec::validate_spec(&temp_file.path());
+    let result = WorkflowSpec::validate_spec(temp_file.path());
 
     assert!(result.valid, "Expected validation to pass");
     assert!(
@@ -3653,10 +3652,10 @@ fn test_subgraph_workflow_generated_actions_have_correct_triggers() {
         let sched = job
             .scheduler
             .as_ref()
-            .expect(&format!("Job {} should have scheduler assigned", job.name));
+            .unwrap_or_else(|| panic!("Job {} should have scheduler assigned", job.name));
         let trigger = scheduler_triggers
             .get(sched)
-            .expect(&format!("Scheduler {} should have action", sched));
+            .unwrap_or_else(|| panic!("Scheduler {} should have action", sched));
 
         let expected_trigger = if job.name == "prep_a" || job.name == "prep_b" {
             "on_workflow_start"

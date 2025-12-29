@@ -6,7 +6,7 @@ use common::{
 use rstest::rstest;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use torc::client::default_api;
 use torc::models;
 
@@ -70,7 +70,7 @@ fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs
     check_diamond_workflow_init_job_statuses(config, &jobs2);
 }
 
-fn create_input_file(work_dir: &PathBuf) {
+fn create_input_file(work_dir: &Path) {
     let input_data = r#"{"data": "initial input", "value": 42}"#;
     fs::write(work_dir.join("f1.json"), input_data).expect("Failed to write f1.json");
 }
@@ -78,7 +78,7 @@ fn create_input_file(work_dir: &PathBuf) {
 fn verify_diamond_workflow_completion(
     config: &torc::client::Configuration,
     workflow_id: i64,
-    work_dir: &PathBuf,
+    work_dir: &Path,
 ) {
     let jobs = default_api::list_jobs(
         config,
@@ -289,14 +289,14 @@ fn check_diamond_workflow_init_job_statuses(
     let postprocess = jobs.get("postprocess").expect("postprocess job not found");
 
     let preprocess_post =
-        default_api::get_job(&config, preprocess.id.unwrap()).expect("Failed to get preprocess");
+        default_api::get_job(config, preprocess.id.unwrap()).expect("Failed to get preprocess");
     assert_eq!(preprocess_post.status.unwrap(), models::JobStatus::Ready);
-    let work1_post = default_api::get_job(&config, work1.id.unwrap()).expect("Failed to get work1");
+    let work1_post = default_api::get_job(config, work1.id.unwrap()).expect("Failed to get work1");
     assert_eq!(work1_post.status.unwrap(), models::JobStatus::Blocked);
-    let work2_post = default_api::get_job(&config, work2.id.unwrap()).expect("Failed to get work2");
+    let work2_post = default_api::get_job(config, work2.id.unwrap()).expect("Failed to get work2");
     assert_eq!(work2_post.status.unwrap(), models::JobStatus::Blocked);
     let postprocess_post =
-        default_api::get_job(&config, postprocess.id.unwrap()).expect("Failed to get postprocess");
+        default_api::get_job(config, postprocess.id.unwrap()).expect("Failed to get postprocess");
     assert_eq!(postprocess_post.status.unwrap(), models::JobStatus::Blocked);
 }
 

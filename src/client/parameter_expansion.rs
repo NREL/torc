@@ -460,8 +460,8 @@ mod tests {
 
     #[test]
     fn test_format_float() {
-        let value = ParameterValue::Float(3.14159);
-        assert_eq!(value.format(Some(".2f")), "3.14");
+        let value = ParameterValue::Float(1.23456);
+        assert_eq!(value.format(Some(".2f")), "1.23");
     }
 
     #[test]

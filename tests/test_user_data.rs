@@ -1,6 +1,5 @@
 mod common;
 
-use chrono;
 use common::{
     ServerProcess, create_test_compute_node, create_test_user_data, create_test_workflow,
     run_cli_with_json, start_server,
@@ -136,7 +135,7 @@ fn test_user_data_add_with_job_associations(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        producer_user_data_array.len() >= 1,
+        !producer_user_data_array.is_empty(),
         "Should find at least one user data associated with producer job"
     );
 
@@ -167,7 +166,7 @@ fn test_user_data_add_with_job_associations(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        consumer_user_data_array.len() >= 1,
+        !consumer_user_data_array.is_empty(),
         "Should find at least one user data associated with consumer job"
     );
 
@@ -280,7 +279,7 @@ fn test_user_data_list_with_filters(start_server: &ServerProcess) {
         .expect("Failed to run user-data list with ephemeral filter");
 
     let user_data_array = json_output.get("user_data").unwrap().as_array().unwrap();
-    assert!(user_data_array.len() >= 1);
+    assert!(!user_data_array.is_empty());
 
     // All results should be ephemeral
     for user_data in user_data_array {
@@ -304,7 +303,7 @@ fn test_user_data_list_with_filters(start_server: &ServerProcess) {
         .unwrap()
         .as_array()
         .unwrap();
-    assert!(filtered_array.len() >= 1);
+    assert!(!filtered_array.is_empty());
 
     // All results should have the filtered name
     for user_data in filtered_array {
@@ -345,7 +344,7 @@ fn test_user_data_list_pagination(start_server: &ServerProcess) {
     let user_data_array = json_output.get("user_data").unwrap().as_array().unwrap();
     assert!(user_data_array.len() <= 3, "Should respect limit parameter");
     assert!(
-        user_data_array.len() >= 1,
+        !user_data_array.is_empty(),
         "Should have at least one record"
     );
 
@@ -369,7 +368,7 @@ fn test_user_data_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        user_data_with_offset.len() >= 1,
+        !user_data_with_offset.is_empty(),
         "Should have user data with offset"
     );
 }

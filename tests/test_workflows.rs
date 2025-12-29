@@ -76,7 +76,7 @@ fn test_workflows_add_various_names(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
-            .expect(&format!("Failed to create workflow with name: {}", name));
+            .unwrap_or_else(|_| panic!("Failed to create workflow with name: {}", name));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(name));
         assert_eq!(json_output.get("user").unwrap(), &json!("test_user"));
@@ -164,7 +164,7 @@ fn test_workflows_list_pagination(start_server: &ServerProcess) {
     let workflows_array = json_output.as_array().unwrap();
     assert!(workflows_array.len() <= 4, "Should respect limit parameter");
     assert!(
-        workflows_array.len() >= 1,
+        !workflows_array.is_empty(),
         "Should have at least one workflow"
     );
 
@@ -177,7 +177,7 @@ fn test_workflows_list_pagination(start_server: &ServerProcess) {
 
     let workflows_with_offset = json_output_offset.as_array().unwrap();
     assert!(
-        workflows_with_offset.len() >= 1,
+        !workflows_with_offset.is_empty(),
         "Should have workflows with offset"
     );
 }
@@ -627,13 +627,12 @@ fn test_workflows_reset_status_depends_on_submitted_jobs(start_server: &ServerPr
     // Verify workflow status was reset
     let workflow_status = default_api::get_workflow_status(config, workflow_id)
         .expect("Failed to get workflow status");
-    assert_eq!(
-        workflow_status.is_canceled, false,
+    assert!(
+        !workflow_status.is_canceled,
         "Workflow should not be canceled after reset"
     );
-    assert_eq!(
-        workflow_status.is_archived.unwrap_or(false),
-        false,
+    assert!(
+        !workflow_status.is_archived.unwrap_or(false),
         "Workflow should not be archived after reset"
     );
 }
@@ -669,7 +668,7 @@ fn test_workflows_different_users(start_server: &ServerProcess) {
         .expect("Failed to list workflows for user1");
 
     let workflows_user1 = json_output_user1.as_array().unwrap();
-    assert!(workflows_user1.len() >= 1);
+    assert!(!workflows_user1.is_empty());
 
     // All workflows should belong to user1
     for workflow in workflows_user1 {
@@ -683,7 +682,7 @@ fn test_workflows_different_users(start_server: &ServerProcess) {
         .expect("Failed to list workflows for user2");
 
     let workflows_user2 = json_output_user2.as_array().unwrap();
-    assert!(workflows_user2.len() >= 1);
+    assert!(!workflows_user2.is_empty());
 
     // All workflows should belong to user2
     for workflow in workflows_user2 {
@@ -786,11 +785,13 @@ fn test_workflows_special_characters(start_server: &ServerProcess) {
             description,
         ];
 
-        let json_output =
-            run_cli_with_json(&args, start_server, Some("special_user")).expect(&format!(
-                "Failed to create workflow with special characters: {}",
-                test_name
-            ));
+        let json_output = run_cli_with_json(&args, start_server, Some("special_user"))
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to create workflow with special characters: {}",
+                    test_name
+                )
+            });
 
         assert_eq!(json_output.get("name").unwrap(), &json!(workflow_name));
         assert_eq!(json_output.get("description").unwrap(), &json!(description));
@@ -1080,9 +1081,8 @@ fn test_workflow_archive_and_unarchive(start_server: &ServerProcess) {
     // Get initial workflow status - should not be archived
     let initial_status = default_api::get_workflow_status(config, workflow_id)
         .expect("Failed to get initial workflow status");
-    assert_eq!(
-        initial_status.is_archived.unwrap_or(false),
-        false,
+    assert!(
+        !initial_status.is_archived.unwrap_or(false),
         "New workflow should not be archived"
     );
 
@@ -1105,9 +1105,8 @@ fn test_workflow_archive_and_unarchive(start_server: &ServerProcess) {
     // Verify workflow is archived
     let archived_status = default_api::get_workflow_status(config, workflow_id)
         .expect("Failed to get archived workflow status");
-    assert_eq!(
+    assert!(
         archived_status.is_archived.unwrap_or(false),
-        true,
         "Workflow should be archived"
     );
 
@@ -1132,9 +1131,8 @@ fn test_workflow_archive_and_unarchive(start_server: &ServerProcess) {
     // Verify workflow is no longer archived
     let unarchived_status = default_api::get_workflow_status(config, workflow_id)
         .expect("Failed to get unarchived workflow status");
-    assert_eq!(
-        unarchived_status.is_archived.unwrap_or(false),
-        false,
+    assert!(
+        !unarchived_status.is_archived.unwrap_or(false),
         "Workflow should not be archived after unarchive"
     );
 }
@@ -1371,9 +1369,8 @@ fn test_archive_multiple_workflows(start_server: &ServerProcess) {
     for workflow_id in &[id1, id2, id3] {
         let status = default_api::get_workflow_status(config, *workflow_id)
             .expect("Failed to get workflow status");
-        assert_eq!(
+        assert!(
             status.is_archived.unwrap_or(false),
-            true,
             "Workflow {} should be archived",
             workflow_id
         );

@@ -121,7 +121,6 @@ mod paths {
     pub(crate) static ID_COMPUTE_NODES_ID: usize = 2;
     lazy_static! {
         pub static ref REGEX_COMPUTE_NODES_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/compute_nodes/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for COMPUTE_NODES_ID");
     }
@@ -129,7 +128,6 @@ mod paths {
     pub(crate) static ID_EVENTS_ID: usize = 4;
     lazy_static! {
         pub static ref REGEX_EVENTS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/events/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for EVENTS_ID");
     }
@@ -137,7 +135,6 @@ mod paths {
     pub(crate) static ID_FILES_ID: usize = 6;
     lazy_static! {
         pub static ref REGEX_FILES_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/files/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for FILES_ID");
     }
@@ -145,36 +142,31 @@ mod paths {
     pub(crate) static ID_JOBS_ID: usize = 8;
     lazy_static! {
         pub static ref REGEX_JOBS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for JOBS_ID");
     }
     pub(crate) static ID_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID: usize = 9;
     lazy_static! {
         pub static ref REGEX_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/complete_job/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
+regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/complete_job/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
                 .expect("Unable to create regex for JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID");
     }
     pub(crate) static ID_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID: usize = 10;
     lazy_static! {
         pub static ref REGEX_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/manage_status_change/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
+regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/manage_status_change/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
                 .expect("Unable to create regex for JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID");
     }
     pub(crate) static ID_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID: usize = 11;
     lazy_static! {
         pub static ref REGEX_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/start_job/(?P<run_id>[^/?#]*)/(?P<compute_node_id>[^/?#]*)$")
+regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/start_job/(?P<run_id>[^/?#]*)/(?P<compute_node_id>[^/?#]*)$")
                 .expect("Unable to create regex for JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID");
     }
     pub(crate) static ID_LOCAL_SCHEDULERS: usize = 12;
     pub(crate) static ID_LOCAL_SCHEDULERS_ID: usize = 13;
     lazy_static! {
         pub static ref REGEX_LOCAL_SCHEDULERS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/local_schedulers/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for LOCAL_SCHEDULERS_ID");
     }
@@ -183,7 +175,6 @@ mod paths {
     pub(crate) static ID_RESOURCE_REQUIREMENTS_ID: usize = 16;
     lazy_static! {
         pub static ref REGEX_RESOURCE_REQUIREMENTS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/resource_requirements/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for RESOURCE_REQUIREMENTS_ID");
     }
@@ -191,7 +182,6 @@ mod paths {
     pub(crate) static ID_RESULTS_ID: usize = 18;
     lazy_static! {
         pub static ref REGEX_RESULTS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/results/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for RESULTS_ID");
     }
@@ -199,7 +189,6 @@ mod paths {
     pub(crate) static ID_SCHEDULED_COMPUTE_NODES_ID: usize = 20;
     lazy_static! {
         pub static ref REGEX_SCHEDULED_COMPUTE_NODES_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/scheduled_compute_nodes/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for SCHEDULED_COMPUTE_NODES_ID");
     }
@@ -207,7 +196,6 @@ mod paths {
     pub(crate) static ID_SLURM_SCHEDULERS_ID: usize = 22;
     lazy_static! {
         pub static ref REGEX_SLURM_SCHEDULERS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/slurm_schedulers/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for SLURM_SCHEDULERS_ID");
     }
@@ -215,7 +203,6 @@ mod paths {
     pub(crate) static ID_USER_DATA_ID: usize = 24;
     lazy_static! {
         pub static ref REGEX_USER_DATA_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/user_data/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for USER_DATA_ID");
     }
@@ -224,81 +211,68 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID: usize = 27;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)$")
                 .expect("Unable to create regex for WORKFLOWS_ID");
     }
     pub(crate) static ID_WORKFLOWS_ID_CANCEL: usize = 28;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_CANCEL: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/cancel$")
                 .expect("Unable to create regex for WORKFLOWS_ID_CANCEL");
     }
     pub(crate) static ID_WORKFLOWS_ID_DOT_GRAPH_NAME: usize = 29;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_DOT_GRAPH_NAME: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
-                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/dot_graph/(?P<name>[^/?#]*)$"
-            )
-            .expect("Unable to create regex for WORKFLOWS_ID_DOT_GRAPH_NAME");
+        pub static ref REGEX_WORKFLOWS_ID_DOT_GRAPH_NAME: regex::Regex = regex::Regex::new(
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/dot_graph/(?P<name>[^/?#]*)$"
+        )
+        .expect("Unable to create regex for WORKFLOWS_ID_DOT_GRAPH_NAME");
     }
     pub(crate) static ID_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP: usize = 30;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events_after_timestamp/(?P<timestamp>[^/?#]*)$")
+regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events_after_timestamp/(?P<timestamp>[^/?#]*)$")
                 .expect("Unable to create regex for WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP");
     }
     pub(crate) static ID_WORKFLOWS_ID_INITIALIZE_JOBS: usize = 31;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_INITIALIZE_JOBS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/initialize_jobs$")
                 .expect("Unable to create regex for WORKFLOWS_ID_INITIALIZE_JOBS");
     }
     pub(crate) static ID_WORKFLOWS_ID_IS_COMPLETE: usize = 32;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_IS_COMPLETE: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_complete$")
                 .expect("Unable to create regex for WORKFLOWS_ID_IS_COMPLETE");
     }
     pub(crate) static ID_WORKFLOWS_ID_IS_UNINITIALIZED: usize = 33;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_IS_UNINITIALIZED: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_uninitialized$")
                 .expect("Unable to create regex for WORKFLOWS_ID_IS_UNINITIALIZED");
     }
     pub(crate) static ID_WORKFLOWS_ID_JOB_IDS: usize = 34;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_JOB_IDS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_ids$")
                 .expect("Unable to create regex for WORKFLOWS_ID_JOB_IDS");
     }
     pub(crate) static ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP: usize = 35;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
-                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/latest_event_timestamp$"
-            )
-            .expect("Unable to create regex for WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP");
+        pub static ref REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP: regex::Regex = regex::Regex::new(
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/latest_event_timestamp$"
+        )
+        .expect("Unable to create regex for WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP");
     }
     pub(crate) static ID_WORKFLOWS_ID_MISSING_USER_DATA: usize = 36;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_MISSING_USER_DATA: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/missing_user_data$")
                 .expect("Unable to create regex for WORKFLOWS_ID_MISSING_USER_DATA");
     }
     pub(crate) static ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING: usize = 37;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/prepare_jobs_for_scheduling$"
             )
@@ -307,8 +281,7 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES: usize = 38;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_claim_jobs_based_on_resources: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
+regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_jobs_based_on_resources/(?P<limit>[^/?#]*)$"
             )
             .expect("Unable to create regex for WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES");
@@ -316,14 +289,12 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS: usize = 39;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_next_jobs$")
                 .expect("Unable to create regex for WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION");
     }
     pub(crate) static ID_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS: usize = 40;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/process_changed_job_inputs$"
             )
@@ -331,17 +302,14 @@ mod paths {
     }
     pub(crate) static ID_WORKFLOWS_ID_READY_JOB_REQUIREMENTS: usize = 41;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_READY_JOB_REQUIREMENTS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
-                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/ready_job_requirements$"
-            )
-            .expect("Unable to create regex for WORKFLOWS_ID_READY_JOB_REQUIREMENTS");
+        pub static ref REGEX_WORKFLOWS_ID_READY_JOB_REQUIREMENTS: regex::Regex = regex::Regex::new(
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/ready_job_requirements$"
+        )
+        .expect("Unable to create regex for WORKFLOWS_ID_READY_JOB_REQUIREMENTS");
     }
     pub(crate) static ID_WORKFLOWS_ID_REQUIRED_EXISTING_FILES: usize = 42;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_REQUIRED_EXISTING_FILES: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/required_existing_files$"
             )
@@ -350,44 +318,37 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID_RESET_JOB_STATUS: usize = 43;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_RESET_JOB_STATUS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_job_status$")
                 .expect("Unable to create regex for WORKFLOWS_ID_RESET_JOB_STATUS");
     }
     pub(crate) static ID_WORKFLOWS_ID_RESET_STATUS: usize = 44;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_RESET_STATUS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_status$")
                 .expect("Unable to create regex for WORKFLOWS_ID_RESET_STATUS");
     }
     pub(crate) static ID_WORKFLOWS_ID_STATUS: usize = 45;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_STATUS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/status$")
                 .expect("Unable to create regex for WORKFLOWS_ID_STATUS");
     }
     pub(crate) static ID_WORKFLOWS_ID_JOB_DEPENDENCIES: usize = 46;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_JOB_DEPENDENCIES: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_dependencies$")
                 .expect("Unable to create regex for WORKFLOWS_ID_JOB_DEPENDENCIES");
     }
     pub(crate) static ID_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS: usize = 47;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
-                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_file_relationships$"
-            )
-            .expect("Unable to create regex for WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS");
+        pub static ref REGEX_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS: regex::Regex = regex::Regex::new(
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_file_relationships$"
+        )
+        .expect("Unable to create regex for WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS");
     }
     pub(crate) static ID_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS: usize = 48;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_user_data_relationships$"
             )
@@ -396,21 +357,18 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID_ACTIONS: usize = 49;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$")
                 .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS");
     }
     pub(crate) static ID_WORKFLOWS_ID_ACTIONS_PENDING: usize = 50;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS_PENDING: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$")
                 .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS_PENDING");
     }
     pub(crate) static ID_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: usize = 51;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
             )
@@ -419,18 +377,15 @@ mod paths {
     pub(crate) static ID_WORKFLOWS_ID_REMOTE_WORKERS: usize = 52;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_REMOTE_WORKERS: regex::Regex =
-            #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers$")
                 .expect("Unable to create regex for WORKFLOWS_ID_REMOTE_WORKERS");
     }
     pub(crate) static ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER: usize = 53;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_REMOTE_WORKERS_WORKER: regex::Regex =
-            #[allow(clippy::invalid_regex)]
-            regex::Regex::new(
-                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers/(?P<worker>[^/?#]*)$"
-            )
-            .expect("Unable to create regex for WORKFLOWS_ID_REMOTE_WORKERS_WORKER");
+        pub static ref REGEX_WORKFLOWS_ID_REMOTE_WORKERS_WORKER: regex::Regex = regex::Regex::new(
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/remote_workers/(?P<worker>[^/?#]*)$"
+        )
+        .expect("Unable to create regex for WORKFLOWS_ID_REMOTE_WORKERS_WORKER");
     }
 }
 

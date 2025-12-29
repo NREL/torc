@@ -1,6 +1,5 @@
 mod common;
 
-use chrono;
 use common::{
     ServerProcess, create_test_compute_node, create_test_job, create_test_workflow,
     run_cli_with_json, start_server,
@@ -194,7 +193,7 @@ fn test_jobs_list_pagination(start_server: &ServerProcess) {
 
     let jobs_array = json_output.get("jobs").unwrap().as_array().unwrap();
     assert!(jobs_array.len() <= 3, "Should respect limit parameter");
-    assert!(jobs_array.len() >= 1, "Should have at least one job");
+    assert!(!jobs_array.is_empty(), "Should have at least one job");
 
     // Test with offset
     let args_with_offset = [
@@ -211,7 +210,7 @@ fn test_jobs_list_pagination(start_server: &ServerProcess) {
         .expect("Failed to run jobs list with offset");
 
     let jobs_with_offset = json_output_offset.get("jobs").unwrap().as_array().unwrap();
-    assert!(jobs_with_offset.len() >= 1, "Should have jobs with offset");
+    assert!(!jobs_with_offset.is_empty(), "Should have jobs with offset");
 }
 
 #[rstest]
@@ -258,7 +257,7 @@ fn test_jobs_list_sorting(start_server: &ServerProcess) {
     assert!(jobs_array_reverse.len() >= 3);
 
     // Verify sorting worked (first job should be different in regular vs reverse)
-    if jobs_array.len() >= 1 && jobs_array_reverse.len() >= 1 {
+    if !jobs_array.is_empty() && !jobs_array_reverse.is_empty() {
         let first_regular = jobs_array[0].get("name").unwrap().as_str().unwrap();
         let first_reverse = jobs_array_reverse[0].get("name").unwrap().as_str().unwrap();
         // In reverse sort, we should get different first elements (unless all names are the same)
@@ -518,20 +517,20 @@ fn test_jobs_complete_with_different_statuses(start_server: &ServerProcess) {
             0,   // return_code
             2.0, // exec_time_minutes
             chrono::Utc::now().to_rfc3339(),
-            status.clone(),
+            *status,
         );
 
         // Test the API complete_job function
         let completed_job = default_api::complete_job(
             config,
             job_id,
-            status.clone(),
+            *status,
             1, // run_id
             result_model,
         )
-        .expect(&format!("Failed to complete job with status {}", status));
+        .unwrap_or_else(|_| panic!("Failed to complete job with status {}", status));
 
-        assert_eq!(completed_job.status.unwrap(), status.clone());
+        assert_eq!(completed_job.status.unwrap(), *status);
     }
 }
 
@@ -573,21 +572,18 @@ fn test_jobs_complete_return_codes(start_server: &ServerProcess) {
             return_code as i64,
             1.0, // exec_time_minutes
             chrono::Utc::now().to_rfc3339(),
-            expected_status.clone(),
+            expected_status,
         );
 
         // Test the API complete_job function
         let completed_job = default_api::complete_job(
             config,
             job_id,
-            expected_status.clone(),
+            expected_status,
             1, // run_id
             result_model,
         )
-        .expect(&format!(
-            "Failed to complete job with return code {}",
-            return_code
-        ));
+        .unwrap_or_else(|_| panic!("Failed to complete job with return code {}", return_code));
 
         assert_eq!(completed_job.status.unwrap(), expected_status);
     }
