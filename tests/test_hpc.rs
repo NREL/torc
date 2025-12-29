@@ -3,7 +3,8 @@
 use rstest::rstest;
 use std::collections::HashMap;
 use torc::client::commands::slurm::{
-    generate_schedulers_for_workflow, parse_memory_mb, parse_walltime_secs, secs_to_walltime,
+    GroupByStrategy, generate_schedulers_for_workflow, parse_memory_mb, parse_walltime_secs,
+    secs_to_walltime,
 };
 use torc::client::hpc::kestrel::kestrel_profile;
 use torc::client::hpc::{HpcDetection, HpcPartition, HpcProfile, HpcProfileRegistry};
@@ -300,9 +301,16 @@ fn test_generate_schedulers_basic() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     // Should generate 2 schedulers:
     // - small_scheduler for job1 (no dependencies, on_workflow_start)
@@ -378,9 +386,16 @@ fn test_generate_schedulers_with_gpus() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
 
@@ -420,9 +435,16 @@ fn test_generate_schedulers_no_actions() {
 
     let profile = kestrel_profile();
     // Pass add_actions = false
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, false, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        false,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
     assert_eq!(result.action_count, 0);
@@ -466,9 +488,16 @@ fn test_generate_schedulers_shared_by_jobs() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     // Only one scheduler since both jobs use the same resource requirements
     assert_eq!(result.scheduler_count, 1);
@@ -497,8 +526,15 @@ fn test_generate_schedulers_errors_no_resource_requirements() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false);
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    );
 
     // Should return an error when no resource requirements are defined
     match result {
@@ -547,8 +583,15 @@ fn test_generate_schedulers_existing_schedulers_no_force() {
 
     let profile = kestrel_profile();
     // force = false should return error when slurm_schedulers already exists
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false);
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    );
 
     match result {
         Err(e) => assert!(e.contains("already has slurm_schedulers")),
@@ -596,9 +639,16 @@ fn test_generate_schedulers_existing_schedulers_with_force() {
 
     let profile = kestrel_profile();
     // force = true should succeed even when slurm_schedulers already exists
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, true)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        true,
+    )
+    .unwrap();
 
     // Job should be reassigned to scheduler based on resource requirement name
     assert_eq!(spec.jobs[0].scheduler.as_ref().unwrap(), "small_scheduler");
@@ -634,9 +684,10 @@ fn test_generate_schedulers_sets_correct_account() {
         &mut spec,
         &profile,
         "my_project_account",
-        false,
-        true,
-        false,
+        false,                                 // single_allocation
+        GroupByStrategy::ResourceRequirements, // group_by
+        true,                                  // add_actions
+        false,                                 // overwrite
     )
     .unwrap();
 
@@ -667,9 +718,16 @@ fn test_generate_schedulers_sets_walltime() {
     };
 
     let profile = kestrel_profile();
-    let _result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
     // Walltime should be set to the partition's max (2 days for standard), not the job's runtime.
@@ -700,9 +758,16 @@ fn test_generate_schedulers_sets_memory() {
     };
 
     let profile = kestrel_profile();
-    let _result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
     // Memory should be set
@@ -761,9 +826,16 @@ fn test_generate_schedulers_per_resource_requirement() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     // 3 schedulers:
     // - small_scheduler for setup (no deps, on_workflow_start)
@@ -843,9 +915,16 @@ fn test_generate_schedulers_auto_calculates_allocations() {
     let profile = kestrel_profile();
 
     // Pass None for num_allocations to trigger auto-calculation
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
     assert_eq!(result.action_count, 1);
@@ -891,9 +970,16 @@ fn test_generate_schedulers_auto_calculates_with_parameters() {
     let profile = kestrel_profile();
 
     // Pass None for num_allocations to trigger auto-calculation
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
     assert_eq!(result.action_count, 1);
@@ -946,9 +1032,16 @@ fn test_generate_schedulers_stage_aware_for_dependent_jobs() {
 
     let profile = kestrel_profile();
 
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     // Should generate 2 schedulers for stage-aware scheduling:
     // - small_scheduler (on_workflow_start) for job1
@@ -1017,9 +1110,16 @@ fn test_generate_schedulers_memory_constrained_allocation() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
     assert_eq!(result.action_count, 1);
@@ -1085,9 +1185,16 @@ fn test_generate_schedulers_cpu_vs_memory_constraint() {
     };
 
     let profile = kestrel_profile();
-    let _result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     let actions = spec.actions.as_ref().unwrap();
     let action = &actions[0];
@@ -1138,9 +1245,16 @@ fn test_generate_schedulers_gpu_constrained_allocation() {
     };
 
     let profile = kestrel_profile();
-    let result =
-        generate_schedulers_for_workflow(&mut spec, &profile, "testaccount", false, true, false)
-            .unwrap();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        true,
+        false,
+    )
+    .unwrap();
 
     assert_eq!(result.scheduler_count, 1);
     assert_eq!(result.action_count, 1);

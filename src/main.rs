@@ -322,6 +322,7 @@ fn main() {
             account,
             hpc_profile,
             single_allocation,
+            group_by,
             ignore_missing_data,
             skip_checks,
             overwrite,
@@ -368,6 +369,7 @@ fn main() {
                 profile,
                 account,
                 *single_allocation,
+                *group_by,
                 true,
                 *overwrite,
             ) {

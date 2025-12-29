@@ -297,13 +297,22 @@ impl HpcProfile {
         // For small jobs, prefer shared partitions that don't require explicit request
         let is_small_job = cpus <= 26 && memory_mb <= 60_000; // ~1/4 of standard node
         if is_small_job {
-            // First try auto-routed shared partitions
+            // First try auto-routed shared partitions (prefer non-GPU)
             if let Some(shared_partition) = candidates
                 .iter()
-                .find(|p| p.shared && !p.requires_explicit_request)
+                .find(|p| p.shared && !p.requires_explicit_request && p.gpus_per_node.is_none())
             {
                 return Some(shared_partition);
             }
+        }
+
+        // If GPUs not requested, prefer non-GPU partitions that don't require explicit request
+        if gpus.map(|g| g == 0).unwrap_or(true)
+            && let Some(cpu_partition) = candidates
+                .iter()
+                .find(|p| !p.requires_explicit_request && p.gpus_per_node.is_none())
+        {
+            return Some(cpu_partition);
         }
 
         // Prefer partitions that don't require explicit request (auto-routed)

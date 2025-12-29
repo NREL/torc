@@ -250,6 +250,40 @@ torc slurm generate --account myproject --profile kestrel workflow.yaml
 
 This outputs the complete workflow with generated schedulers and actions:
 
+#### Scheduler Grouping Options
+
+By default, Torc creates **one scheduler per unique `resource_requirements` name**. This means if
+you have three jobs with three different resource requirement definitions (e.g., `cpu`, `memory`,
+`mixed`), you get three schedulers—even if all three would fit on the same partition.
+
+The `--group-by` option controls how jobs are grouped into schedulers:
+
+```bash
+# Default: one scheduler per resource_requirements name
+torc slurm generate --account myproject workflow.yaml
+torc slurm generate --account myproject --group-by resource-requirements workflow.yaml
+# Result: 3 schedulers (cpu_scheduler, memory_scheduler, mixed_scheduler)
+
+# Group by partition: one scheduler per partition
+torc slurm generate --account myproject --group-by partition workflow.yaml
+# Result: 1 scheduler (short_scheduler) if all jobs fit on the "short" partition
+```
+
+**When to use `--group-by partition`:**
+
+- Your workflow has many small resource requirement definitions that all fit on the same partition
+- You want to minimize Slurm queue overhead by reducing the number of allocations
+- Jobs have similar characteristics and can share nodes efficiently
+
+**When to use `--group-by resource-requirements` (default):**
+
+- Jobs have significantly different resource profiles that benefit from separate allocations
+- You want fine-grained control over which jobs share resources
+- You're debugging and want clear separation between job types
+
+When grouping by partition, the scheduler uses the **maximum** resource values from all grouped
+requirements (max memory, max CPUs, max runtime, etc.) to ensure all jobs can run.
+
 ```yaml
 name: data_analysis_pipeline
 # ... original content ...

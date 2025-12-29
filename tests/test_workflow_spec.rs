@@ -3600,7 +3600,7 @@ fn test_create_subgraph_workflows_from_examples(start_server: &ServerProcess) {
 /// Jobs without dependencies get on_workflow_start, jobs with dependencies get on_jobs_ready
 #[test]
 fn test_subgraph_workflow_generated_actions_have_correct_triggers() {
-    use torc::client::commands::slurm::generate_schedulers_for_workflow;
+    use torc::client::commands::slurm::{GroupByStrategy, generate_schedulers_for_workflow};
     use torc::client::hpc::kestrel::kestrel_profile;
 
     let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/subgraphs");
@@ -3621,9 +3621,10 @@ fn test_subgraph_workflow_generated_actions_have_correct_triggers() {
         &mut spec,
         &profile,
         "testaccount",
-        false, // not single allocation
-        true,  // add actions
-        false, // don't force
+        false,                                 // single_allocation
+        GroupByStrategy::ResourceRequirements, // group_by
+        true,                                  // add_actions
+        false,                                 // overwrite
     )
     .expect("Failed to generate schedulers");
 

@@ -1759,3 +1759,122 @@ pub fn run_slurm_job_runner_cli_command(
     cleanup_fake_slurm_state();
     result
 }
+
+/// Test that `slurm generate --group-by` correctly groups jobs by the specified strategy.
+///
+/// The resource_monitoring_demo.kdl workflow has 3 resource requirements (cpu, memory, mixed)
+/// that all map to the same partition.
+/// - With `--group-by partition`: 1 scheduler (all jobs map to same partition)
+/// - With `--group-by resource-requirements` (default): 3 schedulers (one per resource_requirements)
+#[rstest]
+fn test_slurm_generate_group_by_strategy() {
+    let current_dir = env::current_dir().expect("Failed to get current directory");
+    let workflow_file = current_dir.join("examples/kdl/resource_monitoring_demo.kdl");
+
+    // Test with --group-by partition: should produce 1 scheduler
+    let output_grouped = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args(&[
+            "slurm",
+            "generate",
+            workflow_file.to_str().unwrap(),
+            "--account",
+            "dsgrid",
+            "--group-by",
+            "partition",
+            "--dry-run",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate with --group-by partition");
+
+    assert!(
+        output_grouped.status.success(),
+        "slurm generate --group-by partition failed: {}",
+        String::from_utf8_lossy(&output_grouped.stderr)
+    );
+
+    let stdout_grouped = String::from_utf8_lossy(&output_grouped.stdout);
+    // Count lines containing "Scheduler:" to determine number of schedulers generated
+    let scheduler_count_grouped = stdout_grouped
+        .lines()
+        .filter(|line| line.contains("Scheduler:"))
+        .count();
+
+    assert_eq!(
+        scheduler_count_grouped, 1,
+        "With --group-by partition, should generate 1 scheduler (all jobs map to same partition), \
+         but got {}. Output:\n{}",
+        scheduler_count_grouped, stdout_grouped
+    );
+
+    // Test with --group-by resource-requirements (explicit): should produce 3 schedulers
+    let output_explicit = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args(&[
+            "slurm",
+            "generate",
+            workflow_file.to_str().unwrap(),
+            "--account",
+            "dsgrid",
+            "--group-by",
+            "resource-requirements",
+            "--dry-run",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate with --group-by resource-requirements");
+
+    assert!(
+        output_explicit.status.success(),
+        "slurm generate --group-by resource-requirements failed: {}",
+        String::from_utf8_lossy(&output_explicit.stderr)
+    );
+
+    let stdout_explicit = String::from_utf8_lossy(&output_explicit.stdout);
+    let scheduler_count_explicit = stdout_explicit
+        .lines()
+        .filter(|line| line.contains("Scheduler:"))
+        .count();
+
+    assert_eq!(
+        scheduler_count_explicit, 3,
+        "With --group-by resource-requirements, should generate 3 schedulers, \
+         but got {}. Output:\n{}",
+        scheduler_count_explicit, stdout_explicit
+    );
+
+    // Test without --group-by (default): should also produce 3 schedulers
+    let output_default = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args(&[
+            "slurm",
+            "generate",
+            workflow_file.to_str().unwrap(),
+            "--account",
+            "dsgrid",
+            "--dry-run",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate without --group-by");
+
+    assert!(
+        output_default.status.success(),
+        "slurm generate (default) failed: {}",
+        String::from_utf8_lossy(&output_default.stderr)
+    );
+
+    let stdout_default = String::from_utf8_lossy(&output_default.stdout);
+    let scheduler_count_default = stdout_default
+        .lines()
+        .filter(|line| line.contains("Scheduler:"))
+        .count();
+
+    assert_eq!(
+        scheduler_count_default, 3,
+        "Default (no --group-by) should generate 3 schedulers (one per resource_requirements), \
+         but got {}. Output:\n{}",
+        scheduler_count_default, stdout_default
+    );
+}

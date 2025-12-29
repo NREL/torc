@@ -15,7 +15,7 @@ use crate::client::hpc::HpcProfile;
 use crate::client::workflow_graph::{SchedulerGroup, WorkflowGraph};
 use crate::time_utils::duration_string_to_seconds;
 
-use super::commands::slurm::{parse_memory_mb, secs_to_walltime};
+use super::commands::slurm::{GroupByStrategy, parse_memory_mb, secs_to_walltime};
 
 /// A planned Slurm scheduler configuration.
 ///
@@ -134,6 +134,7 @@ pub trait ResourceRequirements {
 /// * `profile` - HPC profile with partition information
 /// * `account` - Slurm account to use
 /// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode)
+/// * `group_by` - Strategy for grouping jobs into schedulers
 /// * `add_actions` - Whether to add workflow actions for scheduling
 /// * `scheduler_name_suffix` - Optional suffix for scheduler names (e.g., "_regen_20240101")
 /// * `is_recovery` - Whether this is a recovery scenario (actions marked as recovery)
@@ -144,6 +145,7 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
+    group_by: GroupByStrategy,
     add_actions: bool,
     scheduler_name_suffix: Option<&str>,
     is_recovery: bool,
@@ -154,33 +156,51 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
     // Groups jobs by (resource_requirements, has_dependencies)
     let scheduler_groups = graph.scheduler_groups();
 
-    // Process each scheduler group
-    for group in &scheduler_groups {
-        match process_scheduler_group(
-            group,
-            resource_requirements,
-            profile,
-            account,
-            single_allocation,
-            add_actions,
-            scheduler_name_suffix,
-            is_recovery,
-        ) {
-            Ok((scheduler, action)) => {
-                // Record job assignments
-                for job_name in &scheduler.job_names {
-                    plan.job_assignments
-                        .insert(job_name.clone(), scheduler.name.clone());
-                }
+    match group_by {
+        GroupByStrategy::Partition => {
+            // Group by partition: merge scheduler groups that map to the same partition
+            generate_plan_grouped_by_partition(
+                &scheduler_groups,
+                resource_requirements,
+                profile,
+                account,
+                single_allocation,
+                add_actions,
+                scheduler_name_suffix,
+                is_recovery,
+                &mut plan,
+            );
+        }
+        GroupByStrategy::ResourceRequirements => {
+            // Default: one scheduler per resource_requirements name
+            for group in &scheduler_groups {
+                match process_scheduler_group(
+                    group,
+                    resource_requirements,
+                    profile,
+                    account,
+                    single_allocation,
+                    add_actions,
+                    scheduler_name_suffix,
+                    is_recovery,
+                ) {
+                    Ok((scheduler, action)) => {
+                        // Record job assignments
+                        for job_name in &scheduler.job_names {
+                            plan.job_assignments
+                                .insert(job_name.clone(), scheduler.name.clone());
+                        }
 
-                plan.schedulers.push(scheduler);
+                        plan.schedulers.push(scheduler);
 
-                if let Some(action) = action {
-                    plan.actions.push(action);
+                        if let Some(action) = action {
+                            plan.actions.push(action);
+                        }
+                    }
+                    Err(warning) => {
+                        plan.warnings.push(warning);
+                    }
                 }
-            }
-            Err(warning) => {
-                plan.warnings.push(warning);
             }
         }
     }
@@ -333,6 +353,266 @@ fn process_scheduler_group<RR: ResourceRequirements>(
     };
 
     Ok((scheduler, action))
+}
+
+/// Helper struct to track merged partition groups
+struct PartitionGroup {
+    partition_name: String,
+    has_dependencies: bool,
+    job_count: usize,
+    job_names: Vec<String>,
+    job_name_patterns: Vec<String>,
+    /// All RR names in this group (for naming the scheduler)
+    rr_names: Vec<String>,
+    /// Maximum memory in MB across all RRs
+    max_memory_mb: u64,
+    /// Maximum runtime in seconds across all RRs
+    max_runtime_secs: u64,
+    /// Maximum CPUs across all RRs
+    max_cpus: i64,
+    /// Maximum GPUs across all RRs
+    max_gpus: i64,
+    /// Maximum nodes per job across all RRs
+    max_nodes: i64,
+}
+
+/// Generate a scheduler plan by grouping jobs by partition instead of by RR name.
+///
+/// Jobs whose resource requirements map to the same partition are merged into
+/// a single scheduler. The scheduler uses the most demanding requirements
+/// (max memory, max runtime, etc.) from all RRs in the group.
+#[allow(clippy::too_many_arguments)]
+fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
+    scheduler_groups: &[SchedulerGroup],
+    resource_requirements: &HashMap<&str, &RR>,
+    profile: &HpcProfile,
+    account: &str,
+    single_allocation: bool,
+    add_actions: bool,
+    scheduler_name_suffix: Option<&str>,
+    is_recovery: bool,
+    plan: &mut SchedulerPlan,
+) {
+    // First pass: resolve each scheduler group to its partition and build merged groups
+    let mut partition_groups: HashMap<(String, bool), PartitionGroup> = HashMap::new();
+
+    for group in scheduler_groups {
+        let rr_name = &group.resource_requirements;
+        let rr = match resource_requirements.get(rr_name.as_str()) {
+            Some(rr) => *rr,
+            None => {
+                plan.warnings.push(format!(
+                    "Resource requirements '{}' not found, skipping {} job(s)",
+                    rr_name, group.job_count
+                ));
+                continue;
+            }
+        };
+
+        // Parse resource requirements
+        let memory_mb = match parse_memory_mb(rr.memory()) {
+            Ok(m) => m,
+            Err(e) => {
+                plan.warnings.push(format!(
+                    "Failed to parse memory '{}' for RR '{}': {}",
+                    rr.memory(),
+                    rr.name(),
+                    e
+                ));
+                continue;
+            }
+        };
+
+        let runtime_secs = match duration_string_to_seconds(rr.runtime()) {
+            Ok(s) => s as u64,
+            Err(e) => {
+                plan.warnings.push(format!(
+                    "Failed to parse runtime '{}' for RR '{}': {}",
+                    rr.runtime(),
+                    rr.name(),
+                    e
+                ));
+                continue;
+            }
+        };
+
+        let gpus = if rr.num_gpus() > 0 {
+            Some(rr.num_gpus() as u32)
+        } else {
+            None
+        };
+
+        // Find best partition for this RR
+        let partition = match profile.find_best_partition(
+            rr.num_cpus() as u32,
+            memory_mb,
+            runtime_secs,
+            gpus,
+        ) {
+            Some(p) => p,
+            None => {
+                plan.warnings.push(format!(
+                    "No partition found for resource requirements '{}' (CPUs: {}, Memory: {}, Runtime: {}, GPUs: {:?})",
+                    rr.name(),
+                    rr.num_cpus(),
+                    rr.memory(),
+                    rr.runtime(),
+                    gpus
+                ));
+                continue;
+            }
+        };
+
+        // Group by (partition_name, has_dependencies)
+        let key = (partition.name.clone(), group.has_dependencies);
+
+        let pg = partition_groups
+            .entry(key)
+            .or_insert_with(|| PartitionGroup {
+                partition_name: partition.name.clone(),
+                has_dependencies: group.has_dependencies,
+                job_count: 0,
+                job_names: Vec::new(),
+                job_name_patterns: Vec::new(),
+                rr_names: Vec::new(),
+                max_memory_mb: 0,
+                max_runtime_secs: 0,
+                max_cpus: 0,
+                max_gpus: 0,
+                max_nodes: 0,
+            });
+
+        // Merge this group into the partition group
+        pg.job_count += group.job_count;
+        pg.job_names.extend(group.job_names.clone());
+        pg.job_name_patterns.extend(group.job_name_patterns.clone());
+        pg.rr_names.push(rr_name.clone());
+        pg.max_memory_mb = pg.max_memory_mb.max(memory_mb);
+        pg.max_runtime_secs = pg.max_runtime_secs.max(runtime_secs);
+        pg.max_cpus = pg.max_cpus.max(rr.num_cpus());
+        pg.max_gpus = pg.max_gpus.max(rr.num_gpus());
+        pg.max_nodes = pg.max_nodes.max(rr.num_nodes());
+    }
+
+    // Second pass: create schedulers for each partition group
+    for pg in partition_groups.into_values() {
+        // Find the partition again to get its full info
+        let gpus = if pg.max_gpus > 0 {
+            Some(pg.max_gpus as u32)
+        } else {
+            None
+        };
+
+        let partition = match profile.find_best_partition(
+            pg.max_cpus as u32,
+            pg.max_memory_mb,
+            pg.max_runtime_secs,
+            gpus,
+        ) {
+            Some(p) => p,
+            None => {
+                plan.warnings.push(format!(
+                    "No partition found for merged group '{}' (this shouldn't happen)",
+                    pg.partition_name
+                ));
+                continue;
+            }
+        };
+
+        // Calculate jobs per node based on the most demanding requirements
+        let jobs_per_node_by_cpu = partition.cpus_per_node / pg.max_cpus as u32;
+        let jobs_per_node_by_mem = (partition.memory_mb / pg.max_memory_mb) as u32;
+        let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
+            (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
+            _ => u32::MAX,
+        };
+        let jobs_per_node = std::cmp::max(
+            1,
+            std::cmp::min(
+                jobs_per_node_by_cpu,
+                std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
+            ),
+        );
+
+        let nodes_per_job = pg.max_nodes as u32;
+        let total_nodes_needed = (pg.job_count as u32).div_ceil(jobs_per_node) * nodes_per_job;
+        let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
+
+        // Allocation strategy
+        let (nodes_per_alloc, num_allocations) = if single_allocation {
+            (total_nodes_needed, 1i64)
+        } else {
+            (1i64, total_nodes_needed)
+        };
+
+        // Generate scheduler name based on partition
+        let base_name = if pg.has_dependencies {
+            format!("{}_deferred", pg.partition_name)
+        } else {
+            pg.partition_name.clone()
+        };
+        let scheduler_name = match scheduler_name_suffix {
+            Some(suffix) => format!("{}_{}", base_name, suffix),
+            None => format!("{}_scheduler", base_name),
+        };
+
+        // Format memory for the scheduler (use max memory)
+        let mem_str = if pg.max_memory_mb >= 1024 {
+            format!("{}g", pg.max_memory_mb / 1024)
+        } else {
+            format!("{}m", pg.max_memory_mb)
+        };
+
+        let scheduler = PlannedScheduler {
+            name: scheduler_name.clone(),
+            account: account.to_string(),
+            partition: if partition.requires_explicit_request {
+                Some(partition.name.clone())
+            } else {
+                None
+            },
+            mem: Some(mem_str),
+            walltime: secs_to_walltime(partition.max_walltime_secs),
+            nodes: nodes_per_alloc,
+            gres: gpus.map(|g| format!("gpu:{}", g)),
+            qos: partition.default_qos.clone(),
+            resource_requirements: pg.rr_names.join(","), // Join all RR names
+            has_dependencies: pg.has_dependencies,
+            job_count: pg.job_count,
+            job_names: pg.job_names.clone(),
+            job_name_patterns: pg.job_name_patterns.clone(),
+            num_allocations,
+        };
+
+        // Record job assignments
+        for job_name in &scheduler.job_names {
+            plan.job_assignments
+                .insert(job_name.clone(), scheduler.name.clone());
+        }
+
+        plan.schedulers.push(scheduler);
+
+        // Create action if requested
+        if add_actions {
+            let start_one_worker_per_node = nodes_per_alloc > 1;
+
+            let (trigger_type, job_names, job_name_patterns) = if pg.has_dependencies {
+                ("on_jobs_ready", Some(pg.job_names.clone()), None)
+            } else {
+                ("on_workflow_start", None, None)
+            };
+
+            plan.actions.push(PlannedAction {
+                trigger_type: trigger_type.to_string(),
+                scheduler_name,
+                job_names,
+                job_name_patterns,
+                num_allocations,
+                start_one_worker_per_node,
+                is_recovery,
+            });
+        }
+    }
 }
 
 // ============================================================================
