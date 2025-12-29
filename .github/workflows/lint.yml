@@ -49,6 +49,13 @@ jobs:
       - name: Check Rust formatting
         run: cargo fmt -- --check
 
+      - name: Setup database for sqlx
+        run: |
+          cargo install sqlx-cli --no-default-features --features sqlite
+          mkdir -p db/sqlite
+          DATABASE_URL=sqlite:db/sqlite/dev.db sqlx database create
+          DATABASE_URL=sqlite:db/sqlite/dev.db sqlx migrate run
+
       - name: Run Clippy
         run: cargo clippy --all --all-targets --all-features -- -D warnings
 
