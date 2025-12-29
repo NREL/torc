@@ -93,7 +93,7 @@ fn test_results_list_with_job_filter(start_server: &ServerProcess) {
         .expect("Failed to run results list with job filter");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
-    assert!(results_array.len() >= 1);
+    assert!(!results_array.is_empty());
 
     // All results should be for the specified job
     for result in results_array {
@@ -208,7 +208,7 @@ fn test_results_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        results_with_offset.len() >= 1,
+        !results_with_offset.is_empty(),
         "Should have results with offset"
     );
 }

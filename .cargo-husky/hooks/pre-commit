@@ -9,8 +9,8 @@ set -e
 echo '+cargo fmt -- --check'
 cargo fmt -- --check
 
-echo '+cargo clippy -- -D warnings'
-cargo clippy -- -D warnings
+echo '+cargo clippy --all --all-targets --all-features -- -D warnings'
+cargo clippy --all --all-targets --all-features -- -D warnings
 
 echo '+dprint check'
 dprint check

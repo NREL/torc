@@ -98,7 +98,7 @@ fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String> {
     let start = std::time::Instant::now();
 
     while start.elapsed().as_secs() < timeout_secs {
-        if let Ok(_) = client.get(&url).send() {
+        if client.get(&url).send().is_ok() {
             return Ok(());
         }
         thread::sleep(Duration::from_millis(100));
@@ -358,9 +358,9 @@ pub fn create_diamond_workflow(
     jobs.insert("postprocess".to_string(), postprocess);
 
     for job in jobs.values() {
-        assert!(!job.resource_requirements_id.is_none());
+        assert!(job.resource_requirements_id.is_some());
         let rr_id = job.resource_requirements_id.unwrap();
-        let rr = default_api::get_resource_requirements(&config, rr_id)
+        let rr = default_api::get_resource_requirements(config, rr_id)
             .expect("Failed to get resource requirements");
         assert_eq!(rr.name, "default".to_string());
     }
@@ -515,6 +515,7 @@ pub fn create_test_workflow_advanced(
 }
 
 /// Helper function to create test resource requirements directly via API
+#[allow(clippy::too_many_arguments)]
 pub fn create_test_resource_requirements(
     config: &Configuration,
     workflow_id: i64,
@@ -1165,10 +1166,10 @@ pub fn delete_all_workflows(config: &Configuration) -> Result<(), Box<dyn std::e
 
     // Delete each workflow, collecting any failures
     for workflow in workflows {
-        if let Some(workflow_id) = workflow.id {
-            if let Err(e) = default_api::delete_workflow(config, workflow_id, None) {
-                failed_deletions.push((workflow_id, e.to_string()));
-            }
+        if let Some(workflow_id) = workflow.id
+            && let Err(e) = default_api::delete_workflow(config, workflow_id, None)
+        {
+            failed_deletions.push((workflow_id, e.to_string()));
         }
     }
 
@@ -1225,7 +1226,7 @@ pub fn run_cli_command(
     user: Option<&str>,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
-    cmd.args(&["--url", &server.config.base_path]);
+    cmd.args(["--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
     if let Some(u) = user {

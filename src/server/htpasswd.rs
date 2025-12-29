@@ -137,7 +137,7 @@ mod tests {
             file,
             "user2:$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
         )?;
-        writeln!(file, "")?; // Empty line
+        writeln!(file)?; // Empty line
         writeln!(
             file,
             "user3:$2y$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"

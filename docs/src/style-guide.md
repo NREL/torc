@@ -11,7 +11,7 @@ hooks automatically. Before each commit, the following checks run:
 
 ```bash
 cargo fmt -- --check    # Rust formatting
-cargo clippy -- -D warnings  # Linting with warnings as errors
+cargo clippy --all --all-targets --all-features -- -D warnings
 dprint check            # Markdown formatting
 ```
 
@@ -46,7 +46,7 @@ code.
 All code must compile without clippy warnings when run with `-D warnings`:
 
 ```bash
-cargo clippy -- -D warnings
+cargo clippy --all --all-targets --all-features -- -D warnings
 ```
 
 **Common clippy lints to watch for:**
@@ -571,7 +571,7 @@ RUST_LOG=torc=debug,sqlx=warn cargo run  # Fine-grained control
 Before submitting a pull request, verify:
 
 - [ ] `cargo fmt --check` passes
-- [ ] `cargo clippy -- -D warnings` passes
+- [ ] `cargo clippy --all --all-targets --all-features -- -D warnings` passes
 - [ ] `dprint check` passes (for Markdown changes)
 - [ ] All tests pass with `cargo test`
 - [ ] New features have tests using `rstest`

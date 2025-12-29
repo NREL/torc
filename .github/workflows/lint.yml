@@ -50,7 +50,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all --all-targets --all-features -- -D warnings
 
       - name: Install dprint
         run: |

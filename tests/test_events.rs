@@ -180,7 +180,7 @@ fn test_events_list_pagination(start_server: &ServerProcess) {
 
     let events_array = json_output.get("events").unwrap().as_array().unwrap();
     assert!(events_array.len() <= 3, "Should respect limit parameter");
-    assert!(events_array.len() >= 1, "Should have at least one event");
+    assert!(!events_array.is_empty(), "Should have at least one event");
 
     // Test with offset
     let args_with_offset = [
@@ -202,7 +202,7 @@ fn test_events_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        events_with_offset.len() >= 1,
+        !events_with_offset.is_empty(),
         "Should have events with offset"
     );
 }
@@ -439,7 +439,7 @@ fn test_events_various_data_types(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, None)
-            .expect(&format!("Failed to create event with {}", test_name));
+            .unwrap_or_else(|_| panic!("Failed to create event with {}", test_name));
 
         assert_eq!(json_output.get("data").unwrap(), &test_data);
         assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -667,7 +667,7 @@ fn test_events_concurrent_additions(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, None)
-            .expect(&format!("Failed to create concurrent event {}", i));
+            .unwrap_or_else(|_| panic!("Failed to create concurrent event {}", i));
 
         event_ids.push(json_output.get("id").unwrap().as_i64().unwrap());
     }

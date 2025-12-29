@@ -29,10 +29,10 @@ fn wait_for_job_status(
 ) -> bool {
     let start = std::time::Instant::now();
     while start.elapsed().as_secs() < timeout_secs {
-        if let Ok(job) = default_api::get_job(config, job_id) {
-            if job.status.as_ref() == Some(&expected_status) {
-                return true;
-            }
+        if let Ok(job) = default_api::get_job(config, job_id)
+            && job.status.as_ref() == Some(&expected_status)
+        {
+            return true;
         }
         thread::sleep(Duration::from_millis(50));
     }
@@ -331,7 +331,7 @@ fn test_start_workflow_basic(start_server: &ServerProcess) {
     // Check that an event was created
     let events = default_api::list_events(&config, workflow_id, None, None, None, None, None, None)
         .expect("Failed to list events");
-    assert!(events.items.as_ref().unwrap().len() > 0);
+    assert!(!events.items.as_ref().unwrap().is_empty());
 
     // Check that jobs were completed
     let jobs = default_api::list_jobs(
@@ -349,7 +349,7 @@ fn test_start_workflow_basic(start_server: &ServerProcess) {
     )
     .expect("Failed to list jobs");
     let job_items = jobs.items.as_ref().unwrap();
-    assert!(job_items.len() > 0);
+    assert!(!job_items.is_empty());
     assert_eq!(
         job_items[0].status.as_ref().unwrap(),
         &models::JobStatus::Completed
@@ -1180,7 +1180,7 @@ fn test_workflow_manager_end_to_end(start_server: &ServerProcess) {
     // Check that everything was initialized properly
     let events = default_api::list_events(&config, workflow_id, None, None, None, None, None, None)
         .expect("Failed to list events");
-    assert!(events.items.as_ref().unwrap().len() > 0);
+    assert!(!events.items.as_ref().unwrap().is_empty());
 
     let jobs = default_api::list_jobs(
         &config,
@@ -1197,7 +1197,7 @@ fn test_workflow_manager_end_to_end(start_server: &ServerProcess) {
     )
     .expect("Failed to list jobs");
     let job_items = jobs.items.as_ref().unwrap();
-    assert!(job_items.len() > 0);
+    assert!(!job_items.is_empty());
     assert_eq!(
         job_items[0].status.as_ref().unwrap(),
         &models::JobStatus::Completed
@@ -1217,7 +1217,7 @@ fn test_workflow_manager_end_to_end(start_server: &ServerProcess) {
     )
     .expect("Failed to list files");
     let file_items = files.items.as_ref().unwrap();
-    assert!(file_items.len() > 0);
+    assert!(!file_items.is_empty());
     for file in file_items {
         assert!(file.st_mtime.is_some());
     }

@@ -76,7 +76,7 @@ fn test_files_add_various_paths(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, None)
-            .expect(&format!("Failed to create file with path: {}", file_path));
+            .unwrap_or_else(|_| panic!("Failed to create file with path: {}", file_path));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(test_name));
         assert_eq!(json_output.get("path").unwrap(), &json!(file_path));
@@ -133,7 +133,7 @@ fn test_files_add_different_file_types(start_server: &ServerProcess) {
         ];
 
         let json_output = run_cli_with_json(&args, start_server, None)
-            .expect(&format!("Failed to create {} file", name));
+            .unwrap_or_else(|_| panic!("Failed to create {} file", name));
 
         assert_eq!(json_output.get("path").unwrap(), &json!(path));
         assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -211,7 +211,7 @@ fn test_files_list_pagination(start_server: &ServerProcess) {
 
     let files_array = json_output.get("files").unwrap().as_array().unwrap();
     assert!(files_array.len() <= 4, "Should respect limit parameter");
-    assert!(files_array.len() >= 1, "Should have at least one file");
+    assert!(!files_array.is_empty(), "Should have at least one file");
 
     // Test with offset
     let args_with_offset = [
@@ -229,7 +229,7 @@ fn test_files_list_pagination(start_server: &ServerProcess) {
 
     let files_with_offset = json_output_offset.get("files").unwrap().as_array().unwrap();
     assert!(
-        files_with_offset.len() >= 1,
+        !files_with_offset.is_empty(),
         "Should have files with offset"
     );
 }
@@ -282,7 +282,7 @@ fn test_files_list_sorting(start_server: &ServerProcess) {
     assert!(files_array_reverse.len() >= 3);
 
     // Verify sorting worked - first items should be different in regular vs reverse
-    if files_array.len() >= 1 && files_array_reverse.len() >= 1 {
+    if !files_array.is_empty() && !files_array_reverse.is_empty() {
         let first_regular = files_array[0].get("name").unwrap().as_str().unwrap();
         let first_reverse = files_array_reverse[0]
             .get("name")
@@ -537,10 +537,12 @@ fn test_files_special_characters_in_names(start_server: &ServerProcess) {
             file_path,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
-            "Failed to create file with special characters: {}",
-            test_name
-        ));
+        let json_output = run_cli_with_json(&args, start_server, None).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create file with special characters: {}",
+                test_name
+            )
+        });
 
         assert_eq!(json_output.get("name").unwrap(), &json!(file_name));
         assert_eq!(json_output.get("path").unwrap(), &json!(file_path));

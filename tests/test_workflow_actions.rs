@@ -172,7 +172,7 @@ fn test_get_pending_actions(start_server: &ServerProcess) {
         .expect("Failed to get pending actions");
 
     assert_eq!(pending_actions.len(), 1);
-    assert_eq!(pending_actions[0].executed, false);
+    assert!(!pending_actions[0].executed);
 }
 
 #[rstest]
@@ -211,10 +211,7 @@ fn test_claim_action_success(start_server: &ServerProcess) {
     let claim_result = default_api::claim_action(config, workflow_id, action_id, claim_body)
         .expect("Failed to claim action");
 
-    assert_eq!(
-        claim_result.get("claimed").unwrap().as_bool().unwrap(),
-        true
-    );
+    assert!(claim_result.get("claimed").unwrap().as_bool().unwrap());
     assert_eq!(
         claim_result.get("action_id").unwrap().as_i64().unwrap(),
         action_id
@@ -263,10 +260,7 @@ fn test_claim_action_already_claimed(start_server: &ServerProcess) {
 
     let claim_result1 = default_api::claim_action(config, workflow_id, action_id, claim_body1)
         .expect("Failed to claim action first time");
-    assert_eq!(
-        claim_result1.get("claimed").unwrap().as_bool().unwrap(),
-        true
-    );
+    assert!(claim_result1.get("claimed").unwrap().as_bool().unwrap());
 
     // Second claim should return CONFLICT
     let claim_body2 = json!({
@@ -431,7 +425,7 @@ fn test_multiple_actions_different_triggers(start_server: &ServerProcess) {
         });
 
         default_api::create_workflow_action(config, workflow_id, action_body)
-            .expect(&format!("Failed to create action for trigger: {}", trigger));
+            .unwrap_or_else(|_| panic!("Failed to create action for trigger: {}", trigger));
     }
 
     // Verify all actions were created
@@ -473,7 +467,7 @@ fn test_action_status_lifecycle(start_server: &ServerProcess) {
     let action_id = created_action.id.unwrap();
 
     // Initial status should be "not executed"
-    assert_eq!(created_action.executed, false);
+    assert!(!created_action.executed);
     assert!(created_action.executed_by.is_none());
 
     // Initialize the workflow to trigger on_workflow_start actions
@@ -497,7 +491,7 @@ fn test_action_status_lifecycle(start_server: &ServerProcess) {
         .find(|a| a.id.unwrap() == action_id)
         .expect("Action not found");
 
-    assert_eq!(claimed_action.executed, true);
+    assert!(claimed_action.executed);
     assert_eq!(claimed_action.executed_by.unwrap(), compute_node_id);
 
     // Verify it's no longer in pending actions

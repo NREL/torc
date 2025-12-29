@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use rstest::rstest;
 use serial_test::serial;
 use std::env;

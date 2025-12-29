@@ -299,7 +299,7 @@ fn test_get_job_stats() {
 
     // Get job stats using sacct directly
     let output = std::process::Command::new(sacct)
-        .args(&[
+        .args([
             "-j",
             &job_id,
             "--format=JobID,JobName%20,state,start,end,Account,Partition%15,QOS",
@@ -1039,7 +1039,7 @@ fn test_slurm_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(configs_array.len() <= 3, "Should respect limit parameter");
-    assert!(configs_array.len() >= 1, "Should have at least one config");
+    assert!(!configs_array.is_empty(), "Should have at least one config");
 
     // Test with offset
     let args_with_offset = [
@@ -1061,7 +1061,7 @@ fn test_slurm_list_pagination(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        configs_with_offset.len() >= 1,
+        !configs_with_offset.is_empty(),
         "Should have configs with offset"
     );
 }
@@ -1191,7 +1191,7 @@ fn test_slurm_multiple_workflows(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        configs1.len() >= 1,
+        !configs1.is_empty(),
         "Should have at least one config for workflow 1"
     );
 
@@ -1214,7 +1214,7 @@ fn test_slurm_multiple_workflows(start_server: &ServerProcess) {
         .as_array()
         .unwrap();
     assert!(
-        configs2.len() >= 1,
+        !configs2.is_empty(),
         "Should have at least one config for workflow 2"
     );
 
@@ -1462,8 +1462,8 @@ fn create_test_jobs(
             format!("test_job_{}", i),
             format!("echo 'Job {}'", i),
         );
-        let created_job =
-            default_api::create_job(config, job).expect(&format!("Failed to create job {}", i));
+        let created_job = default_api::create_job(config, job)
+            .unwrap_or_else(|_| panic!("Failed to create job {}", i));
         jobs.push(created_job);
     }
     jobs
@@ -1497,7 +1497,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
     setup_fake_slurm_commands();
     // Schedule nodes using CLI command
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "-p",
             "torc",
@@ -1571,14 +1571,14 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
 
             let job_id = job.id.unwrap();
             default_api::update_job(config, job_id, updated_job)
-                .expect(&format!("Failed to update job {}", i));
+                .unwrap_or_else(|_| panic!("Failed to update job {}", i));
         }
     }
 
     setup_fake_slurm_commands();
     // Cancel the workflow using CLI command
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "torc",
@@ -1776,7 +1776,7 @@ fn test_slurm_generate_group_by_strategy() {
 
     // Test with --group-by partition: should produce 1 scheduler
     let output_grouped = Command::new(common::get_exe_path("./target/debug/torc"))
-        .args(&[
+        .args([
             "slurm",
             "generate",
             workflow_file.to_str().unwrap(),
@@ -1813,7 +1813,7 @@ fn test_slurm_generate_group_by_strategy() {
 
     // Test with --group-by resource-requirements (explicit): should produce 3 schedulers
     let output_explicit = Command::new(common::get_exe_path("./target/debug/torc"))
-        .args(&[
+        .args([
             "slurm",
             "generate",
             workflow_file.to_str().unwrap(),
@@ -1849,7 +1849,7 @@ fn test_slurm_generate_group_by_strategy() {
 
     // Test without --group-by (default): should also produce 3 schedulers
     let output_default = Command::new(common::get_exe_path("./target/debug/torc"))
-        .args(&[
+        .args([
             "slurm",
             "generate",
             workflow_file.to_str().unwrap(),

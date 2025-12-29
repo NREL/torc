@@ -53,10 +53,10 @@ Run formatting and linting before committing:
 cargo fmt
 
 # Run clippy
-cargo clippy --all-targets --all-features
+cargo clippy --all --all-targets --all-features -- -D warnings
 
 # Run all checks
-cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings
+cargo fmt --check && cargo clippy --all --all-targets --all-features -- -D warnings
 ```
 
 ### Adding Tests

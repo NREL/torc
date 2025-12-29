@@ -24,7 +24,7 @@ fn test_create_jobs_from_file_basic(start_server: &ServerProcess) {
     // Create a temp file with job commands
     let job_commands = "echo 'Hello from job 1'\necho 'Hello from job 2'\necho 'Hello from job 3'";
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file
     let result = create_jobs_from_file(
@@ -94,7 +94,7 @@ echo 'job 3'
 
 # Final comment"#;
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file
     let result = create_jobs_from_file(
@@ -180,7 +180,7 @@ fn test_create_jobs_from_file_with_existing_jobs(start_server: &ServerProcess) {
     // Create a temp file with job commands
     let job_commands = "echo 'new job 1'\necho 'new job 2'";
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file
     let result = create_jobs_from_file(
@@ -254,7 +254,7 @@ fn test_create_jobs_from_file_name_conflicts(start_server: &ServerProcess) {
     // Create a temp file with job commands
     let job_commands = "echo 'conflicting job'";
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file
     let result = create_jobs_from_file(
@@ -314,7 +314,7 @@ fn test_create_jobs_from_file_empty_file(start_server: &ServerProcess) {
     // Create an empty temp file
     let job_commands = "";
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file - should fail
     let result = create_jobs_from_file(
@@ -354,7 +354,7 @@ fn test_create_jobs_from_file_only_comments(start_server: &ServerProcess) {
 # Comment 2
 # Comment 3"#;
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file - should fail
     let result = create_jobs_from_file(
@@ -429,7 +429,7 @@ find /home -name "*.txt" -type f
 wget https://example.com/data.csv -O output.csv
 ffmpeg -i input.mp4 -vcodec libx264 output.mp4"#;
     let temp_file = NamedTempFile::new().expect("Failed to create temp file");
-    fs::write(&temp_file.path(), job_commands).expect("Failed to write temp file");
+    fs::write(temp_file.path(), job_commands).expect("Failed to write temp file");
 
     // Create jobs from file
     let result = create_jobs_from_file(

@@ -1,6 +1,5 @@
 mod common;
 
-use chrono;
 use common::{
     ServerProcess, create_test_compute_node, create_test_file, create_test_workflow, start_server,
 };

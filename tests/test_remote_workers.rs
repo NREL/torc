@@ -268,7 +268,7 @@ fn test_cli_add_workers_from_file(start_server: &ServerProcess) {
     let mut worker_file = NamedTempFile::new().expect("Failed to create temp file");
     writeln!(worker_file, "# This is a comment").unwrap();
     writeln!(worker_file, "file-worker1.example.com").unwrap();
-    writeln!(worker_file, "").unwrap(); // Empty line
+    writeln!(worker_file).unwrap(); // Empty line
     writeln!(worker_file, "user@file-worker2.example.com").unwrap();
     writeln!(worker_file, "file-worker3.example.com:2222").unwrap();
     writeln!(worker_file, "# Another comment").unwrap();

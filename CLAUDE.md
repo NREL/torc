@@ -33,9 +33,9 @@ client-server architecture where:
 **All code changes must pass the following checks before being committed:**
 
 ```bash
-cargo fmt -- --check       # Rust formatting
-cargo clippy -- -D warnings  # Rust linting (warnings are errors)
-dprint check               # Markdown formatting (100 char line limit)
+cargo fmt -- --check                                  # Rust formatting
+cargo clippy --all --all-targets --all-features -- -D warnings  # Rust linting
+dprint check                                          # Markdown formatting
 ```
 
 These checks are enforced by pre-commit hooks installed via `cargo-husky`. The hooks run
@@ -43,7 +43,8 @@ automatically on every commit attempt.
 
 **Key requirements:**
 
-- **Rust code**: Must compile without clippy warnings. Use `cargo clippy -- -D warnings` to verify.
+- **Rust code**: Must compile without clippy warnings. Use
+  `cargo clippy --all --all-targets --all-features -- -D warnings` to verify.
 - **Markdown files**: Must comply with dprint formatting with a maximum line length of 100
   characters. Run `dprint fmt` to auto-format or `dprint check` to verify.
 - **Before committing**: Always run the checks manually if unsure. The pre-commit hook will block
@@ -234,16 +235,9 @@ The Rust client provides a **unified CLI and library interface** with these key 
 
 ## Testing Strategy
 
-### Server Tests
-
-- Integration tests in `server/tests/`
-- Test database operations with actual SQLite
-- Focus on job status transitions and workflow state management
-- Run with: `cargo test` from server directory
-
 ### Rust Client Tests
 
-- Integration tests in `rust-client/tests/`
+- Integration tests in `tests/`
 - Use `serial_test` attribute for tests that modify shared state
 - Test utilities in `tests/common/`
 - Run with: `cargo test` from rust-client directory
@@ -336,15 +330,14 @@ performance reasons.
 ### OpenAPI Code Generation
 
 - Server and client use OpenAPI-generated code for base types and routing
-- **Do not modify** generated code directly
 - Implement business logic in non-generated modules (e.g., `server/src/bin/server/api/*.rs`)
 
 ## Common Tasks
 
 ### Adding a New API Endpoint
 
-1. Update OpenAPI spec (external to this repo)
-2. Regenerate API code
+1. Update OpenAPI spec (api/openapi.yaml)
+2. Regenerate API code (`cd api && bash make_api_clients.sh`)
 3. Add implementation in appropriate `src/server/api/*.rs` module
 4. Update client API in `src/client/apis/`
 5. Add CLI command handler if needed in `src/client/commands/`
