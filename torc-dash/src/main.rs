@@ -176,15 +176,16 @@ async fn main() -> Result<()> {
         dash_config.completion_check_interval_secs
     };
 
-    let version = env!("CARGO_PKG_VERSION");
-    let git_hash = env!("GIT_HASH");
-    let git_dirty = env!("GIT_DIRTY");
     info!(
-        "Starting torc-dash on {}:{} version={} ({}{})",
-        host, port, version, git_hash, git_dirty
+        "Starting torc-dash v{} ({}{}) on {}:{} torc_bin={} server_bin={}",
+        env!("CARGO_PKG_VERSION"),
+        env!("GIT_HASH"),
+        env!("GIT_DIRTY"),
+        host,
+        port,
+        torc_bin,
+        torc_server_bin
     );
-    info!("Torc binary: {}", torc_bin);
-    info!("Torc server binary: {}", torc_server_bin);
 
     // Track the actual server port (may differ from server_port if using port 0)
     let mut actual_server_port = server_port;
@@ -2248,11 +2249,14 @@ async fn version_handler(State(state): State<Arc<AppState>>) -> impl IntoRespons
         None => (None, None, None),
     };
 
-    let git_hash = env!("GIT_HASH");
-    let git_dirty = env!("GIT_DIRTY");
+    // Extract just the semver from server version (strip git hash suffix for display)
+    let server_version_display = server_version
+        .as_ref()
+        .map(|v| v.split(" (").next().unwrap_or(v).to_string());
+
     Json(VersionResponse {
-        version: format!("{} ({}{})", env!("CARGO_PKG_VERSION"), git_hash, git_dirty),
-        server_version,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        server_version: server_version_display,
         version_mismatch,
         mismatch_severity,
     })

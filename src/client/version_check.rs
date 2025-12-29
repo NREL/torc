@@ -90,9 +90,13 @@ impl VersionCheckResult {
 
 /// Parses a version string into (major, minor, patch) components.
 /// Returns None if parsing fails.
+/// Handles formats like "0.8.0", "v0.8.0", "0.8.0-beta", "0.8.0 (abc1234)"
 fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
     // Strip any leading 'v' if present
     let version = version.strip_prefix('v').unwrap_or(version);
+
+    // Strip git hash suffix like " (abc1234)" or " (abc1234-dirty)"
+    let version = version.split(" (").next().unwrap_or(version);
 
     let parts: Vec<&str> = version.split('.').collect();
     if parts.len() < 3 {
@@ -244,6 +248,10 @@ mod tests {
         assert_eq!(parse_version("1.2.3"), Some((1, 2, 3)));
         assert_eq!(parse_version("v1.2.3"), Some((1, 2, 3)));
         assert_eq!(parse_version("1.2.3-beta"), Some((1, 2, 3)));
+        // Versions with git hash suffix
+        assert_eq!(parse_version("0.8.0 (abc1234)"), Some((0, 8, 0)));
+        assert_eq!(parse_version("0.8.0 (abc1234-dirty)"), Some((0, 8, 0)));
+        assert_eq!(parse_version("v1.2.3 (def5678)"), Some((1, 2, 3)));
         assert_eq!(parse_version("invalid"), None);
     }
 
