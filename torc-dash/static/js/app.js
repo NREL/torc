@@ -101,6 +101,9 @@ class TorcDashboard {
         this.setupExecutionPanel();
         this.setupKeyboardShortcuts();
 
+        // Load version (fire and forget)
+        this.loadVersion();
+
         // Test connection and load data
         await this.testConnection();
         await this.loadWorkflows();

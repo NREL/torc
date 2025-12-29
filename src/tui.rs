@@ -50,6 +50,8 @@ pub fn run(standalone: bool, port: u16, database: Option<String>) -> Result<()> 
         if check_server_connection(&app.server_url) {
             app.set_status(StatusMessage::success("Server started in standalone mode"));
             let _ = app.refresh_workflows();
+            // Check server version
+            app.check_server_version();
         } else {
             app.set_status(StatusMessage::warning(
                 "Server starting... press 'r' to refresh when ready",
@@ -57,7 +59,10 @@ pub fn run(standalone: bool, port: u16, database: Option<String>) -> Result<()> 
         }
     } else {
         // Check if server is running and show appropriate message
-        if !check_server_connection(&app.server_url) {
+        if check_server_connection(&app.server_url) {
+            // Connected - check version
+            app.check_server_version();
+        } else {
             app.set_status(StatusMessage::warning(
                 "No server connection. Press 'S' to start server or 'u' to change URL",
             ));

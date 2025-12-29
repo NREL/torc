@@ -255,6 +255,67 @@ Object.assign(TorcDashboard.prototype, {
         }
     },
 
+    async loadVersion() {
+        try {
+            const response = await fetch('/api/version');
+            if (response.ok) {
+                const data = await response.json();
+                const versionEl = document.getElementById('version-display');
+                if (versionEl) {
+                    const text = versionEl.querySelector('.version-text');
+                    if (text) {
+                        // Show dashboard version and server version if available
+                        let versionStr = `v${data.version}`;
+                        if (data.server_version) {
+                            versionStr += ` / server v${data.server_version}`;
+                        }
+                        text.textContent = versionStr;
+                    }
+
+                    // Handle version mismatch warnings
+                    if (data.version_mismatch) {
+                        versionEl.title = data.version_mismatch;
+                        // Apply styling based on severity
+                        versionEl.classList.remove('version-warning', 'version-error');
+                        if (data.mismatch_severity === 'major') {
+                            versionEl.classList.add('version-error');
+                            this.showVersionWarning(data.version_mismatch, 'error');
+                        } else if (data.mismatch_severity === 'minor') {
+                            versionEl.classList.add('version-warning');
+                            this.showVersionWarning(data.version_mismatch, 'warning');
+                        } else if (data.mismatch_severity === 'patch') {
+                            versionEl.classList.add('version-warning');
+                            // Don't show a popup for patch differences, just visual indicator
+                        }
+                    } else {
+                        versionEl.title = 'Torc version';
+                        versionEl.classList.remove('version-warning', 'version-error');
+                    }
+                }
+            }
+        } catch (e) {
+            // Silently ignore version fetch errors
+            console.debug('Failed to fetch version:', e);
+        }
+    },
+
+    showVersionWarning(message, severity) {
+        // Show a brief warning notification
+        const notification = document.createElement('div');
+        notification.className = `version-notification version-notification-${severity}`;
+        notification.innerHTML = `
+            <span class="notification-icon">${severity === 'error' ? '⛔' : '⚠️'}</span>
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        document.body.appendChild(notification);
+
+        // Auto-dismiss after 10 seconds for warnings, keep errors visible
+        if (severity === 'warning') {
+            setTimeout(() => notification.remove(), 10000);
+        }
+    },
+
     // ==================== Auto Refresh ====================
 
     startAutoRefresh() {

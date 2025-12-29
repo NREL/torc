@@ -254,6 +254,9 @@ pub struct App {
     // Server management
     pub server_process: Option<ProcessViewer>,
     pub standalone_database: Option<String>,
+
+    // Version info
+    pub version_mismatch: Option<crate::client::version_check::VersionCheckResult>,
 }
 
 impl App {
@@ -316,6 +319,7 @@ impl App {
             last_refresh: std::time::Instant::now(),
             server_process: None,
             standalone_database: database,
+            version_mismatch: None,
         };
 
         // Update client to use the correct URL
@@ -894,6 +898,39 @@ impl App {
 
     pub fn set_status(&mut self, message: StatusMessage) {
         self.status_message = Some(message);
+    }
+
+    /// Check server version and set version_mismatch if there's a problem
+    pub fn check_server_version(&mut self) {
+        use crate::client::version_check;
+
+        let config = crate::client::apis::configuration::Configuration {
+            base_path: self.server_url.clone(),
+            ..Default::default()
+        };
+
+        let result = version_check::check_version(&config);
+
+        // Only store if we got a server version and there's a mismatch
+        if result.server_version.is_some() && result.severity.has_warning() {
+            // Show status message based on severity
+            match result.severity {
+                version_check::VersionMismatchSeverity::Major => {
+                    self.set_status(StatusMessage::error(&result.message));
+                }
+                version_check::VersionMismatchSeverity::Minor => {
+                    self.set_status(StatusMessage::warning(&result.message));
+                }
+                version_check::VersionMismatchSeverity::Patch => {
+                    // Subtle info for patch differences
+                    self.set_status(StatusMessage::info(&result.message));
+                }
+                version_check::VersionMismatchSeverity::None => {}
+            }
+            self.version_mismatch = Some(result);
+        } else {
+            self.version_mismatch = None;
+        }
     }
 
     /// Show an error dialog for long error messages

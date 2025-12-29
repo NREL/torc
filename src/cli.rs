@@ -94,6 +94,9 @@ pub struct Cli {
     /// Password for basic authentication (will prompt if username provided but password not)
     #[arg(long, env = "TORC_PASSWORD")]
     pub password: Option<String>,
+    /// Skip checking server version compatibility
+    #[arg(long)]
+    pub skip_version_check: bool,
     #[command(subcommand)]
     pub command: Commands,
 }

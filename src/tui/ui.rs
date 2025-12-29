@@ -249,6 +249,8 @@ fn draw_help(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
+    use crate::client::version_check;
+
     // Server status indicator
     let (status_icon, status_color) = if app.is_server_running() {
         ("● ", Color::Green) // Running
@@ -262,10 +264,29 @@ fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
         Span::styled("Server: ", Style::default().fg(Color::White)),
         Span::styled(status_icon, Style::default().fg(status_color)),
         Span::styled(&app.server_url, Style::default().fg(Color::Cyan)),
+    ];
+
+    // Add version info if available
+    if let Some(ref version_result) = app.version_mismatch
+        && let Some(ref server_version) = version_result.server_version
+    {
+        let version_color = match version_result.severity {
+            version_check::VersionMismatchSeverity::Major => Color::Red,
+            version_check::VersionMismatchSeverity::Minor => Color::Yellow,
+            version_check::VersionMismatchSeverity::Patch => Color::Yellow,
+            version_check::VersionMismatchSeverity::None => Color::Green,
+        };
+        spans.push(Span::styled(
+            format!(" (server v{})", server_version),
+            Style::default().fg(version_color),
+        ));
+    }
+
+    spans.extend(vec![
         Span::styled(" | ", Style::default().fg(Color::DarkGray)),
         Span::styled("u", Style::default().fg(Color::Yellow)),
         Span::styled(": URL ", Style::default().fg(Color::DarkGray)),
-    ];
+    ]);
 
     // Add server management hints
     if app.is_server_running() {
@@ -284,7 +305,10 @@ fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
 
     let text = vec![Line::from(spans)];
 
-    let block = Block::default().borders(Borders::ALL).title("Connection");
+    // Build title with TUI version
+    let title = format!("Connection | TUI v{}", version_check::full_version());
+
+    let block = Block::default().borders(Borders::ALL).title(title);
 
     let paragraph = ratatui::widgets::Paragraph::new(text)
         .block(block)

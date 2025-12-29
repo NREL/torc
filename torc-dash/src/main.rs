@@ -176,9 +176,16 @@ async fn main() -> Result<()> {
         dash_config.completion_check_interval_secs
     };
 
-    info!("Starting torc-dash on {}:{}", host, port);
-    info!("Torc binary: {}", torc_bin);
-    info!("Torc server binary: {}", torc_server_bin);
+    info!(
+        "Starting torc-dash v{} ({}{}) on {}:{} torc_bin={} server_bin={}",
+        env!("CARGO_PKG_VERSION"),
+        env!("GIT_HASH"),
+        env!("GIT_DIRTY"),
+        host,
+        port,
+        torc_bin,
+        torc_server_bin
+    );
 
     // Track the actual server port (may differ from server_port if using port 0)
     let mut actual_server_port = server_port;
@@ -371,6 +378,8 @@ async fn main() -> Result<()> {
         .route("/api/server/start", post(server_start_handler))
         .route("/api/server/stop", post(server_stop_handler))
         .route("/api/server/status", get(server_status_handler))
+        // Version endpoint
+        .route("/api/version", get(version_handler))
         // API proxy - catch all /torc-service/* requests
         .route(
             "/torc-service/*path",
@@ -2188,6 +2197,68 @@ async fn server_status_handler(State(state): State<Arc<AppState>>) -> impl IntoR
         pid: if running { managed.pid } else { None },
         port: if running { managed.port } else { None },
         output_lines: managed.output_lines.clone(),
+    })
+}
+
+// ============== Version Handler ==============
+
+#[derive(Serialize)]
+struct VersionResponse {
+    version: String,
+    server_version: Option<String>,
+    version_mismatch: Option<String>,
+    mismatch_severity: Option<String>,
+}
+
+/// Return the torc-dash version and check server version compatibility
+async fn version_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    use torc::client::version_check;
+
+    // Create a configuration to fetch server version
+    let api_url = state.api_url.clone();
+
+    // Run the blocking version check in a spawn_blocking task to avoid runtime panics
+    let result = tokio::task::spawn_blocking(move || {
+        let config = torc::client::apis::configuration::Configuration {
+            base_path: api_url,
+            ..Default::default()
+        };
+        version_check::check_version(&config)
+    })
+    .await
+    .ok();
+
+    let (server_version, version_mismatch, mismatch_severity) = match result {
+        Some(result) => match &result.server_version {
+            Some(server_ver) => {
+                let severity_str = match result.severity {
+                    version_check::VersionMismatchSeverity::None => None,
+                    version_check::VersionMismatchSeverity::Patch => Some("patch".to_string()),
+                    version_check::VersionMismatchSeverity::Minor => Some("minor".to_string()),
+                    version_check::VersionMismatchSeverity::Major => Some("major".to_string()),
+                };
+                let mismatch_msg = if result.severity.has_warning() {
+                    Some(result.message.clone())
+                } else {
+                    None
+                };
+                (Some(server_ver.clone()), mismatch_msg, severity_str)
+            }
+            None => (None, None, None),
+        },
+        None => (None, None, None),
+    };
+
+    // Extract just the semver from server version (strip git hash suffix for display)
+    let server_version_display = server_version
+        .as_ref()
+        .map(|v| v.split(" (").next().unwrap_or(v).to_string());
+
+    Json(VersionResponse {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        server_version: server_version_display,
+        version_mismatch,
+        mismatch_severity,
     })
 }
 

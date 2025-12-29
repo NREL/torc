@@ -45,7 +45,15 @@ use openssl::ssl::{Ssl, SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod}
 
 use sqlx::sqlite::SqlitePool;
 
-const TORC_VERSION: &str = "0.1.0";
+const TORC_VERSION: &str = env!("CARGO_PKG_VERSION");
+const GIT_HASH: &str = env!("GIT_HASH");
+const GIT_DIRTY: &str = env!("GIT_DIRTY");
+
+/// Returns the full version string including git hash (e.g., "0.8.0 (abc1234)")
+fn full_version() -> String {
+    format!("{} ({}{})", TORC_VERSION, GIT_HASH, GIT_DIRTY)
+}
+
 const MAX_RECORD_TRANSFER_COUNT: i64 = 10_000;
 
 /// Process optional offset and limit parameters and return concrete values.
@@ -2436,7 +2444,7 @@ where
     async fn get_version(&self, context: &C) -> Result<GetVersionResponse, ApiError> {
         info!("get_version() - X-Span-ID: {:?}", context.get().0.clone());
         Ok(GetVersionResponse::SuccessfulResponse(serde_json::json!(
-            TORC_VERSION
+            full_version()
         )))
     }
 
