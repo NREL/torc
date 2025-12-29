@@ -1084,7 +1084,7 @@ pub fn create_diverse_jobs_workflow(
     let workflow_id = created_workflow.id.unwrap();
 
     // Create different resource requirement profiles for sorting tests
-    let resource_profiles = vec![
+    let resource_profiles = [
         // (name, cpus, gpus, memory_gb, runtime_hours)
         ("low_gpu_short_small", 4, 1, 8, 1.0), // 1 GPU, 1 hour, 8GB
         ("no_gpu_long_large", 16, 0, 64, 24.0), // 0 GPU, 24 hours, 64GB
