@@ -33,7 +33,7 @@ fn test_jobs_add_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run jobs create command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run jobs create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -72,7 +72,7 @@ fn test_jobs_add_with_blocking_jobs(start_server: &ServerProcess) {
         &blocking_job_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run jobs create with blocking jobs");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("dependent_job"));
@@ -123,7 +123,7 @@ fn test_jobs_add_with_file_dependencies(start_server: &ServerProcess) {
         &output_file_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run jobs create with file dependencies");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("file_job"));
@@ -152,7 +152,7 @@ fn test_jobs_list_command_json(start_server: &ServerProcess) {
     let args = ["jobs", "list", &workflow_id.to_string(), "--limit", "10"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run jobs list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run jobs list command");
 
     // Verify JSON structure is an object with "jobs" field
     assert!(json_output.is_object(), "Jobs list should return an object");
@@ -190,7 +190,7 @@ fn test_jobs_list_pagination(start_server: &ServerProcess) {
     let args = ["jobs", "list", &workflow_id.to_string(), "--limit", "3"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated jobs list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run paginated jobs list");
 
     let jobs_array = json_output.get("jobs").unwrap().as_array().unwrap();
     assert!(jobs_array.len() <= 3, "Should respect limit parameter");
@@ -207,7 +207,7 @@ fn test_jobs_list_pagination(start_server: &ServerProcess) {
         "2",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run jobs list with offset");
 
     let jobs_with_offset = json_output_offset.get("jobs").unwrap().as_array().unwrap();
@@ -236,7 +236,7 @@ fn test_jobs_list_sorting(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run sorted jobs list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run sorted jobs list");
 
     let jobs_array = json_output.get("jobs").unwrap().as_array().unwrap();
     assert!(jobs_array.len() >= 3);
@@ -251,7 +251,7 @@ fn test_jobs_list_sorting(start_server: &ServerProcess) {
         "--reverse-sort",
     ];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, None)
         .expect("Failed to run reverse sorted jobs list");
 
     let jobs_array_reverse = json_output_reverse.get("jobs").unwrap().as_array().unwrap();
@@ -281,7 +281,7 @@ fn test_jobs_get_command_json(start_server: &ServerProcess) {
     let args = ["jobs", "get", &job_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run jobs get command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run jobs get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(job_id));
@@ -313,7 +313,7 @@ fn test_jobs_update_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run jobs update command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run jobs update command");
 
     // Verify the updated values
     assert_eq!(json_output.get("id").unwrap(), &json!(job_id));
@@ -346,7 +346,7 @@ fn test_jobs_update_partial_fields(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run partial jobs update");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run partial jobs update");
 
     // Only name should be updated
     assert_eq!(
@@ -389,7 +389,7 @@ fn test_jobs_update_partial_fields(start_server: &ServerProcess) {
 //         &blocking_job2_id.to_string(),
 //     ];
 
-//     let _ = run_cli_with_json(&args, start_server)
+//     let _ = run_cli_with_json(&args, start_server, None)
 //         .expect("Failed to run jobs update with blocking jobs");
 
 //     // Verify blocking job IDs are updated
@@ -414,7 +414,7 @@ fn test_jobs_delete_command_json(start_server: &ServerProcess) {
     let args = ["jobs", "delete", &job_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run jobs delete command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run jobs delete command");
 
     // Verify JSON structure shows the removed job in "jobs" array
     assert!(json_output.get("jobs").is_some());
@@ -612,7 +612,7 @@ fn test_jobs_add_complex_command(start_server: &ServerProcess) {
         complex_command,
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run jobs create with complex command");
 
     assert_eq!(json_output.get("command").unwrap(), &json!(complex_command));
@@ -624,13 +624,13 @@ fn test_jobs_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent job
     let args = ["jobs", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_err(), "Should fail when getting non-existent job");
 
     // Test updating a non-existent job
     let args = ["jobs", "update", "999999", "--name", "should_fail"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent job"
@@ -639,7 +639,7 @@ fn test_jobs_error_handling(start_server: &ServerProcess) {
     // Test removing a non-existent job
     let args = ["jobs", "delete", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when removing non-existent job"
@@ -663,7 +663,7 @@ fn test_jobs_error_handling(start_server: &ServerProcess) {
 //     let args = ["jobs", "update", &job_id.to_string(), "--status", "ready"];
 //
 //     let json_output =
-//         run_cli_with_json(&args, start_server).expect("Failed to run jobs update status command");
+//         run_cli_with_json(&args, start_server, None).expect("Failed to run jobs update status command");
 //
 //     // Verify the updated status
 //     assert_eq!(json_output.get("id").unwrap(), &json!(job_id));
@@ -673,7 +673,7 @@ fn test_jobs_error_handling(start_server: &ServerProcess) {
 //     let args = ["jobs", "update", &job_id.to_string(), "--status", "blocked"];
 //
 //     let json_output =
-//         run_cli_with_json(&args, start_server).expect("Failed to run jobs update status command");
+//         run_cli_with_json(&args, start_server, None).expect("Failed to run jobs update status command");
 //
 //     // Verify the updated status
 //     assert_eq!(json_output.get("status").unwrap(), &json!("blocked"));
@@ -682,7 +682,7 @@ fn test_jobs_error_handling(start_server: &ServerProcess) {
 //     let args = ["jobs", "update", &job_id.to_string(), "--status", "done"];
 //
 //     let json_output =
-//         run_cli_with_json(&args, start_server).expect("Failed to run jobs update status command");
+//         run_cli_with_json(&args, start_server, None).expect("Failed to run jobs update status command");
 //
 //     // Verify the updated status
 //     assert_eq!(json_output.get("status").unwrap(), &json!("done"));
@@ -707,7 +707,7 @@ fn test_jobs_update_invalid_status(start_server: &ServerProcess) {
         "invalid_status",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating with invalid status"
@@ -752,7 +752,7 @@ fn test_jobs_list_with_upstream_job_id_filter(start_server: &ServerProcess) {
 
     // This test mainly verifies that the CLI accepts the new parameter without errors
     // The actual filtering behavior depends on the backend implementation of job dependencies
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run jobs list command with upstream_job_id filter");
 
     // Verify the response structure is correct
@@ -805,7 +805,7 @@ fn test_jobs_update_restriction_status_must_be_uninitialized(start_server: &Serv
         "should_fail",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating job with status '{}' (not Uninitialized)",
@@ -894,7 +894,7 @@ fn test_jobs_update_works_when_status_is_uninitialized(start_server: &ServerProc
         "echo 'Updated command'",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Update should succeed when job status is Uninitialized");
 
     // Verify the update succeeded
@@ -937,7 +937,7 @@ fn test_jobs_delete_multiple(start_server: &ServerProcess) {
         &job3_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run jobs delete with multiple IDs");
 
     // Verify JSON structure shows deleted jobs in "jobs" field
@@ -973,7 +973,7 @@ fn test_jobs_delete_multiple_with_failures(start_server: &ServerProcess) {
         &invalid_id.to_string(),
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
 
     // Command should fail because one ID doesn't exist
     assert!(

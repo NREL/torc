@@ -1,5 +1,7 @@
 //! Result-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use log::{debug, error};
 use sqlx::Row;
@@ -351,8 +353,8 @@ where
         if let Some(ret_code) = return_code {
             sqlx_query = sqlx_query.bind(ret_code);
         }
-        if status.is_some() {
-            sqlx_query = sqlx_query.bind(status.as_ref().unwrap().to_int());
+        if let Some(ref s) = status {
+            sqlx_query = sqlx_query.bind(s.to_int());
         }
         if let Some(cn_id) = compute_node_id {
             sqlx_query = sqlx_query.bind(cn_id);
@@ -414,8 +416,8 @@ where
         if let Some(ret_code) = return_code {
             count_sqlx_query = count_sqlx_query.bind(ret_code);
         }
-        if status.is_some() {
-            count_sqlx_query = count_sqlx_query.bind(status.as_ref().unwrap().to_int());
+        if let Some(ref s) = status {
+            count_sqlx_query = count_sqlx_query.bind(s.to_int());
         }
         if let Some(cn_id) = compute_node_id {
             count_sqlx_query = count_sqlx_query.bind(cn_id);

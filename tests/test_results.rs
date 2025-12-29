@@ -38,7 +38,7 @@ fn test_results_list_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run results list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run results list command");
 
     // Verify JSON structure is an object with "results" field
     assert!(
@@ -89,8 +89,8 @@ fn test_results_list_with_job_filter(start_server: &ServerProcess) {
         "--all-runs",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run results list with job filter");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run results list with job filter");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
     assert!(results_array.len() >= 1);
@@ -118,7 +118,7 @@ fn test_results_get_command_json(start_server: &ServerProcess) {
     let args = ["results", "get", &result_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run results get command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run results get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(result_id));
@@ -146,7 +146,7 @@ fn test_results_delete_command_json(start_server: &ServerProcess) {
     let args = ["results", "delete", &result_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run results delete command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run results delete command");
 
     // Verify JSON structure shows the removed result
     assert_eq!(json_output.get("id").unwrap(), &json!(result_id));
@@ -182,7 +182,7 @@ fn test_results_list_pagination(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated results list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run paginated results list");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
     assert!(results_array.len() >= 3, "Should respect limit parameter");
@@ -199,7 +199,7 @@ fn test_results_list_pagination(start_server: &ServerProcess) {
         "--all-runs",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run results list with offset");
 
     let results_with_offset = json_output_offset
@@ -248,7 +248,7 @@ fn test_results_list_sorting(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run sorted results list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run sorted results list");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
     assert!(results_array.len() >= 3);
@@ -299,7 +299,7 @@ fn test_results_list_sorting(start_server: &ServerProcess) {
 //         "done",
 //     ];
 //
-//     let json_output = run_cli_with_json(&args, start_server)
+//     let json_output = run_cli_with_json(&args, start_server, None)
 //         .expect("Failed to run results create with default completion time");
 //
 //     // Should have a completion_time field
@@ -369,7 +369,7 @@ fn test_results_list_with_return_code_filter(start_server: &ServerProcess) {
         "0",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list command with return_code filter");
 
     // Verify the response structure is correct
@@ -434,7 +434,7 @@ fn test_results_list_with_status_filter(start_server: &ServerProcess) {
         "completed",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list command with status filter");
 
     // Verify the response structure is correct
@@ -567,7 +567,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     // Test default behavior (should only show current results from run 2)
     let args = ["results", "list", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list command with default behavior");
 
     assert!(
@@ -698,7 +698,7 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
     // Test with --all-runs flag (should show all historical results)
     let args = ["results", "list", &workflow_id.to_string(), "--all-runs"];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list command with --all-runs");
 
     assert!(
@@ -820,7 +820,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         &job1_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list with --all-runs and job filter");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
@@ -849,7 +849,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         "terminated",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list with --all-runs and status filter");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
@@ -868,7 +868,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         "terminated",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run results list with status filter (no --all-runs)");
 
     let results_array = json_output.get("results").unwrap().as_array().unwrap();
@@ -945,8 +945,8 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
 
     // Verify we have 2 current results (default list shows workflow_result entries)
     let args = ["results", "list", &workflow_id.to_string()];
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list results before reinitialize");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list results before reinitialize");
     assert_eq!(
         json_output
             .get("results")
@@ -969,8 +969,8 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
 
     // After reinitialize, jobs are reset to ready/blocked status (not complete)
     // So workflow_result should be empty (default list should show 0 results)
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list results after reinitialize");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list results after reinitialize");
     assert_eq!(
         json_output
             .get("results")
@@ -984,7 +984,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
 
     // But with --all-runs, we should still see the historical results
     let args_all_runs = ["results", "list", &workflow_id.to_string(), "--all-runs"];
-    let json_output = run_cli_with_json(&args_all_runs, start_server)
+    let json_output = run_cli_with_json(&args_all_runs, start_server, None)
         .expect("Failed to list all results after reinitialize");
     assert_eq!(
         json_output

@@ -1,5 +1,7 @@
 //! Scheduler-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use log::{debug, error};
 use sqlx::Row;

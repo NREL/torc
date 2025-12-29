@@ -74,34 +74,37 @@ fn validate_action_config(
             }
 
             // Validate field types if present
-            if let Some(scheduler_id) = config_obj.get("scheduler_id") {
-                if !scheduler_id.is_i64() && !scheduler_id.is_u64() {
-                    return Err("'scheduler_id' must be an integer".to_string());
-                }
+            if let Some(scheduler_id) = config_obj.get("scheduler_id")
+                && !scheduler_id.is_i64()
+                && !scheduler_id.is_u64()
+            {
+                return Err("'scheduler_id' must be an integer".to_string());
             }
 
-            if let Some(scheduler_type) = config_obj.get("scheduler_type") {
-                if !scheduler_type.is_string() {
-                    return Err("'scheduler_type' must be a string".to_string());
-                }
+            if let Some(scheduler_type) = config_obj.get("scheduler_type")
+                && !scheduler_type.is_string()
+            {
+                return Err("'scheduler_type' must be a string".to_string());
             }
 
-            if let Some(num_allocations) = config_obj.get("num_allocations") {
-                if !num_allocations.is_i64() && !num_allocations.is_u64() {
-                    return Err("'num_allocations' must be an integer".to_string());
-                }
+            if let Some(num_allocations) = config_obj.get("num_allocations")
+                && !num_allocations.is_i64()
+                && !num_allocations.is_u64()
+            {
+                return Err("'num_allocations' must be an integer".to_string());
             }
 
-            if let Some(start_one_worker_per_node) = config_obj.get("start_one_worker_per_node") {
-                if !start_one_worker_per_node.is_boolean() {
-                    return Err("'start_one_worker_per_node' must be a boolean".to_string());
-                }
+            if let Some(start_one_worker_per_node) = config_obj.get("start_one_worker_per_node")
+                && !start_one_worker_per_node.is_boolean()
+            {
+                return Err("'start_one_worker_per_node' must be a boolean".to_string());
             }
 
-            if let Some(max_parallel_jobs) = config_obj.get("max_parallel_jobs") {
-                if !max_parallel_jobs.is_i64() && !max_parallel_jobs.is_u64() {
-                    return Err("'max_parallel_jobs' must be an integer".to_string());
-                }
+            if let Some(max_parallel_jobs) = config_obj.get("max_parallel_jobs")
+                && !max_parallel_jobs.is_i64()
+                && !max_parallel_jobs.is_u64()
+            {
+                return Err("'max_parallel_jobs' must be an integer".to_string());
             }
 
             Ok(())

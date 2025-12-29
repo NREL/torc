@@ -463,4 +463,61 @@ mod tests {
         let value = ParameterValue::Float(3.14159);
         assert_eq!(value.format(Some(".2f")), "3.14");
     }
+
+    #[test]
+    fn test_zip_parameters_function() {
+        let mut params = HashMap::new();
+        params.insert(
+            "dataset".to_string(),
+            vec![
+                ParameterValue::String("cifar10".to_string()),
+                ParameterValue::String("mnist".to_string()),
+                ParameterValue::String("imagenet".to_string()),
+            ],
+        );
+        params.insert(
+            "model".to_string(),
+            vec![
+                ParameterValue::String("resnet".to_string()),
+                ParameterValue::String("vgg".to_string()),
+                ParameterValue::String("transformer".to_string()),
+            ],
+        );
+
+        let result = zip_parameters(&params).unwrap();
+        assert_eq!(result.len(), 3); // 3 zipped pairs, not 9 combinations
+
+        // Verify each combination has both parameters
+        for combo in &result {
+            assert!(combo.contains_key("dataset"));
+            assert!(combo.contains_key("model"));
+        }
+    }
+
+    #[test]
+    fn test_zip_parameters_empty() {
+        let params: HashMap<String, Vec<ParameterValue>> = HashMap::new();
+        let result = zip_parameters(&params).unwrap();
+        assert_eq!(result.len(), 1);
+        assert!(result[0].is_empty());
+    }
+
+    #[test]
+    fn test_zip_parameters_single_param() {
+        let mut params = HashMap::new();
+        params.insert(
+            "i".to_string(),
+            vec![
+                ParameterValue::Integer(1),
+                ParameterValue::Integer(2),
+                ParameterValue::Integer(3),
+            ],
+        );
+
+        let result = zip_parameters(&params).unwrap();
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0].get("i"), Some(&ParameterValue::Integer(1)));
+        assert_eq!(result[1].get("i"), Some(&ParameterValue::Integer(2)));
+        assert_eq!(result[2].get("i"), Some(&ParameterValue::Integer(3)));
+    }
 }

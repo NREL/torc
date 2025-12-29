@@ -224,6 +224,29 @@ body {
     font-size: 12px;
 }
 
+.user-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    max-width: 100px;
+    overflow: hidden;
+}
+
+.user-display .user-icon {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.user-display .user-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .version-display {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.5);

@@ -298,7 +298,7 @@ fn test_regenerate_all_jobs_ready(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -332,7 +332,7 @@ fn test_regenerate_no_pending_jobs(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -368,7 +368,7 @@ fn test_regenerate_multiple_ready_jobs(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -402,7 +402,7 @@ fn test_regenerate_with_blocked_jobs(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -437,7 +437,7 @@ fn test_regenerate_counts_all_pending_statuses(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -472,7 +472,7 @@ fn test_regenerate_varied_resources(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -514,7 +514,7 @@ fn test_regenerate_single_allocation(start_server: &ServerProcess) {
         "--single-allocation",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -578,7 +578,7 @@ fn test_regenerate_uses_existing_account(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     // Verify new scheduler uses the existing account
@@ -665,7 +665,7 @@ fn test_regenerate_with_default_resource_requirements(start_server: &ServerProce
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -703,7 +703,7 @@ fn test_regenerate_nonexistent_workflow(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     // Command should succeed but with 0 pending jobs
     // (graceful handling for workflows with no pending jobs)
     assert!(result.is_ok(), "Command should succeed gracefully");
@@ -734,7 +734,7 @@ fn test_regenerate_includes_blocked_jobs(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();
@@ -771,7 +771,7 @@ fn test_regenerate_json_output_structure(start_server: &ServerProcess) {
         "kestrel",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_ok(), "Regenerate command failed: {:?}", result);
 
     let json = result.unwrap();

@@ -687,6 +687,7 @@ resource_requirements:
             "--no-prompts",
         ],
         start_server,
+        None,
     )
     .expect("Failed to reset workflow status");
 
@@ -1025,6 +1026,7 @@ resource_requirements:
     run_cli_command(
         &["workflows", "reinitialize", &workflow_id.to_string()],
         start_server,
+        None,
     )
     .expect("Failed to reinitialize workflow");
 

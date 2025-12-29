@@ -12,7 +12,7 @@ use crate::client::commands::pagination::{
 };
 use crate::client::commands::slurm::{GroupByStrategy, generate_schedulers_for_workflow};
 use crate::client::commands::{
-    get_env_user_name, get_user_name, print_error, select_workflow_interactively,
+    get_env_user_name, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
 };
 use crate::client::hpc::hpc_interface::HpcInterface;
@@ -22,20 +22,6 @@ use crate::config::TorcConfig;
 use crate::models;
 use serde_json;
 use tabled::Tabled;
-
-#[derive(Tabled)]
-struct WorkflowTableRow {
-    #[tabled(rename = "ID")]
-    id: i64,
-    #[tabled(rename = "Name")]
-    name: String,
-    #[tabled(rename = "Description")]
-    description: String,
-    #[tabled(rename = "User")]
-    user: String,
-    #[tabled(rename = "Timestamp")]
-    timestamp: String,
-}
 
 #[derive(Tabled)]
 struct WorkflowTableRowNoUser {
@@ -82,9 +68,6 @@ pub enum WorkflowCommands {
         /// Format is auto-detected from file extension, with fallback parsing attempted
         #[arg()]
         file: String,
-        /// User that owns the workflow (defaults to USER environment variable)
-        #[arg(short, long, env = "USER")]
-        user: String,
         /// Disable resource monitoring (default: enabled with summary granularity and 5s sample rate)
         #[arg(long, default_value = "false")]
         no_resource_monitoring: bool,
@@ -146,18 +129,9 @@ pub enum WorkflowCommands {
         /// Description of the workflow
         #[arg(short, long)]
         description: Option<String>,
-        /// User that owns the workflow (defaults to USER environment variable)
-        #[arg(short, long, env = "USER")]
-        user: String,
     },
     /// List workflows
     List {
-        /// User to filter by (defaults to USER environment variable)
-        #[arg(short, long, env = "USER", required_unless_present = "all_users")]
-        user: Option<String>,
-        /// List workflows for all users (overrides --user)
-        #[arg(long)]
-        all_users: bool,
         /// Maximum number of workflows to return
         #[arg(short, long, default_value = "10000")]
         limit: i64,
@@ -182,9 +156,6 @@ pub enum WorkflowCommands {
         /// ID of the workflow to get (optional - will prompt if not provided)
         #[arg()]
         id: Option<i64>,
-        /// User to filter by (defaults to USER environment variable)
-        #[arg(short, long)]
-        user: Option<String>,
     },
     /// Update an existing workflow
     Update {
@@ -288,9 +259,6 @@ pub enum WorkflowCommands {
         /// ID of the workflow to get status for (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// User to filter by (defaults to USER environment variable)
-        #[arg(short, long)]
-        user: Option<String>,
     },
     /// Reset workflow and job status
     ResetStatus {
@@ -321,9 +289,6 @@ pub enum WorkflowCommands {
         /// ID of the workflow to show actions for (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// User to filter by when selecting workflow interactively (defaults to USER environment variable)
-        #[arg(short, long)]
-        user: Option<String>,
     },
     /// Check if a workflow is complete
     IsComplete {
@@ -561,14 +526,12 @@ fn handle_execution_plan(config: &Configuration, spec_or_id: &str, format: &str)
 fn handle_list_actions(
     config: &Configuration,
     workflow_id: &Option<i64>,
-    user: &Option<String>,
+    user: &str,
     format: &str,
 ) {
-    let user_name = get_user_name(user);
-
     let selected_workflow_id = match workflow_id {
         Some(id) => *id,
-        None => select_workflow_interactively(config, &user_name).unwrap(),
+        None => select_workflow_interactively(config, user).unwrap(),
     };
 
     match default_api::get_workflow_actions(config, selected_workflow_id) {
@@ -1005,17 +968,10 @@ fn handle_reset_status(
     }
 }
 
-fn handle_status(
-    config: &Configuration,
-    workflow_id: &Option<i64>,
-    user: &Option<String>,
-    format: &str,
-) {
-    let user_name = get_user_name(user);
-
+fn handle_status(config: &Configuration, workflow_id: &Option<i64>, user: &str, format: &str) {
     let selected_workflow_id = match workflow_id {
         Some(id) => *id,
-        None => select_workflow_interactively(config, &user_name).unwrap(),
+        None => select_workflow_interactively(config, user).unwrap(),
     };
 
     match default_api::get_workflow_status(config, selected_workflow_id) {
@@ -1786,12 +1742,10 @@ fn handle_update(
     }
 }
 
-fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, format: &str) {
-    let user_name = get_user_name(user);
-
+fn handle_get(config: &Configuration, id: &Option<i64>, user: &str, format: &str) {
     let selected_id = match id {
         Some(workflow_id) => *workflow_id,
-        None => select_workflow_interactively(config, &user_name).unwrap(),
+        None => select_workflow_interactively(config, user).unwrap(),
     };
 
     match default_api::get_workflow(config, selected_id) {
@@ -1836,8 +1790,7 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &Option<String>, f
 #[allow(clippy::too_many_arguments)]
 fn handle_list(
     config: &Configuration,
-    user: &Option<String>,
-    all_users: bool,
+    user: &str,
     limit: i64,
     offset: i64,
     sort_by: &Option<String>,
@@ -1850,7 +1803,8 @@ fn handle_list(
     let mut params = WorkflowListParams::new()
         .with_offset(offset)
         .with_limit(limit)
-        .with_reverse_sort(reverse_sort);
+        .with_reverse_sort(reverse_sort)
+        .with_user(user.to_string());
 
     // Handle archive filtering:
     // - include_archived: show both archived and non-archived (is_archived = None)
@@ -1859,15 +1813,6 @@ fn handle_list(
     if !include_archived {
         params = params.with_is_archived(archived_only);
     }
-
-    // Set user filter based on --all-users flag
-    if !all_users {
-        let user_filter = user
-            .clone()
-            .unwrap_or_else(|| std::env::var("USER").unwrap_or_else(|_| "unknown".to_string()));
-        params = params.with_user(user_filter);
-    }
-    // If all_users is true, user filter remains None (showing all users)
 
     if let Some(sort_field) = sort_by {
         params = params.with_sort_by(sort_field.clone());
@@ -1902,32 +1847,9 @@ fn handle_list(
                     }
                 }
             } else if workflows.is_empty() {
-                if all_users {
-                    println!("No workflows found for any user");
-                } else {
-                    let display_user = user.clone().unwrap_or_else(|| {
-                        std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                    });
-                    println!("No workflows found for user: {}", display_user);
-                }
-            } else if all_users {
-                println!("Workflows for all users:");
-                let rows: Vec<WorkflowTableRow> = workflows
-                    .iter()
-                    .map(|workflow| WorkflowTableRow {
-                        id: workflow.id.unwrap_or(-1),
-                        name: workflow.name.clone(),
-                        description: workflow.description.as_deref().unwrap_or("").to_string(),
-                        user: workflow.user.clone(),
-                        timestamp: workflow.timestamp.as_deref().unwrap_or("").to_string(),
-                    })
-                    .collect();
-                display_table_with_count(&rows, "workflows");
+                println!("No workflows found for user: {}", user);
             } else {
-                let display_user = user.clone().unwrap_or_else(|| {
-                    std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
-                });
-                println!("Workflows for user {}:", display_user);
+                println!("Workflows for user {}:", user);
                 let rows: Vec<WorkflowTableRowNoUser> = workflows
                     .iter()
                     .map(|workflow| WorkflowTableRowNoUser {
@@ -2344,10 +2266,14 @@ fn handle_is_complete(config: &Configuration, id: Option<i64>, format: &str) {
 }
 
 pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowCommands, format: &str) {
+    // Get the current user from environment
+    let current_user = std::env::var("USER")
+        .or_else(|_| std::env::var("USERNAME"))
+        .unwrap_or_else(|_| "unknown".to_string());
+
     match command {
         WorkflowCommands::Create {
             file,
-            user,
             no_resource_monitoring,
             skip_checks,
             dry_run,
@@ -2355,7 +2281,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             handle_create(
                 config,
                 file,
-                user,
+                &current_user,
                 *no_resource_monitoring,
                 *skip_checks,
                 *dry_run,
@@ -2385,16 +2311,10 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 format,
             );
         }
-        WorkflowCommands::New {
-            name,
-            description,
-            user,
-        } => {
-            handle_new(config, name, description, user, format);
+        WorkflowCommands::New { name, description } => {
+            handle_new(config, name, description, &current_user, format);
         }
         WorkflowCommands::List {
-            user,
-            all_users,
             limit,
             offset,
             sort_by,
@@ -2404,8 +2324,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         } => {
             handle_list(
                 config,
-                user,
-                *all_users,
+                &current_user,
                 *limit,
                 *offset,
                 sort_by,
@@ -2415,8 +2334,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 format,
             );
         }
-        WorkflowCommands::Get { id, user } => {
-            handle_get(config, id, user, format);
+        WorkflowCommands::Get { id } => {
+            handle_get(config, id, &current_user, format);
         }
         WorkflowCommands::Update {
             id,
@@ -2471,8 +2390,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         } => {
             handle_reinitialize(config, workflow_id, *force, *dry_run, format);
         }
-        WorkflowCommands::Status { workflow_id, user } => {
-            handle_status(config, workflow_id, user, format);
+        WorkflowCommands::Status { workflow_id } => {
+            handle_status(config, workflow_id, &current_user, format);
         }
         WorkflowCommands::ResetStatus {
             workflow_id,
@@ -2497,8 +2416,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::ExecutionPlan { spec_or_id } => {
             handle_execution_plan(config, spec_or_id, format);
         }
-        WorkflowCommands::ListActions { workflow_id, user } => {
-            handle_list_actions(config, workflow_id, user, format);
+        WorkflowCommands::ListActions { workflow_id } => {
+            handle_list_actions(config, workflow_id, &current_user, format);
         }
         WorkflowCommands::IsComplete { id } => {
             handle_is_complete(config, *id, format);

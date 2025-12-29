@@ -1,5 +1,7 @@
 //! Workflow-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use chrono::Utc;
 use log::{debug, error, info};
@@ -163,7 +165,7 @@ where
             .await
             .map_err(database_error)?;
 
-        Ok(!workflow_exists.is_none())
+        Ok(workflow_exists.is_some())
     }
 
     /// Store a workflow.

@@ -8,7 +8,11 @@
     unused_attributes,
     non_camel_case_types
 )]
-#![allow(clippy::derive_partial_eq_without_eq, clippy::disallowed_names)]
+#![allow(
+    clippy::derive_partial_eq_without_eq,
+    clippy::disallowed_names,
+    clippy::large_enum_variant
+)]
 
 //! OpenAPI-generated API types and trait definitions
 

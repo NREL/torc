@@ -200,7 +200,6 @@ pub enum Focus {
     Details,
     FilterInput,
     ServerUrlInput,
-    UserInput,
     WorkflowPathInput,
     Popup,
 }
@@ -216,8 +215,6 @@ pub struct App {
     pub server_url: String,
     pub server_url_input: String,
     pub user_filter: Option<String>,
-    pub user_input: String,
-    pub show_all_users: bool,
     pub workflows: Vec<WorkflowModel>,
     pub workflows_state: TableState,
     pub jobs: Vec<JobModel>,
@@ -285,8 +282,6 @@ impl App {
             server_url: server_url.clone(),
             server_url_input: String::new(),
             user_filter: Some(current_user.clone()),
-            user_input: String::new(),
-            show_all_users: false,
             workflows: Vec::new(),
             workflows_state: TableState::default(),
             jobs: Vec::new(),
@@ -334,9 +329,7 @@ impl App {
     }
 
     pub fn refresh_workflows(&mut self) -> Result<()> {
-        self.workflows = if self.show_all_users {
-            self.client.list_workflows()?
-        } else if let Some(ref user) = self.user_filter {
+        self.workflows = if let Some(ref user) = self.user_filter {
             self.client.list_workflows_for_user(user)?
         } else {
             self.client.list_workflows()?
@@ -355,7 +348,6 @@ impl App {
             // Stay in current mode for input/popup states
             Focus::FilterInput => Focus::FilterInput,
             Focus::ServerUrlInput => Focus::ServerUrlInput,
-            Focus::UserInput => Focus::UserInput,
             Focus::WorkflowPathInput => Focus::WorkflowPathInput,
             Focus::Popup => Focus::Popup,
         };
@@ -394,7 +386,6 @@ impl App {
             // No navigation in input/popup modes
             Focus::FilterInput
             | Focus::ServerUrlInput
-            | Focus::UserInput
             | Focus::WorkflowPathInput
             | Focus::Popup => {}
         }
@@ -430,7 +421,6 @@ impl App {
             // No navigation in input/popup modes
             Focus::FilterInput
             | Focus::ServerUrlInput
-            | Focus::UserInput
             | Focus::WorkflowPathInput
             | Focus::Popup => {}
         }
@@ -747,52 +737,10 @@ impl App {
         Ok(())
     }
 
-    pub fn start_user_input(&mut self) {
-        self.focus = Focus::UserInput;
-        self.user_input = self.user_filter.clone().unwrap_or_default();
-    }
-
-    pub fn cancel_user_input(&mut self) {
-        self.focus = Focus::Workflows;
-        self.user_input.clear();
-    }
-
-    pub fn add_user_char(&mut self, c: char) {
-        self.user_input.push(c);
-    }
-
-    pub fn remove_user_char(&mut self) {
-        self.user_input.pop();
-    }
-
-    pub fn apply_user_filter(&mut self) -> Result<()> {
-        if self.user_input.is_empty() {
-            self.user_filter = None;
-        } else {
-            self.user_filter = Some(self.user_input.clone());
-        }
-        self.focus = Focus::Workflows;
-
-        // Refresh workflows with new user filter
-        self.refresh_workflows()?;
-
-        Ok(())
-    }
-
-    pub fn toggle_show_all_users(&mut self) -> Result<()> {
-        self.show_all_users = !self.show_all_users;
-        self.refresh_workflows()?;
-        Ok(())
-    }
-
     pub fn get_current_user_display(&self) -> String {
-        if self.show_all_users {
-            "All Users".to_string()
-        } else if let Some(ref user) = self.user_filter {
-            user.clone()
-        } else {
-            "All Users".to_string()
-        }
+        self.user_filter
+            .clone()
+            .unwrap_or_else(|| "Unknown".to_string())
     }
 
     pub fn build_dag_from_jobs(&mut self) {

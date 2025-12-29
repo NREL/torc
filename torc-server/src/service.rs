@@ -349,12 +349,10 @@ pub fn execute_service_command(
             // Merge user-provided config with appropriate defaults
             let merged_config = if let Some(user_config) = config {
                 ServiceConfig::merge_with_defaults(user_config, user_level)
+            } else if user_level {
+                ServiceConfig::default_user()
             } else {
-                if user_level {
-                    ServiceConfig::default_user()
-                } else {
-                    ServiceConfig::default_system()
-                }
+                ServiceConfig::default_system()
             };
             install_service(&merged_config, user_level)
         }

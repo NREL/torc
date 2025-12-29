@@ -1,5 +1,7 @@
 //! Job-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use log::{debug, error, info};
 use sha2::{Digest, Sha256};
@@ -1331,8 +1333,8 @@ where
         sqlx_query = sqlx_query.bind(workflow_id);
 
         // Bind optional parameters in order
-        if status.is_some() {
-            sqlx_query = sqlx_query.bind(status.as_ref().unwrap().to_int());
+        if let Some(ref s) = status {
+            sqlx_query = sqlx_query.bind(s.to_int());
         }
         if let Some(file_id) = needs_file_id {
             sqlx_query = sqlx_query.bind(file_id);
@@ -1411,8 +1413,8 @@ where
 
         let mut count_sqlx_query = sqlx::query(&count_query);
         count_sqlx_query = count_sqlx_query.bind(workflow_id);
-        if status.is_some() {
-            count_sqlx_query = count_sqlx_query.bind(status.as_ref().unwrap().to_int());
+        if let Some(ref s) = status {
+            count_sqlx_query = count_sqlx_query.bind(s.to_int());
         }
         if let Some(file_id) = needs_file_id {
             count_sqlx_query = count_sqlx_query.bind(file_id);
@@ -1496,7 +1498,7 @@ where
 
         // Check if job has a status
         let existing_status = match existing_job.status {
-            Some(ref status) => status.clone(),
+            Some(status) => status,
             None => {
                 let error_response = models::ErrorResponse::new(serde_json::json!({
                     "message": "Cannot update job - job has no status set"
@@ -1586,17 +1588,17 @@ where
         }
 
         // Restriction 2: Updating job status is not allowed, except to Disabled
-        if let Some(new_status) = &body.status {
-            if let Some(ref existing_status) = existing_job.status {
-                if *new_status != *existing_status && *new_status != models::JobStatus::Disabled {
-                    let error_response = models::ErrorResponse::new(serde_json::json!({
-                        "message": "Cannot update job status - this field is immutable after job creation (except to Disabled)"
-                    }));
-                    return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
-                        error_response,
-                    ));
-                }
-            }
+        if let Some(new_status) = &body.status
+            && let Some(ref existing_status) = existing_job.status
+            && *new_status != *existing_status
+            && *new_status != models::JobStatus::Disabled
+        {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": "Cannot update job status - this field is immutable after job creation (except to Disabled)"
+            }));
+            return Ok(UpdateJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
         }
 
         // Check if depends_on_job_ids is being modified
@@ -2053,7 +2055,7 @@ where
                     )))
                 } else if res.rows_affected() == 0 {
                     error!("No rows affected when deleting job {}", id);
-                    Err(ApiError(format!("Database error: No rows affected")))
+                    Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
                     Ok(DeleteJobResponse::SuccessfulResponse(job))
                 }
