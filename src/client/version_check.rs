@@ -112,12 +112,24 @@ fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
 pub fn compare_versions(client_version: &str, server_version: &str) -> VersionMismatchSeverity {
     let client = match parse_version(client_version) {
         Some(v) => v,
-        None => return VersionMismatchSeverity::None, // Can't compare, assume OK
+        None => {
+            eprintln!(
+                "Warning: failed to parse client version '{}'; skipping version comparison",
+                client_version
+            );
+            return VersionMismatchSeverity::None;
+        }
     };
 
     let server = match parse_version(server_version) {
         Some(v) => v,
-        None => return VersionMismatchSeverity::None, // Can't compare, assume OK
+        None => {
+            eprintln!(
+                "Warning: failed to parse server version '{}'; skipping version comparison",
+                server_version
+            );
+            return VersionMismatchSeverity::None;
+        }
     };
 
     // Check major version difference
