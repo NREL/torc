@@ -216,30 +216,40 @@ fn draw_help(f: &mut Frame, area: Rect, app: &App) {
         ])]
     };
 
-    // Build title with status message if present
-    let title = if let Some(ref status) = app.status_message {
+    // Build title with Torc logo and status message
+    // ASCII representation of the Torc workflow icon: ○─○─▶
+    let logo = "○─○─▶ ";
+    let logo_style = Style::default().fg(Color::Cyan);
+
+    let (title_text, title_style) = if let Some(ref status) = app.status_message {
         if status.is_visible() {
-            format!("Torc Management Console - {}", status.message)
+            (
+                format!("Torc ─ {}", status.message),
+                Style::default().fg(status.color()),
+            )
         } else {
-            "Torc Management Console".to_string()
+            (
+                "Torc".to_string(),
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            )
         }
     } else {
-        "Torc Management Console".to_string()
-    };
-
-    let title_style = if let Some(ref status) = app.status_message {
-        if status.is_visible() {
-            Style::default().fg(status.color())
-        } else {
+        (
+            "Torc".to_string(),
             Style::default()
-        }
-    } else {
-        Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )
     };
 
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(Span::styled(title, title_style));
+    let title_line = Line::from(vec![
+        Span::styled(logo, logo_style),
+        Span::styled(title_text, title_style),
+    ]);
+
+    let block = Block::default().borders(Borders::ALL).title(title_line);
 
     let paragraph = ratatui::widgets::Paragraph::new(help_text)
         .block(block)
@@ -306,9 +316,18 @@ fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
     let text = vec![Line::from(spans)];
 
     // Build title with TUI version
-    let title = format!("Connection | TUI v{}", version_check::full_version());
+    let title = Line::from(vec![
+        Span::styled("◉ ", Style::default().fg(Color::Cyan)),
+        Span::styled(
+            format!("Connection │ v{}", version_check::full_version()),
+            Style::default().fg(Color::White),
+        ),
+    ]);
 
-    let block = Block::default().borders(Borders::ALL).title(title);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(title)
+        .border_style(Style::default().fg(Color::DarkGray));
 
     let paragraph = ratatui::widgets::Paragraph::new(text)
         .block(block)
@@ -322,14 +341,22 @@ fn draw_user_filter(f: &mut Frame, area: Rect, app: &App) {
     let text = vec![Line::from(vec![
         Span::styled("User: ", Style::default().fg(Color::White)),
         Span::styled(&user_display, Style::default().fg(Color::Cyan)),
-        Span::styled(" | Press ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" │ ", Style::default().fg(Color::DarkGray)),
         Span::styled("w", Style::default().fg(Color::Yellow)),
-        Span::styled(" to change, ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" change ", Style::default().fg(Color::DarkGray)),
         Span::styled("a", Style::default().fg(Color::Yellow)),
-        Span::styled(" to toggle all users", Style::default().fg(Color::DarkGray)),
+        Span::styled(" all users", Style::default().fg(Color::DarkGray)),
     ])];
 
-    let block = Block::default().borders(Borders::ALL).title("User Filter");
+    let title = Line::from(vec![
+        Span::styled("◎ ", Style::default().fg(Color::Cyan)),
+        Span::styled("Filter", Style::default().fg(Color::White)),
+    ]);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(title)
+        .border_style(Style::default().fg(Color::DarkGray));
 
     let paragraph = ratatui::widgets::Paragraph::new(text)
         .block(block)
@@ -367,16 +394,26 @@ fn draw_workflows_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if app.focus == Focus::Workflows {
-        "Workflows [FOCUSED] (Press Enter to load details)"
+    let (title, border_style) = if app.focus == Focus::Workflows {
+        (
+            Line::from(vec![
+                Span::styled("◆ ", Style::default().fg(Color::Green)),
+                Span::styled("Workflows", Style::default().fg(Color::White)),
+                Span::styled(
+                    " │ Enter: load details",
+                    Style::default().fg(Color::DarkGray),
+                ),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Workflows (Press Enter to load details)"
-    };
-
-    let border_style = if app.focus == Focus::Workflows {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("◇ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Workflows", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -396,7 +433,7 @@ fn draw_workflows_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.workflows_state);
 }
@@ -415,14 +452,20 @@ fn draw_tabs(f: &mut Frame, area: Rect, app: &App) {
     };
 
     let tabs = Tabs::new(titles)
-        .block(Block::default().borders(Borders::ALL).title("Detail View"))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("◈ Detail View")
+                .border_style(Style::default().fg(Color::DarkGray)),
+        )
         .select(selected)
-        .style(Style::default().fg(Color::White))
+        .style(Style::default().fg(Color::DarkGray))
         .highlight_style(
             Style::default()
-                .fg(Color::Yellow)
+                .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
-        );
+        )
+        .divider("│");
 
     f.render_widget(tabs, area);
 }
@@ -481,16 +524,26 @@ fn draw_jobs_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if app.focus == Focus::Details {
-        "Jobs [FOCUSED] - Enter: details, l: logs, c: cancel, t: terminate, y: retry"
+    let (title, border_style) = if app.focus == Focus::Details {
+        (
+            Line::from(vec![
+                Span::styled("▶ ", Style::default().fg(Color::Green)),
+                Span::styled("Jobs", Style::default().fg(Color::White)),
+                Span::styled(
+                    " │ Enter: details  l: logs  c: cancel  t: terminate  y: retry",
+                    Style::default().fg(Color::DarkGray),
+                ),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Jobs"
-    };
-
-    let border_style = if app.focus == Focus::Details {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("▶ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Jobs", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -510,7 +563,7 @@ fn draw_jobs_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.jobs_state);
 }
@@ -552,15 +605,22 @@ fn draw_files_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if is_focused {
-        "Files [FOCUSED]"
+    let (title, border_style) = if is_focused {
+        (
+            Line::from(vec![
+                Span::styled("◫ ", Style::default().fg(Color::Green)),
+                Span::styled("Files", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Files"
-    };
-    let border_style = if is_focused {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("◫ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Files", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -580,7 +640,7 @@ fn draw_files_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.files_state);
 }
@@ -612,15 +672,22 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if is_focused {
-        "Events [FOCUSED]"
+    let (title, border_style) = if is_focused {
+        (
+            Line::from(vec![
+                Span::styled("⚡ ", Style::default().fg(Color::Green)),
+                Span::styled("Events", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Events"
-    };
-    let border_style = if is_focused {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("⚡ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Events", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -640,7 +707,7 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.events_state);
 }
@@ -700,15 +767,22 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if is_focused {
-        "Results [FOCUSED]"
+    let (title, border_style) = if is_focused {
+        (
+            Line::from(vec![
+                Span::styled("✓ ", Style::default().fg(Color::Green)),
+                Span::styled("Results", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Results"
-    };
-    let border_style = if is_focused {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("✓ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Results", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -731,7 +805,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.results_state);
 }
@@ -774,15 +848,22 @@ fn draw_scheduled_nodes_table(f: &mut Frame, area: Rect, app: &mut App) {
         ])
     });
 
-    let title = if is_focused {
-        "Scheduled Nodes [FOCUSED]"
+    let (title, border_style) = if is_focused {
+        (
+            Line::from(vec![
+                Span::styled("⊞ ", Style::default().fg(Color::Green)),
+                Span::styled("Scheduled Nodes", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Scheduled Nodes"
-    };
-    let border_style = if is_focused {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("⊞ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Scheduled Nodes", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     let table = Table::new(
@@ -803,7 +884,7 @@ fn draw_scheduled_nodes_table(f: &mut Frame, area: Rect, app: &mut App) {
             .border_style(border_style),
     )
     .row_highlight_style(selected_style)
-    .highlight_symbol(">> ");
+    .highlight_symbol("▸ ");
 
     f.render_stateful_widget(table, area, &mut app.scheduled_nodes_state);
 }
@@ -932,15 +1013,22 @@ fn draw_workflow_path_input(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_dag(f: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus == Focus::Details;
-    let title = if is_focused {
-        "Job DAG [FOCUSED]"
+    let (title, border_style) = if is_focused {
+        (
+            Line::from(vec![
+                Span::styled("◇ ", Style::default().fg(Color::Green)),
+                Span::styled("Job DAG", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::Green),
+        )
     } else {
-        "Job DAG"
-    };
-    let border_style = if is_focused {
-        Style::default().fg(Color::Green)
-    } else {
-        Style::default()
+        (
+            Line::from(vec![
+                Span::styled("◇ ", Style::default().fg(Color::Cyan)),
+                Span::styled("Job DAG", Style::default().fg(Color::White)),
+            ]),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     if let Some(ref dag) = app.dag {
