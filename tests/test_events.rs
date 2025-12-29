@@ -25,7 +25,7 @@ fn test_events_add_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run events create command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run events create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -89,7 +89,7 @@ fn test_events_add_complex_data(start_server: &ServerProcess) {
         complex_data,
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run events create with complex data");
 
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -122,7 +122,7 @@ fn test_events_list_command_json(start_server: &ServerProcess) {
     let args = ["events", "list", &workflow_id.to_string(), "--limit", "10"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run events list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run events list command");
 
     // Verify JSON structure is an object with "events" field
     assert!(
@@ -176,7 +176,7 @@ fn test_events_list_pagination(start_server: &ServerProcess) {
     let args = ["events", "list", &workflow_id.to_string(), "--limit", "3"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated events list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run paginated events list");
 
     let events_array = json_output.get("events").unwrap().as_array().unwrap();
     assert!(events_array.len() <= 3, "Should respect limit parameter");
@@ -193,7 +193,7 @@ fn test_events_list_pagination(start_server: &ServerProcess) {
         "2",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run events list with offset");
 
     let events_with_offset = json_output_offset
@@ -236,7 +236,7 @@ fn test_events_list_sorting(start_server: &ServerProcess) {
     // Test default sorting (by timestamp, newest first)
     let args_default = ["events", "list", &workflow_id.to_string()];
 
-    let json_output_default = run_cli_with_json(&args_default, start_server)
+    let json_output_default = run_cli_with_json(&args_default, start_server, None)
         .expect("Failed to run default sorted events list");
 
     let events_array_default = json_output_default
@@ -256,7 +256,7 @@ fn test_events_list_sorting(start_server: &ServerProcess) {
         "--reverse-sort",
     ];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, None)
         .expect("Failed to run reverse sorted events list");
 
     let events_array_reverse = json_output_reverse
@@ -318,7 +318,7 @@ fn test_events_get_latest_event_json(start_server: &ServerProcess) {
     // Test the CLI get-latest-event command
     let args = ["events", "get-latest-event", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run events get-latest-event command");
 
     // Verify we got the latest event
@@ -349,7 +349,7 @@ fn test_events_get_latest_event_empty_workflow(start_server: &ServerProcess) {
     // Test the CLI get-latest-event command on empty workflow
     let args = ["events", "get-latest-event", &workflow_id.to_string()];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     // This might succeed with empty output or fail - both are acceptable behaviors
     // The command should handle empty workflows gracefully
     if let Ok(json_output) = result {
@@ -377,7 +377,7 @@ fn test_events_remove_command_json(start_server: &ServerProcess) {
     let args = ["events", "delete", &event_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run events delete command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run events delete command");
 
     // Verify JSON structure shows the removed event
     assert_eq!(json_output.get("id").unwrap(), &json!(event_id));
@@ -390,8 +390,8 @@ fn test_events_remove_command_json(start_server: &ServerProcess) {
     // Verify the event is actually removed by trying to get it via list
     let list_args = ["events", "list", &workflow_id.to_string()];
 
-    let list_output =
-        run_cli_with_json(&list_args, start_server).expect("Failed to list events after removal");
+    let list_output = run_cli_with_json(&list_args, start_server, None)
+        .expect("Failed to list events after removal");
 
     let events_array = list_output.get("events").unwrap().as_array().unwrap();
     let removed_event_exists = events_array
@@ -438,7 +438,7 @@ fn test_events_various_data_types(start_server: &ServerProcess) {
             &data_str,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, None)
             .expect(&format!("Failed to create event with {}", test_name));
 
         assert_eq!(json_output.get("data").unwrap(), &test_data);
@@ -468,8 +468,8 @@ fn test_events_timestamp_ordering(start_server: &ServerProcess) {
     // List events (should be newest first by default)
     let args = ["events", "list", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list events for timestamp test");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list events for timestamp test");
 
     let events_array = json_output.get("events").unwrap().as_array().unwrap();
     assert!(events_array.len() >= 3);
@@ -526,8 +526,8 @@ fn test_events_large_data_handling(start_server: &ServerProcess) {
         &data_str,
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to create event with large data");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to create event with large data");
 
     assert_eq!(json_output.get("data").unwrap(), &large_data);
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -538,8 +538,8 @@ fn test_events_large_data_handling(start_server: &ServerProcess) {
     // List and find our event
     let list_args = ["events", "list", &workflow_id.to_string(), "--limit", "10"];
 
-    let list_output =
-        run_cli_with_json(&list_args, start_server).expect("Failed to list events with large data");
+    let list_output = run_cli_with_json(&list_args, start_server, None)
+        .expect("Failed to list events with large data");
 
     let events_array = list_output.get("events").unwrap().as_array().unwrap();
     let found_event = events_array
@@ -573,13 +573,13 @@ fn test_events_error_handling(start_server: &ServerProcess) {
         invalid_json,
     ];
 
-    let result = run_cli_with_json(&args_invalid, start_server);
+    let result = run_cli_with_json(&args_invalid, start_server, None);
     assert!(result.is_err(), "Should fail with invalid JSON data");
 
     // Test removing non-existent event
     let args_remove = ["events", "delete", "999999"];
 
-    let result = run_cli_with_json(&args_remove, start_server);
+    let result = run_cli_with_json(&args_remove, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when removing non-existent event"
@@ -588,7 +588,7 @@ fn test_events_error_handling(start_server: &ServerProcess) {
     // Test listing events for non-existent workflow
     let args_list = ["events", "list", "999999"];
 
-    let result = run_cli_with_json(&args_list, start_server);
+    let result = run_cli_with_json(&args_list, start_server, None);
     // This might succeed with empty results or fail - both are acceptable
     if let Ok(json_output) = result {
         let events_array = json_output.get("events").unwrap().as_array().unwrap();
@@ -625,8 +625,8 @@ fn test_events_unicode_and_special_characters(start_server: &ServerProcess) {
         &data_str,
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to create event with Unicode data");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to create event with Unicode data");
 
     assert_eq!(json_output.get("data").unwrap(), &unicode_data);
 
@@ -666,7 +666,7 @@ fn test_events_concurrent_additions(start_server: &ServerProcess) {
             &data_str,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, None)
             .expect(&format!("Failed to create concurrent event {}", i));
 
         event_ids.push(json_output.get("id").unwrap().as_i64().unwrap());
@@ -688,8 +688,8 @@ fn test_events_concurrent_additions(start_server: &ServerProcess) {
     // List and verify all events are present
     let list_args = ["events", "list", &workflow_id.to_string(), "--limit", "10"];
 
-    let list_output =
-        run_cli_with_json(&list_args, start_server).expect("Failed to list concurrent events");
+    let list_output = run_cli_with_json(&list_args, start_server, None)
+        .expect("Failed to list concurrent events");
 
     let events_array = list_output.get("events").unwrap().as_array().unwrap();
     let batch_events: Vec<_> = events_array
@@ -742,7 +742,7 @@ fn test_events_list_with_category_filter(start_server: &ServerProcess) {
 
     // This test mainly verifies that the CLI accepts the new parameter without errors
     // The actual filtering behavior depends on the backend implementation
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run events list command with category filter");
 
     // Verify the response structure is correct

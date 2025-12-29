@@ -87,5 +87,3 @@ pub fn memory_string_to_gb(memory_str: &str) -> f64 {
         }
     }
 }
-
-// Tests are in tests/test_memory_utils.rs

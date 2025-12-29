@@ -177,20 +177,17 @@ fn main() -> Result<()> {
 
     // Handle commands - default to Run with default config if no subcommand
     match cli.command {
-        Some(Commands::Service { action }) => {
-            return handle_service_action(action);
-        }
-        Some(Commands::Run { config }) => {
-            return run_server(config);
-        }
+        Some(Commands::Service { action }) => handle_service_action(action),
+        Some(Commands::Run { config }) => run_server(config),
         None => {
             // Default: run server with default config
             // We need to re-parse as "run" to get ServerConfig defaults from clap
             let cli = Cli::parse_from(["torc-server", "run"]);
             if let Some(Commands::Run { config }) = cli.command {
-                return run_server(config);
+                run_server(config)
+            } else {
+                unreachable!()
             }
-            unreachable!()
         }
     }
 }

@@ -299,6 +299,26 @@ Object.assign(TorcDashboard.prototype, {
         }
     },
 
+    async loadUser() {
+        try {
+            const response = await fetch('/api/user');
+            if (response.ok) {
+                const data = await response.json();
+                const userEl = document.getElementById('user-display');
+                if (userEl) {
+                    const text = userEl.querySelector('.user-text');
+                    if (text && data.user) {
+                        text.textContent = data.user;
+                        userEl.title = `Current user: ${data.user}`;
+                    }
+                }
+            }
+        } catch (e) {
+            // Silently ignore user fetch errors
+            console.debug('Failed to fetch user:', e);
+        }
+    },
+
     showVersionWarning(message, severity) {
         // Show a brief warning notification
         const notification = document.createElement('div');

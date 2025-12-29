@@ -47,36 +47,33 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),      // Help text
-            Constraint::Length(3),      // Server URL + status display
-            Constraint::Length(3),      // User filter display
+            Constraint::Length(3),      // Server URL + user display
             Constraint::Percentage(40), // Workflows table
             Constraint::Length(3),      // Tabs
-            Constraint::Min(10),        // Detail table + filter/url/user input
+            Constraint::Min(10),        // Detail table + filter/url input
         ])
         .split(f.area());
 
     draw_help(f, main_chunks[0], app);
     draw_server_url(f, main_chunks[1], app);
-    draw_user_filter(f, main_chunks[2], app);
-    draw_workflows_table(f, main_chunks[3], app);
-    draw_tabs(f, main_chunks[4], app);
+    draw_workflows_table(f, main_chunks[2], app);
+    draw_tabs(f, main_chunks[3], app);
 
     // Split the bottom section for detail table and input widgets
     let needs_input = app.focus == Focus::FilterInput
         || app.focus == Focus::ServerUrlInput
-        || app.focus == Focus::UserInput
         || app.focus == Focus::WorkflowPathInput;
 
     let detail_chunks = if needs_input {
         Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(5), Constraint::Length(3)])
-            .split(main_chunks[5])
+            .split(main_chunks[4])
     } else {
         Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(5)])
-            .split(main_chunks[5])
+            .split(main_chunks[4])
     };
 
     draw_detail_table(f, detail_chunks[0], app);
@@ -85,8 +82,6 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         draw_filter_input(f, detail_chunks[1], app);
     } else if app.focus == Focus::ServerUrlInput {
         draw_server_url_input(f, detail_chunks[1], app);
-    } else if app.focus == Focus::UserInput {
-        draw_user_input(f, detail_chunks[1], app);
     } else if app.focus == Focus::WorkflowPathInput {
         draw_workflow_path_input(f, detail_chunks[1], app);
     }
@@ -137,15 +132,6 @@ fn draw_help(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(": enter URL | "),
             Span::styled("Enter", Style::default().fg(Color::Yellow)),
             Span::raw(": connect | "),
-            Span::styled("Esc", Style::default().fg(Color::Yellow)),
-            Span::raw(": cancel"),
-        ])]
-    } else if app.focus == Focus::UserInput {
-        vec![Line::from(vec![
-            Span::styled("Type", Style::default().fg(Color::Yellow)),
-            Span::raw(": enter username | "),
-            Span::styled("Enter", Style::default().fg(Color::Yellow)),
-            Span::raw(": apply | "),
             Span::styled("Esc", Style::default().fg(Color::Yellow)),
             Span::raw(": cancel"),
         ])]
@@ -309,9 +295,18 @@ fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
     } else {
         spans.extend(vec![
             Span::styled("S", Style::default().fg(Color::Yellow)),
-            Span::styled(": start server", Style::default().fg(Color::DarkGray)),
+            Span::styled(": start", Style::default().fg(Color::DarkGray)),
         ]);
     }
+
+    // Add user display
+    let user_display = app.get_current_user_display();
+    spans.extend(vec![
+        Span::styled(" │ ", Style::default().fg(Color::DarkGray)),
+        Span::styled("◎ ", Style::default().fg(Color::Cyan)),
+        Span::styled("User: ", Style::default().fg(Color::White)),
+        Span::styled(user_display, Style::default().fg(Color::Cyan)),
+    ]);
 
     let text = vec![Line::from(spans)];
 
@@ -322,35 +317,6 @@ fn draw_server_url(f: &mut Frame, area: Rect, app: &App) {
             format!("Connection │ v{}", version_check::full_version()),
             Style::default().fg(Color::White),
         ),
-    ]);
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(title)
-        .border_style(Style::default().fg(Color::DarkGray));
-
-    let paragraph = ratatui::widgets::Paragraph::new(text)
-        .block(block)
-        .style(Style::default().fg(Color::White));
-
-    f.render_widget(paragraph, area);
-}
-
-fn draw_user_filter(f: &mut Frame, area: Rect, app: &App) {
-    let user_display = app.get_current_user_display();
-    let text = vec![Line::from(vec![
-        Span::styled("User: ", Style::default().fg(Color::White)),
-        Span::styled(&user_display, Style::default().fg(Color::Cyan)),
-        Span::styled(" │ ", Style::default().fg(Color::DarkGray)),
-        Span::styled("w", Style::default().fg(Color::Yellow)),
-        Span::styled(" change ", Style::default().fg(Color::DarkGray)),
-        Span::styled("a", Style::default().fg(Color::Yellow)),
-        Span::styled(" all users", Style::default().fg(Color::DarkGray)),
-    ])];
-
-    let title = Line::from(vec![
-        Span::styled("◎ ", Style::default().fg(Color::Cyan)),
-        Span::styled("Filter", Style::default().fg(Color::White)),
     ]);
 
     let block = Block::default()
@@ -948,32 +914,6 @@ fn draw_server_url_input(f: &mut Frame, area: Rect, app: &App) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("Change Server URL")
-        .border_style(Style::default().fg(Color::Green));
-
-    let paragraph = ratatui::widgets::Paragraph::new(text)
-        .block(block)
-        .style(Style::default().fg(Color::White));
-
-    f.render_widget(paragraph, area);
-}
-
-fn draw_user_input(f: &mut Frame, area: Rect, app: &App) {
-    let text = vec![Line::from(vec![
-        Span::styled("Username: ", Style::default().fg(Color::White)),
-        Span::styled(&app.user_input, Style::default().fg(Color::Cyan)),
-        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
-        Span::styled("Enter", Style::default().fg(Color::Yellow)),
-        Span::styled(": apply | ", Style::default().fg(Color::White)),
-        Span::styled("Esc", Style::default().fg(Color::Yellow)),
-        Span::styled(
-            ": cancel | Leave empty for all users",
-            Style::default().fg(Color::DarkGray),
-        ),
-    ])];
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title("Change User Filter")
         .border_style(Style::default().fg(Color::Green));
 
     let paragraph = ratatui::widgets::Paragraph::new(text)

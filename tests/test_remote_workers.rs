@@ -240,7 +240,8 @@ fn test_cli_add_workers(start_server: &ServerProcess) {
         "user@cli-worker3.example.com:2222",
     ];
 
-    let output = run_cli_command(&args, start_server).expect("Failed to run add-workers command");
+    let output =
+        run_cli_command(&args, start_server, None).expect("Failed to run add-workers command");
 
     // Verify output indicates success
     assert!(
@@ -281,8 +282,8 @@ fn test_cli_add_workers_from_file(start_server: &ServerProcess) {
         &workflow_id.to_string(),
     ];
 
-    let output =
-        run_cli_command(&args, start_server).expect("Failed to run add-workers-from-file command");
+    let output = run_cli_command(&args, start_server, None)
+        .expect("Failed to run add-workers-from-file command");
 
     // Verify output indicates success
     assert!(
@@ -316,7 +317,8 @@ fn test_cli_list_workers(start_server: &ServerProcess) {
     // List workers via CLI
     let args = ["remote", "list-workers", &workflow_id.to_string()];
 
-    let output = run_cli_command(&args, start_server).expect("Failed to run list-workers command");
+    let output =
+        run_cli_command(&args, start_server, None).expect("Failed to run list-workers command");
 
     // Verify output contains the workers
     assert!(
@@ -342,7 +344,8 @@ fn test_cli_list_workers_empty(start_server: &ServerProcess) {
     // List workers via CLI
     let args = ["remote", "list-workers", &workflow_id.to_string()];
 
-    let output = run_cli_command(&args, start_server).expect("Failed to run list-workers command");
+    let output =
+        run_cli_command(&args, start_server, None).expect("Failed to run list-workers command");
 
     // Verify output indicates no workers
     assert!(
@@ -376,7 +379,8 @@ fn test_cli_remove_worker(start_server: &ServerProcess) {
         &workflow_id.to_string(),
     ];
 
-    let output = run_cli_command(&args, start_server).expect("Failed to run remove-worker command");
+    let output =
+        run_cli_command(&args, start_server, None).expect("Failed to run remove-worker command");
 
     // Verify output indicates success
     assert!(
@@ -409,8 +413,8 @@ fn test_cli_add_workers_with_special_characters(start_server: &ServerProcess) {
         "user.name@host.name.example.com",
     ];
 
-    let output =
-        run_cli_command(&args, start_server).expect("Failed to add workers with special chars");
+    let output = run_cli_command(&args, start_server, None)
+        .expect("Failed to add workers with special chars");
 
     assert!(
         output.contains("Added") || output.contains("worker"),

@@ -30,8 +30,8 @@ fn test_user_data_add_command_json(start_server: &ServerProcess) {
         test_data,
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data create command");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run user-data create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -61,7 +61,7 @@ fn test_user_data_add_ephemeral(start_server: &ServerProcess) {
         "--ephemeral",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run user-data create with ephemeral flag");
 
     assert_eq!(json_output.get("is_ephemeral").unwrap(), &json!(true));
@@ -109,7 +109,7 @@ fn test_user_data_add_with_job_associations(start_server: &ServerProcess) {
         &consumer_job_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run user-data create with job associations");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("job_data"));
@@ -127,7 +127,7 @@ fn test_user_data_add_with_job_associations(start_server: &ServerProcess) {
         &producer_job_id.to_string(),
     ];
 
-    let producer_list_output = run_cli_with_json(&producer_list_args, start_server)
+    let producer_list_output = run_cli_with_json(&producer_list_args, start_server, None)
         .expect("Failed to list user-data by producer job ID");
 
     let producer_user_data_array = producer_list_output
@@ -158,7 +158,7 @@ fn test_user_data_add_with_job_associations(start_server: &ServerProcess) {
         &consumer_job_id.to_string(),
     ];
 
-    let consumer_list_output = run_cli_with_json(&consumer_list_args, start_server)
+    let consumer_list_output = run_cli_with_json(&consumer_list_args, start_server, None)
         .expect("Failed to list user-data by consumer job ID");
 
     let consumer_user_data_array = consumer_list_output
@@ -216,7 +216,7 @@ fn test_user_data_list_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run user-data list command");
 
     // Verify JSON structure is an object with "user_data" field
     assert!(
@@ -276,7 +276,7 @@ fn test_user_data_list_with_filters(start_server: &ServerProcess) {
         "true",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run user-data list with ephemeral filter");
 
     let user_data_array = json_output.get("user_data").unwrap().as_array().unwrap();
@@ -296,7 +296,7 @@ fn test_user_data_list_with_filters(start_server: &ServerProcess) {
         "persistent_item",
     ];
 
-    let json_output_name = run_cli_with_json(&args_name_filter, start_server)
+    let json_output_name = run_cli_with_json(&args_name_filter, start_server, None)
         .expect("Failed to run user-data list with name filter");
 
     let filtered_array = json_output_name
@@ -339,8 +339,8 @@ fn test_user_data_list_pagination(start_server: &ServerProcess) {
         "3",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated user-data list");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run paginated user-data list");
 
     let user_data_array = json_output.get("user_data").unwrap().as_array().unwrap();
     assert!(user_data_array.len() <= 3, "Should respect limit parameter");
@@ -360,7 +360,7 @@ fn test_user_data_list_pagination(start_server: &ServerProcess) {
         "2",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run user-data list with offset");
 
     let user_data_with_offset = json_output_offset
@@ -414,7 +414,7 @@ fn test_user_data_list_sorting(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run sorted user-data list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run sorted user-data list");
 
     let user_data_array = json_output.get("user_data").unwrap().as_array().unwrap();
     assert!(user_data_array.len() >= 3);
@@ -429,7 +429,7 @@ fn test_user_data_list_sorting(start_server: &ServerProcess) {
         "--reverse-sort",
     ];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, None)
         .expect("Failed to run reverse sorted user-data list");
 
     let user_data_array_reverse = json_output_reverse
@@ -460,7 +460,7 @@ fn test_user_data_get_command_json(start_server: &ServerProcess) {
     let args = ["user-data", "get", &user_data_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data get command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run user-data get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(user_data_id));
@@ -502,8 +502,8 @@ fn test_user_data_update_command_json(start_server: &ServerProcess) {
         "true",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data update command");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run user-data update command");
 
     // Verify the updated values
     assert_eq!(json_output.get("id").unwrap(), &json!(user_data_id));
@@ -544,8 +544,8 @@ fn test_user_data_update_partial_fields(start_server: &ServerProcess) {
         "only_name_updated",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run partial user-data update");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run partial user-data update");
 
     // Only name should be updated
     assert_eq!(
@@ -576,8 +576,8 @@ fn test_user_data_remove_command_json(start_server: &ServerProcess) {
     // Test the CLI delete command
     let args = ["user-data", "delete", &user_data_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data delete command");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run user-data delete command");
 
     // Verify JSON structure shows the removed user data
     assert_eq!(json_output.get("id").unwrap(), &json!(user_data_id));
@@ -604,8 +604,8 @@ fn test_user_data_delete_workflow_command_json(start_server: &ServerProcess) {
     // Test the CLI delete command (deletes all user data for workflow)
     let args = ["user-data", "delete-all", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run user-data delete command");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run user-data delete command");
 
     // Should return a success message
     assert!(json_output.get("message").is_some());
@@ -671,8 +671,9 @@ fn test_user_data_list_missing_command_json(start_server: &ServerProcess) {
         "--consumer-job-id",
         &consumer_job_id.to_string(),
     ];
-    let consumer_associated_data = run_cli_with_json(&args_consumer_association, start_server)
-        .expect("Failed to create consumer association");
+    let consumer_associated_data =
+        run_cli_with_json(&args_consumer_association, start_server, None)
+            .expect("Failed to create consumer association");
     let consumer_data_id = consumer_associated_data
         .get("id")
         .unwrap()
@@ -716,8 +717,9 @@ fn test_user_data_list_missing_command_json(start_server: &ServerProcess) {
         "--producer-job-id",
         &producer_job_id.to_string(),
     ];
-    let producer_associated_data = run_cli_with_json(&args_producer_association, start_server)
-        .expect("Failed to create producer association");
+    let producer_associated_data =
+        run_cli_with_json(&args_producer_association, start_server, None)
+            .expect("Failed to create producer association");
     let producer_data_id = producer_associated_data
         .get("id")
         .unwrap()
@@ -752,7 +754,7 @@ fn test_user_data_list_missing_command_json(start_server: &ServerProcess) {
     // Test the CLI list-missing command
     let args = ["user-data", "list-missing", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run user-data list-missing command");
 
     // Verify JSON structure
@@ -834,7 +836,7 @@ fn test_user_data_complex_json_data(start_server: &ServerProcess) {
         complex_data,
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run user-data create with complex JSON");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("complex_data"));
@@ -847,7 +849,7 @@ fn test_user_data_complex_json_data(start_server: &ServerProcess) {
     let get_args = ["user-data", "get", &user_data_id.to_string()];
 
     let get_output =
-        run_cli_with_json(&get_args, start_server).expect("Failed to get complex user data");
+        run_cli_with_json(&get_args, start_server, None).expect("Failed to get complex user data");
 
     assert_eq!(get_output.get("data").unwrap(), &expected_data);
 }
@@ -857,7 +859,7 @@ fn test_user_data_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent user data record
     let args = ["user-data", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when getting non-existent user data"
@@ -866,7 +868,7 @@ fn test_user_data_error_handling(start_server: &ServerProcess) {
     // Test updating a non-existent user data record
     let args = ["user-data", "update", "999999", "--name", "should_fail"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent user data"
@@ -875,7 +877,7 @@ fn test_user_data_error_handling(start_server: &ServerProcess) {
     // Test removing a non-existent user data record
     let args = ["user-data", "delete", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when removing non-existent user data"
@@ -901,7 +903,7 @@ fn test_user_data_invalid_json(start_server: &ServerProcess) {
         invalid_json,
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(result.is_err(), "Should fail with invalid JSON data");
 }
 
@@ -922,7 +924,7 @@ fn test_user_data_empty_null_data(start_server: &ServerProcess) {
         "{}",
     ];
 
-    let json_output_empty = run_cli_with_json(&args_empty, start_server)
+    let json_output_empty = run_cli_with_json(&args_empty, start_server, None)
         .expect("Failed to run user-data create with empty object");
 
     assert_eq!(json_output_empty.get("name").unwrap(), &json!("empty_data"));

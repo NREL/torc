@@ -1190,15 +1190,20 @@ pub fn delete_all_workflows(config: &Configuration) -> Result<(), Box<dyn std::e
 }
 
 /// Helper function to run CLI commands and capture JSON output
+/// If `user` is provided, sets the USER environment variable for the command
 pub fn run_cli_with_json(
     args: &[&str],
     server: &ServerProcess,
+    user: Option<&str>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
     let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
     cmd.arg("--format");
     cmd.arg("json");
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
+    if let Some(u) = user {
+        cmd.env("USER", u);
+    }
 
     let output = cmd.output()?;
 
@@ -1213,14 +1218,19 @@ pub fn run_cli_with_json(
 }
 
 /// Helper function to run CLI commands without JSON output
+/// If `user` is provided, sets the USER environment variable for the command
 pub fn run_cli_command(
     args: &[&str],
     server: &ServerProcess,
+    user: Option<&str>,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
     cmd.args(&["--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
+    if let Some(u) = user {
+        cmd.env("USER", u);
+    }
 
     // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
     let current_dir = std::env::current_dir()?;

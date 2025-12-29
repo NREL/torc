@@ -57,7 +57,7 @@ fn test_list_resource_requirements_for_workflow(start_server: &ServerProcess) {
         &workflow_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run list-resource-requirements command");
 
     // Should be an array
@@ -145,7 +145,7 @@ fn test_list_resource_requirements_for_specific_job(start_server: &ServerProcess
         &job_id.to_string(),
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run list-resource-requirements command with -j");
 
     // Should be an array with exactly 1 job

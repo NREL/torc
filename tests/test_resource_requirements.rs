@@ -35,7 +35,7 @@ fn test_resource_requirements_add_command_json(start_server: &ServerProcess) {
         "P0DT2H",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements create command");
 
     assert!(json_output.get("id").is_some());
@@ -67,7 +67,7 @@ fn test_resource_requirements_add_with_defaults(start_server: &ServerProcess) {
         "minimal_requirements",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements create with defaults");
 
     assert_eq!(
@@ -107,7 +107,7 @@ fn test_resource_requirements_add_high_performance(start_server: &ServerProcess)
         "P1DT0H",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements create with high performance specs");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("hpc_requirements"));
@@ -156,7 +156,7 @@ fn test_resource_requirements_list_command_json(start_server: &ServerProcess) {
         "10",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements list command");
 
     // Verify JSON structure is an object with "resource_requirements" field
@@ -222,7 +222,7 @@ fn test_resource_requirements_list_pagination(start_server: &ServerProcess) {
         "3",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run paginated resource-requirements list");
 
     let requirements_array = json_output
@@ -250,7 +250,7 @@ fn test_resource_requirements_list_pagination(start_server: &ServerProcess) {
         "2",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run resource-requirements list with offset");
 
     let requirements_with_offset = json_output_offset
@@ -304,7 +304,7 @@ fn test_resource_requirements_list_sorting(start_server: &ServerProcess) {
         "num_cpus",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run sorted resource-requirements list");
 
     let requirements_array = json_output
@@ -324,7 +324,7 @@ fn test_resource_requirements_list_sorting(start_server: &ServerProcess) {
         "--reverse-sort",
     ];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, None)
         .expect("Failed to run reverse sorted resource-requirements list");
 
     let requirements_array_reverse = json_output_reverse
@@ -375,7 +375,7 @@ fn test_resource_requirements_get_command_json(start_server: &ServerProcess) {
     // Test the CLI get command
     let args = ["resource-requirements", "get", &req_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements get command");
 
     // Verify JSON structure
@@ -425,7 +425,7 @@ fn test_resource_requirements_update_command_json(start_server: &ServerProcess) 
         "P0DT4H",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements update command");
 
     // Verify the updated values
@@ -473,7 +473,7 @@ fn test_resource_requirements_update_partial_fields(start_server: &ServerProcess
         "32g",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run partial resource-requirements update");
 
     // Only specified fields should be updated
@@ -512,7 +512,7 @@ fn test_resource_requirements_remove_command_json(start_server: &ServerProcess) 
     // Test the CLI delete command
     let args = ["resource-requirements", "delete", &req_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run resource-requirements delete command");
 
     // Verify JSON structure shows the removed requirement
@@ -549,7 +549,7 @@ fn test_resource_requirements_memory_formats(start_server: &ServerProcess) {
             memory_format,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server).expect(&format!(
+        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
             "Failed to create requirement with memory format {}",
             memory_format
         ));
@@ -586,7 +586,7 @@ fn test_resource_requirements_runtime_formats(start_server: &ServerProcess) {
             runtime_format,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server).expect(&format!(
+        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
             "Failed to create requirement with runtime format {}",
             runtime_format
         ));
@@ -630,7 +630,7 @@ fn test_resource_requirements_extreme_values(start_server: &ServerProcess) {
             runtime,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server).expect(&format!(
+        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
             "Failed to create requirement with extreme values for {}",
             name
         ));
@@ -683,7 +683,8 @@ fn test_resource_requirements_update_all_fields(start_server: &ServerProcess) {
         "P3DT0H",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server).expect("Failed to update all fields");
+    let json_output =
+        run_cli_with_json(&args, start_server, None).expect("Failed to update all fields");
 
     // Verify all fields were updated
     assert_eq!(
@@ -706,7 +707,7 @@ fn test_resource_requirements_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent resource requirement
     let args = ["resource-requirements", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when getting non-existent resource requirement"
@@ -721,7 +722,7 @@ fn test_resource_requirements_error_handling(start_server: &ServerProcess) {
         "should_fail",
     ];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent resource requirement"
@@ -730,7 +731,7 @@ fn test_resource_requirements_error_handling(start_server: &ServerProcess) {
     // Test removing a non-existent resource requirement
     let args = ["resource-requirements", "delete", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when removing non-existent resource requirement"
@@ -766,7 +767,7 @@ fn test_resource_requirements_variations(start_server: &ServerProcess) {
             name,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, None)
             .expect(&format!("Failed to create requirement with name: {}", name));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(name));
@@ -783,7 +784,7 @@ fn test_resource_requirements_list_empty_workflow(start_server: &ServerProcess) 
 
     let args = ["resource-requirements", "list", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to list resource requirements for empty workflow");
 
     let requirements_array = json_output
@@ -829,8 +830,8 @@ fn test_resource_requirements_mixed_workloads(start_server: &ServerProcess) {
     // List all requirements and verify variety
     let args = ["resource-requirements", "list", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list mixed workload requirements");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list mixed workload requirements");
 
     let requirements_array = json_output
         .get("resource_requirements")

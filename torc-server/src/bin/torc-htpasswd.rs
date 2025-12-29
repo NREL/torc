@@ -74,7 +74,7 @@ fn main() {
             password,
             cost,
         } => {
-            if cost < 4 || cost > 31 {
+            if !(4..=31).contains(&cost) {
                 eprintln!("Error: cost must be between 4 and 31");
                 std::process::exit(1);
             }

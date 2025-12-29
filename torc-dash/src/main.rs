@@ -37,6 +37,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 struct Assets;
 
 /// Managed server process state
+#[derive(Default)]
 struct ManagedServer {
     /// Process ID if server is running
     pid: Option<u32>,
@@ -44,16 +45,6 @@ struct ManagedServer {
     port: Option<u16>,
     /// Recent output lines from the server
     output_lines: Vec<String>,
-}
-
-impl Default for ManagedServer {
-    fn default() -> Self {
-        Self {
-            pid: None,
-            port: None,
-            output_lines: Vec::new(),
-        }
-    }
 }
 
 /// Application state shared across handlers
@@ -258,15 +249,12 @@ async fn main() -> Result<()> {
                             Ok(Ok(0)) => break, // EOF
                             Ok(Ok(_)) => {
                                 // Check for the port line
-                                if let Some(port_str) = line.strip_prefix("TORC_SERVER_PORT=") {
-                                    if let Ok(port) = port_str.trim().parse::<u16>() {
-                                        actual_server_port = port;
-                                        info!(
-                                            "Server reported actual port: {}",
-                                            actual_server_port
-                                        );
-                                        break;
-                                    }
+                                if let Some(port_str) = line.strip_prefix("TORC_SERVER_PORT=")
+                                    && let Ok(port) = port_str.trim().parse::<u16>()
+                                {
+                                    actual_server_port = port;
+                                    info!("Server reported actual port: {}", actual_server_port);
+                                    break;
                                 }
                                 line.clear();
                             }
@@ -282,15 +270,15 @@ async fn main() -> Result<()> {
                     }
                 }
 
-                let mut managed = ManagedServer::default();
-                managed.pid = pid;
-                managed.port = Some(actual_server_port);
-                managed.output_lines.push(format!(
-                    "Server started with PID {} on port {}",
-                    pid.unwrap_or(0),
-                    actual_server_port
-                ));
-                managed
+                ManagedServer {
+                    pid,
+                    port: Some(actual_server_port),
+                    output_lines: vec![format!(
+                        "Server started with PID {} on port {}",
+                        pid.unwrap_or(0),
+                        actual_server_port
+                    )],
+                }
             }
             Err(e) => {
                 error!("Failed to start torc-server: {}", e);
@@ -380,6 +368,8 @@ async fn main() -> Result<()> {
         .route("/api/server/status", get(server_status_handler))
         // Version endpoint
         .route("/api/version", get(version_handler))
+        // User endpoint
+        .route("/api/user", get(user_handler))
         // API proxy - catch all /torc-service/* requests
         .route(
             "/torc-service/*path",
@@ -1358,25 +1348,26 @@ async fn cli_plot_resources_handler(
                 Ok(mut entries) => {
                     while let Ok(Some(entry)) = entries.next_entry().await {
                         let path = entry.path();
-                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                            if name.starts_with(&req.prefix) && name.ends_with(".json") {
-                                match tokio::fs::read_to_string(&path).await {
-                                    Ok(content) => {
-                                        match serde_json::from_str::<serde_json::Value>(&content) {
-                                            Ok(data) => {
-                                                plots.push(PlotData {
-                                                    name: name.to_string(),
-                                                    data,
-                                                });
-                                            }
-                                            Err(e) => {
-                                                warn!("Failed to parse plot JSON {}: {}", name, e);
-                                            }
+                        if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                            && name.starts_with(&req.prefix)
+                            && name.ends_with(".json")
+                        {
+                            match tokio::fs::read_to_string(&path).await {
+                                Ok(content) => {
+                                    match serde_json::from_str::<serde_json::Value>(&content) {
+                                        Ok(data) => {
+                                            plots.push(PlotData {
+                                                name: name.to_string(),
+                                                data,
+                                            });
+                                        }
+                                        Err(e) => {
+                                            warn!("Failed to parse plot JSON {}: {}", name, e);
                                         }
                                     }
-                                    Err(e) => {
-                                        warn!("Failed to read plot file {}: {}", name, e);
-                                    }
+                                }
+                                Err(e) => {
+                                    warn!("Failed to read plot file {}: {}", name, e);
                                 }
                             }
                         }
@@ -1441,32 +1432,31 @@ async fn cli_list_resource_dbs_handler(
         Ok(mut entries) => {
             while let Ok(Some(entry)) = entries.next_entry().await {
                 let path = entry.path();
-                if let Some(ext) = path.extension() {
-                    if ext == "db" {
-                        if let Ok(metadata) = tokio::fs::metadata(&path).await {
-                            let modified = metadata
-                                .modified()
-                                .ok()
-                                .and_then(|t| {
-                                    t.duration_since(std::time::UNIX_EPOCH).ok().map(|d| {
-                                        chrono::DateTime::from_timestamp(d.as_secs() as i64, 0)
-                                            .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
-                                            .unwrap_or_default()
-                                    })
-                                })
-                                .unwrap_or_default();
+                if let Some(ext) = path.extension()
+                    && ext == "db"
+                    && let Ok(metadata) = tokio::fs::metadata(&path).await
+                {
+                    let modified = metadata
+                        .modified()
+                        .ok()
+                        .and_then(|t| {
+                            t.duration_since(std::time::UNIX_EPOCH).ok().map(|d| {
+                                chrono::DateTime::from_timestamp(d.as_secs() as i64, 0)
+                                    .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
+                                    .unwrap_or_default()
+                            })
+                        })
+                        .unwrap_or_default();
 
-                            databases.push(ResourceDbInfo {
-                                path: path.to_string_lossy().to_string(),
-                                name: path
-                                    .file_name()
-                                    .map(|n| n.to_string_lossy().to_string())
-                                    .unwrap_or_default(),
-                                size_bytes: metadata.len(),
-                                modified,
-                            });
-                        }
-                    }
+                    databases.push(ResourceDbInfo {
+                        path: path.to_string_lossy().to_string(),
+                        name: path
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_default(),
+                        size_bytes: metadata.len(),
+                        modified,
+                    });
                 }
             }
         }
@@ -1992,11 +1982,11 @@ async fn server_start_handler(
         req.completion_check_interval_secs.to_string(),
     ];
 
-    if let Some(ref db) = req.database {
-        if !db.is_empty() {
-            args.push("--database".to_string());
-            args.push(db.clone());
-        }
+    if let Some(ref db) = req.database
+        && !db.is_empty()
+    {
+        args.push("--database".to_string());
+        args.push(db.clone());
     }
 
     info!(
@@ -2041,12 +2031,12 @@ async fn server_start_handler(
                         Ok(Ok(0)) => break, // EOF
                         Ok(Ok(_)) => {
                             // Check for the port line
-                            if let Some(port_str) = line.strip_prefix("TORC_SERVER_PORT=") {
-                                if let Ok(port) = port_str.trim().parse::<u16>() {
-                                    actual_port = port;
-                                    info!("Server reported actual port: {}", actual_port);
-                                    break;
-                                }
+                            if let Some(port_str) = line.strip_prefix("TORC_SERVER_PORT=")
+                                && let Ok(port) = port_str.trim().parse::<u16>()
+                            {
+                                actual_port = port;
+                                info!("Server reported actual port: {}", actual_port);
+                                break;
                             }
                             line.clear();
                         }
@@ -2102,10 +2092,10 @@ async fn server_stop_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
                     managed.pid = None;
                     managed.port = None;
                     managed.output_lines.push("Server stopped".to_string());
-                    return Json(ServerStopResponse {
+                    Json(ServerStopResponse {
                         success: true,
                         message: "Server stopped".to_string(),
-                    });
+                    })
                 }
                 Ok(_) => {
                     // Try SIGKILL
@@ -2114,17 +2104,15 @@ async fn server_stop_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
                         .status();
                     managed.pid = None;
                     managed.port = None;
-                    return Json(ServerStopResponse {
+                    Json(ServerStopResponse {
                         success: true,
                         message: "Server force stopped".to_string(),
-                    });
+                    })
                 }
-                Err(e) => {
-                    return Json(ServerStopResponse {
-                        success: false,
-                        message: format!("Failed to stop server: {}", e),
-                    });
-                }
+                Err(e) => Json(ServerStopResponse {
+                    success: false,
+                    message: format!("Failed to stop server: {}", e),
+                }),
             }
         }
 
@@ -2139,17 +2127,15 @@ async fn server_stop_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
                 Ok(status) if status.success() => {
                     managed.pid = None;
                     managed.port = None;
-                    return Json(ServerStopResponse {
+                    Json(ServerStopResponse {
                         success: true,
                         message: "Server stopped".to_string(),
-                    });
+                    })
                 }
-                _ => {
-                    return Json(ServerStopResponse {
-                        success: false,
-                        message: "Failed to stop server".to_string(),
-                    });
-                }
+                _ => Json(ServerStopResponse {
+                    success: false,
+                    message: "Failed to stop server".to_string(),
+                }),
             }
         }
     } else {
@@ -2260,6 +2246,22 @@ async fn version_handler(State(state): State<Arc<AppState>>) -> impl IntoRespons
         version_mismatch,
         mismatch_severity,
     })
+}
+
+// ============== User Handler ==============
+
+#[derive(Serialize)]
+struct UserResponse {
+    user: String,
+}
+
+/// Return the current user from the environment
+async fn user_handler() -> impl IntoResponse {
+    let user = std::env::var("USER")
+        .or_else(|_| std::env::var("USERNAME"))
+        .unwrap_or_else(|_| "unknown".to_string());
+
+    Json(UserResponse { user })
 }
 
 /// Execute a torc CLI command

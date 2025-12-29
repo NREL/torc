@@ -1,5 +1,7 @@
 //! User data-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use log::debug;
 use sqlx::Row;
@@ -380,7 +382,7 @@ where
         }
 
         // Add name filter
-        if let Some(_) = &name {
+        if name.is_some() {
             where_conditions.push("ud.name LIKE ?".to_string());
         }
 

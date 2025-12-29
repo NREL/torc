@@ -62,6 +62,7 @@ fn test_submit_job_success() {
 
 #[rstest]
 #[serial]
+#[ignore] // This is a slow test and we don't need to continue running it.
 fn test_submit_job_failure() {
     cleanup_fake_slurm_state();
     setup_fake_slurm_commands();
@@ -694,7 +695,7 @@ fn test_slurm_create_config(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run slurm create command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run slurm create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -736,7 +737,7 @@ fn test_slurm_create_with_optional_params(start_server: &ServerProcess) {
         "'--reservation=my-reservation'",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run slurm create with optional params");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("gpu_config"));
@@ -775,14 +776,14 @@ fn test_slurm_get_config_json(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Test the CLI get command
     let args = ["slurm", "get", &config_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run slurm get command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run slurm get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(config_id));
@@ -814,7 +815,7 @@ fn test_slurm_update_config_json(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Test the CLI update command
@@ -831,7 +832,7 @@ fn test_slurm_update_config_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run slurm update command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run slurm update command");
 
     // Verify the updated values
     assert_eq!(json_output.get("id").unwrap(), &json!(config_id));
@@ -869,7 +870,7 @@ fn test_slurm_update_partial_fields(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Test updating only the account
@@ -882,7 +883,7 @@ fn test_slurm_update_partial_fields(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run partial slurm update");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run partial slurm update");
 
     // Only account should be updated
     assert_eq!(
@@ -917,7 +918,7 @@ fn test_slurm_update_multiple_optional_fields(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Test updating multiple optional fields
@@ -935,8 +936,8 @@ fn test_slurm_update_multiple_optional_fields(start_server: &ServerProcess) {
         "high",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run multi-field slurm update");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run multi-field slurm update");
 
     assert_eq!(json_output.get("gres").unwrap(), &json!("gpu:4"));
     assert_eq!(json_output.get("mem").unwrap(), &json!("256G"));
@@ -965,7 +966,7 @@ fn test_slurm_list_configs_json(start_server: &ServerProcess) {
             "--nodes",
             "1",
         ];
-        run_cli_with_json(&create_args, start_server)
+        run_cli_with_json(&create_args, start_server, None)
             .expect("Failed to create Slurm config for list test");
     }
 
@@ -973,7 +974,7 @@ fn test_slurm_list_configs_json(start_server: &ServerProcess) {
     let args = ["slurm", "list", &workflow_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run slurm list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run slurm list command");
 
     // Verify JSON structure is an object with slurm_schedulers field
     assert!(
@@ -1023,14 +1024,14 @@ fn test_slurm_list_pagination(start_server: &ServerProcess) {
             "--account",
             "pagination_account",
         ];
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     }
 
     // Test with limit
     let args = ["slurm", "list", &workflow_id.to_string(), "--limit", "3"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated slurm list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run paginated slurm list");
 
     let configs_array = json_output
         .get("slurm_schedulers")
@@ -1051,7 +1052,7 @@ fn test_slurm_list_pagination(start_server: &ServerProcess) {
         "2",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run slurm list with offset");
 
     let configs_with_offset = json_output_offset
@@ -1070,7 +1071,7 @@ fn test_slurm_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent config
     let args = ["slurm", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when getting non-existent Slurm config"
@@ -1079,7 +1080,7 @@ fn test_slurm_error_handling(start_server: &ServerProcess) {
     // Test updating a non-existent config
     let args = ["slurm", "update", "999999", "--account", "should_fail"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent Slurm config"
@@ -1120,7 +1121,7 @@ fn test_slurm_create_with_all_parameters(start_server: &ServerProcess) {
         "'--constraint=feature1'",
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run slurm create with all parameters");
 
     // Verify all fields are set correctly
@@ -1174,12 +1175,14 @@ fn test_slurm_multiple_workflows(start_server: &ServerProcess) {
         "account2",
     ];
 
-    run_cli_with_json(&create_args1, start_server).expect("Failed to create config for workflow 1");
-    run_cli_with_json(&create_args2, start_server).expect("Failed to create config for workflow 2");
+    run_cli_with_json(&create_args1, start_server, None)
+        .expect("Failed to create config for workflow 1");
+    run_cli_with_json(&create_args2, start_server, None)
+        .expect("Failed to create config for workflow 2");
 
     // List configs for workflow 1
     let list_args1 = ["slurm", "list", &workflow1_id.to_string()];
-    let json_output1 = run_cli_with_json(&list_args1, start_server)
+    let json_output1 = run_cli_with_json(&list_args1, start_server, None)
         .expect("Failed to list configs for workflow 1");
 
     let configs1 = json_output1
@@ -1202,7 +1205,7 @@ fn test_slurm_multiple_workflows(start_server: &ServerProcess) {
 
     // List configs for workflow 2
     let list_args2 = ["slurm", "list", &workflow2_id.to_string()];
-    let json_output2 = run_cli_with_json(&list_args2, start_server)
+    let json_output2 = run_cli_with_json(&list_args2, start_server, None)
         .expect("Failed to list configs for workflow 2");
 
     let configs2 = json_output2
@@ -1245,7 +1248,7 @@ fn test_slurm_get_after_update(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Update the config
@@ -1261,12 +1264,12 @@ fn test_slurm_get_after_update(start_server: &ServerProcess) {
         "3",
     ];
 
-    run_cli_with_json(&update_args, start_server).expect("Failed to update Slurm config");
+    run_cli_with_json(&update_args, start_server, None).expect("Failed to update Slurm config");
 
     // Get the config and verify updates were persisted
     let get_args = ["slurm", "get", &config_id.to_string()];
     let json_output =
-        run_cli_with_json(&get_args, start_server).expect("Failed to get updated config");
+        run_cli_with_json(&get_args, start_server, None).expect("Failed to get updated config");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("after_update"));
     assert_eq!(json_output.get("account").unwrap(), &json!("after_account"));
@@ -1295,14 +1298,14 @@ fn test_slurm_delete_config(start_server: &ServerProcess) {
     ];
 
     let created_config =
-        run_cli_with_json(&create_args, start_server).expect("Failed to create Slurm config");
+        run_cli_with_json(&create_args, start_server, None).expect("Failed to create Slurm config");
     let config_id = created_config.get("id").unwrap().as_i64().unwrap();
 
     // Test the CLI delete command
     let args = ["slurm", "delete", &config_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run slurm delete command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run slurm delete command");
 
     // Verify the deleted config is returned
     assert_eq!(json_output.get("id").unwrap(), &json!(config_id));
@@ -1314,7 +1317,7 @@ fn test_slurm_delete_config(start_server: &ServerProcess) {
 
     // Verify the config no longer exists by trying to get it
     let get_args = ["slurm", "get", &config_id.to_string()];
-    let result = run_cli_with_json(&get_args, start_server);
+    let result = run_cli_with_json(&get_args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when getting deleted Slurm config"

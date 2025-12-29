@@ -101,9 +101,6 @@ Use the `--archived-only` flag to see archived workflows:
 ```bash
 # List only archived workflows for current user
 torc workflows list --archived-only
-
-# List all archived workflows for all users
-torc workflows list --all-users --archived-only
 ```
 
 ### Viewing All Workflows

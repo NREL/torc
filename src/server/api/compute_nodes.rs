@@ -1,5 +1,7 @@
 //! Compute node-related API endpoints
 
+#![allow(clippy::too_many_arguments)]
+
 use async_trait::async_trait;
 use log::{debug, error};
 use sqlx::Row;
@@ -103,8 +105,7 @@ where
         let scheduler_json = body
             .scheduler
             .as_ref()
-            .map(|s| serde_json::to_string(s).ok())
-            .flatten();
+            .and_then(|s| serde_json::to_string(s).ok());
 
         match sqlx::query!(
             r#"INSERT INTO compute_node (
@@ -251,7 +252,7 @@ where
             hostname: record.get("hostname"),
             pid: record.get("pid"),
             start_time: record.get("start_time"),
-            duration_seconds: duration_seconds,
+            duration_seconds,
             is_active: if is_active_val == 1 {
                 Some(true)
             } else {
@@ -261,10 +262,10 @@ where
             memory_gb: record.get("memory_gb"),
             num_gpus: record.get("num_gpus"),
             num_nodes: record.get("num_nodes"),
-            time_limit: time_limit,
+            time_limit,
             scheduler_config_id: record.get("scheduler_config_id"),
             compute_node_type: record.get("compute_node_type"),
-            scheduler: scheduler,
+            scheduler,
         };
 
         Ok(GetComputeNodeResponse::SuccessfulResponse(
@@ -377,7 +378,7 @@ where
                 hostname: record.get("hostname"),
                 pid: record.get("pid"),
                 start_time: record.get("start_time"),
-                duration_seconds: duration_seconds,
+                duration_seconds,
                 is_active: if is_active_val == 1 {
                     Some(true)
                 } else {
@@ -387,10 +388,10 @@ where
                 memory_gb: record.get("memory_gb"),
                 num_gpus: record.get("num_gpus"),
                 num_nodes: record.get("num_nodes"),
-                time_limit: time_limit,
+                time_limit,
                 scheduler_config_id: record.get("scheduler_config_id"),
                 compute_node_type: record.get("compute_node_type"),
-                scheduler: scheduler,
+                scheduler,
             });
         }
 
@@ -469,8 +470,7 @@ where
         let scheduler_json = body
             .scheduler
             .as_ref()
-            .map(|s| serde_json::to_string(s).ok())
-            .flatten();
+            .and_then(|s| serde_json::to_string(s).ok());
 
         let result = match sqlx::query(
             r#"

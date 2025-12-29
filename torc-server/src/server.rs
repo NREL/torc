@@ -408,10 +408,8 @@ where
         .unwrap_or(true); // Assume failures on lock error
 
     // If this batch has failures, record it for future batches
-    if batch_has_failures {
-        if let Ok(mut set) = server.workflows_with_failures.write() {
-            set.insert(workflow_id);
-        }
+    if batch_has_failures && let Ok(mut set) = server.workflows_with_failures.write() {
+        set.insert(workflow_id);
     }
 
     // Combine: workflow has failures if either this batch or prior batches had failures
@@ -2127,7 +2125,7 @@ where
         context: &C,
     ) -> Result<CreateResourceRequirementsResponse, ApiError> {
         // Prevent external API calls from creating "default" resource requirements
-        if body.name == "default".to_string() {
+        if body.name == "default" {
             error!(
                 "Attempt to create resource requirement with reserved name 'default' via external API for workflow_id={}",
                 body.workflow_id
@@ -3151,12 +3149,10 @@ where
         // This is skipped during initial workflow start because Step 3 will set all job statuses anyway.
         // During reinitialization, this ensures jobs transitively blocked by reset jobs are also reset.
         let only_uninit = only_uninitialized.unwrap_or(false);
-        if only_uninit {
-            if let Err(e) = self.uninitialize_blocked_jobs(&mut *tx, id).await {
-                error!("Failed to uninitialize blocked jobs: {}", e);
-                let _ = tx.rollback().await;
-                return Err(e);
-            }
+        if only_uninit && let Err(e) = self.uninitialize_blocked_jobs(&mut *tx, id).await {
+            error!("Failed to uninitialize blocked jobs: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
         }
 
         // Step 3: Initialize blocked jobs to blocked status
@@ -3548,10 +3544,10 @@ where
         context: &C,
     ) -> Result<UpdateWorkflowStatusResponse, ApiError> {
         // Clear in-memory failure tracking when workflow is being archived
-        if body.is_archived == Some(true) {
-            if let Ok(mut set) = self.workflows_with_failures.write() {
-                set.remove(&id);
-            }
+        if body.is_archived == Some(true)
+            && let Ok(mut set) = self.workflows_with_failures.write()
+        {
+            set.remove(&id);
         }
 
         self.workflows_api
@@ -3788,10 +3784,7 @@ where
                 let job_id: i64 = row.get("job_id");
                 let file_id: i64 = row.get("file_id");
                 if job_ids_to_update.contains(&job_id) {
-                    output_files_map
-                        .entry(job_id)
-                        .or_insert_with(Vec::new)
-                        .push(file_id);
+                    output_files_map.entry(job_id).or_default().push(file_id);
                 }
             }
 
@@ -3811,7 +3804,7 @@ where
                 if job_ids_to_update.contains(&job_id) {
                     output_user_data_map
                         .entry(job_id)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(user_data_id);
                 }
             }
@@ -4123,14 +4116,10 @@ where
             }
         };
 
-        let current_status = job
-            .status
-            .as_ref()
-            .ok_or_else(|| {
-                error!("Job status is missing for job_id={}", id);
-                ApiError("Job status is required".to_string())
-            })?
-            .clone();
+        let current_status = *job.status.as_ref().ok_or_else(|| {
+            error!("Job status is missing for job_id={}", id);
+            ApiError("Job status is required".to_string())
+        })?;
 
         if current_status == status {
             debug!(
@@ -4149,7 +4138,7 @@ where
             );
         }
 
-        job.status = Some(status.clone());
+        job.status = Some(status);
 
         // 3. Call self.update_job to set the new status
         let updated_job = match self
@@ -4346,19 +4335,19 @@ where
         };
 
         // Check if job is already complete
-        if let Some(current_status) = &job.status {
-            if current_status.is_complete() {
-                error!(
-                    "Job {} is already complete with status {:?}",
-                    id, current_status
-                );
-                let error_response = models::ErrorResponse::new(serde_json::json!({
-                    "message": format!("Job {} is already complete with status {:?}", id, current_status)
-                }));
-                return Ok(CompleteJobResponse::UnprocessableContentErrorResponse(
-                    error_response,
-                ));
-            }
+        if let Some(current_status) = &job.status
+            && current_status.is_complete()
+        {
+            error!(
+                "Job {} is already complete with status {:?}",
+                id, current_status
+            );
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Job {} is already complete with status {:?}", id, current_status)
+            }));
+            return Ok(CompleteJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
         }
 
         job.status = Some(status);
@@ -4499,22 +4488,21 @@ where
         {
             Ok(response) => {
                 if let IsWorkflowCompleteResponse::SuccessfulResponse(completion_status) = response
+                    && completion_status.is_complete
                 {
-                    if completion_status.is_complete {
-                        debug!(
-                            "Workflow {} is complete, triggering on_workflow_complete actions",
-                            workflow_id
+                    debug!(
+                        "Workflow {} is complete, triggering on_workflow_complete actions",
+                        workflow_id
+                    );
+                    if let Err(e) = self
+                        .workflow_actions_api
+                        .check_and_trigger_actions(workflow_id, "on_workflow_complete", None)
+                        .await
+                    {
+                        error!(
+                            "Failed to check_and_trigger_actions for on_workflow_complete: {}",
+                            e
                         );
-                        if let Err(e) = self
-                            .workflow_actions_api
-                            .check_and_trigger_actions(workflow_id, "on_workflow_complete", None)
-                            .await
-                        {
-                            error!(
-                                "Failed to check_and_trigger_actions for on_workflow_complete: {}",
-                                e
-                            );
-                        }
                     }
                 }
             }
@@ -4921,10 +4909,7 @@ where
                 let job_id: i64 = row.get("job_id");
                 let file_id: i64 = row.get("file_id");
                 if job_ids_to_update.contains(&job_id) {
-                    output_files_map
-                        .entry(job_id)
-                        .or_insert_with(Vec::new)
-                        .push(file_id);
+                    output_files_map.entry(job_id).or_default().push(file_id);
                 }
             }
 
@@ -4944,7 +4929,7 @@ where
                 if job_ids_to_update.contains(&job_id) {
                     output_user_data_map
                         .entry(job_id)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(user_data_id);
                 }
             }

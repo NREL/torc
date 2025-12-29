@@ -18,12 +18,10 @@ fn test_workflows_add_command_json(start_server: &ServerProcess) {
         "test_workflow",
         "--description",
         "A test workflow for validation",
-        "--user",
-        "test_user",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run workflows create command");
+    let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
+        .expect("Failed to run workflows create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("name").unwrap(), &json!("test_workflow"));
@@ -38,16 +36,9 @@ fn test_workflows_add_command_json(start_server: &ServerProcess) {
 #[rstest]
 fn test_workflows_add_minimal(start_server: &ServerProcess) {
     // Test with minimal arguments (no description)
-    let args = [
-        "workflows",
-        "new",
-        "--name",
-        "minimal_workflow",
-        "--user",
-        "minimal_user",
-    ];
+    let args = ["workflows", "new", "--name", "minimal_workflow"];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, Some("minimal_user"))
         .expect("Failed to run workflows create with minimal args");
 
     assert_eq!(json_output.get("name").unwrap(), &json!("minimal_workflow"));
@@ -80,13 +71,11 @@ fn test_workflows_add_various_names(start_server: &ServerProcess) {
             "new",
             "--name",
             name,
-            "--user",
-            "test_user",
             "--description",
             &format!("Test workflow for name: {}", name),
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
             .expect(&format!("Failed to create workflow with name: {}", name));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(name));
@@ -115,10 +104,10 @@ fn test_workflows_list_command_json(start_server: &ServerProcess) {
         create_test_workflow_with_description(config, "list_test_workflow_3", "list_user", None);
 
     // Test the CLI list command
-    let args = ["workflows", "list", "--user", "list_user", "--limit", "10"];
+    let args = ["workflows", "list", "--limit", "10"];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run workflows list command");
+    let json_output = run_cli_with_json(&args, start_server, Some("list_user"))
+        .expect("Failed to run workflows list command");
 
     // Verify JSON structure is an array
     assert!(
@@ -167,17 +156,10 @@ fn test_workflows_list_pagination(start_server: &ServerProcess) {
     }
 
     // Test with limit
-    let args = [
-        "workflows",
-        "list",
-        "--user",
-        "pagination_user",
-        "--limit",
-        "4",
-    ];
+    let args = ["workflows", "list", "--limit", "4"];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated workflows list");
+    let json_output = run_cli_with_json(&args, start_server, Some("pagination_user"))
+        .expect("Failed to run paginated workflows list");
 
     let workflows_array = json_output.as_array().unwrap();
     assert!(workflows_array.len() <= 4, "Should respect limit parameter");
@@ -187,19 +169,11 @@ fn test_workflows_list_pagination(start_server: &ServerProcess) {
     );
 
     // Test with offset
-    let args_with_offset = [
-        "workflows",
-        "list",
-        "--user",
-        "pagination_user",
-        "--limit",
-        "3",
-        "--offset",
-        "3",
-    ];
+    let args_with_offset = ["workflows", "list", "--limit", "3", "--offset", "3"];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
-        .expect("Failed to run workflows list with offset");
+    let json_output_offset =
+        run_cli_with_json(&args_with_offset, start_server, Some("pagination_user"))
+            .expect("Failed to run workflows list with offset");
 
     let workflows_with_offset = json_output_offset.as_array().unwrap();
     assert!(
@@ -233,33 +207,18 @@ fn test_workflows_list_sorting(start_server: &ServerProcess) {
     );
 
     // Test sorting by name
-    let args = [
-        "workflows",
-        "list",
-        "--user",
-        "sort_user",
-        "--sort-by",
-        "name",
-    ];
+    let args = ["workflows", "list", "--sort-by", "name"];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run sorted workflows list");
+    let json_output = run_cli_with_json(&args, start_server, Some("sort_user"))
+        .expect("Failed to run sorted workflows list");
 
     let workflows_array = json_output.as_array().unwrap();
     assert!(workflows_array.len() >= 3);
 
     // Test reverse sorting
-    let args_reverse = [
-        "workflows",
-        "list",
-        "--user",
-        "sort_user",
-        "--sort-by",
-        "name",
-        "--reverse-sort",
-    ];
+    let args_reverse = ["workflows", "list", "--sort-by", "name", "--reverse-sort"];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, Some("sort_user"))
         .expect("Failed to run reverse sorted workflows list");
 
     let workflows_array_reverse = json_output_reverse.as_array().unwrap();
@@ -300,16 +259,10 @@ fn test_workflows_get_command_json(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Test the CLI get command
-    let args = [
-        "workflows",
-        "get",
-        &workflow_id.to_string(),
-        "--user",
-        "get_user",
-    ];
+    let args = ["workflows", "get", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run workflows get command");
+    let json_output = run_cli_with_json(&args, start_server, Some("get_user"))
+        .expect("Failed to run workflows get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(workflow_id));
@@ -351,8 +304,8 @@ fn test_workflows_update_command_json(start_server: &ServerProcess) {
         "new_owner",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run workflows update command");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run workflows update command");
 
     // Verify the updated values
     assert_eq!(json_output.get("id").unwrap(), &json!(workflow_id));
@@ -388,8 +341,8 @@ fn test_workflows_update_partial_fields(start_server: &ServerProcess) {
         "only_name_updated",
     ];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run partial workflows update");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to run partial workflows update");
 
     // Only name should be updated
     assert_eq!(
@@ -412,8 +365,8 @@ fn test_workflows_update_partial_fields(start_server: &ServerProcess) {
         "Only description updated",
     ];
 
-    let json_output_desc =
-        run_cli_with_json(&args_desc, start_server).expect("Failed to run description-only update");
+    let json_output_desc = run_cli_with_json(&args_desc, start_server, None)
+        .expect("Failed to run description-only update");
 
     // Description should be updated, name should remain from previous update
     assert_eq!(
@@ -442,7 +395,7 @@ fn test_workflows_delete_command_json(start_server: &ServerProcess) {
     // Test the CLI delete command
     let args = ["workflows", "delete", "--force", &workflow_id.to_string()];
 
-    run_cli_with_json(&args, start_server).expect("Failed to run workflows delete command");
+    run_cli_with_json(&args, start_server, None).expect("Failed to run workflows delete command");
 
     // Verify the workflow is actually deleted by trying to get it
     let get_result = default_api::get_workflow(config, workflow_id);
@@ -467,17 +420,11 @@ fn test_workflows_initialize_jobs_command(start_server: &ServerProcess) {
         default_api::create_job(config, job).expect("Failed to create job for initialization test");
 
     // Test the CLI initialize-jobs command
-    let args = [
-        "workflows",
-        "initialize-jobs",
-        &workflow_id.to_string(),
-        "--user",
-        "test_user",
-    ];
+    let args = ["workflows", "initialize-jobs", &workflow_id.to_string()];
 
     // This command doesn't return JSON in the current implementation,
     // so we'll test that it doesn't fail
-    let _ = run_cli_with_json(&args, start_server);
+    let _ = run_cli_with_json(&args, start_server, Some("test_user"));
     // The command might not return valid JSON, so we just check it doesn't crash
     // In real implementation, this would initialize job dependencies
 }
@@ -491,16 +438,10 @@ fn test_workflows_status_command_json(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Test the CLI status command
-    let args = [
-        "workflows",
-        "status",
-        &workflow_id.to_string(),
-        "--user",
-        "test_user",
-    ];
+    let args = ["workflows", "status", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run workflows status command");
+    let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
+        .expect("Failed to run workflows status command");
 
     // Verify JSON structure for workflow status
     assert!(json_output.get("run_id").is_some());
@@ -558,7 +499,7 @@ fn test_workflows_reset_status_command_json(start_server: &ServerProcess) {
     // Test the CLI reset-status command
     let args = ["workflows", "reset-status", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run workflows reset-status command");
 
     // Verify the command returned success information
@@ -721,11 +662,11 @@ fn test_workflows_different_users(start_server: &ServerProcess) {
         Some("Workflow for user3".to_string()),
     );
 
-    // Test listing workflows for specific user
-    let args_user1 = ["workflows", "list", "--user", "user1"];
+    // Test listing workflows for specific user (set USER env var)
+    let args_user1 = ["workflows", "list"];
 
-    let json_output_user1 =
-        run_cli_with_json(&args_user1, start_server).expect("Failed to list workflows for user1");
+    let json_output_user1 = run_cli_with_json(&args_user1, start_server, Some("user1"))
+        .expect("Failed to list workflows for user1");
 
     let workflows_user1 = json_output_user1.as_array().unwrap();
     assert!(workflows_user1.len() >= 1);
@@ -735,11 +676,11 @@ fn test_workflows_different_users(start_server: &ServerProcess) {
         assert_eq!(workflow.get("user").unwrap(), &json!("user1"));
     }
 
-    // Test listing workflows for different user
-    let args_user2 = ["workflows", "list", "--user", "user2"];
+    // Test listing workflows for different user (set USER env var)
+    let args_user2 = ["workflows", "list"];
 
-    let json_output_user2 =
-        run_cli_with_json(&args_user2, start_server).expect("Failed to list workflows for user2");
+    let json_output_user2 = run_cli_with_json(&args_user2, start_server, Some("user2"))
+        .expect("Failed to list workflows for user2");
 
     let workflows_user2 = json_output_user2.as_array().unwrap();
     assert!(workflows_user2.len() >= 1);
@@ -748,87 +689,6 @@ fn test_workflows_different_users(start_server: &ServerProcess) {
     for workflow in workflows_user2 {
         assert_eq!(workflow.get("user").unwrap(), &json!("user2"));
     }
-}
-
-#[rstest]
-fn test_workflows_list_all_users(start_server: &ServerProcess) {
-    let config = &start_server.config;
-
-    // Create workflows for different users
-    let _workflow_user1 = create_test_workflow_with_description(
-        config,
-        "all_users_workflow_1",
-        "all_user1",
-        Some("Workflow for all_user1".to_string()),
-    );
-    let _workflow_user2 = create_test_workflow_with_description(
-        config,
-        "all_users_workflow_2",
-        "all_user2",
-        Some("Workflow for all_user2".to_string()),
-    );
-    let _workflow_user3 = create_test_workflow_with_description(
-        config,
-        "all_users_workflow_3",
-        "all_user3",
-        Some("Workflow for all_user3".to_string()),
-    );
-
-    // Test listing workflows for all users
-    let args_all_users = ["workflows", "list", "--all-users"];
-
-    let json_output_all = run_cli_with_json(&args_all_users, start_server)
-        .expect("Failed to list workflows for all users");
-
-    let workflows_all = json_output_all.as_array().unwrap();
-    assert!(
-        workflows_all.len() >= 3,
-        "Should have at least 3 workflows from all users"
-    );
-
-    // Check that we have workflows from multiple users
-    let mut users_found = std::collections::HashSet::new();
-    for workflow in workflows_all {
-        if let Some(user) = workflow.get("user").and_then(|u| u.as_str()) {
-            users_found.insert(user.to_string());
-        }
-    }
-
-    // We should have at least our test users
-    assert!(
-        users_found.contains("all_user1"),
-        "Should contain workflows from all_user1"
-    );
-    assert!(
-        users_found.contains("all_user2"),
-        "Should contain workflows from all_user2"
-    );
-    assert!(
-        users_found.contains("all_user3"),
-        "Should contain workflows from all_user3"
-    );
-
-    // Test that --all-users overrides --user
-    let args_all_users_with_user = ["workflows", "list", "--user", "all_user1", "--all-users"];
-
-    let json_output_override = run_cli_with_json(&args_all_users_with_user, start_server)
-        .expect("Failed to list workflows with --all-users override");
-
-    let workflows_override = json_output_override.as_array().unwrap();
-
-    // Should still show workflows from multiple users, not just all_user1
-    let mut users_found_override = std::collections::HashSet::new();
-    for workflow in workflows_override {
-        if let Some(user) = workflow.get("user").and_then(|u| u.as_str()) {
-            users_found_override.insert(user.to_string());
-        }
-    }
-
-    // Should have more than just one user since --all-users overrides --user
-    assert!(
-        users_found_override.len() > 1,
-        "Should have workflows from multiple users when --all-users is specified"
-    );
 }
 
 #[rstest]
@@ -846,16 +706,10 @@ fn test_workflows_advanced_configuration(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Verify the advanced configuration was saved
-    let args = [
-        "workflows",
-        "get",
-        &workflow_id.to_string(),
-        "--user",
-        "advanced_user",
-    ];
+    let args = ["workflows", "get", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to get advanced workflow");
+    let json_output = run_cli_with_json(&args, start_server, Some("advanced_user"))
+        .expect("Failed to get advanced workflow");
 
     assert_eq!(
         json_output.get("name").unwrap(),
@@ -885,15 +739,9 @@ fn test_workflows_long_descriptions(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Verify long description is preserved
-    let args = [
-        "workflows",
-        "get",
-        &workflow_id.to_string(),
-        "--user",
-        "test_user",
-    ];
+    let args = ["workflows", "get", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
         .expect("Failed to get workflow with long description");
 
     assert_eq!(
@@ -934,16 +782,15 @@ fn test_workflows_special_characters(start_server: &ServerProcess) {
             "new",
             "--name",
             workflow_name,
-            "--user",
-            "special_user",
             "--description",
             description,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server).expect(&format!(
-            "Failed to create workflow with special characters: {}",
-            test_name
-        ));
+        let json_output =
+            run_cli_with_json(&args, start_server, Some("special_user")).expect(&format!(
+                "Failed to create workflow with special characters: {}",
+                test_name
+            ));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(workflow_name));
         assert_eq!(json_output.get("description").unwrap(), &json!(description));
@@ -954,9 +801,9 @@ fn test_workflows_special_characters(start_server: &ServerProcess) {
 #[rstest]
 fn test_workflows_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent workflow
-    let args = ["workflows", "get", "999999", "--user", "test_user"];
+    let args = ["workflows", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, Some("test_user"));
     assert!(
         result.is_err(),
         "Should fail when getting non-existent workflow"
@@ -965,16 +812,16 @@ fn test_workflows_error_handling(start_server: &ServerProcess) {
     // Test updating a non-existent workflow
     let args = ["workflows", "update", "999999", "--name", "should_fail"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent workflow"
     );
 
     // Test removing a non-existent workflow
-    let args = ["workflows", "remove", "999999", "--user", "test_user"];
+    let args = ["workflows", "remove", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, Some("test_user"));
     assert!(
         result.is_err(),
         "Should fail when removing non-existent workflow"
@@ -984,10 +831,10 @@ fn test_workflows_error_handling(start_server: &ServerProcess) {
 #[rstest]
 fn test_workflows_list_empty_user(start_server: &ServerProcess) {
     // Test listing workflows for user with no workflows
-    let args = ["workflows", "list", "--user", "nonexistent_user"];
+    let args = ["workflows", "list"];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list workflows for empty user");
+    let json_output = run_cli_with_json(&args, start_server, Some("nonexistent_user"))
+        .expect("Failed to list workflows for empty user");
 
     let workflows_array = json_output.as_array().unwrap();
     assert!(
@@ -1015,10 +862,10 @@ fn test_workflows_name_uniqueness(start_server: &ServerProcess) {
     );
 
     // Both should exist and be distinguishable by user
-    let args_user1 = ["workflows", "list", "--user", "user1"];
+    let args_user1 = ["workflows", "list"];
 
-    let json_output_user1 =
-        run_cli_with_json(&args_user1, start_server).expect("Failed to list workflows for user1");
+    let json_output_user1 = run_cli_with_json(&args_user1, start_server, Some("user1"))
+        .expect("Failed to list workflows for user1");
 
     let workflows_user1 = json_output_user1.as_array().unwrap();
     let user1_workflows: Vec<_> = workflows_user1
@@ -1027,10 +874,10 @@ fn test_workflows_name_uniqueness(start_server: &ServerProcess) {
         .collect();
     assert_eq!(user1_workflows.len(), 1);
 
-    let args_user2 = ["workflows", "list", "--user", "user2"];
+    let args_user2 = ["workflows", "list"];
 
-    let json_output_user2 =
-        run_cli_with_json(&args_user2, start_server).expect("Failed to list workflows for user2");
+    let json_output_user2 = run_cli_with_json(&args_user2, start_server, Some("user2"))
+        .expect("Failed to list workflows for user2");
 
     let workflows_user2 = json_output_user2.as_array().unwrap();
     let user2_workflows: Vec<_> = workflows_user2
@@ -1052,16 +899,10 @@ fn test_workflows_timestamp_format(start_server: &ServerProcess) {
     );
     let workflow_id = workflow.id.unwrap();
 
-    let args = [
-        "workflows",
-        "get",
-        &workflow_id.to_string(),
-        "--user",
-        "test_user",
-    ];
+    let args = ["workflows", "get", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to get workflow for timestamp test");
+    let json_output = run_cli_with_json(&args, start_server, Some("test_user"))
+        .expect("Failed to get workflow for timestamp test");
 
     // Verify timestamp format (should be ISO 8601 or similar)
     if let Some(timestamp) = json_output.get("timestamp") {
@@ -1248,7 +1089,7 @@ fn test_workflow_archive_and_unarchive(start_server: &ServerProcess) {
     // Archive the workflow using CLI
     let archive_args = ["workflows", "archive", "true", &workflow_id.to_string()];
     let archive_output =
-        run_cli_with_json(&archive_args, start_server).expect("Failed to archive workflow");
+        run_cli_with_json(&archive_args, start_server, None).expect("Failed to archive workflow");
 
     assert_eq!(
         archive_output.get("status").and_then(|v| v.as_str()),
@@ -1272,8 +1113,8 @@ fn test_workflow_archive_and_unarchive(start_server: &ServerProcess) {
 
     // Unarchive the workflow using CLI
     let unarchive_args = ["workflows", "archive", "false", &workflow_id.to_string()];
-    let unarchive_output =
-        run_cli_with_json(&unarchive_args, start_server).expect("Failed to unarchive workflow");
+    let unarchive_output = run_cli_with_json(&unarchive_args, start_server, None)
+        .expect("Failed to unarchive workflow");
 
     assert_eq!(
         unarchive_output.get("status").and_then(|v| v.as_str()),
@@ -1317,9 +1158,9 @@ fn test_workflow_list_excludes_archived_by_default(start_server: &ServerProcess)
         .expect("Failed to archive workflow");
 
     // List workflows without archived filter (default behavior)
-    let list_args = ["workflows", "list", "--user", "test_user", "--limit", "100"];
-    let list_output =
-        run_cli_with_json(&list_args, start_server).expect("Failed to list workflows");
+    let list_args = ["workflows", "list", "--limit", "100"];
+    let list_output = run_cli_with_json(&list_args, start_server, Some("test_user"))
+        .expect("Failed to list workflows");
 
     // Extract workflow IDs from response
     let workflows = list_output.as_array().unwrap_or_else(|| {
@@ -1367,17 +1208,9 @@ fn test_workflow_list_archived_only(start_server: &ServerProcess) {
         .expect("Failed to archive workflow");
 
     // List only archived workflows
-    let list_args = [
-        "workflows",
-        "list",
-        "--user",
-        "test_user",
-        "--limit",
-        "100",
-        "--archived-only",
-    ];
-    let list_output =
-        run_cli_with_json(&list_args, start_server).expect("Failed to list archived workflows");
+    let list_args = ["workflows", "list", "--limit", "100", "--archived-only"];
+    let list_output = run_cli_with_json(&list_args, start_server, Some("test_user"))
+        .expect("Failed to list archived workflows");
 
     // Extract workflow IDs from response
     let workflows = list_output.as_array().unwrap_or_else(|| {
@@ -1514,7 +1347,7 @@ fn test_archive_multiple_workflows(start_server: &ServerProcess) {
         &id2.to_string(),
         &id3.to_string(),
     ];
-    let archive_output = run_cli_with_json(&archive_args, start_server)
+    let archive_output = run_cli_with_json(&archive_args, start_server, None)
         .expect("Failed to archive multiple workflows");
 
     assert_eq!(

@@ -1,3 +1,5 @@
+#![allow(clippy::explicit_auto_deref, clippy::manual_unwrap_or_default)]
+
 use futures::{future, future::BoxFuture};
 use hyper::header::{CONTENT_TYPE, HeaderName, HeaderValue};
 use hyper::{Body, Request, Response, StatusCode};

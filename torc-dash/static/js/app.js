@@ -101,8 +101,9 @@ class TorcDashboard {
         this.setupExecutionPanel();
         this.setupKeyboardShortcuts();
 
-        // Load version (fire and forget)
+        // Load version and user info (fire and forget)
         this.loadVersion();
+        this.loadUser();
 
         // Test connection and load data
         await this.testConnection();

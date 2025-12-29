@@ -28,7 +28,7 @@ fn test_files_add_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run files create command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run files create command");
 
     assert!(json_output.get("id").is_some());
     assert_eq!(json_output.get("workflow_id").unwrap(), &json!(workflow_id));
@@ -75,7 +75,7 @@ fn test_files_add_various_paths(start_server: &ServerProcess) {
             file_path,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, None)
             .expect(&format!("Failed to create file with path: {}", file_path));
 
         assert_eq!(json_output.get("name").unwrap(), &json!(test_name));
@@ -132,7 +132,7 @@ fn test_files_add_different_file_types(start_server: &ServerProcess) {
             path,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server)
+        let json_output = run_cli_with_json(&args, start_server, None)
             .expect(&format!("Failed to create {} file", name));
 
         assert_eq!(json_output.get("path").unwrap(), &json!(path));
@@ -161,7 +161,7 @@ fn test_files_list_command_json(start_server: &ServerProcess) {
     let args = ["files", "list", &workflow_id.to_string(), "--limit", "10"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run files list command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run files list command");
 
     // Verify JSON structure is an object with "files" field
     assert!(
@@ -207,7 +207,7 @@ fn test_files_list_pagination(start_server: &ServerProcess) {
     let args = ["files", "list", &workflow_id.to_string(), "--limit", "4"];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run paginated files list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run paginated files list");
 
     let files_array = json_output.get("files").unwrap().as_array().unwrap();
     assert!(files_array.len() <= 4, "Should respect limit parameter");
@@ -224,7 +224,7 @@ fn test_files_list_pagination(start_server: &ServerProcess) {
         "3",
     ];
 
-    let json_output_offset = run_cli_with_json(&args_with_offset, start_server)
+    let json_output_offset = run_cli_with_json(&args_with_offset, start_server, None)
         .expect("Failed to run files list with offset");
 
     let files_with_offset = json_output_offset.get("files").unwrap().as_array().unwrap();
@@ -256,7 +256,7 @@ fn test_files_list_sorting(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run sorted files list");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run sorted files list");
 
     let files_array = json_output.get("files").unwrap().as_array().unwrap();
     assert!(files_array.len() >= 3);
@@ -271,7 +271,7 @@ fn test_files_list_sorting(start_server: &ServerProcess) {
         "--reverse-sort",
     ];
 
-    let json_output_reverse = run_cli_with_json(&args_reverse, start_server)
+    let json_output_reverse = run_cli_with_json(&args_reverse, start_server, None)
         .expect("Failed to run reverse sorted files list");
 
     let files_array_reverse = json_output_reverse
@@ -322,7 +322,7 @@ fn test_files_get_command_json(start_server: &ServerProcess) {
     let args = ["files", "get", &file_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run files get command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run files get command");
 
     // Verify JSON structure
     assert_eq!(json_output.get("id").unwrap(), &json!(file_id));
@@ -356,7 +356,7 @@ fn test_files_update_command_json(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run files update command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run files update command");
 
     // Verify the updated values
     assert_eq!(json_output.get("id").unwrap(), &json!(file_id));
@@ -397,7 +397,7 @@ fn test_files_update_partial_fields(start_server: &ServerProcess) {
     ];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run partial files update");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run partial files update");
 
     // Only name should be updated
     assert_eq!(
@@ -420,7 +420,7 @@ fn test_files_update_partial_fields(start_server: &ServerProcess) {
     ];
 
     let json_output_path =
-        run_cli_with_json(&args_path, start_server).expect("Failed to run path-only update");
+        run_cli_with_json(&args_path, start_server, None).expect("Failed to run path-only update");
 
     // Path should be updated, name should remain from previous update
     assert_eq!(
@@ -452,7 +452,7 @@ fn test_files_remove_command_json(start_server: &ServerProcess) {
     let args = ["files", "delete", &file_id.to_string()];
 
     let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to run files delete command");
+        run_cli_with_json(&args, start_server, None).expect("Failed to run files delete command");
 
     // Verify JSON structure shows the removed file
     assert_eq!(json_output.get("id").unwrap(), &json!(file_id));
@@ -489,7 +489,7 @@ fn test_files_long_names_and_paths(start_server: &ServerProcess) {
         long_path,
     ];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to create file with long name and path");
 
     assert_eq!(json_output.get("name").unwrap(), &json!(long_name));
@@ -537,7 +537,7 @@ fn test_files_special_characters_in_names(start_server: &ServerProcess) {
             file_path,
         ];
 
-        let json_output = run_cli_with_json(&args, start_server).expect(&format!(
+        let json_output = run_cli_with_json(&args, start_server, None).expect(&format!(
             "Failed to create file with special characters: {}",
             test_name
         ));
@@ -582,7 +582,7 @@ fn test_files_list_required_existing_command_json(start_server: &ServerProcess) 
     // Test the CLI list-required-existing command
     let args = ["files", "list-required-existing", &workflow_id.to_string()];
 
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run files list-required-existing command");
 
     // Verify JSON structure
@@ -645,8 +645,8 @@ fn test_files_workflow_organization(start_server: &ServerProcess) {
     // List all files and verify organization
     let args = ["files", "list", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list workflow organization files");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list workflow organization files");
 
     let files_array = json_output.get("files").unwrap().as_array().unwrap();
     assert_eq!(files_array.len(), workflow_files.len());
@@ -677,7 +677,7 @@ fn test_files_error_handling(start_server: &ServerProcess) {
     // Test getting a non-existent file
     let args = ["files", "get", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when getting non-existent file"
@@ -686,7 +686,7 @@ fn test_files_error_handling(start_server: &ServerProcess) {
     // Test updating a non-existent file
     let args = ["files", "update", "999999", "--name", "should_fail"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when updating non-existent file"
@@ -695,7 +695,7 @@ fn test_files_error_handling(start_server: &ServerProcess) {
     // Test removing a non-existent file
     let args = ["files", "delete", "999999"];
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = run_cli_with_json(&args, start_server, None);
     assert!(
         result.is_err(),
         "Should fail when removing non-existent file"
@@ -712,8 +712,8 @@ fn test_files_list_empty_workflow(start_server: &ServerProcess) {
 
     let args = ["files", "list", &workflow_id.to_string()];
 
-    let json_output =
-        run_cli_with_json(&args, start_server).expect("Failed to list files for empty workflow");
+    let json_output = run_cli_with_json(&args, start_server, None)
+        .expect("Failed to list files for empty workflow");
 
     let files_array = json_output.get("files").unwrap().as_array().unwrap();
     assert!(files_array.is_empty(), "Should have no files");
@@ -747,7 +747,7 @@ fn test_files_list_with_produced_by_job_id_filter(start_server: &ServerProcess) 
 
     // This test mainly verifies that the CLI accepts the new parameter without errors
     // The actual filtering behavior depends on the backend database relationships
-    let json_output = run_cli_with_json(&args, start_server)
+    let json_output = run_cli_with_json(&args, start_server, None)
         .expect("Failed to run files list command with produced_by_job_id filter");
 
     // Verify the response structure is correct

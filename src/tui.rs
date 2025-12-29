@@ -429,21 +429,6 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                     KeyCode::Char(c) => app.add_server_url_char(c),
                     _ => {}
                 },
-                Focus::UserInput => match key.code {
-                    KeyCode::Esc => app.cancel_user_input(),
-                    KeyCode::Enter => {
-                        if let Err(e) = app.apply_user_filter() {
-                            app.set_status(components::StatusMessage::error(&format!(
-                                "Failed to apply filter: {}",
-                                e
-                            )));
-                            app.cancel_user_input();
-                        }
-                    }
-                    KeyCode::Backspace => app.remove_user_char(),
-                    KeyCode::Char(c) => app.add_user_char(c),
-                    _ => {}
-                },
                 Focus::WorkflowPathInput => match key.code {
                     KeyCode::Esc => app.cancel_workflow_path_input(),
                     KeyCode::Enter => {
@@ -499,17 +484,6 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
                     }
                     KeyCode::Char('u') => {
                         app.start_server_url_input();
-                    }
-                    KeyCode::Char('w') => {
-                        app.start_user_input();
-                    }
-                    KeyCode::Char('a') => {
-                        if let Err(e) = app.toggle_show_all_users() {
-                            app.set_status(components::StatusMessage::error(&format!(
-                                "Failed to toggle filter: {}",
-                                e
-                            )));
-                        }
                     }
                     KeyCode::Char('A') => {
                         app.toggle_auto_refresh();
