@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 /// Represents an htpasswd file with user credentials
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct HtpasswdFile {
     /// Map of username to bcrypt password hash
     users: HashMap<String, String>,
