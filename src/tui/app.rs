@@ -151,12 +151,12 @@ pub enum PendingAction {
 impl DetailViewType {
     pub fn as_str(&self) -> &str {
         match self {
-            Self::Jobs => "Jobs",
-            Self::Files => "Files",
-            Self::Events => "Events",
-            Self::Results => "Results",
-            Self::ScheduledNodes => "Scheduled Nodes",
-            Self::Dag => "DAG",
+            Self::Jobs => "▶ Jobs",
+            Self::Files => "◫ Files",
+            Self::Events => "⚡ Events",
+            Self::Results => "✓ Results",
+            Self::ScheduledNodes => "⊞ Nodes",
+            Self::Dag => "◇ DAG",
         }
     }
 
