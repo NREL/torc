@@ -1,5 +1,3 @@
-// This is the amended version that adds Authorization via Inversion of Control.
-
 #![allow(missing_docs)]
 
 use anyhow::Result;
@@ -374,6 +372,13 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
             .connect_with(connect_options)
             .await?;
 
+        let version = env!("CARGO_PKG_VERSION");
+        let git_hash = env!("GIT_HASH");
+        let git_dirty = env!("GIT_DIRTY");
+        info!(
+            "Starting torc-server version={} ({}{})",
+            version, git_hash, git_dirty
+        );
         info!("Connected to database: {}", database_url);
         info!("Database configured with WAL journal mode and foreign key constraints");
 

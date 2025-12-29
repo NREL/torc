@@ -317,7 +317,9 @@ impl JobRunner {
     }
 
     pub fn run_worker(&mut self) -> Result<WorkerResult, Box<dyn std::error::Error>> {
-        let version = env!("CARGO_PKG_VERSION");
+        use crate::client::version_check;
+
+        let version = version_check::full_version();
         let hostname = hostname::get()
             .expect("Failed to get hostname")
             .into_string()
@@ -334,10 +336,18 @@ impl JobRunner {
             info!("Created output directory: {}", self.output_dir.display());
         }
 
+        // Check and log server version
+        let version_result = version_check::check_version(&self.config);
+        let server_version = version_result
+            .server_version
+            .clone()
+            .unwrap_or_else(|| "unknown".to_string());
+
         info!(
-            "Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?} \
+            "Starting torc job runner version={} server_version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?} \
             job_completion_poll_interval={}s max_parallel_jobs={:?} end_time={:?} strict_scheduler_match={}",
             version,
+            server_version,
             self.workflow_id,
             hostname,
             self.output_dir.display(),
@@ -348,6 +358,11 @@ impl JobRunner {
             self.end_time,
             self.torc_config.client.slurm.strict_scheduler_match
         );
+
+        // Warn about version mismatches
+        if version_result.severity.has_warning() {
+            version_check::print_version_warning(&version_result);
+        }
 
         // Check for and execute on_workflow_start and on_worker_start actions before entering main loop
         self.execute_workflow_start_actions();

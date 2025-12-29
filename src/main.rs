@@ -24,6 +24,7 @@ use torc::client::commands::user_data::handle_user_data_commands;
 use torc::client::commands::watch::{WatchArgs, run_watch};
 use torc::client::commands::workflows::handle_workflow_commands;
 use torc::client::config::TorcConfig;
+use torc::client::version_check;
 use torc::client::workflow_manager::WorkflowManager;
 use torc::client::workflow_spec::WorkflowSpec;
 
@@ -115,6 +116,29 @@ fn main() {
             }
         };
         config.basic_auth = Some((username, password));
+    }
+
+    // Check server version for commands that communicate with the server
+    // Skip for local-only commands or if --skip-version-check is set
+    let requires_server = !matches!(
+        cli.command,
+        Commands::Completions { .. }
+            | Commands::PlotResources(..)
+            | Commands::Tui(..)
+            | Commands::Config { .. }
+            | Commands::Hpc { .. }
+    );
+
+    if requires_server && !cli.skip_version_check {
+        let result = version_check::check_version(&config);
+        if result.server_version.is_some() {
+            let severity = version_check::print_version_warning(&result);
+            if severity.is_blocking() {
+                eprintln!("Use --skip-version-check to bypass this check (not recommended)");
+                std::process::exit(1);
+            }
+        }
+        // If server is unreachable, we'll let the actual command fail with a better error
     }
 
     match &cli.command {

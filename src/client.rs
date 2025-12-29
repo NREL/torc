@@ -27,6 +27,7 @@ pub mod report_models;
 pub mod resource_monitor;
 pub mod scheduler_plan;
 pub mod utils;
+pub mod version_check;
 pub mod workflow_graph;
 pub mod workflow_manager;
 pub mod workflow_spec;
@@ -49,4 +50,9 @@ pub use workflow_spec::{
 // Report model types for inter-command data sharing
 pub use report_models::{
     FailedJobInfo, JobResultRecord, ResourceUtilizationReport, ResourceViolation, ResultsReport,
+};
+
+// Version checking utilities
+pub use version_check::{
+    VersionCheckResult, VersionMismatchSeverity, check_and_warn, check_version,
 };

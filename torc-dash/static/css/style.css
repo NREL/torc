@@ -210,11 +210,114 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+.sidebar-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 .connection-status {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 12px;
+}
+
+.version-display {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.version-display .version-text {
+    font-family: monospace;
+}
+
+.version-display.version-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.version-display.version-error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* Version mismatch notification */
+.version-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.version-notification-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.version-notification-error {
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+    color: #721c24;
+}
+
+.version-notification .notification-icon {
+    font-size: 18px;
+}
+
+.version-notification .notification-message {
+    flex: 1;
+    font-size: 13px;
+}
+
+.version-notification .notification-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 0 4px;
+}
+
+.version-notification .notification-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Dark mode adjustments for version notifications */
+.dark-mode .version-notification-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.5);
+    color: #ffc107;
+}
+
+.dark-mode .version-notification-error {
+    background-color: rgba(220, 53, 69, 0.15);
+    border-color: rgba(220, 53, 69, 0.5);
+    color: #f8d7da;
 }
 
 .status-dot {
