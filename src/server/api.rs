@@ -63,6 +63,7 @@ impl PaginationInfo {
 }
 
 // Re-export submodules
+pub mod access_groups;
 pub mod compute_nodes;
 pub mod events;
 pub mod files;
@@ -77,6 +78,7 @@ pub mod workflow_actions;
 pub mod workflows;
 
 // Re-export API traits and implementations
+pub use access_groups::AccessGroupsApiImpl;
 pub use compute_nodes::{ComputeNodesApi, ComputeNodesApiImpl};
 pub use events::{EventsApi, EventsApiImpl};
 pub use files::{FilesApi, FilesApiImpl};

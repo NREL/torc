@@ -6,6 +6,7 @@
 pub mod api;
 pub mod api_types;
 pub mod auth;
+pub mod authorization;
 pub mod context;
 pub mod dashboard;
 pub mod header;

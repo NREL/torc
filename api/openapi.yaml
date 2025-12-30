@@ -9,6 +9,522 @@ info:
 servers:
 - url: /torc-service/v1
 paths:
+  # ============================================================================
+  # Access Groups endpoints for team-based access control
+  # ============================================================================
+  /access_groups:
+    post:
+      description: Create a new access group.
+      operationId: create_access_group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/access_group_model"
+        description: Access group to create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_group_model"
+          description: Successful response
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Conflict - group already exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Create a new access group.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: List all access groups.
+      operationId: list_access_groups
+      parameters:
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_access_groups_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List all access groups.
+      tags: []
+  /access_groups/{id}:
+    get:
+      description: Get an access group by ID.
+      operationId: get_access_group
+      parameters:
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_group_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Get an access group by ID.
+      tags: []
+    delete:
+      description: Delete an access group.
+      operationId: delete_access_group
+      parameters:
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_group_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete an access group.
+      tags: []
+      x-codegen-request-body-name: body
+  /access_groups/{id}/members:
+    post:
+      description: Add a user to an access group.
+      operationId: add_user_to_group
+      parameters:
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user_group_membership_model"
+        description: User membership to add
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user_group_membership_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Group not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: User already in group
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Add a user to an access group.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: List members of an access group.
+      operationId: list_group_members
+      parameters:
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_user_group_memberships_response"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Group not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List members of an access group.
+      tags: []
+  /access_groups/{id}/members/{user_name}:
+    delete:
+      description: Remove a user from an access group.
+      operationId: remove_user_from_group
+      parameters:
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Username to remove
+        explode: false
+        in: path
+        name: user_name
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Membership not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Remove a user from an access group.
+      tags: []
+      x-codegen-request-body-name: body
+  /users/{user_name}/groups:
+    get:
+      description: List groups a user belongs to.
+      operationId: list_user_groups
+      parameters:
+      - description: Username
+        explode: false
+        in: path
+        name: user_name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_access_groups_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List groups a user belongs to.
+      tags: []
+  /workflows/{id}/access_groups:
+    post:
+      description: Grant an access group access to a workflow.
+      operationId: add_workflow_to_group
+      parameters:
+      - description: ID of the workflow
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/workflow_access_group_model"
+        description: Group association to create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_access_group_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Workflow or group not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Association already exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Grant an access group access to a workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: List access groups that have access to a workflow.
+      operationId: list_workflow_groups
+      parameters:
+      - description: ID of the workflow
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_access_groups_response"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Workflow not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List access groups that have access to a workflow.
+      tags: []
+  /workflows/{id}/access_groups/{group_id}:
+    delete:
+      description: Revoke an access group's access to a workflow.
+      operationId: remove_workflow_from_group
+      parameters:
+      - description: ID of the workflow
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: ID of the access group
+        explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Association not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Revoke an access group's access to a workflow.
+      tags: []
+      x-codegen-request-body-name: body
+  /access_check/{workflow_id}/{user_name}:
+    get:
+      description: Check if a user can access a workflow.
+      operationId: check_workflow_access
+      parameters:
+      - description: ID of the workflow
+        explode: false
+        in: path
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Username to check
+        explode: false
+        in: path
+        name: user_name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_check_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Check if a user can access a workflow.
+      tags: []
+  # ============================================================================
+  # End of Access Groups endpoints
+  # ============================================================================
   /compute_nodes:
     post:
       description: Store a compute node.
@@ -4090,6 +4606,103 @@ paths:
       tags: []
 components:
   schemas:
+    # ==========================================================================
+    # Access Groups schemas for team-based access control
+    # ==========================================================================
+    access_group_model:
+      description: Access group for team-based access control
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+      required:
+        - name
+      type: object
+    user_group_membership_model:
+      description: User membership in an access group
+      properties:
+        id:
+          type: integer
+        user_name:
+          type: string
+        group_id:
+          type: integer
+        role:
+          type: string
+          default: member
+        created_at:
+          type: string
+      required:
+        - user_name
+        - group_id
+      type: object
+    workflow_access_group_model:
+      description: Association between a workflow and an access group
+      properties:
+        workflow_id:
+          type: integer
+        group_id:
+          type: integer
+        created_at:
+          type: string
+      required:
+        - workflow_id
+        - group_id
+      type: object
+    list_access_groups_response:
+      description: Response for listing access groups
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/access_group_model"
+          type: array
+        offset:
+          type: integer
+        limit:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      type: object
+    list_user_group_memberships_response:
+      description: Response for listing user group memberships
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/user_group_membership_model"
+          type: array
+        offset:
+          type: integer
+        limit:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      type: object
+    access_check_response:
+      description: Response for access check
+      properties:
+        has_access:
+          type: boolean
+        user_name:
+          type: string
+        workflow_id:
+          type: integer
+      required:
+        - has_access
+        - user_name
+        - workflow_id
+      type: object
+    # ==========================================================================
+    # End of Access Groups schemas
+    # ==========================================================================
     compute_node_model:
       example:
         workflow_id: 37

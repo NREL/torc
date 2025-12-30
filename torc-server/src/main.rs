@@ -51,6 +51,11 @@ struct ServerConfig {
     #[arg(long, default_value_t = false)]
     require_auth: bool,
 
+    /// Enforce access control based on workflow ownership and group membership.
+    /// When enabled, users can only access workflows they own or have group access to.
+    #[arg(long, default_value_t = false)]
+    enforce_access_control: bool,
+
     /// Directory for log files (enables file logging with size-based rotation)
     #[arg(long, env = "TORC_LOG_DIR")]
     log_dir: Option<PathBuf>,
@@ -254,6 +259,8 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
             .auth_file
             .or_else(|| server_file_config.auth_file.clone()),
         require_auth: cli_config.require_auth || server_file_config.require_auth,
+        enforce_access_control: cli_config.enforce_access_control
+            || server_file_config.enforce_access_control,
         log_dir: cli_config
             .log_dir
             .or_else(|| server_file_config.logging.log_dir.clone()),
@@ -427,12 +434,17 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
             .completion_check_interval_secs
             .unwrap_or(DEFAULT_RUN_INTERVAL_SECS);
 
+        if config.enforce_access_control {
+            info!("Access control is ENABLED - users can only access their own workflows and workflows shared via access groups");
+        }
+
         server::create(
             &addr,
             config.https,
             pool,
             htpasswd,
             config.require_auth,
+            config.enforce_access_control,
             completion_check_interval_secs,
         )
         .await;

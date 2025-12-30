@@ -31,6 +31,9 @@ pub struct ServerConfig {
     /// Require authentication for all requests
     pub require_auth: bool,
 
+    /// Enforce access control based on workflow ownership and group membership
+    pub enforce_access_control: bool,
+
     /// Interval in seconds for background job completion processing
     pub completion_check_interval_secs: f64,
 
@@ -49,6 +52,7 @@ impl Default for ServerConfig {
             database: None,
             auth_file: None,
             require_auth: false,
+            enforce_access_control: false,
             completion_check_interval_secs: 30.0,
             logging: ServerLoggingConfig::default(),
         }
@@ -81,6 +85,7 @@ mod tests {
         assert_eq!(config.threads, 1);
         assert!(config.database.is_none());
         assert!(!config.require_auth);
+        assert!(!config.enforce_access_control);
         assert_eq!(config.completion_check_interval_secs, 30.0);
     }
 

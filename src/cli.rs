@@ -6,6 +6,7 @@
 use clap::{Parser, Subcommand, builder::styling};
 use std::path::PathBuf;
 
+use crate::client::commands::access_groups::AccessGroupCommands;
 use crate::client::commands::compute_nodes::ComputeNodeCommands;
 use crate::client::commands::config::ConfigCommands;
 use crate::client::commands::events::EventCommands;
@@ -446,6 +447,12 @@ pub enum Commands {
     // =========================================================================
     // Configuration & Utilities - Setup and miscellaneous
     // =========================================================================
+    /// Manage access groups for team-based access control
+    #[command(hide = true)]
+    AccessGroups {
+        #[command(subcommand)]
+        command: AccessGroupCommands,
+    },
     /// Manage configuration files and settings
     #[command(hide = true)]
     Config {

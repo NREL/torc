@@ -3,6 +3,7 @@ use clap::{CommandFactory, Parser};
 use torc::cli::{Cli, Commands};
 use torc::client::apis::configuration::Configuration;
 use torc::client::apis::default_api;
+use torc::client::commands::access_groups::handle_access_group_commands;
 use torc::client::commands::compute_nodes::handle_compute_node_commands;
 use torc::client::commands::config::handle_config_commands;
 use torc::client::commands::events::handle_event_commands;
@@ -660,6 +661,9 @@ fn main() {
         }
         Commands::Logs { command } => {
             handle_log_commands(&config, command);
+        }
+        Commands::AccessGroups { command } => {
+            handle_access_group_commands(&config, command, &format);
         }
         Commands::Config { command } => {
             handle_config_commands(command);
