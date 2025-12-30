@@ -14,6 +14,16 @@ Access groups provide:
 
 ## Concepts
 
+### Admin Group
+
+The **admin** group is a special system group that controls who can create and manage access groups.
+Admin group membership is managed via server configuration, not through the CLI.
+
+- Only members of the admin group can create, delete, or modify access groups
+- The admin group is created automatically on server startup
+- Admin users are specified via `--admin-user` CLI flag or `admin_users` config option
+- The admin group cannot be deleted or have its membership modified via the API
+
 ### Access Groups
 
 An access group is a named collection of users who share access to workflows. Groups have:
@@ -44,8 +54,11 @@ Access to a workflow is granted if any of these conditions are met:
 
 ### Group Management
 
+**Note:** Creating, deleting, and modifying access groups requires admin access. Only users who are
+members of the admin group can perform these operations.
+
 ```bash
-# Create a new group
+# Create a new group (admin only)
 torc access-groups create "data-science" --description "Data science team"
 
 # List all groups
@@ -54,20 +67,22 @@ torc access-groups list
 # Get a specific group
 torc access-groups get 1
 
-# Delete a group
+# Delete a group (admin only)
 torc access-groups delete 1
 ```
 
 ### Membership Management
 
+**Note:** Adding and removing users from groups requires admin access or group admin role.
+
 ```bash
-# Add a user to a group
+# Add a user to a group (admin or group admin only)
 torc access-groups add-user 1 alice --role member
 
 # List members of a group
 torc access-groups list-members 1
 
-# Remove a user from a group
+# Remove a user from a group (admin or group admin only)
 torc access-groups remove-user 1 alice
 
 # List groups a user belongs to
@@ -76,14 +91,16 @@ torc access-groups list-user-groups alice
 
 ### Workflow Access
 
+**Note:** Adding and removing workflows from groups requires workflow ownership or admin access.
+
 ```bash
-# Add a workflow to a group (grant group access)
+# Add a workflow to a group (owner or admin only)
 torc access-groups add-workflow 42 1
 
 # List groups that have access to a workflow
 torc access-groups list-workflow-groups 42
 
-# Remove a workflow from a group (revoke group access)
+# Remove a workflow from a group (owner or admin only)
 torc access-groups remove-workflow 42 1
 ```
 
@@ -91,15 +108,17 @@ torc access-groups remove-workflow 42 1
 
 ### Setting Up a Team
 
+As an admin user:
+
 ```bash
-# 1. Create the team group
+# 1. Create the team group (requires admin access)
 torc access-groups create "ml-team" --description "Machine learning team"
 # Output: Successfully created access group:
 #   ID: 1
 #   Name: ml-team
 #   Description: Machine learning team
 
-# 2. Add team members
+# 2. Add team members (requires admin access)
 torc access-groups add-user 1 alice
 torc access-groups add-user 1 bob
 ```
@@ -161,12 +180,13 @@ Access groups use three tables:
 
 ### `access_group`
 
-| Column      | Type    | Description           |
-| ----------- | ------- | --------------------- |
-| id          | INTEGER | Primary key           |
-| name        | TEXT    | Unique group name     |
-| description | TEXT    | Optional description  |
-| created_at  | TEXT    | Timestamp of creation |
+| Column      | Type    | Description                                     |
+| ----------- | ------- | ----------------------------------------------- |
+| id          | INTEGER | Primary key                                     |
+| name        | TEXT    | Unique group name                               |
+| description | TEXT    | Optional description                            |
+| is_system   | INTEGER | 1 if system group (cannot be deleted), 0 if not |
+| created_at  | TEXT    | Timestamp of creation                           |
 
 ### `user_group_membership`
 
@@ -200,6 +220,7 @@ When enforcement is enabled:
 - Users can only access workflows they own or have group access to
 - Anonymous access is denied
 - API requests to inaccessible workflows return a 403 Forbidden error
+- Only admin group members can create and manage access groups
 
 The enforcement setting can also be configured in the torc configuration file:
 
@@ -208,6 +229,34 @@ The enforcement setting can also be configured in the torc configuration file:
 enforce_access_control = true
 ```
 
+## Configuring Admin Users
+
+Admin users have permission to create, delete, and modify access groups. Configure admin users via:
+
+### CLI Flag
+
+```bash
+torc-server run --admin-user alice --admin-user bob --enforce-access-control
+```
+
+### Environment Variable
+
+```bash
+export TORC_ADMIN_USERS="alice,bob"
+torc-server run --enforce-access-control
+```
+
+### Configuration File
+
+```toml
+[server]
+admin_users = ["alice", "bob"]
+enforce_access_control = true
+```
+
+On server startup, the admin group is automatically created or updated to include the configured
+users. The admin group is a system group that cannot be deleted or modified via the API.
+
 ## Future Enhancements
 
-- **Admin roles** - The role field supports "admin" for future permission escalation
+- **Group admin role** - Users with the "admin" role in a group can manage that group's membership

@@ -8,6 +8,7 @@ pub mod api_types;
 pub mod auth;
 pub mod authorization;
 pub mod context;
+pub mod credential_cache;
 pub mod dashboard;
 pub mod header;
 pub mod htpasswd;

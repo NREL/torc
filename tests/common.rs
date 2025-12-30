@@ -1278,6 +1278,121 @@ pub fn run_jobs_cli_command(
     }
 }
 
+/// Helper function to run CLI commands with basic authentication
+/// Uses USER env var as username and TORC_PASSWORD env var for password
+pub fn run_cli_command_with_auth(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir()?;
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8(output.stdout)?;
+        Ok(stdout)
+    } else {
+        let error_str = String::from_utf8(output.stderr)?;
+        Err(format!("Command failed: {}", error_str).into())
+    }
+}
+
+/// Helper function to run CLI commands with basic authentication, returning full output
+/// even on failure. Useful for testing error cases.
+pub fn run_cli_command_with_auth_full(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> std::process::Output {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir().expect("Failed to get current dir");
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    cmd.output().expect("Failed to execute command")
+}
+
+/// Helper function to run the torc job runner with authentication
+pub fn run_jobs_cli_command_with_auth(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path, "run"]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir()?;
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8(output.stdout)?;
+        Ok(stdout)
+    } else {
+        let error_str = String::from_utf8(output.stderr)?;
+        Err(format!("Command failed: {}", error_str).into())
+    }
+}
+
+/// Helper function to run the torc job runner with authentication, returning full output
+/// even on failure. Useful for testing error cases.
+pub fn run_jobs_cli_command_with_auth_full(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> std::process::Output {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path, "run"]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir().expect("Failed to get current dir");
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    cmd.output().expect("Failed to execute command")
+}
+
 // ============================================================================
 // Access Control Server Fixture
 // ============================================================================
@@ -1364,6 +1479,23 @@ fn start_process_with_access_control(
         .arg("--enforce-access-control") // Enable access control enforcement
         .arg("--auth-file")
         .arg(&htpasswd_path)
+        // Add admin users (all test users get admin access for now to test other functionality)
+        .arg("--admin-user")
+        .arg("alice")
+        .arg("--admin-user")
+        .arg("bob")
+        .arg("--admin-user")
+        .arg("owner")
+        .arg("--admin-user")
+        .arg("api_owner")
+        .arg("--admin-user")
+        .arg("ml_owner")
+        .arg("--admin-user")
+        .arg("data_owner")
+        .arg("--admin-user")
+        .arg("ml_api_owner")
+        .arg("--admin-user")
+        .arg("data_api_owner")
         .env("DATABASE_URL", db_url)
         .env("RUST_LOG", "info")
         .stdout(std::process::Stdio::inherit())
@@ -1386,6 +1518,8 @@ fn start_process_with_access_control(
     );
     let mut config = Configuration::new();
     config.base_path = get_server_url(port);
+    // Set up basic auth as "alice" (one of the admin users) with password "password"
+    config.basic_auth = Some(("alice".to_string(), Some("password".to_string())));
     AccessControlServerProcess {
         server: ServerProcess {
             child,

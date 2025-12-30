@@ -82,17 +82,85 @@ fn process_pagination_params(
     Ok((processed_offset, processed_limit))
 }
 
+/// Sync the admin group with configured admin users
+///
+/// Creates the "admin" system group if it doesn't exist and ensures
+/// all configured admin users are members with admin role.
+async fn sync_admin_group(pool: &SqlitePool, admin_users: &[String]) -> Result<(), sqlx::Error> {
+    // Create admin group if it doesn't exist
+    sqlx::query(
+        r#"
+        INSERT INTO access_group (name, description, is_system)
+        VALUES ('admin', 'System administrators', 1)
+        ON CONFLICT (name) DO UPDATE SET is_system = 1
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Get admin group ID
+    let admin_group_id: i64 =
+        sqlx::query_scalar("SELECT id FROM access_group WHERE name = 'admin'")
+            .fetch_one(pool)
+            .await?;
+
+    // Get current admin group members
+    let current_members: Vec<String> =
+        sqlx::query_scalar("SELECT user_name FROM user_group_membership WHERE group_id = $1")
+            .bind(admin_group_id)
+            .fetch_all(pool)
+            .await?;
+
+    // Add missing admin users
+    for user in admin_users {
+        if !current_members.contains(user) {
+            info!("Adding user '{}' to admin group", user);
+            sqlx::query(
+                r#"
+                INSERT INTO user_group_membership (user_name, group_id, role)
+                VALUES ($1, $2, 'admin')
+                ON CONFLICT (user_name, group_id) DO UPDATE SET role = 'admin'
+                "#,
+            )
+            .bind(user)
+            .bind(admin_group_id)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // Remove users not in config from admin group
+    for member in &current_members {
+        if !admin_users.contains(member) {
+            info!(
+                "Removing user '{}' from admin group (not in config)",
+                member
+            );
+            sqlx::query("DELETE FROM user_group_membership WHERE user_name = $1 AND group_id = $2")
+                .bind(member)
+                .bind(admin_group_id)
+                .execute(pool)
+                .await?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Builds an SSL implementation for Simple HTTPS from some hard-coded file names
 ///
 /// Returns the actual port the server bound to (useful when port 0 is specified for auto-detection)
+#[allow(clippy::too_many_arguments)]
 pub async fn create(
     addr: &str,
     https: bool,
     pool: SqlitePool,
     htpasswd: Option<HtpasswdFile>,
     require_auth: bool,
+    credential_cache_ttl_secs: u64,
     enforce_access_control: bool,
     completion_check_interval_secs: f64,
+    admin_users: Vec<String>,
 ) -> u16 {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
@@ -114,6 +182,16 @@ pub async fn create(
     // This MUST be printed before any other output so it can be reliably parsed
     println!("TORC_SERVER_PORT={}", actual_port);
 
+    // Sync admin group with configured admin users
+    if let Err(e) = sync_admin_group(&pool, &admin_users).await {
+        error!("Failed to sync admin group: {}", e);
+    } else if !admin_users.is_empty() {
+        info!(
+            "Admin group synchronized with {} configured users",
+            admin_users.len()
+        );
+    }
+
     let server = Server::new(pool.clone(), enforce_access_control);
 
     // Spawn background task for deferred job unblocking
@@ -124,7 +202,12 @@ pub async fn create(
 
     let service = MakeService::new(server);
 
-    let service = MakeHtpasswdAuthenticator::new(service, htpasswd, require_auth);
+    let service = MakeHtpasswdAuthenticator::with_cache_ttl(
+        service,
+        htpasswd,
+        require_auth,
+        credential_cache_ttl_secs,
+    );
 
     #[allow(unused_mut)]
     let mut service = torc::server::context::MakeAddContext::<_, EmptyContext>::new(service);
@@ -898,7 +981,9 @@ impl<C> Server<C> {
                     ))
                 }
             }
-            Ok(ListResourceRequirementsResponse::DefaultErrorResponse(_)) => Err(ApiError(
+            Ok(ListResourceRequirementsResponse::ForbiddenErrorResponse(_))
+            | Ok(ListResourceRequirementsResponse::NotFoundErrorResponse(_))
+            | Ok(ListResourceRequirementsResponse::DefaultErrorResponse(_)) => Err(ApiError(
                 "Did not find default resource requirements".to_string(),
             )),
             Err(e) => {
@@ -2475,7 +2560,7 @@ where
 
     /// Return the version of the service.
     async fn get_version(&self, context: &C) -> Result<GetVersionResponse, ApiError> {
-        info!(
+        debug!(
             "get_version() - X-Span-ID: {:?}",
             Has::<XSpanIdString>::get(context).0.clone()
         );
@@ -2773,6 +2858,30 @@ where
         active_compute_node_id: Option<i64>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListJobsResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListJobsResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.jobs_api
             .list_jobs(
@@ -2799,6 +2908,30 @@ where
         limit: Option<i64>,
         context: &C,
     ) -> Result<ListJobDependenciesResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListJobDependenciesResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListJobDependenciesResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.workflows_api
             .list_job_dependencies(workflow_id, offset, limit, context)
             .await
@@ -2812,6 +2945,30 @@ where
         limit: Option<i64>,
         context: &C,
     ) -> Result<ListJobFileRelationshipsResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListJobFileRelationshipsResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListJobFileRelationshipsResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.workflows_api
             .list_job_file_relationships(workflow_id, offset, limit, context)
             .await
@@ -2825,6 +2982,32 @@ where
         limit: Option<i64>,
         context: &C,
     ) -> Result<ListJobUserDataRelationshipsResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(
+                    ListJobUserDataRelationshipsResponse::ForbiddenErrorResponse(
+                        models::ErrorResponse::new(serde_json::json!({
+                            "error": "Forbidden",
+                            "message": reason
+                        })),
+                    ),
+                );
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListJobUserDataRelationshipsResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.workflows_api
             .list_job_user_data_relationships(workflow_id, offset, limit, context)
             .await
@@ -2842,6 +3025,30 @@ where
         num_cpus: Option<i64>,
         context: &C,
     ) -> Result<ListLocalSchedulersResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListLocalSchedulersResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListLocalSchedulersResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.schedulers_api
             .list_local_schedulers(
@@ -2874,6 +3081,30 @@ where
         reverse_sort: Option<bool>,
         context: &C,
     ) -> Result<ListResourceRequirementsResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListResourceRequirementsResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListResourceRequirementsResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.resource_requirements_api
             .list_resource_requirements(
@@ -2926,6 +3157,30 @@ where
             Has::<XSpanIdString>::get(context).0.clone()
         );
 
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListResultsResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListResultsResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.results_api
             .list_results(
@@ -2958,6 +3213,30 @@ where
         status: Option<String>,
         context: &C,
     ) -> Result<ListScheduledComputeNodesResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListScheduledComputeNodesResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListScheduledComputeNodesResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.schedulers_api
             .list_scheduled_compute_nodes(
@@ -2993,6 +3272,30 @@ where
         _: Option<String>,
         context: &C,
     ) -> Result<ListSlurmSchedulersResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListSlurmSchedulersResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListSlurmSchedulersResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.schedulers_api
             .list_slurm_schedulers(
@@ -3020,6 +3323,30 @@ where
         is_ephemeral: Option<bool>,
         context: &C,
     ) -> Result<ListUserDataResponse, ApiError> {
+        // Check access control
+        match self
+            .check_workflow_access_for_context(workflow_id, context)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(ListUserDataResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(ListUserDataResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
         self.user_data_api
             .list_user_data(
@@ -5256,6 +5583,29 @@ where
         body: models::AccessGroupModel,
         context: &C,
     ) -> Result<CreateAccessGroupResponse, ApiError> {
+        // Only system administrators can create access groups
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self.authorization_service.check_admin_access(&auth).await {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(CreateAccessGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                // This shouldn't happen for admin access check, but handle it
+                return Ok(CreateAccessGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .create_access_group(body, context)
             .await
@@ -5286,6 +5636,49 @@ where
         id: i64,
         context: &C,
     ) -> Result<DeleteAccessGroupResponse, ApiError> {
+        // Only system administrators can delete access groups
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self.authorization_service.check_admin_access(&auth).await {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(DeleteAccessGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(DeleteAccessGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
+        // Cannot delete system groups (like the admin group)
+        match self.authorization_service.is_system_group(id).await {
+            Ok(true) => {
+                return Ok(DeleteAccessGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": "Cannot delete system groups"
+                    })),
+                ));
+            }
+            Ok(false) => {}
+            Err(e) => {
+                return Ok(DeleteAccessGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": e
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .delete_access_group(id, context)
             .await
@@ -5297,6 +5690,33 @@ where
         body: models::UserGroupMembershipModel,
         context: &C,
     ) -> Result<AddUserToGroupResponse, ApiError> {
+        // Group admins or system admins can add users to groups
+        // Note: check_group_admin_access already blocks modifications to the admin group
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self
+            .authorization_service
+            .check_group_admin_access(&auth, group_id)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(AddUserToGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(AddUserToGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .add_user_to_group(group_id, body, context)
             .await
@@ -5308,6 +5728,33 @@ where
         user_name: String,
         context: &C,
     ) -> Result<RemoveUserFromGroupResponse, ApiError> {
+        // Group admins or system admins can remove users from groups
+        // Note: check_group_admin_access already blocks modifications to the admin group
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self
+            .authorization_service
+            .check_group_admin_access(&auth, group_id)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(RemoveUserFromGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(RemoveUserFromGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .remove_user_from_group(group_id, &user_name, context)
             .await
@@ -5345,6 +5792,32 @@ where
         group_id: i64,
         context: &C,
     ) -> Result<AddWorkflowToGroupResponse, ApiError> {
+        // Workflow owner or group admin can add workflows to groups
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self
+            .authorization_service
+            .check_workflow_group_access(&auth, workflow_id, group_id)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(AddWorkflowToGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(AddWorkflowToGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .add_workflow_to_group(workflow_id, group_id, context)
             .await
@@ -5356,6 +5829,32 @@ where
         group_id: i64,
         context: &C,
     ) -> Result<RemoveWorkflowFromGroupResponse, ApiError> {
+        // Workflow owner or group admin can remove workflows from groups
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        match self
+            .authorization_service
+            .check_workflow_group_access(&auth, workflow_id, group_id)
+            .await
+        {
+            AccessCheckResult::Allowed => {}
+            AccessCheckResult::Denied(reason) => {
+                return Ok(RemoveWorkflowFromGroupResponse::ForbiddenErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "Forbidden",
+                        "message": reason
+                    })),
+                ));
+            }
+            AccessCheckResult::NotFound(reason) => {
+                return Ok(RemoveWorkflowFromGroupResponse::NotFoundErrorResponse(
+                    models::ErrorResponse::new(serde_json::json!({
+                        "error": "NotFound",
+                        "message": reason
+                    })),
+                ));
+            }
+        }
+
         self.access_groups_api
             .remove_workflow_from_group(workflow_id, group_id, context)
             .await

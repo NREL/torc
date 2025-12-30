@@ -97,26 +97,25 @@ fn main() {
     let mut config = Configuration::new();
     config.base_path = url.clone();
 
-    // Handle authentication with priority: CLI arg > file config
-    let username = cli
-        .username
-        .clone()
-        .or_else(|| file_config.client.username.clone());
-    if let Some(username) = username {
-        let password = match cli.password.clone() {
-            Some(pwd) => Some(pwd),
-            None => {
-                // Prompt for password if username provided but password not
-                match rpassword::prompt_password("Password: ") {
-                    Ok(pwd) => Some(pwd),
-                    Err(e) => {
-                        eprintln!("Error reading password: {}", e);
-                        std::process::exit(1);
-                    }
-                }
+    // Handle authentication: use USER env var as username, password from CLI/env or prompt
+    let password = if cli.prompt_password {
+        // Prompt for password securely
+        match rpassword::prompt_password("Password: ") {
+            Ok(pwd) => Some(pwd),
+            Err(e) => {
+                eprintln!("Error reading password: {}", e);
+                std::process::exit(1);
             }
-        };
-        config.basic_auth = Some((username, password));
+        }
+    } else {
+        cli.password.clone()
+    };
+
+    if let Some(password) = password {
+        let username = std::env::var("USER")
+            .or_else(|_| std::env::var("USERNAME"))
+            .unwrap_or_else(|_| "unknown".to_string());
+        config.basic_auth = Some((username, Some(password)));
     }
 
     // Check server version for commands that communicate with the server
@@ -190,6 +189,8 @@ fn main() {
 
             // Build args for run_jobs_cmd with config file fallbacks
             let run_config = &file_config.client.run;
+            // Pass through authentication from config
+            let password = config.basic_auth.as_ref().and_then(|(_, p)| p.clone());
             let args = run_jobs_cmd::Args {
                 workflow_id: Some(workflow_id),
                 url: url.clone(),
@@ -208,6 +209,7 @@ fn main() {
                 log_prefix: None,
                 cpu_affinity_cpus_per_job: None,
                 log_level: log_level.clone(),
+                password,
             };
 
             run_jobs_cmd::run(&args);
@@ -680,6 +682,26 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        Commands::Ping => match default_api::ping(&config) {
+            Ok(_) => {
+                if cli.format == "json" {
+                    println!(r#"{{"status": "Server is running"}}"#);
+                } else {
+                    println!("Server is running");
+                }
+            }
+            Err(e) => {
+                if cli.format == "json" {
+                    println!(
+                        r#"{{"status": "error", "message": "{}"}}"#,
+                        e.to_string().replace('"', "\\\"")
+                    );
+                } else {
+                    eprintln!("Failed to connect to server: {}", e);
+                }
+                std::process::exit(1);
+            }
+        },
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();
             clap_complete::generate(*shell, &mut cmd, "torc", &mut std::io::stdout());

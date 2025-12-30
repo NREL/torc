@@ -57,8 +57,13 @@ torc-server run --auth-file /path/to/htpasswd
 # Required authentication (all requests must authenticate)
 torc-server run --auth-file /path/to/htpasswd --require-auth
 
+# With access control enforcement and admin users
+torc-server run --auth-file /path/to/htpasswd --require-auth \
+  --enforce-access-control --admin-user alice --admin-user bob
+
 # Can also use environment variable
 export TORC_AUTH_FILE=/path/to/htpasswd
+export TORC_ADMIN_USERS=alice,bob
 torc-server run
 ```
 
@@ -68,6 +73,11 @@ torc-server run
 - **`--auth-file` only**: Authentication optional - authenticated requests are logged,
   unauthenticated requests allowed
 - **`--auth-file --require-auth`**: Authentication required - unauthenticated requests are rejected
+
+**Access Control:**
+
+- **`--enforce-access-control`**: Users can only access workflows they own or have group access to
+- **`--admin-user`**: Adds users to the admin group (can specify multiple times)
 
 ### 3. Server Logs
 
@@ -103,7 +113,6 @@ torc --username alice --password mypassword workflows create workflow.yaml
 
 ```bash
 # Set credentials in environment
-export TORC_USERNAME=alice
 export TORC_PASSWORD=mypassword
 
 # Run commands without flags
@@ -113,16 +122,10 @@ torc jobs list my-workflow-id
 
 ### Mixed Approach
 
-```bash
+````bash
 # Username from env, password prompted
-export TORC_USERNAME=alice
 torc workflows list
 Password: ****
-
-# Override env with flag
-export TORC_USERNAME=alice
-torc --username bob --password bobpass workflows list
-```
 
 ## Security Best Practices
 
@@ -137,7 +140,7 @@ torc-server run --https --auth-file /path/to/htpasswd --require-auth
 
 # Client connects via HTTPS
 torc --url https://torc.example.com/torc-service/v1 --username alice workflows list
-```
+````
 
 ### 2. Secure Credential Storage
 
@@ -210,16 +213,17 @@ torc-htpasswd add --file /etc/torc/htpasswd --cost 14 bob
 chmod 600 /etc/torc/htpasswd
 chown torc-server:torc-server /etc/torc/htpasswd
 
-# 3. Start server with required auth and HTTPS
+# 3. Start server with required auth, access control, and HTTPS
 torc-server run \
   --https \
   --auth-file /etc/torc/htpasswd \
   --require-auth \
+  --enforce-access-control \
+  --admin-user alice \
   --database /var/lib/torc/production.db
 
 # 4. Clients must authenticate
-export TORC_USERNAME=alice
-torc --url https://torc.example.com/torc-service/v1 workflows list
+torc --url --prompt-password https://torc.example.com/torc-service/v1 workflows list
 Password: ****
 ```
 
@@ -227,11 +231,9 @@ Password: ****
 
 ```bash
 # Store credentials as CI secrets
-# TORC_USERNAME=ci-bot
 # TORC_PASSWORD=<secure-password>
 
 # Use in pipeline
-export TORC_USERNAME="${TORC_USERNAME}"
 export TORC_PASSWORD="${TORC_PASSWORD}"
 export TORC_API_URL=https://torc.example.com/torc-service/v1
 

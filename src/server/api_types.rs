@@ -362,6 +362,10 @@ pub enum ListFilesResponse {
 pub enum ListJobsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -371,6 +375,10 @@ pub enum ListJobsResponse {
 pub enum ListJobDependenciesResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobDependenciesResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -380,6 +388,10 @@ pub enum ListJobDependenciesResponse {
 pub enum ListJobFileRelationshipsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobFileRelationshipsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -389,6 +401,10 @@ pub enum ListJobFileRelationshipsResponse {
 pub enum ListJobUserDataRelationshipsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobUserDataRelationshipsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -398,6 +414,10 @@ pub enum ListJobUserDataRelationshipsResponse {
 pub enum ListLocalSchedulersResponse {
     /// HTTP 200 OK.
     HTTP(models::ListLocalSchedulersResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -407,6 +427,10 @@ pub enum ListLocalSchedulersResponse {
 pub enum ListResourceRequirementsResponse {
     /// Successful response
     SuccessfulResponse(models::ListResourceRequirementsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -416,6 +440,10 @@ pub enum ListResourceRequirementsResponse {
 pub enum ListResultsResponse {
     /// Successful response
     SuccessfulResponse(models::ListResultsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -425,6 +453,10 @@ pub enum ListResultsResponse {
 pub enum ListScheduledComputeNodesResponse {
     /// Successful response
     SuccessfulResponse(models::ListScheduledComputeNodesResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -434,6 +466,10 @@ pub enum ListScheduledComputeNodesResponse {
 pub enum ListSlurmSchedulersResponse {
     /// Successful response
     SuccessfulResponse(models::ListSlurmSchedulersResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -443,6 +479,10 @@ pub enum ListSlurmSchedulersResponse {
 pub enum ListUserDataResponse {
     /// Successful response
     SuccessfulResponse(models::ListUserDataResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1093,6 +1133,10 @@ pub enum CompleteJobResponse {
 pub enum CreateAccessGroupResponse {
     /// Successful response
     SuccessfulResponse(models::AccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Conflict error response - group already exists
+    ConflictErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1122,6 +1166,8 @@ pub enum ListAccessGroupsApiResponse {
 pub enum DeleteAccessGroupResponse {
     /// Successful response
     SuccessfulResponse(models::AccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -1133,8 +1179,12 @@ pub enum DeleteAccessGroupResponse {
 pub enum AddUserToGroupResponse {
     /// Successful response
     SuccessfulResponse(models::UserGroupMembershipModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
+    /// Conflict error response - user already in group
+    ConflictErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1144,6 +1194,8 @@ pub enum AddUserToGroupResponse {
 pub enum RemoveUserFromGroupResponse {
     /// Successful response
     SuccessfulResponse(models::UserGroupMembershipModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -1155,6 +1207,8 @@ pub enum RemoveUserFromGroupResponse {
 pub enum ListGroupMembersResponse {
     /// Successful response
     SuccessfulResponse(models::ListUserGroupMembershipsResponse),
+    /// Not found error response - group not found
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1173,8 +1227,12 @@ pub enum ListUserGroupsApiResponse {
 pub enum AddWorkflowToGroupResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowAccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
+    /// Conflict error response - association already exists
+    ConflictErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1184,6 +1242,8 @@ pub enum AddWorkflowToGroupResponse {
 pub enum RemoveWorkflowFromGroupResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowAccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -1195,6 +1255,8 @@ pub enum RemoveWorkflowFromGroupResponse {
 pub enum ListWorkflowGroupsResponse {
     /// Successful response
     SuccessfulResponse(models::ListAccessGroupsResponse),
+    /// Not found error response - workflow not found
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }

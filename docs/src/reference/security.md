@@ -107,6 +107,34 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 - TLS all the way to Torc server
 - Required for compliance scenarios
 
+### Internal Network Quick Setup
+
+For internal, trusted networks where the primary goal is preventing accidental access rather than
+defending against malicious attacks, use this optimized configuration:
+
+```bash
+# 1. Create htpasswd with lower cost factor (faster auth)
+torc-htpasswd add --cost 8 /etc/torc/htpasswd alice
+torc-htpasswd add --cost 8 /etc/torc/htpasswd bob
+
+# 2. Run server with auth and access control
+torc-server run \
+  --auth-file /etc/torc/htpasswd \
+  --require-auth \
+  --enforce-access-control \
+  --credential-cache-ttl-secs 60
+```
+
+This provides:
+
+- User isolation (users only see their own workflows)
+- Fast CLI response (~10ms first auth, <1ms cached)
+- Protection against accidental modifications
+- Simple username/password authentication
+
+For higher security requirements (internet-facing, compliance, sensitive data), use the default cost
+factor (12) and HTTPS.
+
 ## Credential Management
 
 ### Password Requirements
@@ -120,19 +148,69 @@ torc --url https://torc.example.com/torc-service/v1 workflows list
 
 **Bcrypt Cost Factor:**
 
-| Cost  | Hash Time | Use Case                             |
-| ----- | --------- | ------------------------------------ |
-| 4-8   | < 100ms   | Testing only                         |
-| 10    | ~100ms    | Legacy systems                       |
-| 12    | ~250ms    | **Default**, good for most use cases |
-| 13-14 | ~500ms-1s | Production, sensitive data           |
-| 15+   | > 2s      | High-security, infrequent logins     |
+| Cost | Approx Time | Use Case                                  |
+| ---- | ----------- | ----------------------------------------- |
+| 4    | ~1ms        | Testing only                              |
+| 8    | ~10ms       | Internal trusted networks                 |
+| 10   | ~50ms       | Low-security internal                     |
+| 12   | ~250ms      | **Default**, general use, internet-facing |
+| 14   | ~1s         | High security, sensitive data             |
+| 15+  | > 2s        | Maximum security, infrequent logins       |
 
 **Cost Selection Criteria:**
 
 - Higher cost = more CPU, slower login
 - Balance security vs. user experience
 - Consider attack surface (internet-facing vs. internal)
+- For internal networks with trusted users, cost 8 provides reasonable security with fast response
+
+**Creating passwords with a specific cost:**
+
+```bash
+# Default cost (12) - good for most deployments
+torc-htpasswd add /etc/torc/htpasswd alice
+
+# Lower cost (8) - faster, suitable for internal networks
+torc-htpasswd add --cost 8 /etc/torc/htpasswd alice
+
+# Higher cost (14) - slower, for high-security environments
+torc-htpasswd add --cost 14 /etc/torc/htpasswd alice
+```
+
+### Credential Caching
+
+To improve CLI responsiveness, the server caches successful authentications for a configurable
+duration (default: 60 seconds). This avoids repeated bcrypt verification for the same credentials.
+
+**Configuration:**
+
+```bash
+# CLI option
+torc-server run --credential-cache-ttl-secs 60
+
+# Environment variable
+export TORC_CREDENTIAL_CACHE_TTL_SECS=60
+
+# Config file (torc.toml)
+[server]
+credential_cache_ttl_secs = 60
+```
+
+**Performance impact:**
+
+| Scenario               | Response Time |
+| ---------------------- | ------------- |
+| First auth (cost 12)   | ~250ms        |
+| First auth (cost 8)    | ~10ms         |
+| Cached auth (any cost) | < 1ms         |
+
+**Security notes:**
+
+- Passwords are never stored in plaintext in the cache
+- Cache keys are SHA-256 hashes of credentials
+- Cache entries auto-expire after TTL
+- Failed authentications are never cached
+- Set `--credential-cache-ttl-secs 0` to disable caching
 
 ### Htpasswd File Security
 
@@ -178,19 +256,18 @@ username:$2b$12$hash...
 
 ```bash
 # Good: Environment variables
-export TORC_USERNAME=alice
-export TORC_PASSWORD=$(secret-tool lookup torc password)
+read -s TORC_PASSWORD && export TORC_PASSWORD
 torc workflows list
 
 # Good: Password prompt
-torc --username alice workflows list
+torc alice workflows list
 Password: ****
 
 # Acceptable: CI/CD with secrets
 TORC_PASSWORD=${{ secrets.TORC_PASSWORD }} torc workflows create
 
 # Bad: Command-line argument (visible in `ps`)
-torc --username alice --password mypassword workflows list
+torc --password mypassword workflows list
 ```
 
 ## Threat Model
@@ -389,18 +466,53 @@ torc-server run \
 - [ ] Backup htpasswd files encrypted
 - [ ] Disaster recovery tested
 
+## Access Control
+
+### Admin Group
+
+Torc uses a special **admin** group to control who can manage access groups. Key properties:
+
+- **Config-driven**: Admin users are configured via `--admin-user` flag or `admin_users` config
+- **Auto-created**: The admin group is created/synced automatically on server startup
+- **System group**: Cannot be deleted or have membership modified via the API
+- **Required for management**: Only admin members can create, delete, or modify access groups
+
+**Configuration:**
+
+```bash
+# Via CLI
+torc-server run --admin-user alice --admin-user bob --enforce-access-control
+
+# Via config file
+[server]
+admin_users = ["alice", "bob"]
+enforce_access_control = true
+```
+
+### Access Group Permissions
+
+| Operation                  | Required Permission                   |
+| -------------------------- | ------------------------------------- |
+| Create group               | System admin                          |
+| Delete group               | System admin (non-system groups only) |
+| Add user to group          | System admin or group admin           |
+| Remove user from group     | System admin or group admin           |
+| Add workflow to group      | Workflow owner or group admin         |
+| Remove workflow from group | Workflow owner or group admin         |
+| List groups                | Any authenticated user                |
+| Get group details          | Any authenticated user                |
+
 ## Future Enhancements
 
 Planned security features:
 
 1. **Token-based authentication:** JWT/OAuth2 support
 2. **API keys:** Long-lived tokens for automation
-3. **Role-based access control (RBAC):** Granular permissions
-4. **LDAP/Active Directory integration:** Enterprise SSO
-5. **Rate limiting:** Prevent brute force attacks
-6. **2FA/MFA support:** Multi-factor authentication
-7. **Session management:** Token expiration, refresh
-8. **Audit trail:** Detailed access logging
+3. **LDAP/Active Directory integration:** Enterprise SSO
+4. **Rate limiting:** Prevent brute force attacks
+5. **2FA/MFA support:** Multi-factor authentication
+6. **Session management:** Token expiration, refresh
+7. **Audit trail:** Detailed access logging
 
 ## Resources
 

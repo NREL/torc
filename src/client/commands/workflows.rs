@@ -1309,6 +1309,8 @@ fn handle_run(
     };
 
     // Build args for run_jobs_cmd with sensible defaults
+    // Pass through authentication from config
+    let password = config.basic_auth.as_ref().and_then(|(_, p)| p.clone());
     let args = crate::run_jobs_cmd::Args {
         workflow_id: Some(selected_workflow_id),
         url: config.base_path.clone(),
@@ -1325,6 +1327,7 @@ fn handle_run(
         log_prefix: None,
         cpu_affinity_cpus_per_job: None,
         log_level: "info".to_string(),
+        password,
     };
 
     crate::run_jobs_cmd::run(&args);

@@ -64,14 +64,16 @@ dave:$2b$12$...
 
 ## Step 2: Start the Server with Authentication and Access Control
 
-Start the server with authentication required and access control enforcement enabled:
+Start the server with authentication required, access control enforcement enabled, and Alice as an
+admin user:
 
 ```bash
 torc-server run \
   --database /var/lib/torc/torc.db \
   --auth-file /etc/torc/htpasswd \
   --require-auth \
-  --enforce-access-control
+  --enforce-access-control \
+  --admin-user alice
 ```
 
 You should see:
@@ -81,8 +83,12 @@ INFO  Starting torc-server version=0.8.0 (abc1234)
 INFO  Loaded 4 users from htpasswd file
 INFO  Authentication is REQUIRED for all requests
 INFO  Access control is ENABLED - users can only access their own workflows and workflows shared via access groups
+INFO  Admin users configured: ["alice"]
 INFO  Listening on localhost:8080
 ```
+
+**Note:** The `--admin-user` flag specifies users who can create and manage access groups. Only
+admin users can create, delete, or modify groups.
 
 ## Step 3: Configure CLI Authentication
 
@@ -93,8 +99,8 @@ Set up credentials for each user. In a new terminal:
 export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
 # Set credentials for Alice
-export TORC_USERNAME="alice"
-export TORC_PASSWORD="alice_password"
+read -s TORC_PASSWORD && export TORC_PASSWORD
+# It will prompt you for the password with displaying it.
 
 # Verify connection
 torc ping
@@ -108,10 +114,10 @@ Expected output:
 
 ## Step 4: Create Access Groups
 
-As Alice, create the two team groups:
+As Alice (who is an admin user), create the two team groups:
 
 ```bash
-# Create the ML team group
+# Create the ML team group (requires admin access)
 torc access-groups create "ml-team" --description "Machine Learning Team"
 ```
 
@@ -209,7 +215,6 @@ Now let's create workflows and see how access control works.
 ### As Alice (ML Team)
 
 ```bash
-export TORC_USERNAME="alice"
 export TORC_PASSWORD="alice_password"
 
 # Create a workflow
@@ -236,7 +241,6 @@ echo "Alice created workflow: $WORKFLOW_ID"
 ### As Carol (Data Team)
 
 ```bash
-export TORC_USERNAME="carol"
 export TORC_PASSWORD="carol_password"
 
 # Create a different workflow
@@ -305,7 +309,6 @@ team.
 ### As Alice, Share the Workflow
 
 ```bash
-export TORC_USERNAME="alice"
 export TORC_PASSWORD="alice_password"
 
 # Share workflow 1 with the data team (group 2)
@@ -334,7 +337,6 @@ Output:
 ### Carol Can Now Access the Shared Workflow
 
 ```bash
-export TORC_USERNAME="carol"
 export TORC_PASSWORD="carol_password"
 
 # Now Carol can access the workflow
@@ -363,7 +365,6 @@ has been granted access.
 If you need to remove access:
 
 ```bash
-export TORC_USERNAME="alice"
 export TORC_PASSWORD="alice_password"
 
 # Remove the data team's access to workflow 1
@@ -396,11 +397,12 @@ Can user access workflow?
 
 ### Server Flags
 
-| Flag                       | Description                             |
-| -------------------------- | --------------------------------------- |
-| `--auth-file`              | Path to htpasswd file                   |
-| `--require-auth`           | Require authentication for all requests |
-| `--enforce-access-control` | Enable access control enforcement       |
+| Flag                       | Description                               |
+| -------------------------- | ----------------------------------------- |
+| `--auth-file`              | Path to htpasswd file                     |
+| `--require-auth`           | Require authentication for all requests   |
+| `--enforce-access-control` | Enable access control enforcement         |
+| `--admin-user`             | Add user to admin group (can be repeated) |
 
 ### Configuration File
 
@@ -411,6 +413,7 @@ You can also configure these in `config.toml`:
 auth_file = "/etc/torc/htpasswd"
 require_auth = true
 enforce_access_control = true
+admin_users = ["alice", "bob"]
 ```
 
 ## Troubleshooting
@@ -422,7 +425,17 @@ This error appears when:
 - No credentials are provided
 - `--require-auth` is enabled
 
-Solution: Set `TORC_USERNAME` and `TORC_PASSWORD` environment variables.
+Solution: Set the `TORC_PASSWORD` environment variable.
+
+### "User is not a system administrator"
+
+This error appears when trying to create, delete, or modify access groups without admin privileges.
+
+Solution: Either:
+
+1. Add the user to the admin group in the server configuration using `--admin-user` or `admin_users`
+   in config.toml
+2. Use an account that is already an admin
 
 ### "User does not have access to workflow"
 

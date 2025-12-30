@@ -31,6 +31,10 @@ pub struct ServerConfig {
     /// Require authentication for all requests
     pub require_auth: bool,
 
+    /// TTL in seconds for credential cache (0 to disable).
+    /// Caching avoids repeated bcrypt verification for the same credentials.
+    pub credential_cache_ttl_secs: u64,
+
     /// Enforce access control based on workflow ownership and group membership
     pub enforce_access_control: bool,
 
@@ -39,6 +43,10 @@ pub struct ServerConfig {
 
     /// Logging configuration
     pub logging: ServerLoggingConfig,
+
+    /// List of admin users (members of the system admin group)
+    /// These users can create and manage access groups
+    pub admin_users: Vec<String>,
 }
 
 impl Default for ServerConfig {
@@ -52,9 +60,11 @@ impl Default for ServerConfig {
             database: None,
             auth_file: None,
             require_auth: false,
+            credential_cache_ttl_secs: 60,
             enforce_access_control: false,
             completion_check_interval_secs: 30.0,
             logging: ServerLoggingConfig::default(),
+            admin_users: Vec::new(),
         }
     }
 }

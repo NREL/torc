@@ -191,9 +191,6 @@ format = "table"
 # Log level: error, warn, info, debug, trace
 log_level = "info"
 
-# Username for basic authentication (optional)
-# username = "myuser"
-
 [client.run]
 # Job completion poll interval in seconds
 poll_interval = 5.0
@@ -274,6 +271,10 @@ log_level = "info"
 
 # Use JSON format for logs
 json_logs = false
+
+# Admin users (can create and manage access groups)
+# These users are automatically added to the system "admin" group on startup
+# admin_users = ["alice", "bob"]
 
 [dash]
 # Host to bind to

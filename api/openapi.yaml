@@ -30,6 +30,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/access_group_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - only system admins can create groups
         "409":
           content:
             application/json:
@@ -142,12 +148,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/access_group_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - only system admins can delete groups
         "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/default_error_response"
-          description: Not found
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Group not found
         "500":
           content:
             application/json:
@@ -185,11 +197,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/user_group_membership_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have permission to modify this group
         "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/default_error_response"
+                $ref: "#/components/schemas/not_found_error_response"
           description: Group not found
         "409":
           content:
@@ -291,11 +309,17 @@ paths:
               schema:
                 type: object
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have permission to modify this group
         "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/default_error_response"
+                $ref: "#/components/schemas/not_found_error_response"
           description: Membership not found
         "500":
           content:
@@ -379,11 +403,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_access_group_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have permission to modify this workflow
         "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/default_error_response"
+                $ref: "#/components/schemas/not_found_error_response"
           description: Workflow or group not found
         "409":
           content:
@@ -469,11 +499,17 @@ paths:
               schema:
                 type: object
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have permission to modify this workflow
         "404":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/default_error_response"
+                $ref: "#/components/schemas/not_found_error_response"
           description: Association not found
         "500":
           content:
@@ -513,6 +549,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/access_check_response"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Workflow not found
         "500":
           content:
             application/json:
@@ -543,6 +585,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/compute_node_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
         "500":
           content:
             application/json:
@@ -725,6 +773,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/compute_node_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Compute node not found
         "500":
           content:
             application/json:
@@ -760,6 +814,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/compute_node_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Compute node not found
         "500":
           content:
             application/json:
@@ -788,6 +848,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/event_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
         "500":
           content:
             application/json:
@@ -934,6 +1000,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/event_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Event not found
         "500":
           content:
             application/json:
@@ -963,6 +1035,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/event_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Event not found
         "500":
           content:
             application/json:
@@ -998,6 +1076,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/event_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Event not found
         "500":
           content:
             application/json:
@@ -1026,6 +1110,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/file_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
         "500":
           content:
             application/json:
@@ -1187,6 +1277,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/file_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: File not found
         "500":
           content:
             application/json:
@@ -1216,6 +1312,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/file_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: File not found
         "500":
           content:
             application/json:
@@ -1251,6 +1353,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/file_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: File not found
         "500":
           content:
             application/json:
@@ -1278,6 +1386,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/create_jobs_response"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Unprocessable content
         "500":
           content:
             application/json:
@@ -1306,6 +1426,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/job_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
         "500":
           content:
             application/json:
@@ -1444,6 +1570,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_jobs_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -1880,6 +2018,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_local_schedulers_response"
           description: HTTP 200 OK.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -1944,6 +2094,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/local_scheduler_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Local scheduler not found
         "500":
           content:
             application/json:
@@ -1979,6 +2135,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/local_scheduler_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Local scheduler not found
         "500":
           content:
             application/json:
@@ -2007,6 +2169,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/resource_requirements_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Unprocessable content
         "500":
           content:
             application/json:
@@ -2153,6 +2327,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_resource_requirements_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -2188,6 +2374,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/resource_requirements_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Resource requirements not found
         "500":
           content:
             application/json:
@@ -2217,6 +2409,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/resource_requirements_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Resource requirements not found
         "500":
           content:
             application/json:
@@ -2252,6 +2450,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/resource_requirements_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Resource requirements not found
         "500":
           content:
             application/json:
@@ -2421,6 +2625,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_results_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -2456,6 +2672,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/result_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Result not found
         "500":
           content:
             application/json:
@@ -2485,6 +2707,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/result_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Result not found
         "500":
           content:
             application/json:
@@ -2520,6 +2748,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/result_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Result not found
         "500":
           content:
             application/json:
@@ -2665,6 +2899,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_scheduled_compute_nodes_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -2700,6 +2946,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/scheduled_compute_nodes_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Scheduled compute node not found
         "500":
           content:
             application/json:
@@ -2729,6 +2981,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/scheduled_compute_nodes_model"
           description: HTTP 200 OK.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Scheduled compute node not found
         "500":
           content:
             application/json:
@@ -2764,6 +3022,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/scheduled_compute_nodes_model"
           description: scheduled compute node updated in the table.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Scheduled compute node not found
         "500":
           content:
             application/json:
@@ -2951,6 +3215,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_slurm_schedulers_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -2986,6 +3262,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/slurm_scheduler_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Slurm scheduler not found
         "500":
           content:
             application/json:
@@ -3015,6 +3297,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/slurm_scheduler_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Slurm scheduler not found
         "500":
           content:
             application/json:
@@ -3050,6 +3338,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/slurm_scheduler_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Slurm scheduler not found
         "500":
           content:
             application/json:
@@ -3095,6 +3389,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/user_data_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced resource not found
         "500":
           content:
             application/json:
@@ -3221,6 +3521,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_user_data_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3256,6 +3568,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/user_data_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: User data not found
         "500":
           content:
             application/json:
@@ -3285,6 +3603,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/user_data_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: User data not found
         "500":
           content:
             application/json:
@@ -3320,6 +3644,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/user_data_model"
           description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: User data not found
         "500":
           content:
             application/json:
@@ -4310,6 +4640,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_job_dependencies_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -4355,6 +4697,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_job_file_relationships_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -4400,6 +4754,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/list_job_user_data_relationships_response"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:

@@ -132,7 +132,7 @@ fn create_group(
         created_at: None,
     };
 
-    let resp = make_request(config, reqwest::Method::POST, "/access-groups")
+    let resp = make_request(config, reqwest::Method::POST, "/access_groups")
         .json(&group)
         .send()
         .map_err(|e| format!("Request failed: {}", e))?;
@@ -153,7 +153,7 @@ fn get_group(config: &Configuration, id: i64) -> Result<AccessGroupModel, String
     let resp = make_request(
         config,
         reqwest::Method::GET,
-        &format!("/access-groups/{}", id),
+        &format!("/access_groups/{}", id),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;
@@ -178,7 +178,7 @@ fn list_groups(
     let resp = make_request(
         config,
         reqwest::Method::GET,
-        &format!("/access-groups?offset={}&limit={}", offset, limit),
+        &format!("/access_groups?offset={}&limit={}", offset, limit),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;
@@ -199,7 +199,7 @@ fn delete_group(config: &Configuration, id: i64) -> Result<AccessGroupModel, Str
     let resp = make_request(
         config,
         reqwest::Method::DELETE,
-        &format!("/access-groups/{}", id),
+        &format!("/access_groups/{}", id),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;
@@ -234,7 +234,7 @@ fn add_user_to_group(
     let resp = make_request(
         config,
         reqwest::Method::POST,
-        &format!("/access-groups/{}/members", group_id),
+        &format!("/access_groups/{}/members", group_id),
     )
     .json(&membership)
     .send()
@@ -260,7 +260,7 @@ fn remove_user_from_group(
     let resp = make_request(
         config,
         reqwest::Method::DELETE,
-        &format!("/access-groups/{}/members/{}", group_id, user_name),
+        &format!("/access_groups/{}/members/{}", group_id, user_name),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;
@@ -286,7 +286,7 @@ fn list_group_members(
         config,
         reqwest::Method::GET,
         &format!(
-            "/access-groups/{}/members?offset={}&limit={}",
+            "/access_groups/{}/members?offset={}&limit={}",
             group_id, offset, limit
         ),
     )
@@ -349,7 +349,7 @@ fn add_workflow_to_group(
     let resp = make_request(
         config,
         reqwest::Method::POST,
-        &format!("/workflows/{}/groups", workflow_id),
+        &format!("/workflows/{}/access_groups/{}", workflow_id, group_id),
     )
     .json(&association)
     .send()
@@ -375,7 +375,7 @@ fn remove_workflow_from_group(
     let resp = make_request(
         config,
         reqwest::Method::DELETE,
-        &format!("/workflows/{}/groups/{}", workflow_id, group_id),
+        &format!("/workflows/{}/access_groups/{}", workflow_id, group_id),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;
@@ -398,7 +398,7 @@ fn list_workflow_groups(
     let resp = make_request(
         config,
         reqwest::Method::GET,
-        &format!("/workflows/{}/groups", workflow_id),
+        &format!("/workflows/{}/access_groups", workflow_id),
     )
     .send()
     .map_err(|e| format!("Request failed: {}", e))?;

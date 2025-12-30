@@ -853,6 +853,9 @@ pub fn create_compute_node(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -906,6 +909,9 @@ pub fn create_event(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -959,6 +965,9 @@ pub fn create_file(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1012,6 +1021,9 @@ pub fn create_job(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1065,6 +1077,9 @@ pub fn create_jobs(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1118,6 +1133,9 @@ pub fn create_local_scheduler(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1171,6 +1189,9 @@ pub fn create_resource_requirements(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1224,6 +1245,9 @@ pub fn create_result(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1277,6 +1301,9 @@ pub fn create_scheduled_compute_node(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1330,6 +1357,9 @@ pub fn create_slurm_scheduler(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1393,6 +1423,9 @@ pub fn create_user_data(
     if let Some(ref param_value) = p_producer_job_id {
         req_builder = req_builder.query(&[("producer_job_id", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1446,6 +1479,9 @@ pub fn create_workflow(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1503,6 +1539,9 @@ pub fn cancel_workflow(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1568,6 +1607,9 @@ pub fn complete_job(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1624,6 +1666,9 @@ pub fn delete_compute_nodes(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1680,6 +1725,9 @@ pub fn delete_events(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1736,6 +1784,9 @@ pub fn delete_files(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1792,6 +1843,9 @@ pub fn delete_jobs(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1848,6 +1902,9 @@ pub fn delete_local_schedulers(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1904,6 +1961,9 @@ pub fn delete_all_resource_requirements(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -1961,6 +2021,9 @@ pub fn delete_results(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2017,6 +2080,9 @@ pub fn delete_scheduled_compute_nodes(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2073,6 +2139,9 @@ pub fn delete_slurm_schedulers(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2129,6 +2198,9 @@ pub fn delete_all_user_data(
         .request(reqwest::Method::DELETE, &uri_str);
 
     req_builder = req_builder.query(&[("workflow_id", &p_workflow_id.to_string())]);
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2180,6 +2252,9 @@ pub fn get_compute_node(
     let uri_str = format!("{}/compute_nodes/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2240,6 +2315,9 @@ pub fn get_dot_graph(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2293,6 +2371,9 @@ pub fn get_event(
     let uri_str = format!("{}/events/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2346,6 +2427,9 @@ pub fn get_file(
     let uri_str = format!("{}/files/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2399,6 +2483,9 @@ pub fn get_job(
     let uri_str = format!("{}/jobs/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2456,6 +2543,9 @@ pub fn get_local_scheduler(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2518,6 +2608,9 @@ pub fn get_ready_job_requirements(
     if let Some(ref param_value) = p_scheduler_config_id {
         req_builder = req_builder.query(&[("scheduler_config_id", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2575,6 +2668,9 @@ pub fn get_resource_requirements(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2628,6 +2724,9 @@ pub fn get_result(
     let uri_str = format!("{}/results/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2685,6 +2784,9 @@ pub fn get_scheduled_compute_node(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2742,6 +2844,9 @@ pub fn get_slurm_scheduler(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2795,6 +2900,9 @@ pub fn get_user_data(
     let uri_str = format!("{}/user_data/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2844,6 +2952,9 @@ pub fn get_version(
     let uri_str = format!("{}/version", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2897,6 +3008,9 @@ pub fn get_workflow(
     let uri_str = format!("{}/workflows/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -2954,6 +3068,9 @@ pub fn get_workflow_status(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3025,6 +3142,9 @@ pub fn initialize_jobs(
     if let Some(ref param_value) = p_clear_ephemeral_user_data {
         req_builder = req_builder.query(&[("clear_ephemeral_user_data", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3080,6 +3200,9 @@ pub fn is_workflow_complete(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3137,6 +3260,9 @@ pub fn is_workflow_uninitialized(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3226,6 +3352,9 @@ pub fn list_compute_nodes(
     if let Some(ref param_value) = p_scheduled_compute_node_id {
         req_builder = req_builder.query(&[("scheduled_compute_node_id", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3309,6 +3438,9 @@ pub fn list_events(
     }
     if let Some(ref param_value) = p_after_timestamp {
         req_builder = req_builder.query(&[("after_timestamp", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -3404,6 +3536,9 @@ pub fn list_files(
     if let Some(ref param_value) = p_is_output {
         req_builder = req_builder.query(&[("is_output", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3461,6 +3596,9 @@ pub fn list_job_ids(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3560,6 +3698,9 @@ pub fn list_jobs(
     if let Some(ref param_value) = p_active_compute_node_id {
         req_builder = req_builder.query(&[("active_compute_node_id", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3625,6 +3766,9 @@ pub fn list_job_dependencies(
     }
     if let Some(ref param_value) = p_limit {
         req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -3692,6 +3836,9 @@ pub fn list_job_file_relationships(
     if let Some(ref param_value) = p_limit {
         req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3758,6 +3905,9 @@ pub fn list_job_user_data_relationships(
     }
     if let Some(ref param_value) = p_limit {
         req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -3843,6 +3993,9 @@ pub fn list_local_schedulers(
     if let Some(ref param_value) = p_num_cpus {
         req_builder = req_builder.query(&[("num_cpus", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3900,6 +4053,9 @@ pub fn list_missing_user_data(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -3957,6 +4113,9 @@ pub fn list_required_existing_files(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4066,6 +4225,9 @@ pub fn list_resource_requirements(
     if let Some(ref param_value) = p_runtime {
         req_builder = req_builder.query(&[("runtime", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4170,6 +4332,9 @@ pub fn list_results(
     if let Some(ref param_value) = p_compute_node_id {
         req_builder = req_builder.query(&[("compute_node_id", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4258,6 +4423,9 @@ pub fn list_scheduled_compute_nodes(
     }
     if let Some(ref param_value) = p_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -4378,6 +4546,9 @@ pub fn list_slurm_schedulers(
     if let Some(ref param_value) = p_walltime {
         req_builder = req_builder.query(&[("walltime", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4472,6 +4643,9 @@ pub fn list_user_data(
     if let Some(ref param_value) = p_is_ephemeral {
         req_builder = req_builder.query(&[("is_ephemeral", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4563,6 +4737,9 @@ pub fn list_workflows(
     if let Some(ref param_value) = p_is_archived {
         req_builder = req_builder.query(&[("is_archived", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4628,6 +4805,9 @@ pub fn manage_status_change(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4681,6 +4861,9 @@ pub fn update_compute_node(
     let uri_str = format!("{}/compute_nodes/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4734,6 +4917,9 @@ pub fn update_event(
     let uri_str = format!("{}/events/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4787,6 +4973,9 @@ pub fn update_file(
     let uri_str = format!("{}/files/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4840,6 +5029,9 @@ pub fn update_job(
     let uri_str = format!("{}/jobs/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4897,6 +5089,9 @@ pub fn update_local_scheduler(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -4954,6 +5149,9 @@ pub fn update_resource_requirements(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5007,6 +5205,9 @@ pub fn update_result(
     let uri_str = format!("{}/results/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5064,6 +5265,9 @@ pub fn update_scheduled_compute_node(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5121,6 +5325,9 @@ pub fn update_slurm_scheduler(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5174,6 +5381,9 @@ pub fn update_user_data(
     let uri_str = format!("{}/user_data/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5227,6 +5437,9 @@ pub fn update_workflow(
     let uri_str = format!("{}/workflows/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5284,6 +5497,9 @@ pub fn update_workflow_status(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5331,6 +5547,9 @@ pub fn ping(
     let uri_str = format!("{}/ping", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5405,6 +5624,9 @@ pub fn claim_jobs_based_on_resources(
     if let Some(ref param_value) = p_strict_scheduler_match {
         req_builder = req_builder.query(&[("strict_scheduler_match", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5468,6 +5690,9 @@ pub fn claim_next_jobs(
 
     if let Some(ref param_value) = p_limit {
         req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -5533,6 +5758,9 @@ pub fn process_changed_job_inputs(
     if let Some(ref param_value) = p_dry_run {
         req_builder = req_builder.query(&[("dry_run", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5588,6 +5816,9 @@ pub fn delete_compute_node(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5643,6 +5874,9 @@ pub fn delete_event(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5698,6 +5932,9 @@ pub fn delete_file(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5753,6 +5990,9 @@ pub fn delete_job(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5812,6 +6052,9 @@ pub fn delete_local_scheduler(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5871,6 +6114,9 @@ pub fn delete_resource_requirements(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5926,6 +6172,9 @@ pub fn delete_result(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -5985,6 +6234,9 @@ pub fn delete_scheduled_compute_node(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6044,6 +6296,9 @@ pub fn delete_slurm_scheduler(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6099,6 +6354,9 @@ pub fn delete_user_data(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6154,6 +6412,9 @@ pub fn delete_workflow(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6217,6 +6478,9 @@ pub fn reset_job_status(
 
     if let Some(ref param_value) = p_failed_only {
         req_builder = req_builder.query(&[("failed_only", &param_value.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -6282,6 +6546,9 @@ pub fn reset_workflow_status(
     if let Some(ref param_value) = p_force {
         req_builder = req_builder.query(&[("force", &param_value.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6345,6 +6612,9 @@ pub fn start_job(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6440,6 +6710,9 @@ pub fn create_workflow_action(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6494,6 +6767,9 @@ pub fn get_workflow_actions(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6571,6 +6847,9 @@ pub fn get_pending_actions(
 
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6634,6 +6913,9 @@ pub fn claim_action(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6719,6 +7001,9 @@ pub fn create_remote_workers(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6773,6 +7058,9 @@ pub fn list_remote_workers(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6833,6 +7121,9 @@ pub fn delete_remote_worker(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6884,6 +7175,9 @@ pub fn create_access_group(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6934,6 +7228,9 @@ pub fn get_access_group(
     let uri_str = format!("{}/access_groups/{id}", configuration.base_path, id = p_id);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -6988,6 +7285,9 @@ pub fn list_access_groups(
     if let Some(ref s) = limit {
         req_builder = req_builder.query(&[("limit", s.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7039,6 +7339,9 @@ pub fn delete_access_group(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7096,6 +7399,9 @@ pub fn add_user_to_group(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7157,6 +7463,9 @@ pub fn remove_user_from_group(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7217,6 +7526,9 @@ pub fn list_group_members(
     }
     if let Some(ref s) = limit {
         req_builder = req_builder.query(&[("limit", s.to_string())]);
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -7281,6 +7593,9 @@ pub fn list_user_groups(
     if let Some(ref s) = limit {
         req_builder = req_builder.query(&[("limit", s.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7339,6 +7654,9 @@ pub fn add_workflow_to_group(
         .client
         .request(reqwest::Method::POST, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7397,6 +7715,9 @@ pub fn remove_workflow_from_group(
         .client
         .request(reqwest::Method::DELETE, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7458,6 +7779,9 @@ pub fn list_workflow_groups(
     if let Some(ref s) = limit {
         req_builder = req_builder.query(&[("limit", s.to_string())]);
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -7516,6 +7840,9 @@ pub fn check_workflow_access(
     );
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }

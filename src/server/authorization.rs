@@ -265,6 +265,218 @@ impl AuthorizationService {
     pub fn is_enforced(&self) -> bool {
         self.enforce_access_control
     }
+
+    /// Check if a user is a system administrator
+    ///
+    /// A user is an admin if they are a member of the "admin" group (is_system = 1)
+    pub async fn check_admin_access(&self, auth: &Option<Authorization>) -> AccessCheckResult {
+        if !self.enforce_access_control {
+            return AccessCheckResult::Allowed;
+        }
+
+        let user_name = match Self::get_username(auth) {
+            Some(name) => name,
+            None => {
+                return AccessCheckResult::Denied(
+                    "Anonymous access not allowed for admin operations".to_string(),
+                );
+            }
+        };
+
+        let is_admin: bool = match sqlx::query(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM user_group_membership ugm
+                INNER JOIN access_group ag ON ugm.group_id = ag.id
+                WHERE ugm.user_name = $1 AND ag.is_system = 1 AND ag.name = 'admin'
+            ) as is_admin
+            "#,
+        )
+        .bind(user_name)
+        .fetch_one(self.pool.as_ref())
+        .await
+        {
+            Ok(row) => row.get::<i32, _>("is_admin") == 1,
+            Err(e) => {
+                warn!("Database error checking admin status: {}", e);
+                return AccessCheckResult::Denied(format!("Database error: {}", e));
+            }
+        };
+
+        if is_admin {
+            debug!("User '{}' is a system administrator", user_name);
+            AccessCheckResult::Allowed
+        } else {
+            debug!("User '{}' is not a system administrator", user_name);
+            AccessCheckResult::Denied(format!(
+                "User '{}' is not a system administrator",
+                user_name
+            ))
+        }
+    }
+
+    /// Check if a user can manage a specific access group
+    ///
+    /// A user can manage a group if:
+    /// 1. They are a system administrator
+    /// 2. They are an admin of that specific group (role = 'admin')
+    ///
+    /// Note: The system 'admin' group can only be managed via config
+    pub async fn check_group_admin_access(
+        &self,
+        auth: &Option<Authorization>,
+        group_id: i64,
+    ) -> AccessCheckResult {
+        if !self.enforce_access_control {
+            return AccessCheckResult::Allowed;
+        }
+
+        let user_name = match Self::get_username(auth) {
+            Some(name) => name,
+            None => {
+                return AccessCheckResult::Denied(
+                    "Anonymous access not allowed for group management".to_string(),
+                );
+            }
+        };
+
+        // Check if the target group is the system admin group
+        let is_system_group: bool =
+            match sqlx::query("SELECT is_system FROM access_group WHERE id = $1")
+                .bind(group_id)
+                .fetch_optional(self.pool.as_ref())
+                .await
+            {
+                Ok(Some(row)) => row.get::<i32, _>("is_system") == 1,
+                Ok(None) => {
+                    return AccessCheckResult::NotFound(format!(
+                        "Group not found with ID: {}",
+                        group_id
+                    ));
+                }
+                Err(e) => {
+                    warn!("Database error checking group: {}", e);
+                    return AccessCheckResult::Denied(format!("Database error: {}", e));
+                }
+            };
+
+        // System admin group membership is managed via config only
+        if is_system_group {
+            return AccessCheckResult::Denied(
+                "Admin group membership is managed via server configuration".to_string(),
+            );
+        }
+
+        // Check if user is a system admin
+        if let AccessCheckResult::Allowed = self.check_admin_access(auth).await {
+            return AccessCheckResult::Allowed;
+        }
+
+        // Check if user is an admin of this specific group
+        let is_group_admin: bool = match sqlx::query(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM user_group_membership
+                WHERE user_name = $1 AND group_id = $2 AND role = 'admin'
+            ) as is_admin
+            "#,
+        )
+        .bind(user_name)
+        .bind(group_id)
+        .fetch_one(self.pool.as_ref())
+        .await
+        {
+            Ok(row) => row.get::<i32, _>("is_admin") == 1,
+            Err(e) => {
+                warn!("Database error checking group admin status: {}", e);
+                return AccessCheckResult::Denied(format!("Database error: {}", e));
+            }
+        };
+
+        if is_group_admin {
+            debug!("User '{}' is an admin of group {}", user_name, group_id);
+            AccessCheckResult::Allowed
+        } else {
+            debug!("User '{}' is not an admin of group {}", user_name, group_id);
+            AccessCheckResult::Denied(format!(
+                "User '{}' is not an admin of group {}",
+                user_name, group_id
+            ))
+        }
+    }
+
+    /// Check if a user can add a workflow to a group
+    ///
+    /// A user can add a workflow to a group if:
+    /// 1. They are the owner of the workflow, OR
+    /// 2. They are an admin of the group (or system admin)
+    pub async fn check_workflow_group_access(
+        &self,
+        auth: &Option<Authorization>,
+        workflow_id: i64,
+        group_id: i64,
+    ) -> AccessCheckResult {
+        if !self.enforce_access_control {
+            return AccessCheckResult::Allowed;
+        }
+
+        let user_name = match Self::get_username(auth) {
+            Some(name) => name,
+            None => {
+                return AccessCheckResult::Denied(
+                    "Anonymous access not allowed for workflow-group operations".to_string(),
+                );
+            }
+        };
+
+        // Check if user owns the workflow
+        let workflow_owner: Option<String> =
+            match sqlx::query("SELECT user FROM workflow WHERE id = $1")
+                .bind(workflow_id)
+                .fetch_optional(self.pool.as_ref())
+                .await
+            {
+                Ok(Some(row)) => Some(row.get("user")),
+                Ok(None) => {
+                    return AccessCheckResult::NotFound(format!(
+                        "Workflow not found with ID: {}",
+                        workflow_id
+                    ));
+                }
+                Err(e) => {
+                    warn!("Database error checking workflow owner: {}", e);
+                    return AccessCheckResult::Denied(format!("Database error: {}", e));
+                }
+            };
+
+        if let Some(owner) = workflow_owner
+            && owner == user_name
+        {
+            debug!(
+                "User '{}' is owner of workflow {}, allowed to manage group access",
+                user_name, workflow_id
+            );
+            return AccessCheckResult::Allowed;
+        }
+
+        // Check if user is admin of the group
+        self.check_group_admin_access(auth, group_id).await
+    }
+
+    /// Check if a group is a system group (cannot be deleted)
+    pub async fn is_system_group(&self, group_id: i64) -> Result<bool, String> {
+        match sqlx::query("SELECT is_system FROM access_group WHERE id = $1")
+            .bind(group_id)
+            .fetch_optional(self.pool.as_ref())
+            .await
+        {
+            Ok(Some(row)) => Ok(row.get::<i32, _>("is_system") == 1),
+            Ok(None) => Err(format!("Group not found with ID: {}", group_id)),
+            Err(e) => Err(format!("Database error: {}", e)),
+        }
+    }
 }
 
 #[cfg(test)]

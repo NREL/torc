@@ -32,7 +32,6 @@ The AI assistant has access to these Torc operations:
 | ----------------- | -------------------------------------- | --------------------------------------- |
 | `TORC_API_URL`    | Torc server URL                        | `http://localhost:8080/torc-service/v1` |
 | `TORC_OUTPUT_DIR` | Directory containing job logs          | `output`                                |
-| `TORC_USERNAME`   | Username for authentication (optional) | —                                       |
 | `TORC_PASSWORD`   | Password for authentication (optional) | —                                       |
 
 ---
@@ -231,7 +230,7 @@ remains in Torc's database.
 ## Security Considerations
 
 - The MCP server has full access to your Torc server
-- Consider using authentication (`TORC_USERNAME`/`TORC_PASSWORD`) if your Torc server is exposed
+- Consider using authentication if your Torc server is exposed
 - The server can modify workflows (restart, cancel, update resources)
 - Review proposed actions before they execute
 
@@ -254,7 +253,7 @@ remains in Torc's database.
 
 ### "Permission denied" or "Authentication failed"
 
-- Set `TORC_USERNAME` and `TORC_PASSWORD` if your server requires auth
+- Set `TORC_PASSWORD` if your server requires auth
 - Check that the credentials are correct
 
 ### Logs not found

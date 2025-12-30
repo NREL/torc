@@ -13,7 +13,8 @@ basepath(::Type{ DefaultApi }) = "http://localhost/torc-service/v1"
 
 const _returntypes_add_user_to_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserGroupMembershipModel,
-    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
@@ -48,7 +49,8 @@ end
 
 const _returntypes_add_workflow_to_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowAccessGroupModel,
-    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
@@ -118,6 +120,7 @@ end
 
 const _returntypes_check_workflow_access_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AccessCheckResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -299,6 +302,7 @@ end
 
 const _returntypes_create_access_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AccessGroupModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
     Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
@@ -331,6 +335,7 @@ end
 
 const _returntypes_create_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -362,6 +367,7 @@ end
 
 const _returntypes_create_event_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EventModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -393,6 +399,7 @@ end
 
 const _returntypes_create_file_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FileModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -424,6 +431,7 @@ end
 
 const _returntypes_create_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -455,6 +463,8 @@ end
 
 const _returntypes_create_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => CreateJobsResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("422", "x"=>".") * "\$") => DefaultErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -551,6 +561,8 @@ end
 
 const _returntypes_create_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("422", "x"=>".") * "\$") => DefaultErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -675,6 +687,7 @@ end
 
 const _returntypes_create_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -775,7 +788,8 @@ end
 
 const _returntypes_delete_access_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AccessGroupModel,
-    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -908,6 +922,7 @@ end
 
 const _returntypes_delete_event_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EventModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -974,6 +989,7 @@ end
 
 const _returntypes_delete_file_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FileModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1209,6 +1225,7 @@ end
 
 const _returntypes_delete_resource_requirement_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1275,6 +1292,7 @@ end
 
 const _returntypes_delete_result_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1341,6 +1359,7 @@ end
 
 const _returntypes_delete_scheduled_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1407,6 +1426,7 @@ end
 
 const _returntypes_delete_slurm_scheduler_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1473,6 +1493,7 @@ end
 
 const _returntypes_delete_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1574,6 +1595,7 @@ end
 
 const _returntypes_get_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1606,6 +1628,7 @@ end
 
 const _returntypes_get_event_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EventModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1638,6 +1661,7 @@ end
 
 const _returntypes_get_file_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FileModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1736,6 +1760,7 @@ end
 
 const _returntypes_get_local_scheduler_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1837,6 +1862,7 @@ end
 
 const _returntypes_get_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1869,6 +1895,7 @@ end
 
 const _returntypes_get_result_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1901,6 +1928,7 @@ end
 
 const _returntypes_get_scheduled_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1933,6 +1961,7 @@ end
 
 const _returntypes_get_slurm_scheduler_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1965,6 +1994,7 @@ end
 
 const _returntypes_get_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2440,6 +2470,8 @@ end
 
 const _returntypes_list_job_dependencies_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListJobDependenciesResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2476,6 +2508,8 @@ end
 
 const _returntypes_list_job_file_relationships_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListJobFileRelationshipsResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2544,6 +2578,8 @@ end
 
 const _returntypes_list_job_user_data_relationships_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListJobUserDataRelationshipsResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2580,6 +2616,8 @@ end
 
 const _returntypes_list_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListJobsResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2630,6 +2668,8 @@ end
 
 const _returntypes_list_local_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListLocalSchedulersResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2771,6 +2811,8 @@ end
 
 const _returntypes_list_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListResourceRequirementsResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2825,6 +2867,8 @@ end
 
 const _returntypes_list_results_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListResultsResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2877,6 +2921,8 @@ end
 
 const _returntypes_list_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListScheduledComputeNodesResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2923,6 +2969,8 @@ end
 
 const _returntypes_list_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListSlurmSchedulersResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2981,6 +3029,8 @@ end
 
 const _returntypes_list_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListUserDataResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3246,7 +3296,8 @@ end
 
 const _returntypes_remove_user_from_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3282,7 +3333,8 @@ end
 
 const _returntypes_remove_workflow_from_group_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3427,6 +3479,7 @@ end
 
 const _returntypes_update_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3460,6 +3513,7 @@ end
 
 const _returntypes_update_event_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EventModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3493,6 +3547,7 @@ end
 
 const _returntypes_update_file_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FileModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3561,6 +3616,7 @@ end
 
 const _returntypes_update_local_scheduler_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3594,6 +3650,7 @@ end
 
 const _returntypes_update_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3627,6 +3684,7 @@ end
 
 const _returntypes_update_result_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3660,6 +3718,7 @@ end
 
 const _returntypes_update_scheduled_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3693,6 +3752,7 @@ end
 
 const _returntypes_update_slurm_scheduler_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3726,6 +3786,7 @@ end
 
 const _returntypes_update_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 

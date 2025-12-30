@@ -1,8 +1,11 @@
 mod common;
 
 use common::{
-    AccessControlServerProcess, ServerProcess, start_server, start_server_with_access_control,
+    AccessControlServerProcess, ServerProcess, run_cli_command_with_auth,
+    run_cli_command_with_auth_full, run_jobs_cli_command_with_auth,
+    run_jobs_cli_command_with_auth_full, start_server, start_server_with_access_control,
 };
+use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use rstest::rstest;
@@ -1093,4 +1096,428 @@ fn test_multi_team_user_can_access_both_workflows_via_api(
         Ok(_) => panic!("Alice should NOT access Data workflow"),
         Err(e) => panic!("Unexpected error: {:?}", e),
     }
+}
+
+// ============================================================================
+// Comprehensive End-to-End Access Control Integration Test
+// ============================================================================
+//
+// This test verifies the complete workflow lifecycle with access control:
+// - Two access groups with different users
+// - Authorized user runs workflow to completion with `torc run`
+// - Authorized user inspects results, events, jobs via CLI
+// - Authorized user can run reports CLI commands
+// - Unauthorized user cannot run the workflow
+
+/// Create a diamond workflow for access control testing.
+/// Returns (workflow_id, HashMap of job names to jobs).
+fn create_access_control_diamond_workflow(
+    config: &Configuration,
+    owner: &str,
+    work_dir: &std::path::Path,
+) -> (i64, std::collections::HashMap<String, models::JobModel>) {
+    let suffix = unique_suffix();
+    let name = format!("access_control_diamond_workflow_{}", suffix);
+    let workflow = models::WorkflowModel::new(name.clone(), owner.to_string());
+    let created_workflow =
+        default_api::create_workflow(config, workflow).expect("Failed to add workflow");
+    let workflow_id = created_workflow.id.unwrap();
+
+    // Create a compute node for this workflow
+    let compute_node = models::ComputeNodeModel::new(
+        workflow_id,
+        "test-host".to_string(),
+        std::process::id() as i64,
+        chrono::Utc::now().to_rfc3339(),
+        8,                   // num_cpus
+        16.0,                // memory_gb
+        0,                   // num_gpus
+        1,                   // num_nodes
+        "local".to_string(), // compute_node_type
+        None,
+    );
+    let _ = default_api::create_compute_node(config, compute_node)
+        .expect("Failed to create compute node");
+
+    // Create local variables for file paths
+    let f1_path = work_dir.join("f1.json").to_string_lossy().to_string();
+    let f2_path = work_dir.join("f2.json").to_string_lossy().to_string();
+    let f3_path = work_dir.join("f3.json").to_string_lossy().to_string();
+    let f4_path = work_dir.join("f4.json").to_string_lossy().to_string();
+    let f5_path = work_dir.join("f5.json").to_string_lossy().to_string();
+    let f6_path = work_dir.join("f6.json").to_string_lossy().to_string();
+
+    let f1 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f1".to_string(), f1_path.clone()),
+    )
+    .expect("Failed to add file");
+    let f2 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f2".to_string(), f2_path.clone()),
+    )
+    .expect("Failed to add file");
+    let f3 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f3".to_string(), f3_path.clone()),
+    )
+    .expect("Failed to add file");
+    let f4 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f4".to_string(), f4_path.clone()),
+    )
+    .expect("Failed to add file");
+    let f5 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f5".to_string(), f5_path.clone()),
+    )
+    .expect("Failed to add file");
+    let f6 = default_api::create_file(
+        config,
+        models::FileModel::new(workflow_id, "f6".to_string(), f6_path.clone()),
+    )
+    .expect("Failed to add file");
+
+    let preprocess_script = "tests/scripts/preprocess.sh";
+    let work_script = "tests/scripts/work.sh";
+    let postprocess_script = "tests/scripts/postprocess.sh";
+
+    let mut preprocess_pre = models::JobModel::new(
+        workflow_id,
+        "preprocess".to_string(),
+        format!(
+            "bash {} -i {} -o {} -o {}",
+            preprocess_script, f1_path, f2_path, f3_path
+        ),
+    );
+    let mut work1_pre = models::JobModel::new(
+        workflow_id,
+        "work1".to_string(),
+        format!("bash {} -i {} -o {}", work_script, f2_path, f4_path),
+    );
+    let mut work2_pre = models::JobModel::new(
+        workflow_id,
+        "work2".to_string(),
+        format!("bash {} -i {} -o {}", work_script, f3_path, f5_path),
+    );
+    let mut postprocess_pre = models::JobModel::new(
+        workflow_id,
+        "postprocess".to_string(),
+        format!(
+            "bash {} -i {} -i {} -o {}",
+            postprocess_script, f4_path, f5_path, f6_path
+        ),
+    );
+
+    preprocess_pre.input_file_ids = Some(vec![f1.id.unwrap()]);
+    preprocess_pre.output_file_ids = Some(vec![f2.id.unwrap(), f3.id.unwrap()]);
+    work1_pre.input_file_ids = Some(vec![f2.id.unwrap()]);
+    work1_pre.output_file_ids = Some(vec![f4.id.unwrap()]);
+    work2_pre.input_file_ids = Some(vec![f3.id.unwrap()]);
+    work2_pre.output_file_ids = Some(vec![f5.id.unwrap()]);
+    postprocess_pre.input_file_ids = Some(vec![f4.id.unwrap(), f5.id.unwrap()]);
+    postprocess_pre.output_file_ids = Some(vec![f6.id.unwrap()]);
+
+    let preprocess =
+        default_api::create_job(config, preprocess_pre).expect("Failed to add preprocess");
+    let work1 = default_api::create_job(config, work1_pre).expect("Failed to add work1");
+    let work2 = default_api::create_job(config, work2_pre).expect("Failed to add work2");
+    let postprocess =
+        default_api::create_job(config, postprocess_pre).expect("Failed to add postprocess");
+
+    let mut jobs = std::collections::HashMap::new();
+    jobs.insert("preprocess".to_string(), preprocess);
+    jobs.insert("work1".to_string(), work1);
+    jobs.insert("work2".to_string(), work2);
+    jobs.insert("postprocess".to_string(), postprocess);
+
+    (workflow_id, jobs)
+}
+
+/// Comprehensive end-to-end test for access control with workflow execution.
+///
+/// This test verifies:
+/// 1. Two access groups with different users (ml-team and data-team)
+/// 2. A valid user (alice, ml-team member) can run a workflow to completion with `torc run`
+/// 3. The valid user can inspect results, events, jobs via CLI
+/// 4. The valid user can run reports CLI commands
+/// 5. An invalid user (carol, data-team only) cannot run the workflow
+#[rstest]
+fn test_comprehensive_access_control_workflow_execution(
+    start_server_with_access_control: &AccessControlServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+    let password = "password"; // All test users have this password
+
+    // =========================================================================
+    // Step 1: Set up two access groups with different users
+    // =========================================================================
+    let (ml_team_id, _data_team_id) = setup_two_teams(config);
+
+    // =========================================================================
+    // Step 2: Create a workflow owned by alice and share it with ml-team
+    // =========================================================================
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir = temp_dir.path().to_path_buf();
+
+    // Create input file
+    let input_data = r#"{"data": "initial input", "value": 42}"#;
+    fs::write(work_dir.join("f1.json"), input_data).expect("Failed to write f1.json");
+
+    // Create workflow owned by alice (who is an admin and ml-team member)
+    let alice_config = config_with_auth(config, "alice");
+    let (workflow_id, _jobs) =
+        create_access_control_diamond_workflow(&alice_config, "alice", &work_dir);
+
+    // Share workflow with ml-team
+    default_api::add_workflow_to_group(config, workflow_id, ml_team_id)
+        .expect("Failed to share workflow with ml-team");
+
+    // Verify alice has access
+    let alice_access = default_api::check_workflow_access(config, workflow_id, "alice")
+        .expect("Failed to check alice's access");
+    assert!(
+        alice_access.has_access,
+        "alice should have access to workflow"
+    );
+
+    // Verify carol (data-team only) does NOT have access
+    let carol_access = default_api::check_workflow_access(config, workflow_id, "carol")
+        .expect("Failed to check carol's access");
+    assert!(
+        !carol_access.has_access,
+        "carol should NOT have access to workflow"
+    );
+
+    // =========================================================================
+    // Step 3: Valid user (alice) runs workflow to completion with `torc run`
+    // =========================================================================
+    let workflow_id_str = workflow_id.to_string();
+    let work_dir_str = work_dir.to_str().unwrap();
+    let run_args: Vec<&str> = vec![
+        &workflow_id_str,
+        "--output-dir",
+        work_dir_str,
+        "--poll-interval",
+        "0.1",
+        "--num-cpus",
+        "4",
+        "--memory-gb",
+        "8.0",
+    ];
+
+    run_jobs_cli_command_with_auth(
+        &run_args,
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to run workflow");
+
+    // Verify workflow completion - all jobs should be completed
+    let jobs = default_api::list_jobs(
+        &alice_config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    for job in jobs.items.unwrap() {
+        assert_eq!(
+            job.status.unwrap(),
+            models::JobStatus::Completed,
+            "Job {} should be completed. actual status: {:?}",
+            job.name,
+            job.status
+        );
+    }
+
+    // Verify output files exist
+    assert!(work_dir.join("f2.json").exists(), "f2.json should exist");
+    assert!(work_dir.join("f3.json").exists(), "f3.json should exist");
+    assert!(work_dir.join("f4.json").exists(), "f4.json should exist");
+    assert!(work_dir.join("f5.json").exists(), "f5.json should exist");
+    assert!(work_dir.join("f6.json").exists(), "f6.json should exist");
+
+    // =========================================================================
+    // Step 4: Valid user (alice) inspects results, events, jobs via CLI
+    // =========================================================================
+
+    // Test jobs list command
+    let jobs_output = run_cli_command_with_auth(
+        &["jobs", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to list jobs");
+    assert!(
+        jobs_output.contains("preprocess") || jobs_output.contains("work1"),
+        "Jobs list should contain job names"
+    );
+
+    // Test results list command
+    let results_output = run_cli_command_with_auth(
+        &["results", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to list results");
+    // Results should exist and show completion info
+    assert!(
+        results_output.contains("0") || !results_output.is_empty(),
+        "Results list should contain data"
+    );
+
+    // Test events list command
+    let _events_output = run_cli_command_with_auth(
+        &["events", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to list events");
+    // Events list command should succeed (may be empty if no events were logged)
+
+    // Test files list command
+    let files_output = run_cli_command_with_auth(
+        &["files", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to list files");
+    assert!(
+        files_output.contains("f1") || files_output.contains("f2"),
+        "Files list should contain file names"
+    );
+
+    // Test workflow status command
+    let status_output = run_cli_command_with_auth(
+        &["workflows", "status", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to get workflow status");
+    // Workflow status shows metadata like run_id, is_canceled - verify we got output
+    assert!(
+        status_output.contains("Run ID") || status_output.contains("run_id"),
+        "Workflow status should show workflow metadata. Got: {}",
+        status_output
+    );
+
+    // =========================================================================
+    // Step 5: Valid user (alice) can run reports CLI commands
+    // =========================================================================
+
+    // Test reports commands - these should work for authorized users
+    let report_output = run_cli_command_with_auth(
+        &["reports", "summary", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "alice",
+        password,
+    )
+    .expect("alice should be able to run reports summary");
+    assert!(!report_output.is_empty(), "Report should produce output");
+
+    // =========================================================================
+    // Step 6: Invalid user (carol) cannot run the workflow
+    // =========================================================================
+
+    // Create a new workflow for carol to try to access
+    let (workflow_id_2, _) =
+        create_access_control_diamond_workflow(&alice_config, "alice", &work_dir);
+
+    // Share with ml-team only (carol is in data-team, not ml-team)
+    default_api::add_workflow_to_group(config, workflow_id_2, ml_team_id)
+        .expect("Failed to share workflow with ml-team");
+
+    // Carol should not be able to run the workflow
+    let carol_run_output = run_jobs_cli_command_with_auth_full(
+        &[
+            &workflow_id_2.to_string(),
+            "--output-dir",
+            work_dir.to_str().unwrap(),
+            "--poll-interval",
+            "0.1",
+            "--num-cpus",
+            "4",
+            "--memory-gb",
+            "8.0",
+        ],
+        start_server_with_access_control,
+        "carol",
+        password,
+    );
+
+    // Command should fail with access denied
+    assert!(
+        !carol_run_output.status.success(),
+        "carol should NOT be able to run workflow she doesn't have access to"
+    );
+
+    let stderr = String::from_utf8_lossy(&carol_run_output.stderr);
+    assert!(
+        stderr.contains("403")
+            || stderr.contains("Forbidden")
+            || stderr.contains("access")
+            || stderr.contains("denied")
+            || stderr.contains("unauthorized"),
+        "Error message should indicate access denial. Got: {}",
+        stderr
+    );
+
+    // Carol should also not be able to list jobs for the workflow
+    let carol_jobs_output = run_cli_command_with_auth_full(
+        &["jobs", "list", &workflow_id_2.to_string()],
+        start_server_with_access_control,
+        "carol",
+        password,
+    );
+
+    assert!(
+        !carol_jobs_output.status.success(),
+        "carol should NOT be able to list jobs for workflow she doesn't have access to"
+    );
+
+    // =========================================================================
+    // Step 7: Verify bob (also ml-team member) can also access the workflow
+    // =========================================================================
+    let bob_jobs_output = run_cli_command_with_auth(
+        &["jobs", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "bob",
+        password,
+    )
+    .expect("bob (ml-team member) should be able to list jobs");
+    assert!(
+        bob_jobs_output.contains("preprocess") || bob_jobs_output.contains("work1"),
+        "Bob should see job names"
+    );
+
+    // =========================================================================
+    // Step 8: Verify shared_user (member of both teams) can access workflows
+    // shared with either team
+    // =========================================================================
+    let shared_user_jobs_output = run_cli_command_with_auth(
+        &["jobs", "list", &workflow_id.to_string()],
+        start_server_with_access_control,
+        "shared_user",
+        password,
+    )
+    .expect("shared_user (member of both teams) should be able to list jobs");
+    assert!(
+        shared_user_jobs_output.contains("preprocess") || shared_user_jobs_output.contains("work1"),
+        "shared_user should see job names"
+    );
 }
