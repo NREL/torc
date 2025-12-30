@@ -1277,3 +1277,88 @@ pub fn run_jobs_cli_command(
         Err(format!("Command failed: {}", error_str).into())
     }
 }
+
+// ============================================================================
+// Access Control Server Fixture
+// ============================================================================
+
+/// Start a server with access control enforcement enabled
+fn start_process_with_access_control(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
+    let port = find_available_port();
+    println!("Setting up database with url: {}", db_url);
+    let status = Command::new("sqlx")
+        .arg("--no-dotenv")
+        .arg("database")
+        .arg("setup")
+        .env("DATABASE_URL", db_url)
+        .status()
+        .expect("failed to execute sqlx");
+    if !status.success() {
+        panic!("sqlx database setup failed with status: {}", status);
+    }
+    let status = Command::new("cargo")
+        .arg("build")
+        .arg("--workspace")
+        .status()
+        .expect("Failed to execute cargo build");
+    if !status.success() {
+        panic!("cargo build failed with status: {}", status);
+    }
+
+    eprintln!("Starting server with access control on port {}", port);
+    let child = Command::new(get_exe_path("./target/debug/torc-server"))
+        .arg("run")
+        .arg("--port")
+        .arg(port.to_string())
+        .arg("--completion-check-interval-secs")
+        .arg("0.1")
+        .arg("--enforce-access-control") // Enable access control enforcement
+        .env("DATABASE_URL", db_url)
+        .env("RUST_LOG", "info")
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .expect("failed to start server process");
+
+    let pid = child.id();
+
+    // Track this PID for cleanup at program exit
+    track_server_pid(pid);
+
+    if let Err(e) = wait_for_server_ready(port, 10) {
+        panic!("Server startup failed: {}", e);
+    }
+
+    eprintln!(
+        "Server with access control ready on port {} (PID: {})",
+        port, pid
+    );
+    let mut config = Configuration::new();
+    config.base_path = get_server_url(port);
+    ServerProcess {
+        child,
+        db_file,
+        port,
+        config,
+    }
+}
+
+/// Start a test server instance with access control enforcement enabled
+///
+/// This fixture creates a server where users can only access workflows they own
+/// or have group access to.
+#[fixture]
+#[once]
+pub fn start_server_with_access_control() -> ServerProcess {
+    // Initialize logger for client-side code running in tests
+    let _ = env_logger::try_init();
+
+    let db_file = NamedTempFile::new().expect("Failed to create temporary file");
+    let url = format!("sqlite:{}", db_file.path().display());
+    let process = start_process_with_access_control(&url, db_file);
+    eprint!(
+        "Started server with access control, database file {:?} on port {}",
+        process.db_file, process.port
+    );
+    process
+}

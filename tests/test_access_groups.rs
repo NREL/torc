@@ -1,9 +1,14 @@
 mod common;
 
-use common::{ServerProcess, start_server};
+use common::{ServerProcess, start_server, start_server_with_access_control};
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use rstest::rstest;
 use torc::client::{Configuration, default_api};
 use torc::models;
+
+/// Atomic counter for generating unique names in tests
+static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Create a workflow with a specific user
 fn create_workflow_with_user(
@@ -516,4 +521,360 @@ fn test_check_workflow_access_non_member(start_server: &ServerProcess) {
 
     assert!(!result.has_access);
     assert_eq!(result.user_name, "random-user");
+}
+
+// ============================================================================
+// End-to-End Access Control Enforcement Tests
+// ============================================================================
+//
+// These tests verify that access control is actually ENFORCED when calling
+// API endpoints. They require a server started with --enforce-access-control.
+
+/// Generate a unique suffix for test entity names
+fn unique_suffix() -> u64 {
+    TEST_COUNTER.fetch_add(1, Ordering::SeqCst)
+}
+
+/// Helper to set up the two-team scenario:
+///
+/// - ml-team: alice, bob, shared_user
+/// - data-team: carol, dave, shared_user
+///
+/// Returns (ml_team_id, data_team_id)
+fn setup_two_teams(config: &Configuration) -> (i64, i64) {
+    let suffix = unique_suffix();
+
+    // Create ML team
+    let ml_group = models::AccessGroupModel {
+        id: None,
+        name: format!("ml-team-{}", suffix),
+        description: Some("Machine Learning Team".to_string()),
+        created_at: None,
+    };
+    let ml_team =
+        default_api::create_access_group(config, ml_group).expect("Failed to create ML team");
+    let ml_team_id = ml_team.id.unwrap();
+
+    // Create Data team
+    let data_group = models::AccessGroupModel {
+        id: None,
+        name: format!("data-team-{}", suffix),
+        description: Some("Data Processing Team".to_string()),
+        created_at: None,
+    };
+    let data_team =
+        default_api::create_access_group(config, data_group).expect("Failed to create Data team");
+    let data_team_id = data_team.id.unwrap();
+
+    // Add users to ML team: alice, bob, shared_user
+    for user in ["alice", "bob", "shared_user"] {
+        let membership = models::UserGroupMembershipModel {
+            id: None,
+            user_name: user.to_string(),
+            group_id: ml_team_id,
+            role: "member".to_string(),
+            created_at: None,
+        };
+        default_api::add_user_to_group(config, ml_team_id, membership)
+            .expect("Failed to add user to ML team");
+    }
+
+    // Add users to Data team: carol, dave, shared_user
+    for user in ["carol", "dave", "shared_user"] {
+        let membership = models::UserGroupMembershipModel {
+            id: None,
+            user_name: user.to_string(),
+            group_id: data_team_id,
+            role: "member".to_string(),
+            created_at: None,
+        };
+        default_api::add_user_to_group(config, data_team_id, membership)
+            .expect("Failed to add user to Data team");
+    }
+
+    (ml_team_id, data_team_id)
+}
+
+#[rstest]
+fn test_enforcement_owner_can_access_own_workflow(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Create a workflow owned by "owner_user"
+    let workflow = create_workflow_with_user(config, "owner-test-workflow", "owner_user");
+    let workflow_id = workflow.id.unwrap();
+
+    // The owner should be able to access their own workflow
+    // Note: With access control enabled, this should succeed because ownership grants access
+    let result = default_api::check_workflow_access(config, workflow_id, "owner_user")
+        .expect("Failed to check access");
+    assert!(
+        result.has_access,
+        "Owner should have access to their own workflow"
+    );
+}
+
+#[rstest]
+fn test_enforcement_non_member_cannot_access_workflow(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Create a workflow owned by "owner_user"
+    let workflow = create_workflow_with_user(config, "restricted-workflow", "owner_user");
+    let workflow_id = workflow.id.unwrap();
+
+    // A user with no access should be denied
+    let result = default_api::check_workflow_access(config, workflow_id, "outsider")
+        .expect("Failed to check access");
+    assert!(
+        !result.has_access,
+        "Non-member should NOT have access to workflow"
+    );
+}
+
+#[rstest]
+fn test_enforcement_team_member_can_access_shared_workflow(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams
+    let (ml_team_id, _data_team_id) = setup_two_teams(config);
+
+    // Create a workflow owned by "workflow_creator"
+    let workflow = create_workflow_with_user(config, "ml-shared-workflow", "workflow_creator");
+    let workflow_id = workflow.id.unwrap();
+
+    // Initially, alice (ML team member) should NOT have access
+    let no_access = default_api::check_workflow_access(config, workflow_id, "alice")
+        .expect("Failed to check access");
+    assert!(
+        !no_access.has_access,
+        "Alice should not have access before workflow is shared"
+    );
+
+    // Share the workflow with the ML team
+    default_api::add_workflow_to_group(config, workflow_id, ml_team_id)
+        .expect("Failed to add workflow to ML team");
+
+    // Now alice should have access
+    let has_access = default_api::check_workflow_access(config, workflow_id, "alice")
+        .expect("Failed to check access");
+    assert!(
+        has_access.has_access,
+        "Alice (ML team member) should have access after workflow is shared with ML team"
+    );
+
+    // bob (also ML team member) should also have access
+    let bob_access = default_api::check_workflow_access(config, workflow_id, "bob")
+        .expect("Failed to check access");
+    assert!(
+        bob_access.has_access,
+        "Bob (ML team member) should have access to ML team workflow"
+    );
+
+    // carol (Data team member, NOT ML team) should NOT have access
+    let carol_access = default_api::check_workflow_access(config, workflow_id, "carol")
+        .expect("Failed to check access");
+    assert!(
+        !carol_access.has_access,
+        "Carol (Data team only) should NOT have access to ML team workflow"
+    );
+}
+
+#[rstest]
+fn test_enforcement_multi_team_member_can_access_both_team_workflows(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams (shared_user is in both teams)
+    let (ml_team_id, data_team_id) = setup_two_teams(config);
+
+    // Create an ML workflow
+    let ml_workflow = create_workflow_with_user(config, "ml-workflow", "ml_owner");
+    let ml_workflow_id = ml_workflow.id.unwrap();
+
+    // Create a Data workflow
+    let data_workflow = create_workflow_with_user(config, "data-workflow", "data_owner");
+    let data_workflow_id = data_workflow.id.unwrap();
+
+    // Share workflows with respective teams
+    default_api::add_workflow_to_group(config, ml_workflow_id, ml_team_id)
+        .expect("Failed to share ML workflow");
+    default_api::add_workflow_to_group(config, data_workflow_id, data_team_id)
+        .expect("Failed to share Data workflow");
+
+    // shared_user should have access to BOTH workflows (member of both teams)
+    let ml_access = default_api::check_workflow_access(config, ml_workflow_id, "shared_user")
+        .expect("Failed to check ML access");
+    assert!(
+        ml_access.has_access,
+        "shared_user should have access to ML workflow (member of both teams)"
+    );
+
+    let data_access = default_api::check_workflow_access(config, data_workflow_id, "shared_user")
+        .expect("Failed to check Data access");
+    assert!(
+        data_access.has_access,
+        "shared_user should have access to Data workflow (member of both teams)"
+    );
+
+    // alice should only have access to ML workflow
+    let alice_ml = default_api::check_workflow_access(config, ml_workflow_id, "alice")
+        .expect("Failed to check");
+    assert!(
+        alice_ml.has_access,
+        "alice should have access to ML workflow"
+    );
+
+    let alice_data = default_api::check_workflow_access(config, data_workflow_id, "alice")
+        .expect("Failed to check");
+    assert!(
+        !alice_data.has_access,
+        "alice should NOT have access to Data workflow"
+    );
+
+    // carol should only have access to Data workflow
+    let carol_ml = default_api::check_workflow_access(config, ml_workflow_id, "carol")
+        .expect("Failed to check");
+    assert!(
+        !carol_ml.has_access,
+        "carol should NOT have access to ML workflow"
+    );
+
+    let carol_data = default_api::check_workflow_access(config, data_workflow_id, "carol")
+        .expect("Failed to check");
+    assert!(
+        carol_data.has_access,
+        "carol should have access to Data workflow"
+    );
+}
+
+#[rstest]
+fn test_enforcement_revoke_access_removes_permission(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams
+    let (ml_team_id, _data_team_id) = setup_two_teams(config);
+
+    // Create and share a workflow
+    let workflow = create_workflow_with_user(config, "revoke-test-workflow", "some_owner");
+    let workflow_id = workflow.id.unwrap();
+
+    default_api::add_workflow_to_group(config, workflow_id, ml_team_id)
+        .expect("Failed to share workflow");
+
+    // Verify alice has access
+    let has_access = default_api::check_workflow_access(config, workflow_id, "alice")
+        .expect("Failed to check access");
+    assert!(has_access.has_access, "alice should have access initially");
+
+    // Revoke access by removing workflow from group
+    default_api::remove_workflow_from_group(config, workflow_id, ml_team_id)
+        .expect("Failed to remove workflow from group");
+
+    // Verify alice no longer has access
+    let no_access = default_api::check_workflow_access(config, workflow_id, "alice")
+        .expect("Failed to check access");
+    assert!(
+        !no_access.has_access,
+        "alice should NOT have access after workflow is removed from group"
+    );
+}
+
+#[rstest]
+fn test_enforcement_workflow_shared_with_multiple_groups(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams
+    let (ml_team_id, data_team_id) = setup_two_teams(config);
+
+    // Create a workflow
+    let workflow = create_workflow_with_user(config, "multi-group-workflow", "creator");
+    let workflow_id = workflow.id.unwrap();
+
+    // Share with BOTH teams
+    default_api::add_workflow_to_group(config, workflow_id, ml_team_id)
+        .expect("Failed to share with ML team");
+    default_api::add_workflow_to_group(config, workflow_id, data_team_id)
+        .expect("Failed to share with Data team");
+
+    // All team members should have access
+    for user in ["alice", "bob", "carol", "dave", "shared_user"] {
+        let access = default_api::check_workflow_access(config, workflow_id, user)
+            .expect("Failed to check access");
+        assert!(
+            access.has_access,
+            "{} should have access to workflow shared with both teams",
+            user
+        );
+    }
+
+    // An outsider should still not have access
+    let outsider = default_api::check_workflow_access(config, workflow_id, "outsider")
+        .expect("Failed to check access");
+    assert!(
+        !outsider.has_access,
+        "outsider should NOT have access even when workflow is shared with multiple groups"
+    );
+}
+
+#[rstest]
+fn test_enforcement_remove_user_from_group_revokes_access(
+    start_server_with_access_control: &ServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Create a group with a user
+    let group = models::AccessGroupModel {
+        id: None,
+        name: format!("user-removal-test-{}", unique_suffix()),
+        description: None,
+        created_at: None,
+    };
+    let created_group =
+        default_api::create_access_group(config, group).expect("Failed to create group");
+    let group_id = created_group.id.unwrap();
+
+    // Add user to group
+    let membership = models::UserGroupMembershipModel {
+        id: None,
+        user_name: "removable_user".to_string(),
+        group_id,
+        role: "member".to_string(),
+        created_at: None,
+    };
+    default_api::add_user_to_group(config, group_id, membership)
+        .expect("Failed to add user to group");
+
+    // Create and share a workflow
+    let workflow = create_workflow_with_user(config, "user-removal-workflow", "wf_owner");
+    let workflow_id = workflow.id.unwrap();
+
+    default_api::add_workflow_to_group(config, workflow_id, group_id)
+        .expect("Failed to share workflow");
+
+    // User should have access
+    let has_access = default_api::check_workflow_access(config, workflow_id, "removable_user")
+        .expect("Failed to check access");
+    assert!(has_access.has_access, "User should have access initially");
+
+    // Remove user from group
+    default_api::remove_user_from_group(config, group_id, "removable_user")
+        .expect("Failed to remove user from group");
+
+    // User should no longer have access
+    let no_access = default_api::check_workflow_access(config, workflow_id, "removable_user")
+        .expect("Failed to check access");
+    assert!(
+        !no_access.has_access,
+        "User should NOT have access after being removed from group"
+    );
 }
