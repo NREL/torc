@@ -1479,6 +1479,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/job_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -1508,6 +1520,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/job_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -1543,6 +1567,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/job_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3468,6 +3504,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3497,6 +3545,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3532,6 +3592,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3569,6 +3641,18 @@ paths:
               schema:
                 type: object
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -3623,6 +3707,18 @@ paths:
               schema:
                 type: object
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -4109,6 +4205,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_status_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -4144,6 +4252,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/workflow_status_model"
           description: Successful response
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/forbidden_error_response"
+          description: Forbidden - user does not have access
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
         "500":
           content:
             application/json:
@@ -5393,6 +5513,24 @@ components:
         code: 404
         errorNum: 404
         errorMessage: errorMessage
+        error: "{}"
+      properties:
+        error:
+          type: object
+        errorNum:
+          type: integer
+        errorMessage:
+          type: string
+        code:
+          type: integer
+      required:
+      - error
+    forbidden_error_response:
+      description: Response when the user does not have access to the requested resource
+      example:
+        code: 403
+        errorNum: 403
+        errorMessage: User does not have access to this resource
         error: "{}"
       properties:
         error:

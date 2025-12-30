@@ -4,11 +4,15 @@ All URIs are relative to *http://localhost/torc-service/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**add_user_to_group**](DefaultApi.md#add_user_to_group) | **POST** /access_groups/{id}/members | Add a user to an access group.
+[**add_workflow_to_group**](DefaultApi.md#add_workflow_to_group) | **POST** /workflows/{id}/access_groups | Grant an access group access to a workflow.
 [**cancel_workflow**](DefaultApi.md#cancel_workflow) | **PUT** /workflows/{id}/cancel | Cancel a workflow. Workers will detect the status change and cancel jobs.
+[**check_workflow_access**](DefaultApi.md#check_workflow_access) | **GET** /access_check/{workflow_id}/{user_name} | Check if a user can access a workflow.
 [**claim_action**](DefaultApi.md#claim_action) | **POST** /workflows/{id}/actions/{action_id}/claim | Atomically claim a workflow action.
 [**claim_jobs_based_on_resources**](DefaultApi.md#claim_jobs_based_on_resources) | **POST** /workflows/{id}/claim_jobs_based_on_resources/{limit} | Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 [**claim_next_jobs**](DefaultApi.md#claim_next_jobs) | **POST** /workflows/{id}/claim_next_jobs | Return user-requested number of jobs that are ready for submission. Sets status to pending.
 [**complete_job**](DefaultApi.md#complete_job) | **POST** /jobs/{id}/complete_job/{status}/{run_id} | Complete a job, connect it to a result, and manage side effects.
+[**create_access_group**](DefaultApi.md#create_access_group) | **POST** /access_groups | Create a new access group.
 [**create_compute_node**](DefaultApi.md#create_compute_node) | **POST** /compute_nodes | Store a compute node.
 [**create_event**](DefaultApi.md#create_event) | **POST** /events | Store an event.
 [**create_file**](DefaultApi.md#create_file) | **POST** /files | Store a file.
@@ -23,6 +27,7 @@ Method | HTTP request | Description
 [**create_user_data**](DefaultApi.md#create_user_data) | **POST** /user_data | Store a user data record.
 [**create_workflow**](DefaultApi.md#create_workflow) | **POST** /workflows | Store a workflow.
 [**create_workflow_action**](DefaultApi.md#create_workflow_action) | **POST** /workflows/{id}/actions | Create a workflow action.
+[**delete_access_group**](DefaultApi.md#delete_access_group) | **DELETE** /access_groups/{id} | Delete an access group.
 [**delete_all_user_data**](DefaultApi.md#delete_all_user_data) | **DELETE** /user_data | Delete all user data records for one workflow.
 [**delete_compute_node**](DefaultApi.md#delete_compute_node) | **DELETE** /compute_nodes/{id} | Delete a compute node.
 [**delete_compute_nodes**](DefaultApi.md#delete_compute_nodes) | **DELETE** /compute_nodes | Delete all compute node records for one workflow.
@@ -45,6 +50,7 @@ Method | HTTP request | Description
 [**delete_slurm_schedulers**](DefaultApi.md#delete_slurm_schedulers) | **DELETE** /slurm_schedulers | Retrieve all Slurm compute node configurations for one workflow.
 [**delete_user_data**](DefaultApi.md#delete_user_data) | **DELETE** /user_data/{id} | Delete a user data record.
 [**delete_workflow**](DefaultApi.md#delete_workflow) | **DELETE** /workflows/{id} | Delete a workflow.
+[**get_access_group**](DefaultApi.md#get_access_group) | **GET** /access_groups/{id} | Get an access group by ID.
 [**get_compute_node**](DefaultApi.md#get_compute_node) | **GET** /compute_nodes/{id} | Retrieve a compute node by ID.
 [**get_event**](DefaultApi.md#get_event) | **GET** /events/{id} | Retrieve an event by ID.
 [**get_file**](DefaultApi.md#get_file) | **GET** /files/{id} | Retrieve a file.
@@ -65,9 +71,11 @@ Method | HTTP request | Description
 [**initialize_jobs**](DefaultApi.md#initialize_jobs) | **POST** /workflows/{id}/initialize_jobs | Initialize job relationships based on file and user_data relationships.
 [**is_workflow_complete**](DefaultApi.md#is_workflow_complete) | **GET** /workflows/{id}/is_complete | Return true if all jobs in the workflow are complete.
 [**is_workflow_uninitialized**](DefaultApi.md#is_workflow_uninitialized) | **GET** /workflows/{id}/is_uninitialized | Return true if all jobs in the workflow are uninitialized or disabled.
+[**list_access_groups**](DefaultApi.md#list_access_groups) | **GET** /access_groups | List all access groups.
 [**list_compute_nodes**](DefaultApi.md#list_compute_nodes) | **GET** /compute_nodes | Retrieve all compute node records for one workflow.
 [**list_events**](DefaultApi.md#list_events) | **GET** /events | Retrieve all events for one workflow.
 [**list_files**](DefaultApi.md#list_files) | **GET** /files | Retrieve all files for one workflow.
+[**list_group_members**](DefaultApi.md#list_group_members) | **GET** /access_groups/{id}/members | List members of an access group.
 [**list_job_dependencies**](DefaultApi.md#list_job_dependencies) | **GET** /workflows/{id}/job_dependencies | Retrieve job blocking relationships for a workflow.
 [**list_job_file_relationships**](DefaultApi.md#list_job_file_relationships) | **GET** /workflows/{id}/job_file_relationships | Retrieve job-file relationships for a workflow.
 [**list_job_ids**](DefaultApi.md#list_job_ids) | **GET** /workflows/{id}/job_ids | Retrieve all job IDs for one workflow.
@@ -82,10 +90,14 @@ Method | HTTP request | Description
 [**list_scheduled_compute_nodes**](DefaultApi.md#list_scheduled_compute_nodes) | **GET** /scheduled_compute_nodes | Retrieve scheduled compute node records for one workflow.
 [**list_slurm_schedulers**](DefaultApi.md#list_slurm_schedulers) | **GET** /slurm_schedulers | Retrieve a Slurm compute node configuration.
 [**list_user_data**](DefaultApi.md#list_user_data) | **GET** /user_data | Retrieve all user data records for one workflow.
+[**list_user_groups**](DefaultApi.md#list_user_groups) | **GET** /users/{user_name}/groups | List groups a user belongs to.
+[**list_workflow_groups**](DefaultApi.md#list_workflow_groups) | **GET** /workflows/{id}/access_groups | List access groups that have access to a workflow.
 [**list_workflows**](DefaultApi.md#list_workflows) | **GET** /workflows | Retrieve all workflows.
 [**manage_status_change**](DefaultApi.md#manage_status_change) | **PUT** /jobs/{id}/manage_status_change/{status}/{run_id} | Change the status of a job and manage side effects.
 [**ping**](DefaultApi.md#ping) | **GET** /ping | Check if the service is running.
 [**process_changed_job_inputs**](DefaultApi.md#process_changed_job_inputs) | **POST** /workflows/{id}/process_changed_job_inputs | Check for changed job inputs and update status accordingly.
+[**remove_user_from_group**](DefaultApi.md#remove_user_from_group) | **DELETE** /access_groups/{id}/members/{user_name} | Remove a user from an access group.
+[**remove_workflow_from_group**](DefaultApi.md#remove_workflow_from_group) | **DELETE** /workflows/{id}/access_groups/{group_id} | Revoke an access group&#39;s access to a workflow.
 [**reset_job_status**](DefaultApi.md#reset_job_status) | **POST** /workflows/{id}/reset_job_status | Reset status for jobs to uninitialized.
 [**reset_workflow_status**](DefaultApi.md#reset_workflow_status) | **POST** /workflows/{id}/reset_status | Reset worklow status.
 [**start_job**](DefaultApi.md#start_job) | **PUT** /jobs/{id}/start_job/{run_id}/{compute_node_id} | Start a job and manage side effects.
@@ -102,6 +114,68 @@ Method | HTTP request | Description
 [**update_workflow**](DefaultApi.md#update_workflow) | **PUT** /workflows/{id} | Update a workflow.
 [**update_workflow_status**](DefaultApi.md#update_workflow_status) | **PUT** /workflows/{id}/status | Update the workflow status.
 
+
+# **add_user_to_group**
+> add_user_to_group(_api::DefaultApi, id::Int64, body::UserGroupMembershipModel; _mediaType=nothing) -> UserGroupMembershipModel, OpenAPI.Clients.ApiResponse <br/>
+> add_user_to_group(_api::DefaultApi, response_stream::Channel, id::Int64, body::UserGroupMembershipModel; _mediaType=nothing) -> Channel{ UserGroupMembershipModel }, OpenAPI.Clients.ApiResponse
+
+Add a user to an access group.
+
+Add a user to an access group.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the access group |
+**body** | [**UserGroupMembershipModel**](UserGroupMembershipModel.md) | User membership to add |
+
+### Return type
+
+[**UserGroupMembershipModel**](UserGroupMembershipModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **add_workflow_to_group**
+> add_workflow_to_group(_api::DefaultApi, id::Int64, body::WorkflowAccessGroupModel; _mediaType=nothing) -> WorkflowAccessGroupModel, OpenAPI.Clients.ApiResponse <br/>
+> add_workflow_to_group(_api::DefaultApi, response_stream::Channel, id::Int64, body::WorkflowAccessGroupModel; _mediaType=nothing) -> Channel{ WorkflowAccessGroupModel }, OpenAPI.Clients.ApiResponse
+
+Grant an access group access to a workflow.
+
+Grant an access group access to a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the workflow |
+**body** | [**WorkflowAccessGroupModel**](WorkflowAccessGroupModel.md) | Group association to create |
+
+### Return type
+
+[**WorkflowAccessGroupModel**](WorkflowAccessGroupModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **cancel_workflow**
 > cancel_workflow(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
@@ -135,6 +209,37 @@ No authorization required
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **check_workflow_access**
+> check_workflow_access(_api::DefaultApi, workflow_id::Int64, user_name::String; _mediaType=nothing) -> AccessCheckResponse, OpenAPI.Clients.ApiResponse <br/>
+> check_workflow_access(_api::DefaultApi, response_stream::Channel, workflow_id::Int64, user_name::String; _mediaType=nothing) -> Channel{ AccessCheckResponse }, OpenAPI.Clients.ApiResponse
+
+Check if a user can access a workflow.
+
+Check if a user can access a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow_id** | **Int64** | ID of the workflow |
+**user_name** | **String** | Username to check |
+
+### Return type
+
+[**AccessCheckResponse**](AccessCheckResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -268,6 +373,36 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**JobModel**](JobModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **create_access_group**
+> create_access_group(_api::DefaultApi, body::AccessGroupModel; _mediaType=nothing) -> AccessGroupModel, OpenAPI.Clients.ApiResponse <br/>
+> create_access_group(_api::DefaultApi, response_stream::Channel, body::AccessGroupModel; _mediaType=nothing) -> Channel{ AccessGroupModel }, OpenAPI.Clients.ApiResponse
+
+Create a new access group.
+
+Create a new access group.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**body** | [**AccessGroupModel**](AccessGroupModel.md) | Access group to create |
+
+### Return type
+
+[**AccessGroupModel**](AccessGroupModel.md)
 
 ### Authorization
 
@@ -697,6 +832,42 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**WorkflowActionModel**](WorkflowActionModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **delete_access_group**
+> delete_access_group(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing) -> AccessGroupModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_access_group(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing) -> Channel{ AccessGroupModel }, OpenAPI.Clients.ApiResponse
+
+Delete an access group.
+
+Delete an access group.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the access group |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any** |  | 
+
+### Return type
+
+[**AccessGroupModel**](AccessGroupModel.md)
 
 ### Authorization
 
@@ -1496,6 +1667,36 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **get_access_group**
+> get_access_group(_api::DefaultApi, id::Int64; _mediaType=nothing) -> AccessGroupModel, OpenAPI.Clients.ApiResponse <br/>
+> get_access_group(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ AccessGroupModel }, OpenAPI.Clients.ApiResponse
+
+Get an access group by ID.
+
+Get an access group by ID.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the access group |
+
+### Return type
+
+[**AccessGroupModel**](AccessGroupModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **get_compute_node**
 > get_compute_node(_api::DefaultApi, id::Int64; _mediaType=nothing) -> ComputeNodeModel, OpenAPI.Clients.ApiResponse <br/>
 > get_compute_node(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ ComputeNodeModel }, OpenAPI.Clients.ApiResponse
@@ -2112,6 +2313,42 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **list_access_groups**
+> list_access_groups(_api::DefaultApi; offset=nothing, limit=nothing, _mediaType=nothing) -> ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_access_groups(_api::DefaultApi, response_stream::Channel; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListAccessGroupsResponse }, OpenAPI.Clients.ApiResponse
+
+List all access groups.
+
+List all access groups.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 100]
+
+### Return type
+
+[**ListAccessGroupsResponse**](ListAccessGroupsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **list_compute_nodes**
 > list_compute_nodes(_api::DefaultApi, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, scheduled_compute_node_id=nothing, _mediaType=nothing) -> ListComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
 > list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, hostname=nothing, is_active=nothing, scheduled_compute_node_id=nothing, _mediaType=nothing) -> Channel{ ListComputeNodesResponse }, OpenAPI.Clients.ApiResponse
@@ -2226,6 +2463,43 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListFilesResponse**](ListFilesResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **list_group_members**
+> list_group_members(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> ListUserGroupMembershipsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_group_members(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListUserGroupMembershipsResponse }, OpenAPI.Clients.ApiResponse
+
+List members of an access group.
+
+List members of an access group.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the access group |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 100]
+
+### Return type
+
+[**ListUserGroupMembershipsResponse**](ListUserGroupMembershipsResponse.md)
 
 ### Authorization
 
@@ -2778,6 +3052,73 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **list_user_groups**
+> list_user_groups(_api::DefaultApi, user_name::String; offset=nothing, limit=nothing, _mediaType=nothing) -> ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_user_groups(_api::DefaultApi, response_stream::Channel, user_name::String; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListAccessGroupsResponse }, OpenAPI.Clients.ApiResponse
+
+List groups a user belongs to.
+
+List groups a user belongs to.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**user_name** | **String** | Username |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 100]
+
+### Return type
+
+[**ListAccessGroupsResponse**](ListAccessGroupsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **list_workflow_groups**
+> list_workflow_groups(_api::DefaultApi, id::Int64; _mediaType=nothing) -> ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_workflow_groups(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ ListAccessGroupsResponse }, OpenAPI.Clients.ApiResponse
+
+List access groups that have access to a workflow.
+
+List access groups that have access to a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the workflow |
+
+### Return type
+
+[**ListAccessGroupsResponse**](ListAccessGroupsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **list_workflows**
 > list_workflows(_api::DefaultApi; offset=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
 > list_workflows(_api::DefaultApi, response_stream::Channel; offset=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
@@ -2909,6 +3250,80 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ProcessChangedJobInputsResponse**](ProcessChangedJobInputsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **remove_user_from_group**
+> remove_user_from_group(_api::DefaultApi, id::Int64, user_name::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> remove_user_from_group(_api::DefaultApi, response_stream::Channel, id::Int64, user_name::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+
+Remove a user from an access group.
+
+Remove a user from an access group.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the access group |
+**user_name** | **String** | Username to remove |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any** |  | 
+
+### Return type
+
+**Any**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **remove_workflow_from_group**
+> remove_workflow_from_group(_api::DefaultApi, id::Int64, group_id::Int64; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> remove_workflow_from_group(_api::DefaultApi, response_stream::Channel, id::Int64, group_id::Int64; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+
+Revoke an access group's access to a workflow.
+
+Revoke an access group's access to a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | ID of the workflow |
+**group_id** | **Int64** | ID of the access group |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any** |  | 
+
+### Return type
+
+**Any**
 
 ### Authorization
 

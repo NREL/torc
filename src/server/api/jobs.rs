@@ -2029,6 +2029,9 @@ where
         // First get the job to ensure it exists and extract the JobModel
         let job = match self.get_job(id, context).await? {
             GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::ForbiddenErrorResponse(err) => {
+                return Ok(DeleteJobResponse::ForbiddenErrorResponse(err));
+            }
             GetJobResponse::NotFoundErrorResponse(err) => {
                 return Ok(DeleteJobResponse::NotFoundErrorResponse(err));
             }

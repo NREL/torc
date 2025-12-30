@@ -2534,7 +2534,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(CancelWorkflowResponse::DefaultErrorResponse(
+                return Ok(CancelWorkflowResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -2542,7 +2542,7 @@ where
                 ));
             }
             AccessCheckResult::NotFound(reason) => {
-                return Ok(CancelWorkflowResponse::DefaultErrorResponse(
+                return Ok(CancelWorkflowResponse::NotFoundErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "NotFound",
                         "message": reason
@@ -3062,7 +3062,7 @@ where
         match self.check_job_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(GetJobResponse::DefaultErrorResponse(
+                return Ok(GetJobResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3155,7 +3155,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(GetWorkflowResponse::DefaultErrorResponse(
+                return Ok(GetWorkflowResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3184,7 +3184,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(GetWorkflowStatusResponse::DefaultErrorResponse(
+                return Ok(GetWorkflowStatusResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3233,7 +3233,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(InitializeJobsResponse::DefaultErrorResponse(
+                return Ok(InitializeJobsResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3241,7 +3241,7 @@ where
                 ));
             }
             AccessCheckResult::NotFound(reason) => {
-                return Ok(InitializeJobsResponse::DefaultErrorResponse(
+                return Ok(InitializeJobsResponse::NotFoundErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "NotFound",
                         "message": reason
@@ -3601,7 +3601,7 @@ where
         match self.check_job_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(UpdateJobResponse::DefaultErrorResponse(
+                return Ok(UpdateJobResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3699,7 +3699,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(UpdateWorkflowResponse::DefaultErrorResponse(
+                return Ok(UpdateWorkflowResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -3729,7 +3729,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(UpdateWorkflowStatusResponse::DefaultErrorResponse(
+                return Ok(UpdateWorkflowStatusResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -4122,7 +4122,7 @@ where
         match self.check_job_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(DeleteJobResponse::DefaultErrorResponse(
+                return Ok(DeleteJobResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -4220,7 +4220,7 @@ where
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
             AccessCheckResult::Denied(reason) => {
-                return Ok(DeleteWorkflowResponse::DefaultErrorResponse(
+                return Ok(DeleteWorkflowResponse::ForbiddenErrorResponse(
                     models::ErrorResponse::new(serde_json::json!({
                         "error": "Forbidden",
                         "message": reason
@@ -4352,6 +4352,9 @@ where
         // 1. Call get_job. If the job doesn't exist, return a 404.
         let mut job = match self.jobs_api.get_job(id, context).await? {
             GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::ForbiddenErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(err));
+            }
             GetJobResponse::NotFoundErrorResponse(err) => {
                 return Ok(ManageStatusChangeResponse::NotFoundErrorResponse(err));
             }
@@ -4391,6 +4394,9 @@ where
             .await?
         {
             UpdateJobResponse::SuccessfulResponse(job) => job,
+            UpdateJobResponse::ForbiddenErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(err));
+            }
             UpdateJobResponse::NotFoundErrorResponse(err) => {
                 return Ok(ManageStatusChangeResponse::NotFoundErrorResponse(err));
             }
@@ -4449,6 +4455,10 @@ where
         );
         let mut job = match self.jobs_api.get_job(id, context).await? {
             GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::ForbiddenErrorResponse(err) => {
+                error!("Access denied for job {}: {:?}", id, err);
+                return Err(ApiError("Access denied for job".to_string()));
+            }
             GetJobResponse::NotFoundErrorResponse(err) => {
                 error!("Job not found {}: {:?}", id, err);
                 return Err(ApiError("Job not found".to_string()));
@@ -4568,6 +4578,10 @@ where
         // 1. Ensure the job exists.
         let mut job = match self.jobs_api.get_job(id, context).await? {
             GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::ForbiddenErrorResponse(err) => {
+                error!("Access denied for job {}: {:?}", id, err);
+                return Err(ApiError("Access denied for job".to_string()));
+            }
             GetJobResponse::NotFoundErrorResponse(err) => {
                 error!("Job not found {}: {:?}", id, err);
                 return Err(ApiError("Job not found".to_string()));

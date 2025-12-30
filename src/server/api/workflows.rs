@@ -969,6 +969,9 @@ where
         // First check if the workflow exists
         match self.get_workflow(id, context).await? {
             GetWorkflowResponse::SuccessfulResponse(_) => {}
+            GetWorkflowResponse::ForbiddenErrorResponse(err) => {
+                return Ok(UpdateWorkflowResponse::ForbiddenErrorResponse(err));
+            }
             GetWorkflowResponse::NotFoundErrorResponse(err) => {
                 return Ok(UpdateWorkflowResponse::NotFoundErrorResponse(err));
             }
@@ -1062,6 +1065,9 @@ where
         // First check if the workflow status exists
         match self.get_workflow_status(id, context).await? {
             GetWorkflowStatusResponse::SuccessfulResponse(_) => {}
+            GetWorkflowStatusResponse::ForbiddenErrorResponse(err) => {
+                return Ok(UpdateWorkflowStatusResponse::ForbiddenErrorResponse(err));
+            }
             GetWorkflowStatusResponse::NotFoundErrorResponse(err) => {
                 return Ok(UpdateWorkflowStatusResponse::NotFoundErrorResponse(err));
             }
@@ -1164,6 +1170,9 @@ where
         // First get the workflow to ensure it exists and extract the WorkflowModel
         let workflow = match self.get_workflow(id, context).await? {
             GetWorkflowResponse::SuccessfulResponse(workflow) => workflow,
+            GetWorkflowResponse::ForbiddenErrorResponse(err) => {
+                return Ok(DeleteWorkflowResponse::ForbiddenErrorResponse(err));
+            }
             GetWorkflowResponse::NotFoundErrorResponse(err) => {
                 return Ok(DeleteWorkflowResponse::NotFoundErrorResponse(err));
             }
@@ -1220,6 +1229,11 @@ where
 
         let workflow_status = match self.get_workflow_status(id, context).await? {
             GetWorkflowStatusResponse::SuccessfulResponse(status) => status,
+            GetWorkflowStatusResponse::ForbiddenErrorResponse(err) => {
+                // Return the forbidden error as a default error since this endpoint
+                // doesn't have a ForbiddenErrorResponse variant in the OpenAPI spec
+                return Ok(ResetWorkflowStatusResponse::DefaultErrorResponse(err));
+            }
             GetWorkflowStatusResponse::NotFoundErrorResponse(err) => {
                 return Ok(ResetWorkflowStatusResponse::NotFoundErrorResponse(err));
             }

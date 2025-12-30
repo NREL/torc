@@ -11,8 +11,80 @@ This can be used to construct the `OpenAPI.Clients.Client` instance.
 """
 basepath(::Type{ DefaultApi }) = "http://localhost/torc-service/v1"
 
+const _returntypes_add_user_to_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => UserGroupMembershipModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_add_user_to_group(_api::DefaultApi, id::Int64, body::UserGroupMembershipModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_add_user_to_group_DefaultApi, "/access_groups/{id}/members", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Add a user to an access group.
+
+Add a user to an access group.
+
+Params:
+- id::Int64 (required)
+- body::UserGroupMembershipModel (required)
+
+Return: UserGroupMembershipModel, OpenAPI.Clients.ApiResponse
+"""
+function add_user_to_group(_api::DefaultApi, id::Int64, body::UserGroupMembershipModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_user_to_group(_api, id, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function add_user_to_group(_api::DefaultApi, response_stream::Channel, id::Int64, body::UserGroupMembershipModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_user_to_group(_api, id, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_add_workflow_to_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowAccessGroupModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_add_workflow_to_group(_api::DefaultApi, id::Int64, body::WorkflowAccessGroupModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_add_workflow_to_group_DefaultApi, "/workflows/{id}/access_groups", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Grant an access group access to a workflow.
+
+Grant an access group access to a workflow.
+
+Params:
+- id::Int64 (required)
+- body::WorkflowAccessGroupModel (required)
+
+Return: WorkflowAccessGroupModel, OpenAPI.Clients.ApiResponse
+"""
+function add_workflow_to_group(_api::DefaultApi, id::Int64, body::WorkflowAccessGroupModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_workflow_to_group(_api, id, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function add_workflow_to_group(_api::DefaultApi, response_stream::Channel, id::Int64, body::WorkflowAccessGroupModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_workflow_to_group(_api, id, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_cancel_workflow_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -41,6 +113,40 @@ end
 
 function cancel_workflow(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_cancel_workflow(_api, id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_check_workflow_access_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AccessCheckResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_check_workflow_access(_api::DefaultApi, workflow_id::Int64, user_name::String; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_check_workflow_access_DefaultApi, "/access_check/{workflow_id}/{user_name}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "workflow_id", workflow_id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "user_name", user_name)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Check if a user can access a workflow.
+
+Check if a user can access a workflow.
+
+Params:
+- workflow_id::Int64 (required)
+- user_name::String (required)
+
+Return: AccessCheckResponse, OpenAPI.Clients.ApiResponse
+"""
+function check_workflow_access(_api::DefaultApi, workflow_id::Int64, user_name::String; _mediaType=nothing)
+    _ctx = _oacinternal_check_workflow_access(_api, workflow_id, user_name; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function check_workflow_access(_api::DefaultApi, response_stream::Channel, workflow_id::Int64, user_name::String; _mediaType=nothing)
+    _ctx = _oacinternal_check_workflow_access(_api, workflow_id, user_name; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -188,6 +294,38 @@ end
 
 function complete_job(_api::DefaultApi, response_stream::Channel, id::Int64, status::JobStatus, run_id::Int64, body::ResultModel; _mediaType=nothing)
     _ctx = _oacinternal_complete_job(_api, id, status, run_id, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_create_access_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AccessGroupModel,
+    Regex("^" * replace("409", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_create_access_group(_api::DefaultApi, body::AccessGroupModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_create_access_group_DefaultApi, "/access_groups", [], body)
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Create a new access group.
+
+Create a new access group.
+
+Params:
+- body::AccessGroupModel (required)
+
+Return: AccessGroupModel, OpenAPI.Clients.ApiResponse
+"""
+function create_access_group(_api::DefaultApi, body::AccessGroupModel; _mediaType=nothing)
+    _ctx = _oacinternal_create_access_group(_api, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function create_access_group(_api::DefaultApi, response_stream::Channel, body::AccessGroupModel; _mediaType=nothing)
+    _ctx = _oacinternal_create_access_group(_api, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -635,6 +773,40 @@ function create_workflow_action(_api::DefaultApi, response_stream::Channel, id::
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_delete_access_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AccessGroupModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_access_group(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_access_group_DefaultApi, "/access_groups/{id}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete an access group.
+
+Delete an access group.
+
+Params:
+- id::Int64 (required)
+- body::Any
+
+Return: AccessGroupModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_access_group(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_access_group(_api, id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_access_group(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_access_group(_api, id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_delete_all_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -868,6 +1040,8 @@ end
 
 const _returntypes_delete_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1332,6 +1506,8 @@ end
 
 const _returntypes_delete_workflow_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1360,6 +1536,39 @@ end
 
 function delete_workflow(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_delete_workflow(_api, id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_get_access_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AccessGroupModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_get_access_group(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_access_group_DefaultApi, "/access_groups/{id}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Get an access group by ID.
+
+Get an access group by ID.
+
+Params:
+- id::Int64 (required)
+
+Return: AccessGroupModel, OpenAPI.Clients.ApiResponse
+"""
+function get_access_group(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_get_access_group(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function get_access_group(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_get_access_group(_api, id; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -1461,6 +1670,8 @@ end
 
 const _returntypes_get_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1816,6 +2027,8 @@ end
 
 const _returntypes_get_workflow_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1881,6 +2094,8 @@ end
 
 const _returntypes_get_workflow_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowStatusModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1913,6 +2128,8 @@ end
 
 const _returntypes_initialize_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2009,6 +2226,40 @@ end
 
 function is_workflow_uninitialized(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
     _ctx = _oacinternal_is_workflow_uninitialized(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_list_access_groups_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListAccessGroupsResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_access_groups(_api::DefaultApi; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_access_groups_DefaultApi, "/access_groups", [])
+    OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List all access groups.
+
+List all access groups.
+
+Params:
+- offset::Int64
+- limit::Int64
+
+Return: ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_access_groups(_api::DefaultApi; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_access_groups(_api; offset=offset, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_access_groups(_api::DefaultApi, response_stream::Channel; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_access_groups(_api; offset=offset, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2147,6 +2398,43 @@ end
 
 function list_files(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, is_output=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_files(_api, workflow_id; produced_by_job_id=produced_by_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, name=name, path=path, is_output=is_output, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_list_group_members_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListUserGroupMembershipsResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_group_members(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_group_members_DefaultApi, "/access_groups/{id}/members", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List members of an access group.
+
+List members of an access group.
+
+Params:
+- id::Int64 (required)
+- offset::Int64
+- limit::Int64
+
+Return: ListUserGroupMembershipsResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_group_members(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_group_members(_api, id; offset=offset, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_group_members(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_group_members(_api, id; offset=offset, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2739,6 +3027,75 @@ function list_user_data(_api::DefaultApi, response_stream::Channel, workflow_id:
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_list_user_groups_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListAccessGroupsResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_user_groups(_api::DefaultApi, user_name::String; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_user_groups_DefaultApi, "/users/{user_name}/groups", [])
+    OpenAPI.Clients.set_param(_ctx.path, "user_name", user_name)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List groups a user belongs to.
+
+List groups a user belongs to.
+
+Params:
+- user_name::String (required)
+- offset::Int64
+- limit::Int64
+
+Return: ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_user_groups(_api::DefaultApi, user_name::String; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_user_groups(_api, user_name; offset=offset, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_user_groups(_api::DefaultApi, response_stream::Channel, user_name::String; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_user_groups(_api, user_name; offset=offset, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_list_workflow_groups_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListAccessGroupsResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_workflow_groups(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_workflow_groups_DefaultApi, "/workflows/{id}/access_groups", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List access groups that have access to a workflow.
+
+List access groups that have access to a workflow.
+
+Params:
+- id::Int64 (required)
+
+Return: ListAccessGroupsResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_workflow_groups(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_list_workflow_groups(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_workflow_groups(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_list_workflow_groups(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_list_workflows_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListWorkflowsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -2884,6 +3241,78 @@ end
 
 function process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, id::Int64; dry_run=nothing, body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_process_changed_job_inputs(_api, id; dry_run=dry_run, body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_remove_user_from_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_remove_user_from_group(_api::DefaultApi, id::Int64, user_name::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_remove_user_from_group_DefaultApi, "/access_groups/{id}/members/{user_name}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "user_name", user_name)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Remove a user from an access group.
+
+Remove a user from an access group.
+
+Params:
+- id::Int64 (required)
+- user_name::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function remove_user_from_group(_api::DefaultApi, id::Int64, user_name::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_remove_user_from_group(_api, id, user_name; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function remove_user_from_group(_api::DefaultApi, response_stream::Channel, id::Int64, user_name::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_remove_user_from_group(_api, id, user_name; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_remove_workflow_from_group_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("404", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_remove_workflow_from_group(_api::DefaultApi, id::Int64, group_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_remove_workflow_from_group_DefaultApi, "/workflows/{id}/access_groups/{group_id}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "group_id", group_id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Revoke an access group's access to a workflow.
+
+Revoke an access group's access to a workflow.
+
+Params:
+- id::Int64 (required)
+- group_id::Int64 (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function remove_workflow_from_group(_api::DefaultApi, id::Int64, group_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_remove_workflow_from_group(_api, id, group_id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function remove_workflow_from_group(_api::DefaultApi, response_stream::Channel, id::Int64, group_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_remove_workflow_from_group(_api, id, group_id; body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -3097,6 +3526,8 @@ end
 
 const _returntypes_update_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3328,6 +3759,8 @@ end
 
 const _returntypes_update_workflow_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3361,6 +3794,8 @@ end
 
 const _returntypes_update_workflow_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowStatusModel,
+    Regex("^" * replace("403", "x"=>".") * "\$") => ForbiddenErrorResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3392,11 +3827,15 @@ function update_workflow_status(_api::DefaultApi, response_stream::Channel, id::
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+export add_user_to_group
+export add_workflow_to_group
 export cancel_workflow
+export check_workflow_access
 export claim_action
 export claim_jobs_based_on_resources
 export claim_next_jobs
 export complete_job
+export create_access_group
 export create_compute_node
 export create_event
 export create_file
@@ -3411,6 +3850,7 @@ export create_slurm_scheduler
 export create_user_data
 export create_workflow
 export create_workflow_action
+export delete_access_group
 export delete_all_user_data
 export delete_compute_node
 export delete_compute_nodes
@@ -3433,6 +3873,7 @@ export delete_slurm_scheduler
 export delete_slurm_schedulers
 export delete_user_data
 export delete_workflow
+export get_access_group
 export get_compute_node
 export get_event
 export get_file
@@ -3453,9 +3894,11 @@ export get_workflow_status
 export initialize_jobs
 export is_workflow_complete
 export is_workflow_uninitialized
+export list_access_groups
 export list_compute_nodes
 export list_events
 export list_files
+export list_group_members
 export list_job_dependencies
 export list_job_file_relationships
 export list_job_ids
@@ -3470,10 +3913,14 @@ export list_results
 export list_scheduled_compute_nodes
 export list_slurm_schedulers
 export list_user_data
+export list_user_groups
+export list_workflow_groups
 export list_workflows
 export manage_status_change
 export ping
 export process_changed_job_inputs
+export remove_user_from_group
+export remove_workflow_from_group
 export reset_job_status
 export reset_workflow_status
 export start_job

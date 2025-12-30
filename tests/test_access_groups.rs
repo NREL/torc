@@ -1,6 +1,8 @@
 mod common;
 
-use common::{ServerProcess, start_server, start_server_with_access_control};
+use common::{
+    AccessControlServerProcess, ServerProcess, start_server, start_server_with_access_control,
+};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use rstest::rstest;
@@ -597,7 +599,7 @@ fn setup_two_teams(config: &Configuration) -> (i64, i64) {
 
 #[rstest]
 fn test_enforcement_owner_can_access_own_workflow(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -617,7 +619,7 @@ fn test_enforcement_owner_can_access_own_workflow(
 
 #[rstest]
 fn test_enforcement_non_member_cannot_access_workflow(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -636,7 +638,7 @@ fn test_enforcement_non_member_cannot_access_workflow(
 
 #[rstest]
 fn test_enforcement_team_member_can_access_shared_workflow(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -686,7 +688,7 @@ fn test_enforcement_team_member_can_access_shared_workflow(
 
 #[rstest]
 fn test_enforcement_multi_team_member_can_access_both_team_workflows(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -755,7 +757,7 @@ fn test_enforcement_multi_team_member_can_access_both_team_workflows(
 
 #[rstest]
 fn test_enforcement_revoke_access_removes_permission(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -789,7 +791,7 @@ fn test_enforcement_revoke_access_removes_permission(
 
 #[rstest]
 fn test_enforcement_workflow_shared_with_multiple_groups(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -828,7 +830,7 @@ fn test_enforcement_workflow_shared_with_multiple_groups(
 
 #[rstest]
 fn test_enforcement_remove_user_from_group_revokes_access(
-    start_server_with_access_control: &ServerProcess,
+    start_server_with_access_control: &AccessControlServerProcess,
 ) {
     let config = &start_server_with_access_control.config;
 
@@ -877,4 +879,218 @@ fn test_enforcement_remove_user_from_group_revokes_access(
         !no_access.has_access,
         "User should NOT have access after being removed from group"
     );
+}
+
+// ============================================================================
+// API Endpoint Access Control Tests
+// ============================================================================
+//
+// These tests verify that actual API endpoints (get_workflow, get_job, etc.)
+// return 403 Forbidden when the user lacks access.
+
+/// Helper to create a configuration with specific basic auth credentials
+fn config_with_auth(base_config: &Configuration, username: &str) -> Configuration {
+    Configuration {
+        base_path: base_config.base_path.clone(),
+        user_agent: base_config.user_agent.clone(),
+        client: base_config.client.clone(),
+        basic_auth: Some((username.to_string(), Some("password".to_string()))),
+        oauth_access_token: None,
+        bearer_access_token: None,
+        api_key: None,
+    }
+}
+
+/// Helper to create a job for a workflow
+fn create_job_for_workflow(
+    config: &Configuration,
+    workflow_id: i64,
+    name: &str,
+) -> models::JobModel {
+    let job = models::JobModel::new(workflow_id, name.to_string(), "echo test".to_string());
+    default_api::create_job(config, job).expect("Failed to create job")
+}
+
+/// Helper to check if an error response indicates access denial (HTTP 403 Forbidden).
+fn is_access_denied_error<T: std::fmt::Debug>(
+    result: &Result<T, torc::client::apis::Error<impl std::fmt::Debug>>,
+) -> bool {
+    match result {
+        Err(torc::client::apis::Error::ResponseError(content)) => {
+            // Check for HTTP 403 status code
+            content.status.as_u16() == 403
+        }
+        _ => false,
+    }
+}
+
+#[rstest]
+fn test_get_workflow_returns_error_for_unauthorized_user(
+    start_server_with_access_control: &AccessControlServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Create a workflow owned by "owner"
+    let workflow = create_workflow_with_user(config, "api-test-workflow", "owner");
+    let workflow_id = workflow.id.unwrap();
+
+    // Create a config with different user credentials
+    let unauthorized_config = config_with_auth(config, "unauthorized_user");
+
+    // Try to get the workflow - should fail with access denied
+    let result = default_api::get_workflow(&unauthorized_config, workflow_id);
+
+    assert!(
+        is_access_denied_error(&result),
+        "Expected access denied error, got: {:?}",
+        result
+    );
+}
+
+#[rstest]
+fn test_get_job_returns_error_for_unauthorized_user(
+    start_server_with_access_control: &AccessControlServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Create a workflow owned by "owner"
+    let workflow = create_workflow_with_user(config, "job-access-test-workflow", "job_owner");
+    let workflow_id = workflow.id.unwrap();
+
+    // Create a job in that workflow
+    let job = create_job_for_workflow(config, workflow_id, "test-job");
+    let job_id = job.id.unwrap();
+
+    // Create a config with different user credentials
+    let unauthorized_config = config_with_auth(config, "unauthorized_job_user");
+
+    // Try to get the job - should fail with access denied
+    let result = default_api::get_job(&unauthorized_config, job_id);
+
+    assert!(
+        is_access_denied_error(&result),
+        "Expected access denied error, got: {:?}",
+        result
+    );
+}
+
+#[rstest]
+fn test_authorized_user_can_access_shared_workflow_via_api(
+    start_server_with_access_control: &AccessControlServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams
+    let (ml_team_id, _) = setup_two_teams(config);
+
+    // Create a workflow
+    let workflow = create_workflow_with_user(config, "shared-api-workflow", "api_owner");
+    let workflow_id = workflow.id.unwrap();
+
+    // Share with ML team
+    default_api::add_workflow_to_group(config, workflow_id, ml_team_id)
+        .expect("Failed to share workflow");
+
+    // Create a job
+    let job = create_job_for_workflow(config, workflow_id, "shared-test-job");
+    let job_id = job.id.unwrap();
+
+    // Alice (ML team member) should be able to access the workflow
+    let alice_config = config_with_auth(config, "alice");
+    let workflow_result = default_api::get_workflow(&alice_config, workflow_id);
+    assert!(
+        workflow_result.is_ok(),
+        "Alice should be able to get workflow: {:?}",
+        workflow_result.err()
+    );
+
+    // Alice should also be able to access the job
+    let job_result = default_api::get_job(&alice_config, job_id);
+    assert!(
+        job_result.is_ok(),
+        "Alice should be able to get job: {:?}",
+        job_result.err()
+    );
+
+    // Carol (Data team, NOT ML team) should NOT be able to access
+    let carol_config = config_with_auth(config, "carol");
+    let carol_workflow_result = default_api::get_workflow(&carol_config, workflow_id);
+    match carol_workflow_result {
+        Err(torc::client::apis::Error::ResponseError(content)) => {
+            assert_eq!(
+                content.status,
+                reqwest::StatusCode::FORBIDDEN,
+                "Carol should get 403 for workflow"
+            );
+        }
+        Ok(_) => panic!("Carol should NOT be able to access ML team workflow"),
+        Err(e) => panic!("Unexpected error for Carol: {:?}", e),
+    }
+
+    let carol_job_result = default_api::get_job(&carol_config, job_id);
+    match carol_job_result {
+        Err(torc::client::apis::Error::ResponseError(content)) => {
+            assert_eq!(
+                content.status,
+                reqwest::StatusCode::FORBIDDEN,
+                "Carol should get 403 for job"
+            );
+        }
+        Ok(_) => panic!("Carol should NOT be able to access job in ML team workflow"),
+        Err(e) => panic!("Unexpected error for Carol: {:?}", e),
+    }
+}
+
+#[rstest]
+fn test_multi_team_user_can_access_both_workflows_via_api(
+    start_server_with_access_control: &AccessControlServerProcess,
+) {
+    let config = &start_server_with_access_control.config;
+
+    // Set up teams (shared_user is in both)
+    let (ml_team_id, data_team_id) = setup_two_teams(config);
+
+    // Create ML workflow and share with ML team
+    let ml_workflow = create_workflow_with_user(config, "ml-api-workflow", "ml_api_owner");
+    let ml_workflow_id = ml_workflow.id.unwrap();
+    default_api::add_workflow_to_group(config, ml_workflow_id, ml_team_id)
+        .expect("Failed to share ML workflow");
+
+    // Create Data workflow and share with Data team
+    let data_workflow = create_workflow_with_user(config, "data-api-workflow", "data_api_owner");
+    let data_workflow_id = data_workflow.id.unwrap();
+    default_api::add_workflow_to_group(config, data_workflow_id, data_team_id)
+        .expect("Failed to share Data workflow");
+
+    // shared_user should be able to access both
+    let shared_config = config_with_auth(config, "shared_user");
+
+    let ml_result = default_api::get_workflow(&shared_config, ml_workflow_id);
+    assert!(
+        ml_result.is_ok(),
+        "shared_user should access ML workflow: {:?}",
+        ml_result.err()
+    );
+
+    let data_result = default_api::get_workflow(&shared_config, data_workflow_id);
+    assert!(
+        data_result.is_ok(),
+        "shared_user should access Data workflow: {:?}",
+        data_result.err()
+    );
+
+    // alice (ML only) should only access ML workflow
+    let alice_config = config_with_auth(config, "alice");
+
+    let alice_ml = default_api::get_workflow(&alice_config, ml_workflow_id);
+    assert!(alice_ml.is_ok(), "Alice should access ML workflow");
+
+    let alice_data = default_api::get_workflow(&alice_config, data_workflow_id);
+    match alice_data {
+        Err(torc::client::apis::Error::ResponseError(content)) => {
+            assert_eq!(content.status, reqwest::StatusCode::FORBIDDEN);
+        }
+        Ok(_) => panic!("Alice should NOT access Data workflow"),
+        Err(e) => panic!("Unexpected error: {:?}", e),
+    }
 }

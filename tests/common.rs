@@ -1282,8 +1282,56 @@ pub fn run_jobs_cli_command(
 // Access Control Server Fixture
 // ============================================================================
 
+/// Create an htpasswd file with test users for access control tests.
+/// Uses torc-htpasswd to add users with bcrypt-hashed passwords.
+fn create_htpasswd_file(users: &[&str]) -> NamedTempFile {
+    let htpasswd_file = NamedTempFile::new().expect("Failed to create htpasswd temp file");
+    let htpasswd_path = htpasswd_file.path().to_string_lossy().to_string();
+
+    // Create each user with password "password" using torc-htpasswd add
+    for user in users.iter() {
+        let status = Command::new(get_exe_path("./target/debug/torc-htpasswd"))
+            .arg("add")
+            .arg("--file")
+            .arg(&htpasswd_path)
+            .arg("--password")
+            .arg("password")
+            .arg(user)
+            .status()
+            .expect("Failed to run torc-htpasswd");
+
+        if !status.success() {
+            panic!(
+                "torc-htpasswd failed for user {} with status: {}",
+                user, status
+            );
+        }
+    }
+
+    htpasswd_file
+}
+
+/// Struct to hold both the server process and the htpasswd file
+pub struct AccessControlServerProcess {
+    pub server: ServerProcess,
+    #[allow(dead_code)]
+    htpasswd_file: NamedTempFile, // Keep the htpasswd file alive
+}
+
+impl std::ops::Deref for AccessControlServerProcess {
+    type Target = ServerProcess;
+
+    fn deref(&self) -> &Self::Target {
+        &self.server
+    }
+}
+
 /// Start a server with access control enforcement enabled
-fn start_process_with_access_control(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
+fn start_process_with_access_control(
+    db_url: &str,
+    db_file: NamedTempFile,
+    htpasswd_file: NamedTempFile,
+) -> AccessControlServerProcess {
     let port = find_available_port();
     println!("Setting up database with url: {}", db_url);
     let status = Command::new("sqlx")
@@ -1306,6 +1354,7 @@ fn start_process_with_access_control(db_url: &str, db_file: NamedTempFile) -> Se
     }
 
     eprintln!("Starting server with access control on port {}", port);
+    let htpasswd_path = htpasswd_file.path().to_string_lossy().to_string();
     let child = Command::new(get_exe_path("./target/debug/torc-server"))
         .arg("run")
         .arg("--port")
@@ -1313,6 +1362,8 @@ fn start_process_with_access_control(db_url: &str, db_file: NamedTempFile) -> Se
         .arg("--completion-check-interval-secs")
         .arg("0.1")
         .arg("--enforce-access-control") // Enable access control enforcement
+        .arg("--auth-file")
+        .arg(&htpasswd_path)
         .env("DATABASE_URL", db_url)
         .env("RUST_LOG", "info")
         .stdout(std::process::Stdio::inherit())
@@ -1335,30 +1386,76 @@ fn start_process_with_access_control(db_url: &str, db_file: NamedTempFile) -> Se
     );
     let mut config = Configuration::new();
     config.base_path = get_server_url(port);
-    ServerProcess {
-        child,
-        db_file,
-        port,
-        config,
+    AccessControlServerProcess {
+        server: ServerProcess {
+            child,
+            db_file,
+            port,
+            config,
+        },
+        htpasswd_file,
     }
 }
 
 /// Start a test server instance with access control enforcement enabled
 ///
 /// This fixture creates a server where users can only access workflows they own
-/// or have group access to.
+/// or have group access to. It creates an htpasswd file with test users that
+/// can be authenticated.
+///
+/// Test users (all with password "password"):
+/// - alice, bob (ML team members)
+/// - carol, dave (Data team members)
+/// - shared_user (member of both teams)
+/// - owner, api_owner, ml_owner, data_owner, job_owner, etc. (workflow owners)
 #[fixture]
 #[once]
-pub fn start_server_with_access_control() -> ServerProcess {
+pub fn start_server_with_access_control() -> AccessControlServerProcess {
     // Initialize logger for client-side code running in tests
     let _ = env_logger::try_init();
 
+    // Create htpasswd file with all test users
+    // These are the users used in access control tests
+    let test_users = [
+        // Team members
+        "alice",
+        "bob",
+        "carol",
+        "dave",
+        "shared_user",
+        // Workflow owners
+        "owner",
+        "owner_user",
+        "api_owner",
+        "ml_owner",
+        "data_owner",
+        "ml_api_owner",
+        "data_api_owner",
+        "job_owner",
+        "workflow_creator",
+        "some_owner",
+        "wf_owner",
+        "creator",
+        "private-owner",
+        "wf-user",
+        "wf-user-2",
+        "wf-user-3",
+        // Test-specific users
+        "unauthorized_user",
+        "unauthorized_job_user",
+        "removable_user",
+        "outsider",
+    ];
+
+    let htpasswd_file = create_htpasswd_file(&test_users);
+    eprintln!("Created htpasswd file with {} users", test_users.len());
+
     let db_file = NamedTempFile::new().expect("Failed to create temporary file");
     let url = format!("sqlite:{}", db_file.path().display());
-    let process = start_process_with_access_control(&url, db_file);
+    let process = start_process_with_access_control(&url, db_file, htpasswd_file);
     eprint!(
         "Started server with access control, database file {:?} on port {}",
-        process.db_file, process.port
+        process.server.db_file, process.server.port
     );
     process
 }
