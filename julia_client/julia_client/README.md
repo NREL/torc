@@ -21,11 +21,15 @@ Documentation is also embedded in Julia which can be used with a Julia specific 
 
 Class | Method
 ------------ | -------------
+*DefaultApi* | [**add_user_to_group**](docs/DefaultApi.md#add_user_to_group)<br/>**POST** /access_groups/{id}/members<br/>Add a user to an access group.
+*DefaultApi* | [**add_workflow_to_group**](docs/DefaultApi.md#add_workflow_to_group)<br/>**POST** /workflows/{id}/access_groups<br/>Grant an access group access to a workflow.
 *DefaultApi* | [**cancel_workflow**](docs/DefaultApi.md#cancel_workflow)<br/>**PUT** /workflows/{id}/cancel<br/>Cancel a workflow. Workers will detect the status change and cancel jobs.
+*DefaultApi* | [**check_workflow_access**](docs/DefaultApi.md#check_workflow_access)<br/>**GET** /access_check/{workflow_id}/{user_name}<br/>Check if a user can access a workflow.
 *DefaultApi* | [**claim_action**](docs/DefaultApi.md#claim_action)<br/>**POST** /workflows/{id}/actions/{action_id}/claim<br/>Atomically claim a workflow action.
 *DefaultApi* | [**claim_jobs_based_on_resources**](docs/DefaultApi.md#claim_jobs_based_on_resources)<br/>**POST** /workflows/{id}/claim_jobs_based_on_resources/{limit}<br/>Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 *DefaultApi* | [**claim_next_jobs**](docs/DefaultApi.md#claim_next_jobs)<br/>**POST** /workflows/{id}/claim_next_jobs<br/>Return user-requested number of jobs that are ready for submission. Sets status to pending.
 *DefaultApi* | [**complete_job**](docs/DefaultApi.md#complete_job)<br/>**POST** /jobs/{id}/complete_job/{status}/{run_id}<br/>Complete a job, connect it to a result, and manage side effects.
+*DefaultApi* | [**create_access_group**](docs/DefaultApi.md#create_access_group)<br/>**POST** /access_groups<br/>Create a new access group.
 *DefaultApi* | [**create_compute_node**](docs/DefaultApi.md#create_compute_node)<br/>**POST** /compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**create_event**](docs/DefaultApi.md#create_event)<br/>**POST** /events<br/>Store an event.
 *DefaultApi* | [**create_file**](docs/DefaultApi.md#create_file)<br/>**POST** /files<br/>Store a file.
@@ -40,6 +44,7 @@ Class | Method
 *DefaultApi* | [**create_user_data**](docs/DefaultApi.md#create_user_data)<br/>**POST** /user_data<br/>Store a user data record.
 *DefaultApi* | [**create_workflow**](docs/DefaultApi.md#create_workflow)<br/>**POST** /workflows<br/>Store a workflow.
 *DefaultApi* | [**create_workflow_action**](docs/DefaultApi.md#create_workflow_action)<br/>**POST** /workflows/{id}/actions<br/>Create a workflow action.
+*DefaultApi* | [**delete_access_group**](docs/DefaultApi.md#delete_access_group)<br/>**DELETE** /access_groups/{id}<br/>Delete an access group.
 *DefaultApi* | [**delete_all_user_data**](docs/DefaultApi.md#delete_all_user_data)<br/>**DELETE** /user_data<br/>Delete all user data records for one workflow.
 *DefaultApi* | [**delete_compute_node**](docs/DefaultApi.md#delete_compute_node)<br/>**DELETE** /compute_nodes/{id}<br/>Delete a compute node.
 *DefaultApi* | [**delete_compute_nodes**](docs/DefaultApi.md#delete_compute_nodes)<br/>**DELETE** /compute_nodes<br/>Delete all compute node records for one workflow.
@@ -62,6 +67,7 @@ Class | Method
 *DefaultApi* | [**delete_slurm_schedulers**](docs/DefaultApi.md#delete_slurm_schedulers)<br/>**DELETE** /slurm_schedulers<br/>Retrieve all Slurm compute node configurations for one workflow.
 *DefaultApi* | [**delete_user_data**](docs/DefaultApi.md#delete_user_data)<br/>**DELETE** /user_data/{id}<br/>Delete a user data record.
 *DefaultApi* | [**delete_workflow**](docs/DefaultApi.md#delete_workflow)<br/>**DELETE** /workflows/{id}<br/>Delete a workflow.
+*DefaultApi* | [**get_access_group**](docs/DefaultApi.md#get_access_group)<br/>**GET** /access_groups/{id}<br/>Get an access group by ID.
 *DefaultApi* | [**get_compute_node**](docs/DefaultApi.md#get_compute_node)<br/>**GET** /compute_nodes/{id}<br/>Retrieve a compute node by ID.
 *DefaultApi* | [**get_event**](docs/DefaultApi.md#get_event)<br/>**GET** /events/{id}<br/>Retrieve an event by ID.
 *DefaultApi* | [**get_file**](docs/DefaultApi.md#get_file)<br/>**GET** /files/{id}<br/>Retrieve a file.
@@ -82,9 +88,11 @@ Class | Method
 *DefaultApi* | [**initialize_jobs**](docs/DefaultApi.md#initialize_jobs)<br/>**POST** /workflows/{id}/initialize_jobs<br/>Initialize job relationships based on file and user_data relationships.
 *DefaultApi* | [**is_workflow_complete**](docs/DefaultApi.md#is_workflow_complete)<br/>**GET** /workflows/{id}/is_complete<br/>Return true if all jobs in the workflow are complete.
 *DefaultApi* | [**is_workflow_uninitialized**](docs/DefaultApi.md#is_workflow_uninitialized)<br/>**GET** /workflows/{id}/is_uninitialized<br/>Return true if all jobs in the workflow are uninitialized or disabled.
+*DefaultApi* | [**list_access_groups**](docs/DefaultApi.md#list_access_groups)<br/>**GET** /access_groups<br/>List all access groups.
 *DefaultApi* | [**list_compute_nodes**](docs/DefaultApi.md#list_compute_nodes)<br/>**GET** /compute_nodes<br/>Retrieve all compute node records for one workflow.
 *DefaultApi* | [**list_events**](docs/DefaultApi.md#list_events)<br/>**GET** /events<br/>Retrieve all events for one workflow.
 *DefaultApi* | [**list_files**](docs/DefaultApi.md#list_files)<br/>**GET** /files<br/>Retrieve all files for one workflow.
+*DefaultApi* | [**list_group_members**](docs/DefaultApi.md#list_group_members)<br/>**GET** /access_groups/{id}/members<br/>List members of an access group.
 *DefaultApi* | [**list_job_dependencies**](docs/DefaultApi.md#list_job_dependencies)<br/>**GET** /workflows/{id}/job_dependencies<br/>Retrieve job blocking relationships for a workflow.
 *DefaultApi* | [**list_job_file_relationships**](docs/DefaultApi.md#list_job_file_relationships)<br/>**GET** /workflows/{id}/job_file_relationships<br/>Retrieve job-file relationships for a workflow.
 *DefaultApi* | [**list_job_ids**](docs/DefaultApi.md#list_job_ids)<br/>**GET** /workflows/{id}/job_ids<br/>Retrieve all job IDs for one workflow.
@@ -99,10 +107,14 @@ Class | Method
 *DefaultApi* | [**list_scheduled_compute_nodes**](docs/DefaultApi.md#list_scheduled_compute_nodes)<br/>**GET** /scheduled_compute_nodes<br/>Retrieve scheduled compute node records for one workflow.
 *DefaultApi* | [**list_slurm_schedulers**](docs/DefaultApi.md#list_slurm_schedulers)<br/>**GET** /slurm_schedulers<br/>Retrieve a Slurm compute node configuration.
 *DefaultApi* | [**list_user_data**](docs/DefaultApi.md#list_user_data)<br/>**GET** /user_data<br/>Retrieve all user data records for one workflow.
+*DefaultApi* | [**list_user_groups**](docs/DefaultApi.md#list_user_groups)<br/>**GET** /users/{user_name}/groups<br/>List groups a user belongs to.
+*DefaultApi* | [**list_workflow_groups**](docs/DefaultApi.md#list_workflow_groups)<br/>**GET** /workflows/{id}/access_groups<br/>List access groups that have access to a workflow.
 *DefaultApi* | [**list_workflows**](docs/DefaultApi.md#list_workflows)<br/>**GET** /workflows<br/>Retrieve all workflows.
 *DefaultApi* | [**manage_status_change**](docs/DefaultApi.md#manage_status_change)<br/>**PUT** /jobs/{id}/manage_status_change/{status}/{run_id}<br/>Change the status of a job and manage side effects.
 *DefaultApi* | [**ping**](docs/DefaultApi.md#ping)<br/>**GET** /ping<br/>Check if the service is running.
 *DefaultApi* | [**process_changed_job_inputs**](docs/DefaultApi.md#process_changed_job_inputs)<br/>**POST** /workflows/{id}/process_changed_job_inputs<br/>Check for changed job inputs and update status accordingly.
+*DefaultApi* | [**remove_user_from_group**](docs/DefaultApi.md#remove_user_from_group)<br/>**DELETE** /access_groups/{id}/members/{user_name}<br/>Remove a user from an access group.
+*DefaultApi* | [**remove_workflow_from_group**](docs/DefaultApi.md#remove_workflow_from_group)<br/>**DELETE** /workflows/{id}/access_groups/{group_id}<br/>Revoke an access group&#39;s access to a workflow.
 *DefaultApi* | [**reset_job_status**](docs/DefaultApi.md#reset_job_status)<br/>**POST** /workflows/{id}/reset_job_status<br/>Reset status for jobs to uninitialized.
 *DefaultApi* | [**reset_workflow_status**](docs/DefaultApi.md#reset_workflow_status)<br/>**POST** /workflows/{id}/reset_status<br/>Reset worklow status.
 *DefaultApi* | [**start_job**](docs/DefaultApi.md#start_job)<br/>**PUT** /jobs/{id}/start_job/{run_id}/{compute_node_id}<br/>Start a job and manage side effects.
@@ -122,6 +134,8 @@ Class | Method
 
 ## Models
 
+ - [AccessCheckResponse](docs/AccessCheckResponse.md)
+ - [AccessGroupModel](docs/AccessGroupModel.md)
  - [ClaimAction200Response](docs/ClaimAction200Response.md)
  - [ClaimActionRequest](docs/ClaimActionRequest.md)
  - [ClaimJobsBasedOnResourcesResponse](docs/ClaimJobsBasedOnResourcesResponse.md)
@@ -133,6 +147,7 @@ Class | Method
  - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
  - [EventModel](docs/EventModel.md)
  - [FileModel](docs/FileModel.md)
+ - [ForbiddenErrorResponse](docs/ForbiddenErrorResponse.md)
  - [GetReadyJobRequirementsResponse](docs/GetReadyJobRequirementsResponse.md)
  - [IsCompleteResponse](docs/IsCompleteResponse.md)
  - [IsUninitializedResponse](docs/IsUninitializedResponse.md)
@@ -143,6 +158,7 @@ Class | Method
  - [JobUserDataRelationshipModel](docs/JobUserDataRelationshipModel.md)
  - [JobsModel](docs/JobsModel.md)
  - [JobsSortMethod](docs/JobsSortMethod.md)
+ - [ListAccessGroupsResponse](docs/ListAccessGroupsResponse.md)
  - [ListComputeNodesResponse](docs/ListComputeNodesResponse.md)
  - [ListEventsResponse](docs/ListEventsResponse.md)
  - [ListFilesResponse](docs/ListFilesResponse.md)
@@ -159,6 +175,7 @@ Class | Method
  - [ListScheduledComputeNodesResponse](docs/ListScheduledComputeNodesResponse.md)
  - [ListSlurmSchedulersResponse](docs/ListSlurmSchedulersResponse.md)
  - [ListUserDataResponse](docs/ListUserDataResponse.md)
+ - [ListUserGroupMembershipsResponse](docs/ListUserGroupMembershipsResponse.md)
  - [ListWorkflowsResponse](docs/ListWorkflowsResponse.md)
  - [LocalSchedulerModel](docs/LocalSchedulerModel.md)
  - [NotFoundErrorResponse](docs/NotFoundErrorResponse.md)
@@ -170,6 +187,8 @@ Class | Method
  - [ScheduledComputeNodesModel](docs/ScheduledComputeNodesModel.md)
  - [SlurmSchedulerModel](docs/SlurmSchedulerModel.md)
  - [UserDataModel](docs/UserDataModel.md)
+ - [UserGroupMembershipModel](docs/UserGroupMembershipModel.md)
+ - [WorkflowAccessGroupModel](docs/WorkflowAccessGroupModel.md)
  - [WorkflowActionModel](docs/WorkflowActionModel.md)
  - [WorkflowModel](docs/WorkflowModel.md)
  - [WorkflowStatusModel](docs/WorkflowStatusModel.md)

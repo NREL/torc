@@ -14,9 +14,6 @@ pub struct ClientConfig {
     /// Output format (table or json)
     pub format: String,
 
-    /// Username for basic authentication
-    pub username: Option<String>,
-
     /// Log level (error, warn, info, debug, trace)
     pub log_level: String,
 
@@ -38,7 +35,6 @@ impl Default for ClientConfig {
         Self {
             api_url: "http://localhost:8080/torc-service/v1".to_string(),
             format: "table".to_string(),
-            username: None,
             log_level: "info".to_string(),
             run: ClientRunConfig::default(),
             slurm: ClientSlurmConfig::default(),
@@ -272,7 +268,6 @@ mod tests {
             "http://localhost:8080/torc-service/v1".to_string()
         );
         assert_eq!(config.format, "table");
-        assert!(config.username.is_none());
         assert_eq!(config.log_level, "info");
     }
 

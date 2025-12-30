@@ -51,6 +51,16 @@ struct ServerConfig {
     #[arg(long, default_value_t = false)]
     require_auth: bool,
 
+    /// TTL in seconds for credential cache (0 to disable). Caching avoids repeated bcrypt
+    /// verification (~250ms each at cost 12) for the same credentials within the TTL window.
+    #[arg(long, default_value_t = 60, env = "TORC_CREDENTIAL_CACHE_TTL_SECS")]
+    credential_cache_ttl_secs: u64,
+
+    /// Enforce access control based on workflow ownership and group membership.
+    /// When enabled, users can only access workflows they own or have group access to.
+    #[arg(long, default_value_t = false)]
+    enforce_access_control: bool,
+
     /// Directory for log files (enables file logging with size-based rotation)
     #[arg(long, env = "TORC_LOG_DIR")]
     log_dir: Option<PathBuf>,
@@ -71,6 +81,11 @@ struct ServerConfig {
     /// Defaults to 60s for `run`, 5s for `service install`
     #[arg(short, long, env = "TORC_COMPLETION_CHECK_INTERVAL_SECS")]
     completion_check_interval_secs: Option<f64>,
+
+    /// Users to add to the admin group (can be specified multiple times).
+    /// These users can create and manage access groups.
+    #[arg(long = "admin-user", env = "TORC_ADMIN_USERS")]
+    admin_users: Vec<String>,
 }
 
 const STYLES: styling::Styles = styling::Styles::styled()
@@ -107,6 +122,7 @@ enum Commands {
 }
 
 #[derive(clap::Subcommand)]
+#[allow(clippy::large_enum_variant)]
 enum ServiceAction {
     /// Install the server as a system service
     Install {
@@ -254,6 +270,13 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
             .auth_file
             .or_else(|| server_file_config.auth_file.clone()),
         require_auth: cli_config.require_auth || server_file_config.require_auth,
+        credential_cache_ttl_secs: if cli_config.credential_cache_ttl_secs != 60 {
+            cli_config.credential_cache_ttl_secs
+        } else {
+            server_file_config.credential_cache_ttl_secs
+        },
+        enforce_access_control: cli_config.enforce_access_control
+            || server_file_config.enforce_access_control,
         log_dir: cli_config
             .log_dir
             .or_else(|| server_file_config.logging.log_dir.clone()),
@@ -263,6 +286,7 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
         completion_check_interval_secs: cli_config
             .completion_check_interval_secs
             .or(Some(server_file_config.completion_check_interval_secs)),
+        admin_users: cli_config.admin_users,
     };
 
     // Handle daemonization BEFORE initializing logging
@@ -427,13 +451,31 @@ fn run_server(cli_config: ServerConfig) -> Result<()> {
             .completion_check_interval_secs
             .unwrap_or(DEFAULT_RUN_INTERVAL_SECS);
 
+        if config.enforce_access_control {
+            info!("Access control is ENABLED - users can only access their own workflows and workflows shared via access groups");
+        }
+
+        // Get admin users from config and CLI (merge, with CLI taking precedence)
+        let mut admin_users = server_file_config.admin_users.clone();
+        for user in &config.admin_users {
+            if !admin_users.contains(user) {
+                admin_users.push(user.clone());
+            }
+        }
+        if !admin_users.is_empty() {
+            info!("Admin users configured: {:?}", admin_users);
+        }
+
         server::create(
             &addr,
             config.https,
             pool,
             htpasswd,
             config.require_auth,
+            config.credential_cache_ttl_secs,
+            config.enforce_access_control,
             completion_check_interval_secs,
+            admin_users,
         )
         .await;
         Ok(())

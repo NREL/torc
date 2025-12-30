@@ -150,17 +150,19 @@ Settings for `torc-server`.
 
 ### `[server]` Section
 
-| Option                           | Type   | Default     | Description                                             |
-| -------------------------------- | ------ | ----------- | ------------------------------------------------------- |
-| `log_level`                      | string | `info`      | Log level                                               |
-| `https`                          | bool   | `false`     | Enable HTTPS                                            |
-| `url`                            | string | `localhost` | Hostname/IP to bind to                                  |
-| `port`                           | int    | `8080`      | Port to listen on                                       |
-| `threads`                        | int    | `1`         | Number of worker threads                                |
-| `database`                       | string | (none)      | SQLite database path (falls back to `DATABASE_URL` env) |
-| `auth_file`                      | string | (none)      | Path to htpasswd file                                   |
-| `require_auth`                   | bool   | `false`     | Require authentication for all requests                 |
-| `completion_check_interval_secs` | float  | `30.0`      | Background job processing interval                      |
+| Option                           | Type         | Default     | Description                                             |
+| -------------------------------- | ------------ | ----------- | ------------------------------------------------------- |
+| `log_level`                      | string       | `info`      | Log level                                               |
+| `https`                          | bool         | `false`     | Enable HTTPS                                            |
+| `url`                            | string       | `localhost` | Hostname/IP to bind to                                  |
+| `port`                           | int          | `8080`      | Port to listen on                                       |
+| `threads`                        | int          | `1`         | Number of worker threads                                |
+| `database`                       | string       | (none)      | SQLite database path (falls back to `DATABASE_URL` env) |
+| `auth_file`                      | string       | (none)      | Path to htpasswd file                                   |
+| `require_auth`                   | bool         | `false`     | Require authentication for all requests                 |
+| `enforce_access_control`         | bool         | `false`     | Enforce access control based on workflow ownership      |
+| `admin_users`                    | string array | `[]`        | Users to add to the admin group                         |
+| `completion_check_interval_secs` | float        | `30.0`      | Background job processing interval                      |
 
 ### `[server.logging]` Section
 
@@ -179,6 +181,8 @@ threads = 4
 database = "/var/lib/torc/torc.db"
 auth_file = "/etc/torc/htpasswd"
 require_auth = true
+enforce_access_control = true
+admin_users = ["alice", "bob"]
 completion_check_interval_secs = 30.0
 log_level = "info"
 https = false
@@ -249,6 +253,7 @@ Environment variables use double underscore (`__`) to separate nested keys.
 | `TORC_SERVER__DATABASE`                       | `server.database`                       |
 | `TORC_SERVER__AUTH_FILE`                      | `server.auth_file`                      |
 | `TORC_SERVER__REQUIRE_AUTH`                   | `server.require_auth`                   |
+| `TORC_SERVER__ENFORCE_ACCESS_CONTROL`         | `server.enforce_access_control`         |
 | `TORC_SERVER__LOG_LEVEL`                      | `server.log_level`                      |
 | `TORC_SERVER__COMPLETION_CHECK_INTERVAL_SECS` | `server.completion_check_interval_secs` |
 | `TORC_SERVER__LOGGING__LOG_DIR`               | `server.logging.log_dir`                |
@@ -267,16 +272,16 @@ Environment variables use double underscore (`__`) to separate nested keys.
 
 These environment variables are still supported directly by clap:
 
-| Variable                              | Component | Description                        |
-| ------------------------------------- | --------- | ---------------------------------- |
-| `TORC_API_URL`                        | Client    | Server API URL (CLI only)          |
-| `TORC_USERNAME`                       | Client    | Authentication username (CLI only) |
-| `TORC_PASSWORD`                       | Client    | Authentication password (CLI only) |
-| `TORC_AUTH_FILE`                      | Server    | htpasswd file path                 |
-| `TORC_LOG_DIR`                        | Server    | Log directory                      |
-| `TORC_COMPLETION_CHECK_INTERVAL_SECS` | Server    | Completion check interval          |
-| `DATABASE_URL`                        | Server    | SQLite database URL                |
-| `RUST_LOG`                            | All       | Log level filter                   |
+| Variable                              | Component | Description                             |
+| ------------------------------------- | --------- | --------------------------------------- |
+| `TORC_API_URL`                        | Client    | Server API URL (CLI only)               |
+| `TORC_PASSWORD`                       | Client    | Authentication password (CLI only)      |
+| `TORC_AUTH_FILE`                      | Server    | htpasswd file path                      |
+| `TORC_LOG_DIR`                        | Server    | Log directory                           |
+| `TORC_COMPLETION_CHECK_INTERVAL_SECS` | Server    | Completion check interval               |
+| `TORC_ADMIN_USERS`                    | Server    | Comma-separated list of admin usernames |
+| `DATABASE_URL`                        | Server    | SQLite database URL                     |
+| `RUST_LOG`                            | All       | Log level filter                        |
 
 ## Complete Example
 
@@ -303,7 +308,10 @@ url = "localhost"
 port = 8080
 threads = 4
 database = "/var/lib/torc/torc.db"
-require_auth = false
+auth_file = "/etc/torc/htpasswd"
+require_auth = true
+enforce_access_control = true
+admin_users = ["alice", "bob"]
 completion_check_interval_secs = 30.0
 
 [server.logging]

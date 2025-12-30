@@ -44,11 +44,7 @@ struct Args {
     #[arg(long, env = "TORC_OUTPUT_DIR", default_value = "output")]
     output_dir: PathBuf,
 
-    /// Username for API authentication
-    #[arg(long, env = "TORC_USERNAME")]
-    username: Option<String>,
-
-    /// Password for API authentication
+    /// Password for API authentication (uses USER env var as username)
     #[arg(long, env = "TORC_PASSWORD")]
     password: Option<String>,
 }
@@ -74,8 +70,11 @@ fn main() -> Result<()> {
     // This is important because TorcMcpServer::new() creates a reqwest::blocking::Client
     // which spawns its own tokio runtime. Creating it inside block_on would cause
     // nested runtime issues.
-    let server = if args.username.is_some() {
-        TorcMcpServer::with_auth(args.api_url, args.output_dir, args.username, args.password)
+    let server = if args.password.is_some() {
+        let username = std::env::var("USER")
+            .or_else(|_| std::env::var("USERNAME"))
+            .unwrap_or_else(|_| "unknown".to_string());
+        TorcMcpServer::with_auth(args.api_url, args.output_dir, Some(username), args.password)
     } else {
         TorcMcpServer::new(args.api_url, args.output_dir)
     };

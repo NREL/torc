@@ -362,6 +362,10 @@ pub enum ListFilesResponse {
 pub enum ListJobsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -371,6 +375,10 @@ pub enum ListJobsResponse {
 pub enum ListJobDependenciesResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobDependenciesResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -380,6 +388,10 @@ pub enum ListJobDependenciesResponse {
 pub enum ListJobFileRelationshipsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobFileRelationshipsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -389,6 +401,10 @@ pub enum ListJobFileRelationshipsResponse {
 pub enum ListJobUserDataRelationshipsResponse {
     /// Successful response
     SuccessfulResponse(models::ListJobUserDataRelationshipsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -398,6 +414,10 @@ pub enum ListJobUserDataRelationshipsResponse {
 pub enum ListLocalSchedulersResponse {
     /// HTTP 200 OK.
     HTTP(models::ListLocalSchedulersResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -407,6 +427,10 @@ pub enum ListLocalSchedulersResponse {
 pub enum ListResourceRequirementsResponse {
     /// Successful response
     SuccessfulResponse(models::ListResourceRequirementsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -416,6 +440,10 @@ pub enum ListResourceRequirementsResponse {
 pub enum ListResultsResponse {
     /// Successful response
     SuccessfulResponse(models::ListResultsResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -425,6 +453,10 @@ pub enum ListResultsResponse {
 pub enum ListScheduledComputeNodesResponse {
     /// Successful response
     SuccessfulResponse(models::ListScheduledComputeNodesResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -434,6 +466,10 @@ pub enum ListScheduledComputeNodesResponse {
 pub enum ListSlurmSchedulersResponse {
     /// Successful response
     SuccessfulResponse(models::ListSlurmSchedulersResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -443,6 +479,10 @@ pub enum ListSlurmSchedulersResponse {
 pub enum ListUserDataResponse {
     /// Successful response
     SuccessfulResponse(models::ListUserDataResponse),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -470,6 +510,10 @@ pub enum PingResponse {
 pub enum CancelWorkflowResponse {
     /// Successful response
     SuccessfulResponse(serde_json::Value),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -512,6 +556,8 @@ pub enum GetFileResponse {
 pub enum GetJobResponse {
     /// Successful response
     SuccessfulResponse(models::JobModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -600,6 +646,8 @@ pub enum GetUserDataResponse {
 pub enum GetWorkflowResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -611,6 +659,8 @@ pub enum GetWorkflowResponse {
 pub enum GetWorkflowStatusResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowStatusModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -622,6 +672,10 @@ pub enum GetWorkflowStatusResponse {
 pub enum InitializeJobsResponse {
     /// Successful response
     SuccessfulResponse(serde_json::Value),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -709,6 +763,8 @@ pub enum UpdateFileResponse {
 pub enum UpdateJobResponse {
     /// Successful response
     SuccessfulResponse(models::JobModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Unprocessable content error response
@@ -788,6 +844,8 @@ pub enum UpdateUserDataResponse {
 pub enum UpdateWorkflowResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -799,6 +857,8 @@ pub enum UpdateWorkflowResponse {
 pub enum UpdateWorkflowStatusResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowStatusModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -874,6 +934,8 @@ pub enum DeleteFileResponse {
 pub enum DeleteJobResponse {
     /// Successful response
     SuccessfulResponse(models::JobModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -984,6 +1046,8 @@ pub enum DeleteUserDataResponse {
 pub enum DeleteWorkflowResponse {
     /// Successful response
     SuccessfulResponse(models::WorkflowModel),
+    /// Forbidden - user does not have access
+    ForbiddenErrorResponse(models::ErrorResponse),
     /// Not found error response
     NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
@@ -1060,6 +1124,150 @@ pub enum CompleteJobResponse {
     NotFoundErrorResponse(models::ErrorResponse),
     /// Unprocessable content error response
     UnprocessableContentErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum CreateAccessGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::AccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Conflict error response - group already exists
+    ConflictErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum GetAccessGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::AccessGroupModel),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListAccessGroupsApiResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListAccessGroupsResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum DeleteAccessGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::AccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum AddUserToGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::UserGroupMembershipModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Conflict error response - user already in group
+    ConflictErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum RemoveUserFromGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::UserGroupMembershipModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListGroupMembersResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListUserGroupMembershipsResponse),
+    /// Not found error response - group not found
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListUserGroupsApiResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListAccessGroupsResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum AddWorkflowToGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::WorkflowAccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Conflict error response - association already exists
+    ConflictErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum RemoveWorkflowFromGroupResponse {
+    /// Successful response
+    SuccessfulResponse(models::WorkflowAccessGroupModel),
+    /// Forbidden error response
+    ForbiddenErrorResponse(models::ErrorResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListWorkflowGroupsResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListAccessGroupsResponse),
+    /// Not found error response - workflow not found
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum CheckWorkflowAccessResponse {
+    /// Successful response
+    SuccessfulResponse(models::AccessCheckResponse),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
     /// Default error response
     DefaultErrorResponse(models::ErrorResponse),
 }
@@ -1894,6 +2102,104 @@ pub trait Api<C: Send + Sync> {
         strict_scheduler_match: Option<bool>,
         context: &C,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
+
+    // Access Groups API
+
+    /// Create an access group.
+    async fn create_access_group(
+        &self,
+        body: models::AccessGroupModel,
+        context: &C,
+    ) -> Result<CreateAccessGroupResponse, ApiError>;
+
+    /// Get an access group by ID.
+    async fn get_access_group(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetAccessGroupResponse, ApiError>;
+
+    /// List all access groups.
+    async fn list_access_groups(
+        &self,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListAccessGroupsApiResponse, ApiError>;
+
+    /// Delete an access group.
+    async fn delete_access_group(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<DeleteAccessGroupResponse, ApiError>;
+
+    /// Add a user to an access group.
+    async fn add_user_to_group(
+        &self,
+        group_id: i64,
+        body: models::UserGroupMembershipModel,
+        context: &C,
+    ) -> Result<AddUserToGroupResponse, ApiError>;
+
+    /// Remove a user from an access group.
+    async fn remove_user_from_group(
+        &self,
+        group_id: i64,
+        user_name: String,
+        context: &C,
+    ) -> Result<RemoveUserFromGroupResponse, ApiError>;
+
+    /// List members of an access group.
+    async fn list_group_members(
+        &self,
+        group_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListGroupMembersResponse, ApiError>;
+
+    /// List groups a user belongs to.
+    async fn list_user_groups(
+        &self,
+        user_name: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListUserGroupsApiResponse, ApiError>;
+
+    /// Add a workflow to an access group.
+    async fn add_workflow_to_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+        context: &C,
+    ) -> Result<AddWorkflowToGroupResponse, ApiError>;
+
+    /// Remove a workflow from an access group.
+    async fn remove_workflow_from_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+        context: &C,
+    ) -> Result<RemoveWorkflowFromGroupResponse, ApiError>;
+
+    /// List access groups for a workflow.
+    async fn list_workflow_groups(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListWorkflowGroupsResponse, ApiError>;
+
+    /// Check if a user can access a workflow.
+    async fn check_workflow_access(
+        &self,
+        workflow_id: i64,
+        user_name: String,
+        context: &C,
+    ) -> Result<CheckWorkflowAccessResponse, ApiError>;
 }
 
 /// API where `Context` isn't passed on every API call
@@ -2559,6 +2865,86 @@ pub trait ApiNoContext<C: Send + Sync> {
         limit: i64,
         strict_scheduler_match: Option<bool>,
     ) -> Result<ClaimJobsBasedOnResources, ApiError>;
+
+    // Access Groups API
+
+    /// Create an access group.
+    async fn create_access_group(
+        &self,
+        body: models::AccessGroupModel,
+    ) -> Result<CreateAccessGroupResponse, ApiError>;
+
+    /// Get an access group by ID.
+    async fn get_access_group(&self, id: i64) -> Result<GetAccessGroupResponse, ApiError>;
+
+    /// List all access groups.
+    async fn list_access_groups(
+        &self,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListAccessGroupsApiResponse, ApiError>;
+
+    /// Delete an access group.
+    async fn delete_access_group(&self, id: i64) -> Result<DeleteAccessGroupResponse, ApiError>;
+
+    /// Add a user to an access group.
+    async fn add_user_to_group(
+        &self,
+        group_id: i64,
+        body: models::UserGroupMembershipModel,
+    ) -> Result<AddUserToGroupResponse, ApiError>;
+
+    /// Remove a user from an access group.
+    async fn remove_user_from_group(
+        &self,
+        group_id: i64,
+        user_name: String,
+    ) -> Result<RemoveUserFromGroupResponse, ApiError>;
+
+    /// List members of an access group.
+    async fn list_group_members(
+        &self,
+        group_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListGroupMembersResponse, ApiError>;
+
+    /// List groups a user belongs to.
+    async fn list_user_groups(
+        &self,
+        user_name: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListUserGroupsApiResponse, ApiError>;
+
+    /// Add a workflow to an access group.
+    async fn add_workflow_to_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+    ) -> Result<AddWorkflowToGroupResponse, ApiError>;
+
+    /// Remove a workflow from an access group.
+    async fn remove_workflow_from_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+    ) -> Result<RemoveWorkflowFromGroupResponse, ApiError>;
+
+    /// List access groups for a workflow.
+    async fn list_workflow_groups(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListWorkflowGroupsResponse, ApiError>;
+
+    /// Check if a user can access a workflow.
+    async fn check_workflow_access(
+        &self,
+        workflow_id: i64,
+        user_name: String,
+    ) -> Result<CheckWorkflowAccessResponse, ApiError>;
 }
 
 /// Trait to extend an API to make it easy to bind it to a context.
@@ -3730,6 +4116,124 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 strict_scheduler_match,
                 &context,
             )
+            .await
+    }
+
+    // Access Groups API
+
+    async fn create_access_group(
+        &self,
+        body: models::AccessGroupModel,
+    ) -> Result<CreateAccessGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api().create_access_group(body, &context).await
+    }
+
+    async fn get_access_group(&self, id: i64) -> Result<GetAccessGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api().get_access_group(id, &context).await
+    }
+
+    async fn list_access_groups(
+        &self,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListAccessGroupsApiResponse, ApiError> {
+        let context = self.context().clone();
+        self.api().list_access_groups(offset, limit, &context).await
+    }
+
+    async fn delete_access_group(&self, id: i64) -> Result<DeleteAccessGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api().delete_access_group(id, &context).await
+    }
+
+    async fn add_user_to_group(
+        &self,
+        group_id: i64,
+        body: models::UserGroupMembershipModel,
+    ) -> Result<AddUserToGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api().add_user_to_group(group_id, body, &context).await
+    }
+
+    async fn remove_user_from_group(
+        &self,
+        group_id: i64,
+        user_name: String,
+    ) -> Result<RemoveUserFromGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .remove_user_from_group(group_id, user_name, &context)
+            .await
+    }
+
+    async fn list_group_members(
+        &self,
+        group_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListGroupMembersResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .list_group_members(group_id, offset, limit, &context)
+            .await
+    }
+
+    async fn list_user_groups(
+        &self,
+        user_name: String,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListUserGroupsApiResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .list_user_groups(user_name, offset, limit, &context)
+            .await
+    }
+
+    async fn add_workflow_to_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+    ) -> Result<AddWorkflowToGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .add_workflow_to_group(workflow_id, group_id, &context)
+            .await
+    }
+
+    async fn remove_workflow_from_group(
+        &self,
+        workflow_id: i64,
+        group_id: i64,
+    ) -> Result<RemoveWorkflowFromGroupResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .remove_workflow_from_group(workflow_id, group_id, &context)
+            .await
+    }
+
+    async fn list_workflow_groups(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListWorkflowGroupsResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .list_workflow_groups(workflow_id, offset, limit, &context)
+            .await
+    }
+
+    async fn check_workflow_access(
+        &self,
+        workflow_id: i64,
+        user_name: String,
+    ) -> Result<CheckWorkflowAccessResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .check_workflow_access(workflow_id, user_name, &context)
             .await
     }
 }

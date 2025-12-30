@@ -85,6 +85,9 @@ pub struct Args {
     /// Log level (error, warn, info, debug, trace)
     #[arg(long, default_value = "info")]
     pub log_level: String,
+    /// Password for authentication (can also use TORC_PASSWORD env var)
+    #[arg(long, env = "TORC_PASSWORD", hide_env_values = true)]
+    pub password: Option<String>,
 }
 
 pub fn run(args: &Args) {
@@ -94,6 +97,12 @@ pub fn run(args: &Args) {
         .expect("Hostname is not valid UTF-8");
     let mut config = Configuration::new();
     config.base_path = args.url.clone();
+
+    // Set up authentication if password is provided
+    if let Some(ref password) = args.password {
+        let username = get_env_user_name();
+        config.basic_auth = Some((username, Some(password.clone())));
+    }
     let user = get_env_user_name();
     let workflow_id = args.workflow_id.unwrap_or_else(|| {
         select_workflow_interactively(&config, &user).unwrap_or_else(|e| {

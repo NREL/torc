@@ -1277,3 +1277,319 @@ pub fn run_jobs_cli_command(
         Err(format!("Command failed: {}", error_str).into())
     }
 }
+
+/// Helper function to run CLI commands with basic authentication
+/// Uses USER env var as username and TORC_PASSWORD env var for password
+pub fn run_cli_command_with_auth(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir()?;
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8(output.stdout)?;
+        Ok(stdout)
+    } else {
+        let error_str = String::from_utf8(output.stderr)?;
+        Err(format!("Command failed: {}", error_str).into())
+    }
+}
+
+/// Helper function to run CLI commands with basic authentication, returning full output
+/// even on failure. Useful for testing error cases.
+pub fn run_cli_command_with_auth_full(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> std::process::Output {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir().expect("Failed to get current dir");
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    cmd.output().expect("Failed to execute command")
+}
+
+/// Helper function to run the torc job runner with authentication
+pub fn run_jobs_cli_command_with_auth(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path, "run"]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir()?;
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8(output.stdout)?;
+        Ok(stdout)
+    } else {
+        let error_str = String::from_utf8(output.stderr)?;
+        Err(format!("Command failed: {}", error_str).into())
+    }
+}
+
+/// Helper function to run the torc job runner with authentication, returning full output
+/// even on failure. Useful for testing error cases.
+pub fn run_jobs_cli_command_with_auth_full(
+    args: &[&str],
+    server: &AccessControlServerProcess,
+    username: &str,
+    password: &str,
+) -> std::process::Output {
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
+    cmd.args(["--url", &server.config.base_path, "run"]);
+    cmd.args(args);
+    cmd.env("TORC_API_URL", &server.config.base_path);
+    cmd.env("USER", username);
+    cmd.env("TORC_PASSWORD", password);
+
+    // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
+    let current_dir = std::env::current_dir().expect("Failed to get current dir");
+    let target_debug = current_dir.join("target/debug");
+    let path_var = std::env::var("PATH").unwrap_or_default();
+    let new_path = format!("{}:{}", target_debug.display(), path_var);
+    cmd.env("PATH", new_path);
+
+    cmd.output().expect("Failed to execute command")
+}
+
+// ============================================================================
+// Access Control Server Fixture
+// ============================================================================
+
+/// Create an htpasswd file with test users for access control tests.
+/// Uses torc-htpasswd to add users with bcrypt-hashed passwords.
+fn create_htpasswd_file(users: &[&str]) -> NamedTempFile {
+    let htpasswd_file = NamedTempFile::new().expect("Failed to create htpasswd temp file");
+    let htpasswd_path = htpasswd_file.path().to_string_lossy().to_string();
+
+    // Create each user with password "password" using torc-htpasswd add
+    for user in users.iter() {
+        let status = Command::new(get_exe_path("./target/debug/torc-htpasswd"))
+            .arg("add")
+            .arg("--file")
+            .arg(&htpasswd_path)
+            .arg("--password")
+            .arg("password")
+            .arg(user)
+            .status()
+            .expect("Failed to run torc-htpasswd");
+
+        if !status.success() {
+            panic!(
+                "torc-htpasswd failed for user {} with status: {}",
+                user, status
+            );
+        }
+    }
+
+    htpasswd_file
+}
+
+/// Struct to hold both the server process and the htpasswd file
+pub struct AccessControlServerProcess {
+    pub server: ServerProcess,
+    #[allow(dead_code)]
+    htpasswd_file: NamedTempFile, // Keep the htpasswd file alive
+}
+
+impl std::ops::Deref for AccessControlServerProcess {
+    type Target = ServerProcess;
+
+    fn deref(&self) -> &Self::Target {
+        &self.server
+    }
+}
+
+/// Start a server with access control enforcement enabled
+fn start_process_with_access_control(
+    db_url: &str,
+    db_file: NamedTempFile,
+    htpasswd_file: NamedTempFile,
+) -> AccessControlServerProcess {
+    let port = find_available_port();
+    println!("Setting up database with url: {}", db_url);
+    let status = Command::new("sqlx")
+        .arg("--no-dotenv")
+        .arg("database")
+        .arg("setup")
+        .env("DATABASE_URL", db_url)
+        .status()
+        .expect("failed to execute sqlx");
+    if !status.success() {
+        panic!("sqlx database setup failed with status: {}", status);
+    }
+    let status = Command::new("cargo")
+        .arg("build")
+        .arg("--workspace")
+        .status()
+        .expect("Failed to execute cargo build");
+    if !status.success() {
+        panic!("cargo build failed with status: {}", status);
+    }
+
+    eprintln!("Starting server with access control on port {}", port);
+    let htpasswd_path = htpasswd_file.path().to_string_lossy().to_string();
+    let child = Command::new(get_exe_path("./target/debug/torc-server"))
+        .arg("run")
+        .arg("--port")
+        .arg(port.to_string())
+        .arg("--completion-check-interval-secs")
+        .arg("0.1")
+        .arg("--enforce-access-control") // Enable access control enforcement
+        .arg("--auth-file")
+        .arg(&htpasswd_path)
+        // Add admin users (all test users get admin access for now to test other functionality)
+        .arg("--admin-user")
+        .arg("alice")
+        .arg("--admin-user")
+        .arg("bob")
+        .arg("--admin-user")
+        .arg("owner")
+        .arg("--admin-user")
+        .arg("api_owner")
+        .arg("--admin-user")
+        .arg("ml_owner")
+        .arg("--admin-user")
+        .arg("data_owner")
+        .arg("--admin-user")
+        .arg("ml_api_owner")
+        .arg("--admin-user")
+        .arg("data_api_owner")
+        .env("DATABASE_URL", db_url)
+        .env("RUST_LOG", "info")
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .expect("failed to start server process");
+
+    let pid = child.id();
+
+    // Track this PID for cleanup at program exit
+    track_server_pid(pid);
+
+    if let Err(e) = wait_for_server_ready(port, 10) {
+        panic!("Server startup failed: {}", e);
+    }
+
+    eprintln!(
+        "Server with access control ready on port {} (PID: {})",
+        port, pid
+    );
+    let mut config = Configuration::new();
+    config.base_path = get_server_url(port);
+    // Set up basic auth as "alice" (one of the admin users) with password "password"
+    config.basic_auth = Some(("alice".to_string(), Some("password".to_string())));
+    AccessControlServerProcess {
+        server: ServerProcess {
+            child,
+            db_file,
+            port,
+            config,
+        },
+        htpasswd_file,
+    }
+}
+
+/// Start a test server instance with access control enforcement enabled
+///
+/// This fixture creates a server where users can only access workflows they own
+/// or have group access to. It creates an htpasswd file with test users that
+/// can be authenticated.
+///
+/// Test users (all with password "password"):
+/// - alice, bob (ML team members)
+/// - carol, dave (Data team members)
+/// - shared_user (member of both teams)
+/// - owner, api_owner, ml_owner, data_owner, job_owner, etc. (workflow owners)
+#[fixture]
+#[once]
+pub fn start_server_with_access_control() -> AccessControlServerProcess {
+    // Initialize logger for client-side code running in tests
+    let _ = env_logger::try_init();
+
+    // Create htpasswd file with all test users
+    // These are the users used in access control tests
+    let test_users = [
+        // Team members
+        "alice",
+        "bob",
+        "carol",
+        "dave",
+        "shared_user",
+        // Workflow owners
+        "owner",
+        "owner_user",
+        "api_owner",
+        "ml_owner",
+        "data_owner",
+        "ml_api_owner",
+        "data_api_owner",
+        "job_owner",
+        "workflow_creator",
+        "some_owner",
+        "wf_owner",
+        "creator",
+        "private-owner",
+        "wf-user",
+        "wf-user-2",
+        "wf-user-3",
+        // Test-specific users
+        "unauthorized_user",
+        "unauthorized_job_user",
+        "removable_user",
+        "outsider",
+    ];
+
+    let htpasswd_file = create_htpasswd_file(&test_users);
+    eprintln!("Created htpasswd file with {} users", test_users.len());
+
+    let db_file = NamedTempFile::new().expect("Failed to create temporary file");
+    let url = format!("sqlite:{}", db_file.path().display());
+    let process = start_process_with_access_control(&url, db_file, htpasswd_file);
+    eprint!(
+        "Started server with access control, database file {:?} on port {}",
+        process.server.db_file, process.server.port
+    );
+    process
+}

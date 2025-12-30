@@ -10599,3 +10599,217 @@ impl ListJobIdsResponse {
         ListJobIdsResponse { job_ids, count }
     }
 }
+
+// ============================================================================
+// Access Groups Models for team-based access control
+// ============================================================================
+
+/// Access group model - represents a team/group for access control
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct AccessGroupModel {
+    /// Database ID
+    #[serde(rename = "id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+
+    /// Name of the group (unique)
+    #[serde(rename = "name")]
+    pub name: String,
+
+    /// Description of the group
+    #[serde(rename = "description")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Timestamp when the group was created
+    #[serde(rename = "created_at")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+}
+
+impl AccessGroupModel {
+    #[allow(clippy::new_without_default)]
+    pub fn new(name: String) -> AccessGroupModel {
+        AccessGroupModel {
+            id: None,
+            name,
+            description: None,
+            created_at: None,
+        }
+    }
+}
+
+/// User group membership model - links users to groups
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct UserGroupMembershipModel {
+    /// Database ID
+    #[serde(rename = "id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+
+    /// Username of the member
+    #[serde(rename = "user_name")]
+    pub user_name: String,
+
+    /// ID of the group
+    #[serde(rename = "group_id")]
+    pub group_id: i64,
+
+    /// Role in the group (admin or member)
+    #[serde(rename = "role")]
+    #[serde(default = "default_membership_role")]
+    pub role: String,
+
+    /// Timestamp when the membership was created
+    #[serde(rename = "created_at")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+}
+
+fn default_membership_role() -> String {
+    "member".to_string()
+}
+
+impl UserGroupMembershipModel {
+    #[allow(clippy::new_without_default)]
+    pub fn new(user_name: String, group_id: i64) -> UserGroupMembershipModel {
+        UserGroupMembershipModel {
+            id: None,
+            user_name,
+            group_id,
+            role: "member".to_string(),
+            created_at: None,
+        }
+    }
+}
+
+/// Workflow access group model - links workflows to groups for shared access
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct WorkflowAccessGroupModel {
+    /// ID of the workflow
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+
+    /// ID of the group
+    #[serde(rename = "group_id")]
+    pub group_id: i64,
+
+    /// Timestamp when the association was created
+    #[serde(rename = "created_at")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+}
+
+impl WorkflowAccessGroupModel {
+    #[allow(clippy::new_without_default)]
+    pub fn new(workflow_id: i64, group_id: i64) -> WorkflowAccessGroupModel {
+        WorkflowAccessGroupModel {
+            workflow_id,
+            group_id,
+            created_at: None,
+        }
+    }
+}
+
+/// Response for listing access groups
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListAccessGroupsResponse {
+    /// List of access groups
+    #[serde(rename = "items")]
+    pub items: Vec<AccessGroupModel>,
+
+    /// Offset used for pagination
+    #[serde(rename = "offset")]
+    pub offset: i64,
+
+    /// Limit used for pagination
+    #[serde(rename = "limit")]
+    pub limit: i64,
+
+    /// Total count of records
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+
+    /// Whether there are more records
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+}
+
+impl ListAccessGroupsResponse {
+    #[allow(clippy::new_without_default)]
+    pub fn new(items: Vec<AccessGroupModel>, offset: i64, limit: i64, total_count: i64) -> Self {
+        let has_more = offset + (items.len() as i64) < total_count;
+        ListAccessGroupsResponse {
+            items,
+            offset,
+            limit,
+            total_count,
+            has_more,
+        }
+    }
+}
+
+/// Response for listing user group memberships
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListUserGroupMembershipsResponse {
+    /// List of memberships
+    #[serde(rename = "items")]
+    pub items: Vec<UserGroupMembershipModel>,
+
+    /// Offset used for pagination
+    #[serde(rename = "offset")]
+    pub offset: i64,
+
+    /// Limit used for pagination
+    #[serde(rename = "limit")]
+    pub limit: i64,
+
+    /// Total count of records
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+
+    /// Whether there are more records
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+}
+
+impl ListUserGroupMembershipsResponse {
+    #[allow(clippy::new_without_default)]
+    pub fn new(
+        items: Vec<UserGroupMembershipModel>,
+        offset: i64,
+        limit: i64,
+        total_count: i64,
+    ) -> Self {
+        let has_more = offset + (items.len() as i64) < total_count;
+        ListUserGroupMembershipsResponse {
+            items,
+            offset,
+            limit,
+            total_count,
+            has_more,
+        }
+    }
+}
+
+/// Response for access check
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct AccessCheckResponse {
+    /// Whether the user has access
+    #[serde(rename = "has_access")]
+    pub has_access: bool,
+
+    /// The user name that was checked
+    #[serde(rename = "user_name")]
+    pub user_name: String,
+
+    /// The workflow ID that was checked
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+}

@@ -17,7 +17,6 @@ fn test_client_config_defaults() {
     assert_eq!(config.api_url, "http://localhost:8080/torc-service/v1");
     assert_eq!(config.format, "table");
     assert_eq!(config.log_level, "info");
-    assert!(config.username.is_none());
 }
 
 #[rstest]
@@ -445,22 +444,6 @@ fn test_nonexistent_file() {
         config.client.api_url,
         "http://localhost:8080/torc-service/v1"
     );
-}
-
-#[rstest]
-fn test_config_with_username() {
-    let temp_dir = TempDir::new().unwrap();
-    let config_path = temp_dir.path().join("config.toml");
-
-    let toml_content = r#"
-[client]
-username = "testuser"
-"#;
-
-    fs::write(&config_path, toml_content).unwrap();
-
-    let config = TorcConfig::load_from_files(&[config_path]).unwrap();
-    assert_eq!(config.client.username, Some("testuser".to_string()));
 }
 
 #[rstest]

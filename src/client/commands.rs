@@ -1,3 +1,4 @@
+pub mod access_groups;
 pub mod compute_nodes;
 pub mod config;
 pub mod events;

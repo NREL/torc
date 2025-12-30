@@ -19,6 +19,8 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt, StrictStr
 from typing import Any, Dict, List, Optional
 from typing_extensions import Annotated
+from torc.openapi_client.models.access_check_response import AccessCheckResponse
+from torc.openapi_client.models.access_group_model import AccessGroupModel
 from torc.openapi_client.models.claim_action200_response import ClaimAction200Response
 from torc.openapi_client.models.claim_action_request import ClaimActionRequest
 from torc.openapi_client.models.claim_jobs_based_on_resources_response import ClaimJobsBasedOnResourcesResponse
@@ -35,6 +37,7 @@ from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_status import JobStatus
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.jobs_sort_method import JobsSortMethod
+from torc.openapi_client.models.list_access_groups_response import ListAccessGroupsResponse
 from torc.openapi_client.models.list_compute_nodes_response import ListComputeNodesResponse
 from torc.openapi_client.models.list_events_response import ListEventsResponse
 from torc.openapi_client.models.list_files_response import ListFilesResponse
@@ -51,6 +54,7 @@ from torc.openapi_client.models.list_results_response import ListResultsResponse
 from torc.openapi_client.models.list_scheduled_compute_nodes_response import ListScheduledComputeNodesResponse
 from torc.openapi_client.models.list_slurm_schedulers_response import ListSlurmSchedulersResponse
 from torc.openapi_client.models.list_user_data_response import ListUserDataResponse
+from torc.openapi_client.models.list_user_group_memberships_response import ListUserGroupMembershipsResponse
 from torc.openapi_client.models.list_workflows_response import ListWorkflowsResponse
 from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse
@@ -61,6 +65,8 @@ from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
 from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from torc.openapi_client.models.user_data_model import UserDataModel
+from torc.openapi_client.models.user_group_membership_model import UserGroupMembershipModel
+from torc.openapi_client.models.workflow_access_group_model import WorkflowAccessGroupModel
 from torc.openapi_client.models.workflow_action_model import WorkflowActionModel
 from torc.openapi_client.models.workflow_model import WorkflowModel
 from torc.openapi_client.models.workflow_status_model import WorkflowStatusModel
@@ -81,6 +87,606 @@ class DefaultApi:
         if api_client is None:
             api_client = ApiClient.get_default()
         self.api_client = api_client
+
+
+    @validate_call
+    def add_user_to_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Annotated[UserGroupMembershipModel, Field(description="User membership to add")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> UserGroupMembershipModel:
+        """Add a user to an access group.
+
+        Add a user to an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body: User membership to add (required)
+        :type body: UserGroupMembershipModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_user_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "UserGroupMembershipModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def add_user_to_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Annotated[UserGroupMembershipModel, Field(description="User membership to add")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[UserGroupMembershipModel]:
+        """Add a user to an access group.
+
+        Add a user to an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body: User membership to add (required)
+        :type body: UserGroupMembershipModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_user_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "UserGroupMembershipModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def add_user_to_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Annotated[UserGroupMembershipModel, Field(description="User membership to add")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Add a user to an access group.
+
+        Add a user to an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body: User membership to add (required)
+        :type body: UserGroupMembershipModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_user_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "UserGroupMembershipModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _add_user_to_group_serialize(
+        self,
+        id,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/access_groups/{id}/members',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def add_workflow_to_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        body: Annotated[WorkflowAccessGroupModel, Field(description="Group association to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> WorkflowAccessGroupModel:
+        """Grant an access group access to a workflow.
+
+        Grant an access group access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param body: Group association to create (required)
+        :type body: WorkflowAccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_workflow_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowAccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def add_workflow_to_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        body: Annotated[WorkflowAccessGroupModel, Field(description="Group association to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[WorkflowAccessGroupModel]:
+        """Grant an access group access to a workflow.
+
+        Grant an access group access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param body: Group association to create (required)
+        :type body: WorkflowAccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_workflow_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowAccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def add_workflow_to_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        body: Annotated[WorkflowAccessGroupModel, Field(description="Group association to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Grant an access group access to a workflow.
+
+        Grant an access group access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param body: Group association to create (required)
+        :type body: WorkflowAccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_workflow_to_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowAccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _add_workflow_to_group_serialize(
+        self,
+        id,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/workflows/{id}/access_groups',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
 
 
     @validate_call
@@ -142,6 +748,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -214,6 +822,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -286,6 +896,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -359,6 +971,287 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='PUT',
             resource_path='/workflows/{id}/cancel',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def check_workflow_access(
+        self,
+        workflow_id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        user_name: Annotated[StrictStr, Field(description="Username to check")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AccessCheckResponse:
+        """Check if a user can access a workflow.
+
+        Check if a user can access a workflow.
+
+        :param workflow_id: ID of the workflow (required)
+        :type workflow_id: int
+        :param user_name: Username to check (required)
+        :type user_name: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._check_workflow_access_serialize(
+            workflow_id=workflow_id,
+            user_name=user_name,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessCheckResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def check_workflow_access_with_http_info(
+        self,
+        workflow_id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        user_name: Annotated[StrictStr, Field(description="Username to check")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AccessCheckResponse]:
+        """Check if a user can access a workflow.
+
+        Check if a user can access a workflow.
+
+        :param workflow_id: ID of the workflow (required)
+        :type workflow_id: int
+        :param user_name: Username to check (required)
+        :type user_name: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._check_workflow_access_serialize(
+            workflow_id=workflow_id,
+            user_name=user_name,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessCheckResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def check_workflow_access_without_preload_content(
+        self,
+        workflow_id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        user_name: Annotated[StrictStr, Field(description="Username to check")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Check if a user can access a workflow.
+
+        Check if a user can access a workflow.
+
+        :param workflow_id: ID of the workflow (required)
+        :type workflow_id: int
+        :param user_name: Username to check (required)
+        :type user_name: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._check_workflow_access_serialize(
+            workflow_id=workflow_id,
+            user_name=user_name,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessCheckResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _check_workflow_access_serialize(
+        self,
+        workflow_id,
+        user_name,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if workflow_id is not None:
+            _path_params['workflow_id'] = workflow_id
+        if user_name is not None:
+            _path_params['user_name'] = user_name
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/access_check/{workflow_id}/{user_name}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1653,6 +2546,288 @@ class DefaultApi:
 
 
     @validate_call
+    def create_access_group(
+        self,
+        body: Annotated[AccessGroupModel, Field(description="Access group to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AccessGroupModel:
+        """Create a new access group.
+
+        Create a new access group.
+
+        :param body: Access group to create (required)
+        :type body: AccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_access_group_serialize(
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def create_access_group_with_http_info(
+        self,
+        body: Annotated[AccessGroupModel, Field(description="Access group to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AccessGroupModel]:
+        """Create a new access group.
+
+        Create a new access group.
+
+        :param body: Access group to create (required)
+        :type body: AccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_access_group_serialize(
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def create_access_group_without_preload_content(
+        self,
+        body: Annotated[AccessGroupModel, Field(description="Access group to create")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Create a new access group.
+
+        Create a new access group.
+
+        :param body: Access group to create (required)
+        :type body: AccessGroupModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_access_group_serialize(
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '409': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _create_access_group_serialize(
+        self,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/access_groups',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     def create_compute_node(
         self,
         body: Annotated[ComputeNodeModel, Field(description="Compute node")],
@@ -1707,6 +2882,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1775,6 +2951,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1843,6 +3020,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1983,6 +3161,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2051,6 +3230,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2119,6 +3299,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2259,6 +3440,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2327,6 +3509,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2395,6 +3578,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2535,6 +3719,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2603,6 +3788,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2671,6 +3857,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2811,6 +3998,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "CreateJobsResponse",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2879,6 +4068,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "CreateJobsResponse",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2947,6 +4138,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "CreateJobsResponse",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -3658,6 +4851,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -3726,6 +4921,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -3794,6 +4991,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
+            '422': "DefaultErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -4770,6 +5969,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -4846,6 +6046,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -4922,6 +6123,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -5572,6 +6774,303 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='POST',
             resource_path='/workflows/{id}/actions',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def delete_access_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AccessGroupModel:
+        """Delete an access group.
+
+        Delete an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_access_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def delete_access_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AccessGroupModel]:
+        """Delete an access group.
+
+        Delete an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_access_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def delete_access_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete an access group.
+
+        Delete an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_access_group_serialize(
+            id=id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_access_group_serialize(
+        self,
+        id,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/access_groups/{id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -6523,6 +8022,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -6595,6 +8095,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -6667,6 +8168,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7107,6 +8609,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7179,6 +8682,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7251,6 +8755,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7691,6 +9196,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7763,6 +9270,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -7835,6 +9344,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9140,6 +10651,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9212,6 +10724,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9284,6 +10797,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9724,6 +11238,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9796,6 +11311,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -9868,6 +11384,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -10308,6 +11825,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -10380,6 +11898,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -10452,6 +11971,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -10892,6 +12412,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -10964,6 +12485,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11036,6 +12558,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11476,6 +12999,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11548,6 +13072,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11620,6 +13145,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11767,6 +13293,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11839,6 +13367,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -11911,6 +13441,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12000,6 +13532,272 @@ class DefaultApi:
 
 
     @validate_call
+    def get_access_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AccessGroupModel:
+        """Get an access group by ID.
+
+        Get an access group by ID.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_access_group_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def get_access_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AccessGroupModel]:
+        """Get an access group by ID.
+
+        Get an access group by ID.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_access_group_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_access_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get an access group by ID.
+
+        Get an access group by ID.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_access_group_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AccessGroupModel",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_access_group_serialize(
+        self,
+        id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/access_groups/{id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     def get_compute_node(
         self,
         id: Annotated[StrictInt, Field(description="ID of the compute node record")],
@@ -12054,6 +13852,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12122,6 +13921,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12190,6 +13990,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12317,6 +14118,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12385,6 +14187,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12453,6 +14256,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12580,6 +14384,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12648,6 +14453,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12716,6 +14522,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12843,6 +14650,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12911,6 +14720,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -12979,6 +14790,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -13369,6 +15182,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -13437,6 +15251,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -13505,6 +15320,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14196,6 +16012,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14264,6 +16081,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14332,6 +16150,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14459,6 +16278,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14527,6 +16347,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14595,6 +16416,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14722,6 +16544,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14790,6 +16613,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14858,6 +16682,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -14985,6 +16810,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15053,6 +16879,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15121,6 +16948,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15248,6 +17076,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15316,6 +17145,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15384,6 +17214,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15759,6 +17590,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15827,6 +17660,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -15895,6 +17730,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16288,6 +18125,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16356,6 +18195,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16424,6 +18265,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16563,6 +18406,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16643,6 +18488,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -16723,6 +18570,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -17332,6 +19181,288 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/workflows/{id}/is_uninitialized',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def list_access_groups(
+        self,
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ListAccessGroupsResponse:
+        """List all access groups.
+
+        List all access groups.
+
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_access_groups_serialize(
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def list_access_groups_with_http_info(
+        self,
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ListAccessGroupsResponse]:
+        """List all access groups.
+
+        List all access groups.
+
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_access_groups_serialize(
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def list_access_groups_without_preload_content(
+        self,
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List all access groups.
+
+        List all access groups.
+
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_access_groups_serialize(
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_access_groups_serialize(
+        self,
+        offset,
+        limit,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/access_groups',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -18500,6 +20631,306 @@ class DefaultApi:
 
 
     @validate_call
+    def list_group_members(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ListUserGroupMembershipsResponse:
+        """List members of an access group.
+
+        List members of an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_group_members_serialize(
+            id=id,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListUserGroupMembershipsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def list_group_members_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ListUserGroupMembershipsResponse]:
+        """List members of an access group.
+
+        List members of an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_group_members_serialize(
+            id=id,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListUserGroupMembershipsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def list_group_members_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List members of an access group.
+
+        List members of an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_group_members_serialize(
+            id=id,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListUserGroupMembershipsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_group_members_serialize(
+        self,
+        id,
+        offset,
+        limit,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/access_groups/{id}/members',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     def list_job_dependencies(
         self,
         id: Annotated[StrictInt, Field(description="Workflow ID")],
@@ -18562,6 +20993,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobDependenciesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -18638,6 +21071,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobDependenciesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -18714,6 +21149,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobDependenciesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -18859,6 +21296,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobFileRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -18935,6 +21374,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobFileRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19011,6 +21452,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobFileRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19419,6 +21862,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19495,6 +21940,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19571,6 +22018,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataRelationshipsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19744,6 +22193,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19848,6 +22299,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -19952,6 +22405,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -20150,6 +22605,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -20242,6 +22699,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -20334,6 +22793,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21329,6 +23790,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21441,6 +23904,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21553,6 +24018,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21777,6 +24244,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21885,6 +24354,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -21993,6 +24464,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22200,6 +24673,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22296,6 +24771,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22392,6 +24869,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22608,6 +25087,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22728,6 +25209,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -22848,6 +25331,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -23074,6 +25559,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -23174,6 +25661,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -23274,6 +25763,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -23373,6 +25864,569 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/user_data',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def list_user_groups(
+        self,
+        user_name: Annotated[StrictStr, Field(description="Username")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ListAccessGroupsResponse:
+        """List groups a user belongs to.
+
+        List groups a user belongs to.
+
+        :param user_name: Username (required)
+        :type user_name: str
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_user_groups_serialize(
+            user_name=user_name,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def list_user_groups_with_http_info(
+        self,
+        user_name: Annotated[StrictStr, Field(description="Username")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ListAccessGroupsResponse]:
+        """List groups a user belongs to.
+
+        List groups a user belongs to.
+
+        :param user_name: Username (required)
+        :type user_name: str
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_user_groups_serialize(
+            user_name=user_name,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def list_user_groups_without_preload_content(
+        self,
+        user_name: Annotated[StrictStr, Field(description="Username")],
+        offset: Optional[StrictInt] = None,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List groups a user belongs to.
+
+        List groups a user belongs to.
+
+        :param user_name: Username (required)
+        :type user_name: str
+        :param offset:
+        :type offset: int
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_user_groups_serialize(
+            user_name=user_name,
+            offset=offset,
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_user_groups_serialize(
+        self,
+        user_name,
+        offset,
+        limit,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if user_name is not None:
+            _path_params['user_name'] = user_name
+        # process the query parameters
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/users/{user_name}/groups',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def list_workflow_groups(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ListAccessGroupsResponse:
+        """List access groups that have access to a workflow.
+
+        List access groups that have access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_workflow_groups_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def list_workflow_groups_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ListAccessGroupsResponse]:
+        """List access groups that have access to a workflow.
+
+        List access groups that have access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_workflow_groups_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def list_workflow_groups_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List access groups that have access to a workflow.
+
+        List access groups that have access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_workflow_groups_serialize(
+            id=id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListAccessGroupsResponse",
+            '404': "DefaultErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_workflow_groups_serialize(
+        self,
+        id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/workflows/{id}/access_groups',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -24650,6 +27704,630 @@ class DefaultApi:
 
 
     @validate_call
+    def remove_user_from_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        user_name: Annotated[StrictStr, Field(description="Username to remove")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Remove a user from an access group.
+
+        Remove a user from an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param user_name: Username to remove (required)
+        :type user_name: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_user_from_group_serialize(
+            id=id,
+            user_name=user_name,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def remove_user_from_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        user_name: Annotated[StrictStr, Field(description="Username to remove")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Remove a user from an access group.
+
+        Remove a user from an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param user_name: Username to remove (required)
+        :type user_name: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_user_from_group_serialize(
+            id=id,
+            user_name=user_name,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def remove_user_from_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the access group")],
+        user_name: Annotated[StrictStr, Field(description="Username to remove")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Remove a user from an access group.
+
+        Remove a user from an access group.
+
+        :param id: ID of the access group (required)
+        :type id: int
+        :param user_name: Username to remove (required)
+        :type user_name: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_user_from_group_serialize(
+            id=id,
+            user_name=user_name,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _remove_user_from_group_serialize(
+        self,
+        id,
+        user_name,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        if user_name is not None:
+            _path_params['user_name'] = user_name
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/access_groups/{id}/members/{user_name}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def remove_workflow_from_group(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        group_id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Revoke an access group's access to a workflow.
+
+        Revoke an access group's access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param group_id: ID of the access group (required)
+        :type group_id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_workflow_from_group_serialize(
+            id=id,
+            group_id=group_id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def remove_workflow_from_group_with_http_info(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        group_id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Revoke an access group's access to a workflow.
+
+        Revoke an access group's access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param group_id: ID of the access group (required)
+        :type group_id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_workflow_from_group_serialize(
+            id=id,
+            group_id=group_id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def remove_workflow_from_group_without_preload_content(
+        self,
+        id: Annotated[StrictInt, Field(description="ID of the workflow")],
+        group_id: Annotated[StrictInt, Field(description="ID of the access group")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Revoke an access group's access to a workflow.
+
+        Revoke an access group's access to a workflow.
+
+        :param id: ID of the workflow (required)
+        :type id: int
+        :param group_id: ID of the access group (required)
+        :type group_id: int
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_workflow_from_group_serialize(
+            id=id,
+            group_id=group_id,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
+            '500': "DefaultErrorResponse",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _remove_workflow_from_group_serialize(
+        self,
+        id,
+        group_id,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if id is not None:
+            _path_params['id'] = id
+        if group_id is not None:
+            _path_params['group_id'] = group_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/workflows/{id}/access_groups/{group_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     def reset_job_status(
         self,
         id: Annotated[StrictInt, Field(description="Workflow ID")],
@@ -25651,6 +29329,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -25723,6 +29402,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -25795,6 +29475,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -25942,6 +29623,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26014,6 +29696,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26086,6 +29769,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EventModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26233,6 +29917,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26305,6 +29990,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26377,6 +30063,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26524,6 +30211,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26596,6 +30285,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26668,6 +30359,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26815,6 +30508,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26887,6 +30581,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -26959,6 +30654,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27106,6 +30802,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27178,6 +30875,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27250,6 +30948,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27397,6 +31096,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27469,6 +31169,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27541,6 +31242,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27688,6 +31390,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27760,6 +31463,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27832,6 +31536,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -27979,6 +31684,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28051,6 +31757,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28123,6 +31830,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28270,6 +31978,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28342,6 +32051,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28414,6 +32124,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28561,6 +32272,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28633,6 +32346,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28705,6 +32420,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28852,6 +32569,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28924,6 +32643,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -28996,6 +32717,8 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
+            '403': "ForbiddenErrorResponse",
+            '404': "NotFoundErrorResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(

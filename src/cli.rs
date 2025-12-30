@@ -6,6 +6,7 @@
 use clap::{Parser, Subcommand, builder::styling};
 use std::path::PathBuf;
 
+use crate::client::commands::access_groups::AccessGroupCommands;
 use crate::client::commands::compute_nodes::ComputeNodeCommands;
 use crate::client::commands::config::ConfigCommands;
 use crate::client::commands::events::EventCommands;
@@ -88,12 +89,12 @@ pub struct Cli {
     /// URL of torc server
     #[arg(long, env = "TORC_API_URL")]
     pub url: Option<String>,
-    /// Username for basic authentication
-    #[arg(long, env = "TORC_USERNAME")]
-    pub username: Option<String>,
-    /// Password for basic authentication (will prompt if username provided but password not)
+    /// Password for basic authentication (uses USER env var as username)
     #[arg(long, env = "TORC_PASSWORD")]
     pub password: Option<String>,
+    /// Prompt for password securely (alternative to --password or TORC_PASSWORD)
+    #[arg(long)]
+    pub prompt_password: bool,
     /// Skip checking server version compatibility
     #[arg(long)]
     pub skip_version_check: bool,
@@ -446,6 +447,12 @@ pub enum Commands {
     // =========================================================================
     // Configuration & Utilities - Setup and miscellaneous
     // =========================================================================
+    /// Manage access groups for team-based access control
+    #[command(hide = true)]
+    AccessGroups {
+        #[command(subcommand)]
+        command: AccessGroupCommands,
+    },
     /// Manage configuration files and settings
     #[command(hide = true)]
     Config {
@@ -455,6 +462,8 @@ pub enum Commands {
     /// Generate interactive HTML plots from resource monitoring data
     #[command(hide = true)]
     PlotResources(plot_resources_cmd::Args),
+    /// Check if the server is running and accessible
+    Ping,
     /// Generate shell completions
     #[command(hide = true)]
     Completions {
