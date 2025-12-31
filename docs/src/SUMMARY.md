@@ -45,6 +45,7 @@
     - [Shell Completions](./how-to/shell-completions.md)
   - [Workflows]()
     - [Creating Workflows](./how-to/creating-workflows.md)
+    - [Exporting and Importing Workflows](./how-to/export-import-workflows.md)
     - [Visualizing Workflow Structure](./how-to/visualizing-workflows.md)
   - [Execution]()
     - [Working with Slurm](./how-to/slurm.md)

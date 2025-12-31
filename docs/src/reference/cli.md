@@ -501,6 +501,8 @@ Workflow management commands
 - `execution-plan` — Show the execution plan for a workflow specification or existing workflow
 - `list-actions` — List workflow actions and their statuses (useful for debugging action triggers)
 - `is-complete` — Check if a workflow is complete
+- `export` — Export a workflow to a portable JSON file
+- `import` — Import a workflow from an exported JSON file
 
 ## `torc workflows create`
 
@@ -889,6 +891,38 @@ Check if a workflow is complete
 
 - `<ID>` — ID of the workflow to check (optional - will prompt if not provided)
 - `<ID>` — ID of the workflow to check (optional - will prompt if not provided)
+
+## `torc workflows export`
+
+Export a workflow to a portable JSON file
+
+**Usage:** `torc workflows export [OPTIONS] <WORKFLOW_ID>`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — ID of the workflow to export
+
+###### **Options:**
+
+- `-o`, `--output <FILE>` — Output file path. If not specified, outputs to stdout
+- `--include-results` — Include job results in the export
+- `--include-events` — Include workflow events in the export
+
+## `torc workflows import`
+
+Import a workflow from an exported JSON file
+
+**Usage:** `torc workflows import [OPTIONS] <FILE>`
+
+###### **Arguments:**
+
+- `<FILE>` — Path to the exported workflow JSON file
+
+###### **Options:**
+
+- `--name <NAME>` — Override the workflow name during import
+- `--skip-results` — Skip importing results even if present in the export
+- `--skip-events` — Skip importing events even if present in the export
 
 ## `torc compute-nodes`
 
