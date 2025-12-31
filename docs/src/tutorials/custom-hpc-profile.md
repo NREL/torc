@@ -27,9 +27,46 @@ Create a custom profile when:
 - You have a private or internal cluster
 - You want to test profile configurations before submitting upstream
 
-## Step 1: Gather Partition Information
+## Quick Start: Auto-Generate from Slurm
 
-First, collect information about your HPC's partitions. On most Slurm systems:
+If you're on a Slurm cluster, you can automatically generate a profile from the cluster
+configuration:
+
+```bash
+# Generate profile from current Slurm cluster
+torc hpc generate
+
+# Specify a custom name
+torc hpc generate --name mycluster --display-name "My Research Cluster"
+
+# Skip standby/preemptible partitions
+torc hpc generate --skip-stdby
+
+# Save to a file
+torc hpc generate --skip-stdby -o mycluster-profile.toml
+```
+
+This queries `sinfo` and `scontrol` to extract:
+
+- Partition names, CPUs, memory, and time limits
+- GPU configuration from GRES
+- Node sharing settings
+- Hostname-based detection pattern
+
+The generated profile can be added directly to your config file. You may want to review and adjust:
+
+- `requires_explicit_request`: Set to `true` for partitions that shouldn't be auto-selected
+- `description`: Add human-readable descriptions for each partition
+
+After generation, skip to [Step 4: Verify the Profile](#step-4-verify-the-profile).
+
+## Manual Profile Creation
+
+If automatic generation isn't available or you need more control, follow these steps.
+
+### Step 1: Gather Partition Information
+
+Collect information about your HPC's partitions. On most Slurm systems:
 
 ```bash
 # List all partitions
@@ -48,7 +85,7 @@ For this tutorial, let's say your cluster "ResearchCluster" has these partitions
 | `gpu`     | 32        | 256 GB  | 48 hours     | 4x A100 |
 | `himem`   | 48        | 1024 GB | 48 hours     | -       |
 
-## Step 2: Identify Detection Method
+### Step 2: Identify Detection Method
 
 Determine how Torc can detect when you're on this system. Common methods:
 
@@ -67,7 +104,7 @@ hostname              # e.g., "login01.research.edu"
 
 For this tutorial, we'll use the environment variable `CLUSTER_NAME=research`.
 
-## Step 3: Create the Configuration File
+### Step 3: Create the Configuration File
 
 Create or edit your Torc configuration file:
 

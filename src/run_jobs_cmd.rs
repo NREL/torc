@@ -230,7 +230,8 @@ pub fn run(args: &Args) {
         .with_cpu(CpuRefreshKind::everything())
         .with_memory();
     let mut system = System::new_with_specifics(refresh_kind);
-    system.refresh_all();
+    system.refresh_cpu();
+    system.refresh_memory();
     let system_cpus = system.cpus().len() as i64;
     let system_memory_gb = (system.total_memory() as f64) / (1024.0 * 1024.0 * 1024.0);
     let system_gpus = detect_nvidia_gpus();

@@ -1,68 +1,11 @@
 //! Access group management commands for team-based access control
 
 use crate::client::apis::configuration::Configuration;
+use crate::client::apis::default_api;
 use crate::client::commands::output::{print_if_json, print_json_wrapped};
 use crate::client::commands::table_format::display_table_with_count;
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
+use crate::models::{AccessGroupModel, UserGroupMembershipModel};
 use tabled::Tabled;
-
-// ============================================================================
-// Models (matching server-side models)
-// ============================================================================
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AccessGroupModel {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<i64>,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserGroupMembershipModel {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<i64>,
-    pub user_name: String,
-    pub group_id: i64,
-    #[serde(default = "default_role")]
-    pub role: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
-}
-
-fn default_role() -> String {
-    "member".to_string()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkflowAccessGroupModel {
-    pub workflow_id: i64,
-    pub group_id: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ListAccessGroupsResponse {
-    pub items: Vec<AccessGroupModel>,
-    pub offset: i64,
-    pub limit: i64,
-    pub total_count: i64,
-    pub has_more: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ListUserGroupMembershipsResponse {
-    pub items: Vec<UserGroupMembershipModel>,
-    pub offset: i64,
-    pub limit: i64,
-    pub total_count: i64,
-    pub has_more: bool,
-}
 
 // ============================================================================
 // Table display types
@@ -88,331 +31,6 @@ struct MemberTableRow {
     role: String,
     #[tabled(rename = "Added")]
     created_at: String,
-}
-
-// ============================================================================
-// API Client functions
-// ============================================================================
-
-fn make_request(
-    config: &Configuration,
-    method: reqwest::Method,
-    path: &str,
-) -> reqwest::blocking::RequestBuilder {
-    let url = format!("{}{}", config.base_path, path);
-    let mut req = config.client.request(method, &url);
-
-    if let Some((username, password)) = &config.basic_auth {
-        req = req.basic_auth(username, password.clone());
-    }
-
-    req
-}
-
-fn handle_error_response(status: StatusCode, body: &str) -> String {
-    match status {
-        StatusCode::NOT_FOUND => format!("Not found: {}", body),
-        StatusCode::CONFLICT => format!("Conflict: {}", body),
-        StatusCode::UNAUTHORIZED => "Unauthorized: Please check your credentials".to_string(),
-        StatusCode::FORBIDDEN => "Forbidden: Access denied".to_string(),
-        _ => format!("Error ({}): {}", status, body),
-    }
-}
-
-// Group operations
-fn create_group(
-    config: &Configuration,
-    name: &str,
-    description: Option<&str>,
-) -> Result<AccessGroupModel, String> {
-    let group = AccessGroupModel {
-        id: None,
-        name: name.to_string(),
-        description: description.map(|s| s.to_string()),
-        created_at: None,
-    };
-
-    let resp = make_request(config, reqwest::Method::POST, "/access_groups")
-        .json(&group)
-        .send()
-        .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn get_group(config: &Configuration, id: i64) -> Result<AccessGroupModel, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::GET,
-        &format!("/access_groups/{}", id),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn list_groups(
-    config: &Configuration,
-    offset: i64,
-    limit: i64,
-) -> Result<ListAccessGroupsResponse, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::GET,
-        &format!("/access_groups?offset={}&limit={}", offset, limit),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn delete_group(config: &Configuration, id: i64) -> Result<AccessGroupModel, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::DELETE,
-        &format!("/access_groups/{}", id),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-// Membership operations
-fn add_user_to_group(
-    config: &Configuration,
-    user_name: &str,
-    group_id: i64,
-    role: &str,
-) -> Result<UserGroupMembershipModel, String> {
-    let membership = UserGroupMembershipModel {
-        id: None,
-        user_name: user_name.to_string(),
-        group_id,
-        role: role.to_string(),
-        created_at: None,
-    };
-
-    let resp = make_request(
-        config,
-        reqwest::Method::POST,
-        &format!("/access_groups/{}/members", group_id),
-    )
-    .json(&membership)
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn remove_user_from_group(
-    config: &Configuration,
-    user_name: &str,
-    group_id: i64,
-) -> Result<(), String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::DELETE,
-        &format!("/access_groups/{}/members/{}", group_id, user_name),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    if status.is_success() {
-        Ok(())
-    } else {
-        let body = resp
-            .text()
-            .map_err(|e| format!("Failed to read response: {}", e))?;
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn list_group_members(
-    config: &Configuration,
-    group_id: i64,
-    offset: i64,
-    limit: i64,
-) -> Result<ListUserGroupMembershipsResponse, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::GET,
-        &format!(
-            "/access_groups/{}/members?offset={}&limit={}",
-            group_id, offset, limit
-        ),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn list_user_groups(
-    config: &Configuration,
-    user_name: &str,
-    offset: i64,
-    limit: i64,
-) -> Result<ListAccessGroupsResponse, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::GET,
-        &format!(
-            "/users/{}/groups?offset={}&limit={}",
-            user_name, offset, limit
-        ),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-// Workflow-group operations
-fn add_workflow_to_group(
-    config: &Configuration,
-    workflow_id: i64,
-    group_id: i64,
-) -> Result<WorkflowAccessGroupModel, String> {
-    let association = WorkflowAccessGroupModel {
-        workflow_id,
-        group_id,
-        created_at: None,
-    };
-
-    let resp = make_request(
-        config,
-        reqwest::Method::POST,
-        &format!("/workflows/{}/access_groups/{}", workflow_id, group_id),
-    )
-    .json(&association)
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn remove_workflow_from_group(
-    config: &Configuration,
-    workflow_id: i64,
-    group_id: i64,
-) -> Result<(), String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::DELETE,
-        &format!("/workflows/{}/access_groups/{}", workflow_id, group_id),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    if status.is_success() {
-        Ok(())
-    } else {
-        let body = resp
-            .text()
-            .map_err(|e| format!("Failed to read response: {}", e))?;
-        Err(handle_error_response(status, &body))
-    }
-}
-
-fn list_workflow_groups(
-    config: &Configuration,
-    workflow_id: i64,
-) -> Result<ListAccessGroupsResponse, String> {
-    let resp = make_request(
-        config,
-        reqwest::Method::GET,
-        &format!("/workflows/{}/access_groups", workflow_id),
-    )
-    .send()
-    .map_err(|e| format!("Request failed: {}", e))?;
-
-    let status = resp.status();
-    let body = resp
-        .text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    if status.is_success() {
-        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))
-    } else {
-        Err(handle_error_response(status, &body))
-    }
 }
 
 // ============================================================================
@@ -533,7 +151,10 @@ pub fn handle_access_group_commands(
 ) {
     match command {
         AccessGroupCommands::Create { name, description } => {
-            match create_group(config, name, description.as_deref()) {
+            let mut group = AccessGroupModel::new(name.clone());
+            group.description = description.clone();
+
+            match default_api::create_access_group(config, group) {
                 Ok(group) => {
                     if print_if_json(format, &group, "group") {
                         // JSON was printed
@@ -552,7 +173,7 @@ pub fn handle_access_group_commands(
                 }
             }
         }
-        AccessGroupCommands::Get { id } => match get_group(config, *id) {
+        AccessGroupCommands::Get { id } => match default_api::get_access_group(config, *id) {
             Ok(group) => {
                 if print_if_json(format, &group, "group") {
                     // JSON was printed
@@ -573,32 +194,34 @@ pub fn handle_access_group_commands(
                 std::process::exit(1);
             }
         },
-        AccessGroupCommands::List { limit, offset } => match list_groups(config, *offset, *limit) {
-            Ok(response) => {
-                if format == "json" {
-                    print_json_wrapped("groups", &response.items, "groups");
-                } else if response.items.is_empty() {
-                    println!("No access groups found");
-                } else {
-                    let rows: Vec<GroupTableRow> = response
-                        .items
-                        .iter()
-                        .map(|g| GroupTableRow {
-                            id: g.id.unwrap_or(-1),
-                            name: g.name.clone(),
-                            description: g.description.clone().unwrap_or_default(),
-                            created_at: g.created_at.clone().unwrap_or_default(),
-                        })
-                        .collect();
-                    display_table_with_count(&rows, "access groups");
+        AccessGroupCommands::List { limit, offset } => {
+            match default_api::list_access_groups(config, Some(*offset), Some(*limit)) {
+                Ok(response) => {
+                    if format == "json" {
+                        print_json_wrapped("groups", &response.items, "groups");
+                    } else if response.items.is_empty() {
+                        println!("No access groups found");
+                    } else {
+                        let rows: Vec<GroupTableRow> = response
+                            .items
+                            .iter()
+                            .map(|g| GroupTableRow {
+                                id: g.id.unwrap_or(-1),
+                                name: g.name.clone(),
+                                description: g.description.clone().unwrap_or_default(),
+                                created_at: g.created_at.clone().unwrap_or_default(),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "access groups");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error listing access groups: {}", e);
+                    std::process::exit(1);
                 }
             }
-            Err(e) => {
-                eprintln!("Error listing access groups: {}", e);
-                std::process::exit(1);
-            }
-        },
-        AccessGroupCommands::Delete { id } => match delete_group(config, *id) {
+        }
+        AccessGroupCommands::Delete { id } => match default_api::delete_access_group(config, *id) {
             Ok(group) => {
                 if print_if_json(format, &group, "group") {
                     // JSON was printed
@@ -617,27 +240,32 @@ pub fn handle_access_group_commands(
             group_id,
             user_name,
             role,
-        } => match add_user_to_group(config, user_name, *group_id, role) {
-            Ok(membership) => {
-                if print_if_json(format, &membership, "membership") {
-                    // JSON was printed
-                } else {
-                    println!("Successfully added user to group:");
-                    println!("  User: {}", membership.user_name);
-                    println!("  Group ID: {}", membership.group_id);
-                    println!("  Role: {}", membership.role);
+        } => {
+            let mut membership = UserGroupMembershipModel::new(user_name.clone(), *group_id);
+            membership.role = role.clone();
+
+            match default_api::add_user_to_group(config, *group_id, membership) {
+                Ok(membership) => {
+                    if print_if_json(format, &membership, "membership") {
+                        // JSON was printed
+                    } else {
+                        println!("Successfully added user to group:");
+                        println!("  User: {}", membership.user_name);
+                        println!("  Group ID: {}", membership.group_id);
+                        println!("  Role: {}", membership.role);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error adding user to group: {}", e);
+                    std::process::exit(1);
                 }
             }
-            Err(e) => {
-                eprintln!("Error adding user to group: {}", e);
-                std::process::exit(1);
-            }
-        },
+        }
         AccessGroupCommands::RemoveUser {
             group_id,
             user_name,
-        } => match remove_user_from_group(config, user_name, *group_id) {
-            Ok(()) => {
+        } => match default_api::remove_user_from_group(config, *group_id, user_name) {
+            Ok(_membership) => {
                 if format == "json" {
                     println!("{{\"success\": true}}");
                 } else {
@@ -656,36 +284,38 @@ pub fn handle_access_group_commands(
             group_id,
             limit,
             offset,
-        } => match list_group_members(config, *group_id, *offset, *limit) {
-            Ok(response) => {
-                if format == "json" {
-                    print_json_wrapped("members", &response.items, "members");
-                } else if response.items.is_empty() {
-                    println!("No members found in group {}", group_id);
-                } else {
-                    println!("Members of group {}:", group_id);
-                    let rows: Vec<MemberTableRow> = response
-                        .items
-                        .iter()
-                        .map(|m| MemberTableRow {
-                            user_name: m.user_name.clone(),
-                            role: m.role.clone(),
-                            created_at: m.created_at.clone().unwrap_or_default(),
-                        })
-                        .collect();
-                    display_table_with_count(&rows, "members");
+        } => {
+            match default_api::list_group_members(config, *group_id, Some(*offset), Some(*limit)) {
+                Ok(response) => {
+                    if format == "json" {
+                        print_json_wrapped("members", &response.items, "members");
+                    } else if response.items.is_empty() {
+                        println!("No members found in group {}", group_id);
+                    } else {
+                        println!("Members of group {}:", group_id);
+                        let rows: Vec<MemberTableRow> = response
+                            .items
+                            .iter()
+                            .map(|m| MemberTableRow {
+                                user_name: m.user_name.clone(),
+                                role: m.role.clone(),
+                                created_at: m.created_at.clone().unwrap_or_default(),
+                            })
+                            .collect();
+                        display_table_with_count(&rows, "members");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error listing group members: {}", e);
+                    std::process::exit(1);
                 }
             }
-            Err(e) => {
-                eprintln!("Error listing group members: {}", e);
-                std::process::exit(1);
-            }
-        },
+        }
         AccessGroupCommands::ListUserGroups {
             user_name,
             limit,
             offset,
-        } => match list_user_groups(config, user_name, *offset, *limit) {
+        } => match default_api::list_user_groups(config, user_name, Some(*offset), Some(*limit)) {
             Ok(response) => {
                 if format == "json" {
                     print_json_wrapped("groups", &response.items, "groups");
@@ -714,7 +344,7 @@ pub fn handle_access_group_commands(
         AccessGroupCommands::AddWorkflow {
             workflow_id,
             group_id,
-        } => match add_workflow_to_group(config, *workflow_id, *group_id) {
+        } => match default_api::add_workflow_to_group(config, *workflow_id, *group_id) {
             Ok(association) => {
                 if print_if_json(format, &association, "association") {
                     // JSON was printed
@@ -732,8 +362,8 @@ pub fn handle_access_group_commands(
         AccessGroupCommands::RemoveWorkflow {
             workflow_id,
             group_id,
-        } => match remove_workflow_from_group(config, *workflow_id, *group_id) {
-            Ok(()) => {
+        } => match default_api::remove_workflow_from_group(config, *workflow_id, *group_id) {
+            Ok(_association) => {
                 if format == "json" {
                     println!("{{\"success\": true}}");
                 } else {
@@ -749,7 +379,7 @@ pub fn handle_access_group_commands(
             }
         },
         AccessGroupCommands::ListWorkflowGroups { workflow_id } => {
-            match list_workflow_groups(config, *workflow_id) {
+            match default_api::list_workflow_groups(config, *workflow_id, None, None) {
                 Ok(response) => {
                     if format == "json" {
                         print_json_wrapped("groups", &response.items, "groups");

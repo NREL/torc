@@ -1210,6 +1210,147 @@ fn test_generate_schedulers_cpu_vs_memory_constraint() {
     );
 }
 
+// ============== sinfo Parsing Tests ==============
+
+use torc::client::commands::hpc::parse_sinfo_string;
+
+/// Test parsing sinfo output from Kestrel HPC cluster
+#[rstest]
+fn test_parse_sinfo_string_kestrel() {
+    let sinfo_output = r#"bigmem|104|2000000|2-00:00:00|(null)|10
+bigmem-stdby|104|2000000|2-00:00:00|(null)|10
+bigmeml|104|2000000|10-00:00:00|(null)|10
+short*|104|246064|4:00:00|(null)|2112
+short*|104|984256|4:00:00|(null)|64
+short-stdby|104|246064|4:00:00|(null)|2112
+short-stdby|104|984256|4:00:00|(null)|64
+medmem|104|984256|10-00:00:00|(null)|64
+medmem-stdby|104|984256|2-00:00:00|(null)|64
+standard|104|246064|2-00:00:00|(null)|2112
+standard|104|984256|2-00:00:00|(null)|64
+standard-stdby|104|246064|2-00:00:00|(null)|2112
+standard-stdby|104|984256|2-00:00:00|(null)|64
+long|104|246064|10-00:00:00|(null)|1632
+long|104|984256|10-00:00:00|(null)|32
+hbw|104|984256|2-00:00:00|(null)|32
+hbw|104|246064|2-00:00:00|(null)|480
+hbw-stdby|104|984256|2-00:00:00|(null)|32
+hbw-stdby|104|246064|2-00:00:00|(null)|480
+hbwl|104|984256|10-00:00:00|(null)|32
+hbwl|104|246064|10-00:00:00|(null)|480
+debug|104|246064|1:00:00|(null)|1376
+debug|104|984256|1:00:00|(null)|32
+debug|104|2000000|1:00:00|(null)|10
+debug-stdby|104|246064|1:00:00|(null)|1376
+debug-stdby|104|984256|1:00:00|(null)|32
+debug-stdby|104|2000000|1:00:00|(null)|10
+debug-gpu|128|1440000|1:00:00|gpu:h100:4(S:0-3)|24
+debug-gpu|128|360000|1:00:00|gpu:h100:4(S:0-3)|105
+debug-gpu|128|360000|1:00:00|gpu:h100:4(S:0-1)|3
+debug-gpu|128|720000|1:00:00|gpu:h100:4(S:0-3)|24
+debug-gpu-stdby|128|1440000|1:00:00|gpu:h100:4(S:0-3)|24
+debug-gpu-stdby|128|360000|1:00:00|gpu:h100:4(S:0-3)|105
+debug-gpu-stdby|128|360000|1:00:00|gpu:h100:4(S:0-1)|3
+debug-gpu-stdby|128|720000|1:00:00|gpu:h100:4(S:0-3)|24
+nvme|104|246064|2-00:00:00|(null)|256
+shared|104|246064|2-00:00:00|(null)|128
+shared-stdby|104|246064|2-00:00:00|(null)|128
+sharedl|104|246064|10-00:00:00|(null)|128
+gpu-h100s|128|1440000|4:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100s|128|360000|4:00:00|gpu:h100:4(S:0-3)|105
+gpu-h100s|128|360000|4:00:00|gpu:h100:4(S:0-1)|3
+gpu-h100s|128|720000|4:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100s-stdby|128|1440000|4:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100s-stdby|128|360000|4:00:00|gpu:h100:4(S:0-3)|105
+gpu-h100s-stdby|128|360000|4:00:00|gpu:h100:4(S:0-1)|3
+gpu-h100s-stdby|128|720000|4:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100|128|1440000|2-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100|128|360000|2-00:00:00|gpu:h100:4(S:0-3)|105
+gpu-h100|128|360000|2-00:00:00|gpu:h100:4(S:0-1)|3
+gpu-h100|128|720000|2-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100-stdby|128|1440000|2-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100-stdby|128|360000|2-00:00:00|gpu:h100:4(S:0-3)|105
+gpu-h100-stdby|128|360000|2-00:00:00|gpu:h100:4(S:0-1)|3
+gpu-h100-stdby|128|720000|2-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100l|128|1440000|10-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-h100l|128|360000|10-00:00:00|gpu:h100:4(S:0-3)|105
+gpu-h100l|128|360000|10-00:00:00|gpu:h100:4(S:0-1)|3
+gpu-h100l|128|720000|10-00:00:00|gpu:h100:4(S:0-3)|24
+vto|128|1440000|2-00:00:00|gpu:h100:4(S:0-3)|24
+vto|128|360000|2-00:00:00|gpu:h100:4(S:0-3)|105
+vto|128|360000|2-00:00:00|gpu:h100:4(S:0-1)|3
+vto|128|720000|2-00:00:00|gpu:h100:4(S:0-3)|24
+gpu-a100|64|246064|2-00:00:00|gpu:a100:4|2
+gpu-a100|64|246064|2-00:00:00|gpu:a100:4(S:0)|4"#;
+
+    let partitions = parse_sinfo_string(sinfo_output).unwrap();
+
+    // Should parse all 65 lines
+    assert_eq!(partitions.len(), 65);
+
+    // Check a CPU-only partition (bigmem)
+    let bigmem = partitions.iter().find(|p| p.name == "bigmem").unwrap();
+    assert_eq!(bigmem.cpus, 104);
+    assert_eq!(bigmem.memory_mb, 2_000_000);
+    assert_eq!(bigmem.timelimit_secs, 2 * 24 * 3600); // 2 days
+    assert!(bigmem.gres.is_none());
+
+    // Check default partition (short*) - asterisk should be stripped
+    let short_partitions: Vec<_> = partitions.iter().filter(|p| p.name == "short").collect();
+    assert_eq!(short_partitions.len(), 2); // Two different node types
+    assert_eq!(short_partitions[0].cpus, 104);
+    assert_eq!(short_partitions[0].timelimit_secs, 4 * 3600); // 4 hours
+
+    // Check a GPU partition (gpu-h100)
+    let gpu_h100: Vec<_> = partitions.iter().filter(|p| p.name == "gpu-h100").collect();
+    assert_eq!(gpu_h100.len(), 4); // 4 different node types
+    assert_eq!(gpu_h100[0].cpus, 128);
+    assert_eq!(gpu_h100[0].timelimit_secs, 2 * 24 * 3600); // 2 days
+    assert!(gpu_h100[0].gres.as_ref().unwrap().contains("gpu:h100:4"));
+
+    // Check GPU partition with A100s
+    let gpu_a100: Vec<_> = partitions.iter().filter(|p| p.name == "gpu-a100").collect();
+    assert_eq!(gpu_a100.len(), 2);
+    assert_eq!(gpu_a100[0].cpus, 64);
+    // One has simple gres, one has socket-specific
+    assert!(
+        gpu_a100
+            .iter()
+            .any(|p| p.gres.as_ref().unwrap() == "gpu:a100:4")
+    );
+    assert!(
+        gpu_a100
+            .iter()
+            .any(|p| p.gres.as_ref().unwrap() == "gpu:a100:4(S:0)")
+    );
+
+    // Check long partition (10 days = 864000 seconds)
+    let long_partitions: Vec<_> = partitions.iter().filter(|p| p.name == "long").collect();
+    assert!(!long_partitions.is_empty());
+    assert_eq!(long_partitions[0].timelimit_secs, 10 * 24 * 3600);
+
+    // Check debug partition (1 hour)
+    let debug_partitions: Vec<_> = partitions.iter().filter(|p| p.name == "debug").collect();
+    assert_eq!(debug_partitions.len(), 3); // 3 different node types
+    assert_eq!(debug_partitions[0].timelimit_secs, 3600); // 1 hour
+}
+
+/// Test parsing empty sinfo output
+#[rstest]
+fn test_parse_sinfo_string_empty() {
+    let result = parse_sinfo_string("").unwrap();
+    assert!(result.is_empty());
+}
+
+/// Test parsing sinfo output with incomplete lines
+#[rstest]
+fn test_parse_sinfo_string_incomplete_lines() {
+    let input = "partition|104|2000000|2-00:00:00|(null)|10\nincomplete|104\n";
+    let result = parse_sinfo_string(input).unwrap();
+    assert_eq!(result.len(), 1); // Only the complete line should be parsed
+    assert_eq!(result[0].name, "partition");
+}
+
 /// Test that GPU constraints are considered in jobs-per-node calculation.
 /// When GPUs are the limiting factor, we should allocate more nodes.
 #[rstest]

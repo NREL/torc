@@ -3,6 +3,8 @@
 //! Commands for listing, detecting, and querying HPC system profiles.
 
 use clap::Subcommand;
+use std::collections::HashMap;
+use std::process::Command;
 use tabled::Tabled;
 
 use super::output::print_json;
@@ -151,6 +153,28 @@ pub enum HpcCommands {
         /// Profile name (if not specified, tries to detect current system)
         #[arg(long)]
         profile: Option<String>,
+    },
+
+    /// Generate an HPC profile from Slurm cluster info
+    ///
+    /// This command queries the current Slurm cluster using sinfo and scontrol
+    /// to automatically generate an HPC profile configuration.
+    Generate {
+        /// Profile name (defaults to SLURM_CLUSTER_NAME or hostname)
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Display name for the profile
+        #[arg(long)]
+        display_name: Option<String>,
+
+        /// Output file (defaults to stdout)
+        #[arg(short, long)]
+        output: Option<std::path::PathBuf>,
+
+        /// Skip standby partitions (names ending in -stdby)
+        #[arg(long)]
+        skip_stdby: bool,
     },
 }
 
@@ -578,5 +602,541 @@ pub fn handle_hpc_commands(command: &HpcCommands, format: &str) {
                 }
             }
         }
+
+        HpcCommands::Generate {
+            name,
+            display_name,
+            output,
+            skip_stdby,
+        } => match generate_profile_from_slurm(name.clone(), display_name.clone(), *skip_stdby) {
+            Ok(toml_output) => {
+                if let Some(path) = output {
+                    if let Err(e) = std::fs::write(path, &toml_output) {
+                        eprintln!("Failed to write output file: {}", e);
+                        std::process::exit(1);
+                    }
+                    eprintln!("Profile written to: {}", path.display());
+                } else {
+                    println!("{}", toml_output);
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to generate profile: {}", e);
+                std::process::exit(1);
+            }
+        },
+    }
+}
+
+/// Information about a partition gathered from sinfo
+#[derive(Debug)]
+pub struct SinfoPartition {
+    pub name: String,
+    pub cpus: u32,
+    pub memory_mb: u64,
+    pub timelimit_secs: u64,
+    pub gres: Option<String>,
+}
+
+/// Additional partition info from scontrol
+#[derive(Debug, Default)]
+struct ScontrolPartitionInfo {
+    min_nodes: Option<u32>,
+    max_nodes: Option<u32>,
+    oversubscribe: Option<String>,
+    default_qos: Option<String>,
+}
+
+/// Generate an HPC profile from the current Slurm cluster
+fn generate_profile_from_slurm(
+    name: Option<String>,
+    display_name: Option<String>,
+    skip_stdby: bool,
+) -> Result<String, String> {
+    // Get cluster name
+    let cluster_name = name.unwrap_or_else(|| {
+        std::env::var("SLURM_CLUSTER_NAME")
+            .or_else(|_| {
+                // Try to get from scontrol
+                Command::new("scontrol")
+                    .args(["show", "config"])
+                    .output()
+                    .ok()
+                    .and_then(|out| {
+                        String::from_utf8(out.stdout).ok().and_then(|s| {
+                            s.lines()
+                                .find(|l| l.starts_with("ClusterName"))
+                                .and_then(|l| l.split('=').nth(1))
+                                .map(|s| s.trim().to_string())
+                        })
+                    })
+                    .ok_or(())
+            })
+            .unwrap_or_else(|_| {
+                // Fall back to hostname
+                hostname::get()
+                    .map(|h| h.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| "unknown".to_string())
+            })
+    });
+
+    let display = display_name.unwrap_or_else(|| {
+        // Capitalize first letter
+        let mut chars = cluster_name.chars();
+        match chars.next() {
+            None => cluster_name.clone(),
+            Some(c) => c.to_uppercase().chain(chars).collect(),
+        }
+    });
+
+    // Get partition info from sinfo
+    let sinfo_partitions = parse_sinfo_output()?;
+
+    if sinfo_partitions.is_empty() {
+        return Err("No partitions found. Is Slurm available on this system?".to_string());
+    }
+
+    // Group partitions by name (Slurm reports each node type separately)
+    let mut partition_map: HashMap<String, Vec<&SinfoPartition>> = HashMap::new();
+    for sp in &sinfo_partitions {
+        partition_map.entry(sp.name.clone()).or_default().push(sp);
+    }
+
+    // Deduplicate and merge partition info
+    let mut partitions = Vec::new();
+    let mut seen_names: Vec<String> = partition_map.keys().cloned().collect();
+    seen_names.sort(); // Consistent ordering
+
+    for name in seen_names {
+        // Skip standby partitions if requested
+        if skip_stdby && name.ends_with("-stdby") {
+            continue;
+        }
+        let group = partition_map.get(&name).unwrap();
+
+        // Get scontrol info (same for all nodes in partition)
+        let scontrol_info = parse_scontrol_partition(&name).unwrap_or_default();
+
+        // Merge partition info from all node types:
+        // - CPUs: use minimum (guaranteed on all nodes)
+        // - Memory: use minimum (guaranteed on all nodes)
+        // - Walltime: should be same, use max to be safe
+        // - GPUs: if any node has GPUs, capture that info
+        let mut min_cpus = u32::MAX;
+        let mut min_memory = u64::MAX;
+        let mut max_walltime = 0u64;
+        let mut gpus_per_node: Option<u32> = None;
+        let mut gpu_type: Option<String> = None;
+
+        for sp in group {
+            min_cpus = min_cpus.min(sp.cpus);
+            min_memory = min_memory.min(sp.memory_mb);
+            max_walltime = max_walltime.max(sp.timelimit_secs);
+
+            // Capture GPU info if present
+            let (gp, gt) = parse_gres(&sp.gres);
+            if gp.is_some() {
+                gpus_per_node = gp;
+                gpu_type = gt;
+            }
+        }
+
+        // Fallback: infer GPU info from partition name if GRES wasn't reported
+        if gpus_per_node.is_none()
+            && let Some((inferred_count, inferred_type)) = infer_gpu_from_name(&name)
+        {
+            gpus_per_node = Some(inferred_count);
+            gpu_type = Some(inferred_type);
+        }
+
+        // Determine if shared based on OverSubscribe setting or partition name
+        let shared = scontrol_info.oversubscribe.as_ref().is_some_and(|o| {
+            o.to_lowercase().contains("yes") || o.to_lowercase().contains("force")
+        }) || name.to_lowercase().contains("shared")
+            || gpus_per_node.is_some(); // GPU partitions are typically shared
+
+        let partition = HpcPartitionConfig {
+            name,
+            description: String::new(),
+            cpus_per_node: min_cpus,
+            memory_mb: min_memory,
+            max_walltime_secs: max_walltime,
+            gpus_per_node,
+            gpu_type,
+            gpu_memory_gb: None,
+            shared,
+            requires_explicit_request: false,
+        };
+
+        partitions.push(partition);
+    }
+
+    // Generate TOML output
+    generate_toml_profile(&cluster_name, &display, &partitions)
+}
+
+/// Parse output from sinfo command
+fn parse_sinfo_output() -> Result<Vec<SinfoPartition>, String> {
+    // Run sinfo with specific format
+    // %P = partition, %c = cpus, %m = memory, %l = timelimit, %G = gres, %D = nodes
+    let output = Command::new("sinfo")
+        .args(["-e", "-o", "%P|%c|%m|%l|%G|%D", "--noheader"])
+        .output()
+        .map_err(|e| format!("Failed to run sinfo: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "sinfo failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    parse_sinfo_string(&stdout)
+}
+
+/// Parse sinfo output string into partition info
+/// Format: "%P|%c|%m|%l|%G|%D" (partition|cpus|memory|timelimit|gres|nodes)
+pub fn parse_sinfo_string(input: &str) -> Result<Vec<SinfoPartition>, String> {
+    let mut partitions = Vec::new();
+
+    for line in input.lines() {
+        let parts: Vec<&str> = line.split('|').collect();
+        if parts.len() < 6 {
+            continue;
+        }
+
+        // Remove trailing * from default partition name
+        let name = parts[0].trim_end_matches('*').to_string();
+
+        let cpus: u32 = parts[1].parse().unwrap_or(1);
+
+        // Memory is in MB
+        let memory_mb: u64 = parts[2].parse().unwrap_or(1024);
+
+        // Parse timelimit (formats: "infinite", "1-00:00:00", "4:00:00", "30:00")
+        let timelimit_secs = parse_slurm_timelimit(parts[3]);
+
+        let gres = if parts[4] == "(null)" || parts[4].is_empty() {
+            None
+        } else {
+            Some(parts[4].to_string())
+        };
+
+        partitions.push(SinfoPartition {
+            name,
+            cpus,
+            memory_mb,
+            timelimit_secs,
+            gres,
+        });
+    }
+
+    Ok(partitions)
+}
+
+/// Parse timelimit string from Slurm format to seconds
+fn parse_slurm_timelimit(s: &str) -> u64 {
+    let s = s.trim();
+
+    if s == "infinite" || s == "UNLIMITED" {
+        return 365 * 24 * 3600; // 1 year as "infinite"
+    }
+
+    // Try formats: "D-HH:MM:SS", "HH:MM:SS", "MM:SS", "MM"
+    if let Some((days, rest)) = s.split_once('-') {
+        let days: u64 = days.parse().unwrap_or(0);
+        let time_secs = parse_time_component(rest);
+        return days * 24 * 3600 + time_secs;
+    }
+
+    parse_time_component(s)
+}
+
+/// Parse time component (HH:MM:SS, MM:SS, or MM)
+fn parse_time_component(s: &str) -> u64 {
+    let parts: Vec<&str> = s.split(':').collect();
+    match parts.len() {
+        3 => {
+            let hours: u64 = parts[0].parse().unwrap_or(0);
+            let mins: u64 = parts[1].parse().unwrap_or(0);
+            let secs: u64 = parts[2].parse().unwrap_or(0);
+            hours * 3600 + mins * 60 + secs
+        }
+        2 => {
+            let mins: u64 = parts[0].parse().unwrap_or(0);
+            let secs: u64 = parts[1].parse().unwrap_or(0);
+            mins * 60 + secs
+        }
+        1 => {
+            let mins: u64 = parts[0].parse().unwrap_or(0);
+            mins * 60
+        }
+        _ => 0,
+    }
+}
+
+/// Parse scontrol show partition output for additional info
+fn parse_scontrol_partition(partition_name: &str) -> Result<ScontrolPartitionInfo, String> {
+    let output = Command::new("scontrol")
+        .args(["show", "partition", partition_name])
+        .output()
+        .map_err(|e| format!("Failed to run scontrol: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "scontrol failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut info = ScontrolPartitionInfo::default();
+
+    // Parse key=value pairs
+    let mut kv_map: HashMap<&str, &str> = HashMap::new();
+    for line in stdout.lines() {
+        for part in line.split_whitespace() {
+            if let Some((key, value)) = part.split_once('=') {
+                kv_map.insert(key, value);
+            }
+        }
+    }
+
+    if let Some(v) = kv_map.get("MinNodes") {
+        info.min_nodes = v.parse().ok();
+    }
+    if let Some(v) = kv_map.get("MaxNodes")
+        && *v != "UNLIMITED"
+    {
+        info.max_nodes = v.parse().ok();
+    }
+    if let Some(v) = kv_map.get("OverSubscribe") {
+        info.oversubscribe = Some(v.to_string());
+    }
+    if let Some(v) = kv_map.get("QoS")
+        && *v != "N/A"
+    {
+        info.default_qos = Some(v.to_string());
+    }
+
+    Ok(info)
+}
+
+/// Infer GPU info from partition name when GRES isn't reported by Slurm.
+///
+/// This is a heuristic fallback used when `sinfo` doesn't report GRES information.
+/// Common partition naming patterns: "gpu-h100", "gpu-a100", "gpu-v100", "debug-gpu"
+///
+/// **Important**: The default of 4 GPUs per node is a reasonable estimate for many
+/// HPC clusters, but actual counts vary (1, 2, 4, or 8 GPUs per node are common).
+/// Administrators should review and adjust the generated profile as needed.
+fn infer_gpu_from_name(name: &str) -> Option<(u32, String)> {
+    let name_lower = name.to_lowercase();
+
+    // Must contain "gpu" to be considered a GPU partition
+    if !name_lower.contains("gpu") {
+        return None;
+    }
+
+    // Try to extract GPU type from name
+    // Common patterns: gpu-h100, gpu-a100, gpu-v100, gpu-h100s, gpu-h100l
+    // Default count of 4 is a heuristic - actual GPU counts vary by cluster
+    let gpu_types = [
+        ("h100", "h100", 4),
+        ("a100", "a100", 4),
+        ("v100", "v100", 4),
+        ("a40", "a40", 4),
+        ("a30", "a30", 4),
+        ("l40", "l40", 4),
+    ];
+
+    for (pattern, gpu_type, default_count) in gpu_types {
+        if name_lower.contains(pattern) {
+            return Some((default_count, gpu_type.to_string()));
+        }
+    }
+
+    // Generic GPU partition without specific type
+    // Default to 4 GPUs - this is a heuristic; verify against actual cluster config
+    Some((4, "gpu".to_string()))
+}
+
+/// Parse GRES string to extract GPU count and type
+/// Examples: "gpu:4", "gpu:a100:4", "gpu:h100:2,nvme:1"
+fn parse_gres(gres: &Option<String>) -> (Option<u32>, Option<String>) {
+    let gres = match gres {
+        Some(g) => g,
+        None => return (None, None),
+    };
+
+    // Find gpu entry (might be multiple GRES separated by comma)
+    for entry in gres.split(',') {
+        // Strip socket info like "(S:0-3)" before parsing
+        // This info can contain colons which would confuse the split
+        let entry = entry.split('(').next().unwrap_or(entry);
+
+        let parts: Vec<&str> = entry.split(':').collect();
+        if parts.first() != Some(&"gpu") {
+            continue;
+        }
+
+        match parts.len() {
+            2 => {
+                // gpu:COUNT
+                let count: u32 = parts[1].parse().unwrap_or(0);
+                if count > 0 {
+                    return (Some(count), None);
+                }
+            }
+            3 => {
+                // gpu:TYPE:COUNT
+                let gpu_type = parts[1].to_string();
+                let count: u32 = parts[2].parse().unwrap_or(0);
+                if count > 0 {
+                    return (Some(count), Some(gpu_type));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (None, None)
+}
+
+/// Generate TOML configuration for the profile
+fn generate_toml_profile(
+    name: &str,
+    display_name: &str,
+    partitions: &[HpcPartitionConfig],
+) -> Result<String, String> {
+    let mut output = String::new();
+
+    // Header comment
+    output.push_str(&format!(
+        "# HPC profile for {} generated from Slurm\n",
+        display_name
+    ));
+    output.push_str(&format!(
+        "# Generated: {}\n",
+        chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+    ));
+    output.push_str("#\n");
+    output.push_str("# To use this profile, add it to your torc config file:\n");
+    output.push_str("#   ~/.config/torc/config.toml (Linux/macOS)\n");
+    output.push_str("#   %APPDATA%\\torc\\config.toml (Windows)\n");
+    output.push_str("#\n");
+    output.push_str("# You may want to review and adjust:\n");
+    output.push_str(
+        "#   - requires_explicit_request: set to true for partitions that shouldn't auto-route\n",
+    );
+    output.push_str("#   - gpu_memory_gb: add GPU memory if known\n");
+    output.push_str("#   - description: add human-readable descriptions\n");
+    output.push('\n');
+
+    // Profile header
+    output.push_str(&format!("[client.hpc.custom_profiles.{}]\n", name));
+    output.push_str(&format!("display_name = \"{}\"\n", display_name));
+
+    // Try to generate hostname detection pattern
+    if let Ok(hostname) = hostname::get() {
+        let hostname = hostname.to_string_lossy();
+        // Extract domain pattern (e.g., "node01.cluster.edu" -> ".*\\.cluster\\.edu")
+        if let Some(dot_pos) = hostname.find('.') {
+            let domain = &hostname[dot_pos + 1..];
+            let pattern = format!(".*\\\\.{}", domain.replace('.', "\\\\."));
+            output.push_str(&format!("detect_hostname = \"{}\"\n", pattern));
+        }
+    }
+
+    output.push('\n');
+
+    // Partitions
+    for partition in partitions {
+        output.push_str(&format!(
+            "[[client.hpc.custom_profiles.{}.partitions]]\n",
+            name
+        ));
+        output.push_str(&format!("name = \"{}\"\n", partition.name));
+        output.push_str(&format!("cpus_per_node = {}\n", partition.cpus_per_node));
+        output.push_str(&format!("memory_mb = {}\n", partition.memory_mb));
+        output.push_str(&format!(
+            "max_walltime_secs = {}\n",
+            partition.max_walltime_secs
+        ));
+
+        if let Some(gpus) = partition.gpus_per_node {
+            output.push_str(&format!("gpus_per_node = {}\n", gpus));
+        }
+        if let Some(ref gpu_type) = partition.gpu_type {
+            output.push_str(&format!("gpu_type = \"{}\"\n", gpu_type));
+        }
+        if partition.shared {
+            output.push_str("shared = true\n");
+        }
+
+        output.push('\n');
+    }
+
+    Ok(output)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_gres_simple_count() {
+        // gpu:4
+        let (count, gpu_type) = parse_gres(&Some("gpu:4".to_string()));
+        assert_eq!(count, Some(4));
+        assert_eq!(gpu_type, None);
+    }
+
+    #[test]
+    fn test_parse_gres_with_type() {
+        // gpu:a100:4
+        let (count, gpu_type) = parse_gres(&Some("gpu:a100:4".to_string()));
+        assert_eq!(count, Some(4));
+        assert_eq!(gpu_type, Some("a100".to_string()));
+    }
+
+    #[test]
+    fn test_parse_gres_with_socket_info() {
+        // gpu:h100:4(S:0-3)
+        let (count, gpu_type) = parse_gres(&Some("gpu:h100:4(S:0-3)".to_string()));
+        assert_eq!(count, Some(4));
+        assert_eq!(gpu_type, Some("h100".to_string()));
+    }
+
+    #[test]
+    fn test_parse_gres_simple_with_socket_info() {
+        // gpu:4(S:0-3)
+        let (count, gpu_type) = parse_gres(&Some("gpu:4(S:0-3)".to_string()));
+        assert_eq!(count, Some(4));
+        assert_eq!(gpu_type, None);
+    }
+
+    #[test]
+    fn test_parse_gres_multiple_resources() {
+        // gpu:a100:2,nvme:1
+        let (count, gpu_type) = parse_gres(&Some("gpu:a100:2,nvme:1".to_string()));
+        assert_eq!(count, Some(2));
+        assert_eq!(gpu_type, Some("a100".to_string()));
+    }
+
+    #[test]
+    fn test_parse_gres_none() {
+        let (count, gpu_type) = parse_gres(&None);
+        assert_eq!(count, None);
+        assert_eq!(gpu_type, None);
+    }
+
+    #[test]
+    fn test_parse_gres_no_gpu() {
+        // nvme:1
+        let (count, gpu_type) = parse_gres(&Some("nvme:1".to_string()));
+        assert_eq!(count, None);
+        assert_eq!(gpu_type, None);
     }
 }

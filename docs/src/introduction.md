@@ -9,7 +9,7 @@ dependencies, mixed resource requirements, and multiple stages.
 - **Declarative Workflow Definitions** — Define workflows in YAML, JSON, JSON5, or KDL
 - **Automatic Dependency Resolution** — Dependencies inferred from file and data relationships
 - **Distributed Execution** — Run jobs across local machines and HPC clusters
-- **Resource Management** — Track CPU, memory, and GPU usage across all jobs
+- **Resource Management** — Track CPU and memory usage across all jobs
 - **Automatic Failure Recovery** — Detect OOM/timeout failures and retry with adjusted resources
 - **Fault Tolerance** — Resume workflows after failures without losing progress
 - **AI-assisted configuration and management** — Use AI tools like Claude Code and Copilot to
