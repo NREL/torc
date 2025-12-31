@@ -923,8 +923,14 @@ fn parse_scontrol_partition(partition_name: &str) -> Result<ScontrolPartitionInf
     Ok(info)
 }
 
-/// Infer GPU info from partition name when GRES isn't reported
-/// Common patterns: "gpu-h100", "gpu-a100", "gpu-v100", "debug-gpu"
+/// Infer GPU info from partition name when GRES isn't reported by Slurm.
+///
+/// This is a heuristic fallback used when `sinfo` doesn't report GRES information.
+/// Common partition naming patterns: "gpu-h100", "gpu-a100", "gpu-v100", "debug-gpu"
+///
+/// **Important**: The default of 4 GPUs per node is a reasonable estimate for many
+/// HPC clusters, but actual counts vary (1, 2, 4, or 8 GPUs per node are common).
+/// Administrators should review and adjust the generated profile as needed.
 fn infer_gpu_from_name(name: &str) -> Option<(u32, String)> {
     let name_lower = name.to_lowercase();
 
@@ -935,6 +941,7 @@ fn infer_gpu_from_name(name: &str) -> Option<(u32, String)> {
 
     // Try to extract GPU type from name
     // Common patterns: gpu-h100, gpu-a100, gpu-v100, gpu-h100s, gpu-h100l
+    // Default count of 4 is a heuristic - actual GPU counts vary by cluster
     let gpu_types = [
         ("h100", "h100", 4),
         ("a100", "a100", 4),
@@ -951,7 +958,7 @@ fn infer_gpu_from_name(name: &str) -> Option<(u32, String)> {
     }
 
     // Generic GPU partition without specific type
-    // Default to 4 GPUs (common configuration)
+    // Default to 4 GPUs - this is a heuristic; verify against actual cluster config
     Some((4, "gpu".to_string()))
 }
 
