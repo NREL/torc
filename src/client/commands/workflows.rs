@@ -3085,6 +3085,12 @@ fn handle_import(
                 mappings
                     .resource_requirements
                     .insert(old_id, default.id.unwrap());
+            } else {
+                eprintln!(
+                    "Warning: Default resource requirement for workflow {} could not be found; \
+                     exported 'default' resource requirement with old ID {} will not be mapped.",
+                    new_workflow_id, old_id
+                );
             }
             continue;
         }

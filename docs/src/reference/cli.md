@@ -896,33 +896,71 @@ Check if a workflow is complete
 
 Export a workflow to a portable JSON file
 
-**Usage:** `torc workflows export [OPTIONS] <WORKFLOW_ID>`
+Creates a self-contained export that can be imported into the same or different torc-server
+instance. All entity IDs are preserved in the export and remapped during import.
+
+**Usage:** `torc workflows export [OPTIONS] [WORKFLOW_ID]`
 
 ###### **Arguments:**
 
-- `<WORKFLOW_ID>` — ID of the workflow to export
+- `<WORKFLOW_ID>` — ID of the workflow to export (optional - will prompt if not provided)
 
 ###### **Options:**
 
-- `-o`, `--output <FILE>` — Output file path. If not specified, outputs to stdout
-- `--include-results` — Include job results in the export
-- `--include-events` — Include workflow events in the export
+- `-o`, `--output <OUTPUT>` — Output file path (default: stdout)
+- `--include-results` — Include job results in export
+- `--include-events` — Include events (workflow history) in export
+
+###### **Examples:**
+
+```bash
+# Export workflow to stdout
+torc workflows export 123
+
+# Export to a file
+torc workflows export 123 -o workflow.json
+
+# Include job results in export
+torc workflows export 123 --include-results -o backup.json
+
+# Export with all optional data
+torc workflows export 123 --include-results --include-events -o complete.json
+```
 
 ## `torc workflows import`
 
 Import a workflow from an exported JSON file
 
+Imports a workflow that was previously exported. All entity IDs are remapped to new IDs assigned by
+the server. By default, all job statuses are reset to uninitialized for a fresh start.
+
 **Usage:** `torc workflows import [OPTIONS] <FILE>`
 
 ###### **Arguments:**
 
-- `<FILE>` — Path to the exported workflow JSON file
+- `<FILE>` — Path to the exported workflow JSON file (use '-' for stdin)
 
 ###### **Options:**
 
-- `--name <NAME>` — Override the workflow name during import
-- `--skip-results` — Skip importing results even if present in the export
-- `--skip-events` — Skip importing events even if present in the export
+- `--name <NAME>` — Override the workflow name
+- `--skip-results` — Skip importing results even if present in export
+- `--skip-events` — Skip importing events even if present in export
+
+###### **Examples:**
+
+```bash
+# Import a workflow (resets job statuses by default)
+torc workflows import workflow.json
+
+# Import from stdin
+cat workflow.json | torc workflows import -
+
+# Import with a different name
+torc workflows import workflow.json --name 'my-copy'
+
+# Skip importing results even if present in file
+torc workflows import workflow.json --skip-results
+```
 
 ## `torc compute-nodes`
 

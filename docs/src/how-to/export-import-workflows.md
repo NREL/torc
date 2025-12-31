@@ -72,7 +72,9 @@ Output:
 ```json
 {
   "success": true,
-  "file": "my_workflow.json",
+  "workflow_id": 123,
+  "workflow_name": "my_workflow",
+  "output_file": "my_workflow.json",
   "jobs": 5,
   "files": 3,
   "user_data": 2,
