@@ -32,6 +32,20 @@ enum Commands {
         cost: u32,
     },
 
+    /// Generate a password hash and output to stdout (for sending to admin)
+    Hash {
+        /// Username (defaults to $USER or $USERNAME from environment)
+        username: Option<String>,
+
+        /// Password (will be prompted if not provided)
+        #[arg(short, long)]
+        password: Option<String>,
+
+        /// Bcrypt cost factor (4-31, default: 12, higher = more secure but slower)
+        #[arg(short, long, default_value_t = 12)]
+        cost: u32,
+    },
+
     /// Remove a user from the htpasswd file
     Remove {
         /// Path to htpasswd file
@@ -154,6 +168,56 @@ fn main() {
             } else {
                 println!("Added user '{}' to {:?}", username, file);
             }
+        }
+
+        Commands::Hash {
+            username,
+            password,
+            cost,
+        } => {
+            if !(4..=31).contains(&cost) {
+                eprintln!("Error: cost must be between 4 and 31");
+                std::process::exit(1);
+            }
+
+            // Resolve username from argument or environment
+            let username = match username {
+                Some(u) => u,
+                None => std::env::var("USER")
+                    .or_else(|_| std::env::var("USERNAME"))
+                    .unwrap_or_else(|_| {
+                        eprintln!(
+                            "Error: username not provided and could not read from $USER or $USERNAME"
+                        );
+                        std::process::exit(1);
+                    }),
+            };
+
+            let password = match password {
+                Some(pwd) => pwd,
+                None => {
+                    match rpassword::prompt_password(format!("Password for '{}': ", username)) {
+                        Ok(pwd) => pwd,
+                        Err(e) => {
+                            eprintln!("Error reading password: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            };
+
+            eprintln!("Hashing password (cost={})...", cost);
+            let hash_result = match hash(&password, cost) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!("Error hashing password: {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            // Output the htpasswd line to stdout (progress messages go to stderr)
+            println!("{}:{}", username, hash_result);
+            eprintln!("Send the line above to your server administrator.");
         }
 
         Commands::Remove { file, username } => {

@@ -29,6 +29,9 @@ torc-htpasswd add --file /path/to/htpasswd --password mypassword username
 # Add a user with custom bcrypt cost (higher = more secure but slower)
 torc-htpasswd add --file /path/to/htpasswd --cost 14 username
 
+# Generate a password hash for remote registration (see below)
+torc-htpasswd hash username
+
 # List all users
 torc-htpasswd list --file /path/to/htpasswd
 
@@ -241,6 +244,45 @@ export TORC_API_URL=https://torc.example.com/torc-service/v1
 torc workflows create pipeline.yaml
 torc workflows start "${WORKFLOW_ID}"
 ```
+
+### Remote User Registration (HPC Environments)
+
+When users cannot directly access the server (e.g., HPC users connecting to a server they don't have
+login access to), use the `hash` command to generate credentials:
+
+**User (on HPC):**
+
+```bash
+# Generate password hash (username defaults to $USER)
+torc-htpasswd hash
+Password for 'alice':
+Hashing password (cost=12)...
+alice:$2b$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Send the line above to your server administrator.
+
+# Or specify a different username
+torc-htpasswd hash myusername
+```
+
+The hash output (`alice:$2b$12$...`) can be safely sent to the server administrator via email,
+Slack, or any other channel - the bcrypt hash cannot be used to recover the original password.
+
+**Administrator (on server):**
+
+```bash
+# Append the user's hash line to the htpasswd file
+echo "alice:\$2b\$12\$xxxxx..." >> /etc/torc/htpasswd
+
+# Or manually edit the file and paste the line
+vim /etc/torc/htpasswd
+```
+
+**Notes:**
+
+- The password is entered on the user's machine and never transmitted in plaintext
+- The bcrypt hash is safe to transmit - it can only verify passwords, not recover them
+- Users can customize the cost factor with `--cost` if needed
+- For scripting, use `--password` flag (though less secure)
 
 ### Migrating from No Auth to Required Auth
 
