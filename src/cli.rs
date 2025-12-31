@@ -108,7 +108,26 @@ pub enum Commands {
     // Workflow Execution - Primary commands for running workflows
     // =========================================================================
     /// Run a workflow locally (create from spec file or run existing workflow by ID)
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Run from spec file
+    torc run workflow.yaml
+
+    # Run existing workflow
+    torc run 123
+
+    # With resource limits
+    torc run --num-cpus 8 --memory-gb 32 --num-gpus 2 workflow.yaml
+
+    # Limit parallel jobs
+    torc run --max-parallel-jobs 4 workflow.yaml
+
+    # Custom output directory
+    torc run -o /path/to/output workflow.yaml
+"
+    )]
     Run {
         /// Path to workflow spec file (JSON/JSON5/YAML) or workflow ID
         #[arg()]
@@ -139,7 +158,20 @@ pub enum Commands {
     ///
     /// Requires workflow to have an on_workflow_start action with schedule_nodes.
     /// For Slurm workflows without pre-configured schedulers, use `submit-slurm` instead.
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Submit from spec file (must have on_workflow_start action)
+    torc submit workflow_with_actions.yaml
+
+    # Submit existing workflow
+    torc submit 123
+
+    # Ignore missing input data
+    torc submit -i workflow.yaml
+"
+    )]
     Submit {
         /// Path to workflow spec file (JSON/JSON5/YAML) or workflow ID
         #[arg()]
@@ -169,7 +201,24 @@ pub enum Commands {
     ///
     ///   torc slurm generate --account <account> -o workflow_with_schedulers.yaml workflow.yaml
     ///   torc submit workflow_with_schedulers.yaml
-    #[command(name = "submit-slurm", hide = true)]
+    #[command(
+        name = "submit-slurm",
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Submit with auto-generated Slurm schedulers
+    torc submit-slurm --account myproject workflow.yaml
+
+    # Specify HPC profile
+    torc submit-slurm --account myproject --hpc-profile kestrel workflow.yaml
+
+    # Single allocation mode
+    torc submit-slurm --account myproject --single-allocation workflow.yaml
+
+    # Group by partition
+    torc submit-slurm --account myproject --group-by partition workflow.yaml
+"
+    )]
     SubmitSlurm {
         /// Path to workflow spec file (JSON/JSON5/YAML/KDL)
         #[arg()]
@@ -220,7 +269,23 @@ pub enum Commands {
     ///
     /// Without --recover, reports failures and exits for manual intervention
     /// or AI-assisted recovery via the MCP server.
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Watch until completion
+    torc watch 123
+
+    # Watch with automatic recovery
+    torc watch 123 --recover
+
+    # Custom poll interval and resource multipliers
+    torc watch 123 --recover -p 30 --memory-multiplier 2.0 --runtime-multiplier 1.5
+
+    # With custom recovery hook
+    torc watch 123 --recover --recovery-hook 'bash fix-cluster.sh'
+"
+    )]
     Watch {
         /// Workflow ID to watch
         #[arg()]
@@ -297,7 +362,23 @@ pub enum Commands {
     /// 6. Submits new allocations
     ///
     /// For continuous monitoring with automatic recovery, use `torc watch --recover`.
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Basic recovery
+    torc recover 123
+
+    # Dry run to preview changes
+    torc recover 123 --dry-run
+
+    # Custom resource multipliers
+    torc recover 123 --memory-multiplier 2.0 --runtime-multiplier 1.5
+
+    # Also retry unknown failures
+    torc recover 123 --retry-unknown
+"
+    )]
     Recover {
         /// Workflow ID to recover
         #[arg()]
@@ -340,7 +421,20 @@ pub enum Commands {
         dry_run: bool,
     },
     /// Interactive terminal UI for managing workflows
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Connect to running server
+    torc tui
+
+    # Standalone mode (starts embedded server)
+    torc tui --standalone
+
+    # Standalone with custom settings
+    torc tui --standalone --port 9090 --database /path/to/db.sqlite
+"
+    )]
     Tui(tui_runner::Args),
     // =========================================================================
     // Workflow Management - CRUD operations on workflow resources
@@ -460,12 +554,33 @@ pub enum Commands {
         command: ConfigCommands,
     },
     /// Generate interactive HTML plots from resource monitoring data
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    torc plot-resources output/resource_metrics.db
+    torc plot-resources -o /reports/ resource_metrics.db
+    torc plot-resources -j job1,job2,job3 resource_metrics.db
+"
+    )]
     PlotResources(plot_resources_cmd::Args),
     /// Check if the server is running and accessible
     Ping,
     /// Generate shell completions
-    #[command(hide = true)]
+    #[command(
+        hide = true,
+        after_long_help = "\
+EXAMPLES:
+    # Bash (add to ~/.bashrc)
+    torc completions bash > ~/.local/share/bash-completion/completions/torc
+
+    # Zsh (add to ~/.zshrc: fpath=(~/.zfunc $fpath))
+    torc completions zsh > ~/.zfunc/_torc
+
+    # Fish
+    torc completions fish > ~/.config/fish/completions/torc.fish
+"
+    )]
     Completions {
         /// The shell to generate completions for
         #[arg(value_enum)]

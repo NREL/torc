@@ -99,14 +99,42 @@ fn config_to_partition(config: &HpcPartitionConfig) -> HpcPartition {
 }
 
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List available HPC profiles
+    torc hpc list
+
+    # Detect current HPC system
+    torc hpc detect
+
+    # Show profile details
+    torc hpc show kestrel
+
+    # Find matching partitions for resources
+    torc hpc match kestrel --cpus 8 --memory 32g
+")]
 pub enum HpcCommands {
     /// List known HPC system profiles
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc hpc list
+    torc -f json hpc list
+")]
     List,
 
     /// Detect the current HPC system
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc hpc detect
+")]
     Detect,
 
     /// Show details of an HPC profile
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc hpc show kestrel
+    torc -f json hpc show kestrel
+")]
     Show {
         /// Profile name (e.g., "kestrel")
         #[arg()]
@@ -114,6 +142,12 @@ pub enum HpcCommands {
     },
 
     /// Show partitions for an HPC profile
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc hpc partitions kestrel
+    torc hpc partitions kestrel --gpu
+    torc hpc partitions kestrel --shared
+")]
     Partitions {
         /// Profile name (e.g., "kestrel"). If not specified, tries to detect current system.
         #[arg()]
@@ -133,6 +167,17 @@ pub enum HpcCommands {
     },
 
     /// Find partitions matching resource requirements
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Find partitions with at least 8 CPUs and 32GB memory
+    torc hpc match kestrel --cpus 8 --memory 32g
+
+    # Find GPU partitions
+    torc hpc match kestrel --cpus 4 --memory 16g --gpus 1
+
+    # Specify walltime
+    torc hpc match kestrel --cpus 8 --memory 32g --walltime 4:00:00
+")]
     Match {
         /// Number of CPUs required
         #[arg(long, default_value = "1")]
@@ -159,6 +204,17 @@ pub enum HpcCommands {
     ///
     /// This command queries the current Slurm cluster using sinfo and scontrol
     /// to automatically generate an HPC profile configuration.
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Generate profile from current cluster
+    torc hpc generate
+
+    # Save to file
+    torc hpc generate --output my_cluster.toml
+
+    # Specify profile name
+    torc hpc generate --name my_cluster --display-name 'My HPC Cluster'
+")]
     Generate {
         /// Profile name (defaults to SLURM_CLUSTER_NAME or hostname)
         #[arg(long)]

@@ -18,8 +18,22 @@ use tar::{Archive, Builder};
 
 /// Log subcommands
 #[derive(clap::Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # Bundle workflow logs
+    torc logs bundle 123 --output-dir ./output
+
+    # Analyze logs for errors
+    torc logs analyze wf123.tar.gz
+    torc logs analyze ./output --workflow-id 123
+")]
 pub enum LogCommands {
     /// Bundle all log files for a workflow into a compressed tarball
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc logs bundle 123
+    torc logs bundle 123 --output-dir ./output --bundle-dir ./bundles
+")]
     Bundle {
         /// Workflow ID to bundle logs for
         #[arg()]
@@ -32,6 +46,11 @@ pub enum LogCommands {
         bundle_dir: PathBuf,
     },
     /// Analyze logs for errors (from a bundle tarball or log directory)
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc logs analyze wf123.tar.gz
+    torc logs analyze ./output --workflow-id 123
+")]
     Analyze {
         /// Path to a bundle tarball (.tar.gz) or log directory
         #[arg()]

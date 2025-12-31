@@ -151,8 +151,35 @@ fn select_slurm_scheduler_interactively(
 }
 
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List Slurm schedulers for a workflow
+    torc slurm list 123
+
+    # Generate schedulers for a workflow spec
+    torc slurm generate --account myproject workflow.yaml
+
+    # Schedule compute nodes
+    torc slurm schedule-nodes 123 --scheduler-name gpu --num-nodes 4
+
+    # Get Slurm accounting info
+    torc slurm sacct 123
+")]
 pub enum SlurmCommands {
     /// Add a Slurm config to the database
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Create a basic Slurm scheduler
+    torc slurm create 123 --name cpu_jobs --account myproject --walltime 04:00:00
+
+    # Create with GPU requirements
+    torc slurm create 123 --name gpu_jobs --account myproject \\
+        --partition gpu --gres gpu:1 --mem 32G
+
+    # Create with specific partition and QOS
+    torc slurm create 123 --name large_jobs --account myproject \\
+        --partition bigmem --qos high --nodes 2
+")]
     Create {
         /// Workflow ID
         #[arg()]
@@ -224,6 +251,11 @@ pub enum SlurmCommands {
         extra: Option<String>,
     },
     /// Show the current Slurm configs in the database
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc slurm list 123
+    torc -f json slurm list 123
+")]
     List {
         /// Workflow ID
         #[arg()]
@@ -248,6 +280,17 @@ pub enum SlurmCommands {
         id: i64,
     },
     /// Schedule compute nodes using Slurm
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Schedule 4 compute nodes
+    torc slurm schedule-nodes 123 --num-hpc-jobs 4
+
+    # Use specific scheduler
+    torc slurm schedule-nodes 123 --scheduler-config-id 456 --num-hpc-jobs 2
+
+    # Keep submission scripts for debugging
+    torc slurm schedule-nodes 123 --keep-submission-scripts --num-hpc-jobs 4
+")]
     ScheduleNodes {
         /// Workflow ID
         #[arg()]
@@ -290,6 +333,11 @@ pub enum SlurmCommands {
         errors_only: bool,
     },
     /// Call sacct for scheduled compute nodes and display summary
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc slurm sacct 123
+    torc slurm sacct 123 --save-json --output-dir ./reports
+")]
     Sacct {
         /// Workflow ID
         #[arg()]
@@ -302,6 +350,20 @@ pub enum SlurmCommands {
         save_json: bool,
     },
     /// Generate Slurm schedulers for a workflow based on job resource requirements
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Preview generated schedulers
+    torc slurm generate --account myproject workflow.yaml
+
+    # Save to new file
+    torc slurm generate --account myproject -o workflow_with_slurm.yaml workflow.yaml
+
+    # Use specific HPC profile
+    torc slurm generate --account myproject --profile kestrel workflow.yaml
+
+    # Group by partition instead of resource requirements
+    torc slurm generate --account myproject --group-by partition workflow.yaml
+")]
     Generate {
         /// Path to workflow specification file (YAML, JSON, JSON5, or KDL)
         #[arg()]

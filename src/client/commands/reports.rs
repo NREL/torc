@@ -60,8 +60,25 @@ struct ResourceUtilizationRow {
 }
 
 #[derive(clap::Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # Get workflow summary
+    torc reports summary 123
+
+    # Get comprehensive results report
+    torc -f json reports results 123 > report.json
+
+    # Check resource utilization
+    torc reports check-resource-utilization 123
+")]
 pub enum ReportCommands {
     /// Check resource utilization and report jobs that exceeded their specified requirements
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc reports check-resource-utilization 123
+    torc reports check-resource-utilization 123 --all
+    torc reports check-resource-utilization 123 --include-failed
+")]
     CheckResourceUtilization {
         /// Workflow ID to analyze (optional - will prompt if not provided)
         #[arg()]
@@ -77,6 +94,12 @@ pub enum ReportCommands {
         include_failed: bool,
     },
     /// Generate a comprehensive JSON report of job results including all log file paths
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc reports results 123
+    torc -f json reports results 123 > results.json
+    torc reports results 123 --all-runs
+")]
     Results {
         /// Workflow ID to analyze (optional - will prompt if not provided)
         #[arg()]
@@ -89,6 +112,11 @@ pub enum ReportCommands {
         all_runs: bool,
     },
     /// Generate a summary of workflow results (requires workflow to be complete)
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc reports summary 123
+    torc -f json reports summary 123
+")]
     Summary {
         /// Workflow ID to summarize (optional - will prompt if not provided)
         #[arg()]

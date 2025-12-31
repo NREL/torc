@@ -9,16 +9,45 @@ use std::path::PathBuf;
 
 /// Config subcommands
 #[derive(Subcommand, Debug, Clone)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # Show current configuration
+    torc config show
+
+    # Show as JSON
+    torc config show --format json
+
+    # Show config file locations
+    torc config paths
+
+    # Initialize user config
+    torc config init --user
+")]
 pub enum ConfigCommands {
     /// Show the effective configuration (merged from all sources)
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc config show
+    torc config show --format json
+")]
     Show {
         /// Output format (toml or json)
         #[arg(short, long, default_value = "toml")]
         format: String,
     },
     /// Show configuration file paths
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc config paths
+")]
     Paths,
     /// Initialize a configuration file with defaults
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc config init --user
+    torc config init --local
+    torc config init --user --force
+")]
     Init {
         /// Create system-wide config (/etc/torc/config.toml)
         #[arg(long)]

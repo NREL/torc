@@ -54,8 +54,33 @@ struct WorkflowActionTableRow {
 }
 
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # Create a workflow from a YAML spec file
+    torc workflows create workflow.yaml
+
+    # Create from JSON5 with comments
+    torc workflows create config.json5
+
+    # Get JSON output for automation
+    torc -f json workflows create workflow.yaml
+
+    # Validate without creating (dry-run)
+    torc workflows create --dry-run workflow.yaml
+")]
 pub enum WorkflowCommands {
     /// Create a workflow from a specification file (supports JSON, JSON5, YAML, and KDL formats)
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Create workflow from YAML
+    torc workflows create my_workflow.yaml
+
+    # Validate spec before creating
+    torc workflows create --dry-run my_workflow.yaml
+
+    # Get JSON output with workflow ID
+    torc -f json workflows create my_workflow.yaml
+")]
     Create {
         /// Path to specification file containing WorkflowSpec
         ///
@@ -83,7 +108,20 @@ pub enum WorkflowCommands {
     ///
     /// Automatically generates Slurm schedulers based on job resource requirements
     /// and HPC profile. For Slurm workflows without pre-configured schedulers.
-    #[command(name = "create-slurm")]
+    #[command(
+        name = "create-slurm",
+        after_long_help = "\
+EXAMPLES:
+    # Create with auto-generated Slurm schedulers
+    torc workflows create-slurm --account myproject workflow.yaml
+
+    # Specify HPC profile explicitly
+    torc workflows create-slurm --account myproject --hpc-profile kestrel workflow.yaml
+
+    # Use single allocation mode (1xN instead of Nx1)
+    torc workflows create-slurm --account myproject --single-allocation workflow.yaml
+"
+    )]
     CreateSlurm {
         /// Path to specification file containing WorkflowSpec
         #[arg()]
@@ -122,6 +160,14 @@ pub enum WorkflowCommands {
         dry_run: bool,
     },
     /// Create a new empty workflow
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Create an empty workflow
+    torc workflows new --name my_workflow
+
+    # Create with description
+    torc workflows new --name my_workflow --description 'Data processing pipeline'
+")]
     New {
         /// Name of the workflow
         #[arg(short, long)]
@@ -131,6 +177,24 @@ pub enum WorkflowCommands {
         description: Option<String>,
     },
     /// List workflows
+    #[command(after_long_help = "\
+EXAMPLES:
+    # List all workflows for current user
+    torc workflows list
+
+    # Get JSON output for scripting
+    torc -f json workflows list
+
+    # Paginate results
+    torc workflows list --limit 50 --offset 100
+
+    # Sort by creation time (newest first)
+    torc workflows list --sort-by timestamp --reverse-sort
+
+    # Show archived workflows
+    torc workflows list --archived-only
+    torc workflows list --include-archived
+")]
     List {
         /// Maximum number of workflows to return
         #[arg(short, long, default_value = "10000")]
@@ -152,12 +216,31 @@ pub enum WorkflowCommands {
         include_archived: bool,
     },
     /// Get a specific workflow by ID
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Get workflow details
+    torc workflows get 123
+
+    # Get as JSON for automation
+    torc -f json workflows get 123
+")]
     Get {
         /// ID of the workflow to get (optional - will prompt if not provided)
         #[arg()]
         id: Option<i64>,
     },
     /// Update an existing workflow
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Update workflow name
+    torc workflows update 123 --name 'New Name'
+
+    # Update description
+    torc workflows update 123 --description 'Updated description'
+
+    # Transfer ownership
+    torc workflows update 123 --owner-user newuser
+")]
     Update {
         /// ID of the workflow to update (optional - will prompt if not provided)
         #[arg()]
@@ -173,12 +256,31 @@ pub enum WorkflowCommands {
         owner_user: Option<String>,
     },
     /// Cancel a workflow and all associated Slurm jobs
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Cancel a workflow and its Slurm jobs
+    torc workflows cancel 123
+
+    # Get JSON status of cancellation
+    torc -f json workflows cancel 123
+")]
     Cancel {
         /// ID of the workflow to cancel (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
     },
     /// Delete one or more workflows
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Delete a single workflow (with confirmation)
+    torc workflows delete 123
+
+    # Delete multiple workflows
+    torc workflows delete 123 456 789
+
+    # Delete without confirmation prompt
+    torc workflows delete 123 --no-prompts
+")]
     Delete {
         /// IDs of workflows to remove (optional - will prompt if not provided)
         #[arg()]
@@ -186,11 +288,16 @@ pub enum WorkflowCommands {
         /// Skip confirmation prompt
         #[arg(long)]
         no_prompts: bool,
-        /// Force deletion even if workflow belongs to a different user
-        #[arg(long)]
-        force: bool,
     },
     /// Archive or unarchive one or more workflows
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Archive workflows
+    torc workflows archive true 123 456
+
+    # Unarchive workflows
+    torc workflows archive false 123
+")]
     Archive {
         /// Set to true to archive, false to unarchive
         #[arg()]
@@ -201,6 +308,14 @@ pub enum WorkflowCommands {
     },
     /// Submit a workflow: initialize if needed and schedule nodes for on_workflow_start actions
     /// This command requires the workflow to have an on_workflow_start action with schedule_nodes
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Submit workflow to scheduler
+    torc workflows submit 123
+
+    # Submit even with missing user data
+    torc workflows submit 123 --force
+")]
     Submit {
         /// ID of the workflow to submit (optional - will prompt if not provided)
         #[arg()]
@@ -210,6 +325,17 @@ pub enum WorkflowCommands {
         force: bool,
     },
     /// Run a workflow locally on the current node
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Run workflow locally
+    torc workflows run 123
+
+    # Run with custom settings
+    torc workflows run 123 --poll-interval 10 --max-parallel-jobs 4
+
+    # Specify output directory
+    torc workflows run 123 --output-dir /path/to/output
+")]
     Run {
         /// ID of the workflow to run (optional - will prompt if not provided)
         #[arg()]
@@ -225,6 +351,17 @@ pub enum WorkflowCommands {
         output_dir: std::path::PathBuf,
     },
     /// Initialize a workflow, including all job statuses.
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Initialize workflow (set up dependencies)
+    torc workflows initialize 123
+
+    # Dry-run to check for missing files
+    torc workflows initialize 123 --dry-run
+
+    # Force initialization with missing data
+    torc workflows initialize 123 --force
+")]
     Initialize {
         /// ID of the workflow to start (optional - will prompt if not provided)
         #[arg()]
@@ -243,6 +380,14 @@ pub enum WorkflowCommands {
     /// canceled, submitting, pending, or terminated. Jobs with a status of
     /// done will also be reinitialized if an input_file or user_data record has
     /// changed.
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Reinitialize workflow after input changes
+    torc workflows reinitialize 123
+
+    # Dry-run to preview changes
+    torc workflows reinitialize 123 --dry-run
+")]
     Reinitialize {
         /// ID of the workflow to reinitialize (optional - will prompt if not provided)
         #[arg()]
@@ -255,12 +400,34 @@ pub enum WorkflowCommands {
         dry_run: bool,
     },
     /// Get workflow status
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Get workflow status
+    torc workflows status 123
+
+    # Get JSON status for scripting
+    torc -f json workflows status 123
+")]
     Status {
         /// ID of the workflow to get status for (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
     },
     /// Reset workflow and job status
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Reset all job statuses
+    torc workflows reset-status 123
+
+    # Reset only failed jobs
+    torc workflows reset-status 123 --failed-only
+
+    # Reset and reinitialize
+    torc workflows reset-status 123 --reinitialize
+
+    # Force reset (ignore running jobs check)
+    torc workflows reset-status 123 --force --no-prompts
+")]
     ResetStatus {
         /// ID of the workflow to reset status for (optional - will prompt if not provided)
         #[arg()]
@@ -279,18 +446,47 @@ pub enum WorkflowCommands {
         no_prompts: bool,
     },
     /// Show the execution plan for a workflow specification or existing workflow
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Show execution plan from spec file
+    torc workflows execution-plan workflow.yaml
+
+    # Show execution plan for existing workflow
+    torc workflows execution-plan 123
+
+    # Get JSON output
+    torc -f json workflows execution-plan workflow.yaml
+")]
     ExecutionPlan {
         /// Path to specification file OR workflow ID
         #[arg()]
         spec_or_id: String,
     },
     /// List workflow actions and their statuses (useful for debugging action triggers)
+    #[command(after_long_help = "\
+EXAMPLES:
+    # List actions for a workflow
+    torc workflows list-actions 123
+
+    # Get JSON output
+    torc -f json workflows list-actions 123
+")]
     ListActions {
         /// ID of the workflow to show actions for (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
     },
     /// Check if a workflow is complete
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Check if workflow is complete
+    torc workflows is-complete 123
+
+    # Use in shell script
+    if torc -f json workflows is-complete 123 | jq -e '.is_complete'; then
+        echo 'Workflow finished!'
+    fi
+")]
     IsComplete {
         /// ID of the workflow to check (optional - will prompt if not provided)
         #[arg()]
@@ -1519,7 +1715,7 @@ fn handle_archive(config: &Configuration, is_archived: &str, workflow_ids: &[i64
     }
 }
 
-fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: bool, format: &str) {
+fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, format: &str) {
     let user_name = get_env_user_name();
 
     // Get list of workflow IDs to delete
@@ -1544,9 +1740,9 @@ fn handle_delete(config: &Configuration, ids: &[i64], no_prompts: bool, force: b
         };
 
         // Check if user owns the workflow
-        if workflow.user != user_name && !force {
+        if workflow.user != user_name {
             let error_msg = format!(
-                "Cannot delete workflow owned by user '{}' (you are '{}'). Use --force to override.",
+                "Cannot delete workflow owned by user '{}' (you are '{}').",
                 workflow.user, user_name
             );
             failed_deletions.push((selected_id, error_msg));
@@ -2348,12 +2544,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         } => {
             handle_update(config, id, name, description, owner_user, format);
         }
-        WorkflowCommands::Delete {
-            ids,
-            no_prompts,
-            force,
-        } => {
-            handle_delete(config, ids, *no_prompts, *force, format);
+        WorkflowCommands::Delete { ids, no_prompts } => {
+            handle_delete(config, ids, *no_prompts, format);
         }
         WorkflowCommands::Archive {
             is_archived,

@@ -23,6 +23,7 @@
 class TorcDashboard {
     constructor() {
         // State
+        this.currentUser = null;
         this.workflows = [];
         this.selectedWorkflowId = null;
         this.selectedSubTab = 'jobs';
@@ -101,9 +102,11 @@ class TorcDashboard {
         this.setupExecutionPanel();
         this.setupKeyboardShortcuts();
 
-        // Load version and user info (fire and forget)
+        // Load version info (fire and forget)
         this.loadVersion();
-        this.loadUser();
+
+        // Load user info (needed for filtering workflows)
+        await this.loadUser();
 
         // Test connection and load data
         await this.testConnection();

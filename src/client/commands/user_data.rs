@@ -24,8 +24,24 @@ struct UserDataTableRow {
 }
 
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List user data for a workflow
+    torc user-data list 123
+
+    # Get JSON output
+    torc -f json user-data list 123
+
+    # Find missing user data
+    torc user-data list-missing 123
+")]
 pub enum UserDataCommands {
     /// Create a new user data record
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc user-data create 123 --name config --data '{\"key\": \"value\"}'
+    torc user-data create 123 --name temp_data --ephemeral
+")]
     Create {
         /// Workflow ID
         #[arg()]

@@ -304,6 +304,9 @@ Object.assign(TorcDashboard.prototype, {
             const response = await fetch('/api/user');
             if (response.ok) {
                 const data = await response.json();
+                if (data.user) {
+                    this.currentUser = data.user;
+                }
                 const userEl = document.getElementById('user-display');
                 if (userEl) {
                     const text = userEl.querySelector('.user-text');

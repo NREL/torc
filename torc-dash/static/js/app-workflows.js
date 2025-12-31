@@ -37,7 +37,7 @@ Object.assign(TorcDashboard.prototype, {
 
     async loadWorkflows() {
         try {
-            const workflows = await api.listWorkflows(0, 100);
+            const workflows = await api.listWorkflows(0, 100, this.currentUser);
             this.workflows = workflows || [];
             // Sort by id descending (newer workflows first)
             this.workflows.sort((a, b) => {
@@ -82,8 +82,8 @@ Object.assign(TorcDashboard.prototype, {
         tbody.innerHTML = workflows.map(workflow => {
             const isSelected = this.selectedWorkflowIds.has(workflow.id);
             return `
-            <tr data-workflow-id="${workflow.id}" class="${isSelected ? 'selected' : ''}">
-                <td class="checkbox-column">
+            <tr data-workflow-id="${workflow.id}" class="clickable-row ${isSelected ? 'selected' : ''}" onclick="app.viewWorkflow('${workflow.id}')">
+                <td class="checkbox-column" onclick="event.stopPropagation()">
                     <input type="checkbox"
                            class="workflow-checkbox"
                            data-workflow-id="${workflow.id}"
@@ -95,7 +95,7 @@ Object.assign(TorcDashboard.prototype, {
                 <td>${this.formatTimestamp(workflow.timestamp)}</td>
                 <td>${this.escapeHtml(workflow.user || '-')}</td>
                 <td title="${this.escapeHtml(workflow.description || '')}">${this.escapeHtml(this.truncate(workflow.description || '-', 40))}</td>
-                <td>
+                <td class="actions-column" onclick="event.stopPropagation()">
                     <div class="action-buttons">
                         <button class="btn btn-sm btn-success" onclick="app.runWorkflow('${workflow.id}')" title="Run Locally">Run</button>
                         <button class="btn btn-sm btn-primary" onclick="app.submitWorkflow('${workflow.id}')" title="Submit to Scheduler">Submit</button>
