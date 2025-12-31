@@ -37,8 +37,24 @@ struct FileTableRow {
 }
 
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List files for a workflow
+    torc files list 123
+
+    # Get JSON output
+    torc -f json files list 123
+
+    # List required input files
+    torc files list-required-existing 123
+")]
 pub enum FileCommands {
     /// Create a new file
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Create a file record
+    torc files create 123 --name input_data --path /data/input.csv
+")]
     Create {
         /// Create the file in this workflow.
         #[arg()]
@@ -51,6 +67,17 @@ pub enum FileCommands {
         path: String,
     },
     /// List files
+    #[command(after_long_help = "\
+EXAMPLES:
+    # List all files for a workflow
+    torc files list 123
+
+    # Get JSON output
+    torc -f json files list 123
+
+    # Filter by producing job
+    torc files list 123 --produced-by-job-id 456
+")]
     List {
         /// List files for this workflow (optional - will prompt if not provided)
         #[arg()]
@@ -72,12 +99,22 @@ pub enum FileCommands {
         reverse_sort: bool,
     },
     /// Get a specific file by ID
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc files get 456
+    torc -f json files get 456
+")]
     Get {
         /// ID of the file to get
         #[arg()]
         id: i64,
     },
     /// Update an existing file
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc files update 456 --name new_name
+    torc files update 456 --path /new/path.csv
+")]
     Update {
         /// ID of the file to update
         #[arg()]
@@ -90,12 +127,21 @@ pub enum FileCommands {
         path: Option<String>,
     },
     /// Delete a file
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc files delete 456
+")]
     Delete {
         /// ID of the file to remove
         #[arg()]
         id: i64,
     },
     /// List required existing files for a workflow
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Find files that must exist before workflow can run
+    torc files list-required-existing 123
+")]
     ListRequiredExisting {
         /// List required existing files for this workflow (optional - will prompt if not provided)
         #[arg()]

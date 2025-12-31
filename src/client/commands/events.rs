@@ -36,8 +36,23 @@ struct EventTableRow {
 }
 
 #[derive(clap::Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List events for a workflow
+    torc events list 123
+
+    # Monitor events in real-time
+    torc events monitor 123 --poll-interval 30
+
+    # Get JSON output
+    torc -f json events list 123
+")]
 pub enum EventCommands {
     /// Create a new event
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc events create 123 --data '{\"type\": \"custom\", \"message\": \"hello\"}'
+")]
     Create {
         /// Create the event in this workflow.
         #[arg()]
@@ -47,6 +62,12 @@ pub enum EventCommands {
         data: String,
     },
     /// List events for a workflow
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc events list 123
+    torc events list 123 --category job_completion
+    torc -f json events list 123
+")]
     List {
         /// List events for this workflow (optional - will prompt if not provided)
         #[arg()]
@@ -68,6 +89,11 @@ pub enum EventCommands {
         reverse_sort: bool,
     },
     /// Monitor events for a workflow in real-time
+    #[command(after_long_help = "\
+EXAMPLES:
+    torc events monitor 123
+    torc events monitor 123 --poll-interval 30 --duration 60
+")]
     Monitor {
         /// Monitor events for this workflow (optional - will prompt if not provided)
         #[arg()]

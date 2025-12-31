@@ -50,8 +50,35 @@ struct JobResourceRequirementsTableRow {
 }
 
 #[derive(clap::Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # List jobs for a workflow
+    torc jobs list 123
+
+    # Filter by status
+    torc jobs list 123 --status failed
+
+    # Get JSON output for scripting
+    torc -f json jobs list 123
+
+    # Get job details
+    torc jobs get 456
+")]
 pub enum JobCommands {
     /// Create a new job
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Create a simple job
+    torc jobs create 123 --name my_job --command 'python script.py'
+
+    # Create job with dependencies
+    torc jobs create 123 --name process --command 'python process.py' \\
+        --blocking-job-ids 1 2 3
+
+    # Create job with file I/O
+    torc jobs create 123 --name analyze --command 'python analyze.py' \\
+        --input-file-ids 10 --output-file-ids 20
+")]
     Create {
         /// Create the job in this workflow.
         #[arg()]
@@ -86,10 +113,24 @@ pub enum JobCommands {
     ///
     /// All jobs created will share the same resource requirements, which
     /// are automatically created and assigned.
-    ///
-    /// Example:
-    ///   torc jobs create-from-file 123 batch_jobs.txt --cpus-per-job 4 --memory-per-job 8g
-    #[command(name = "create-from-file")]
+    #[command(
+        name = "create-from-file",
+        after_long_help = "\
+EXAMPLES:
+    # Create jobs from a file with default resources
+    torc jobs create-from-file 123 batch_jobs.txt
+
+    # Specify resources per job
+    torc jobs create-from-file 123 batch_jobs.txt \\
+        --cpus-per-job 4 --memory-per-job 8g --runtime-per-job P0DT2H
+
+    # Example file format (batch_jobs.txt):
+    # # Data processing jobs
+    # python process.py --batch 1
+    # python process.py --batch 2
+    # python process.py --batch 3
+"
+    )]
     CreateFromFile {
         /// Workflow ID to create jobs for
         #[arg()]
@@ -125,6 +166,25 @@ pub enum JobCommands {
         runtime_per_job: String,
     },
     /// List jobs
+    #[command(after_long_help = "\
+EXAMPLES:
+    # List all jobs for a workflow
+    torc jobs list 123
+
+    # Filter by status
+    torc jobs list 123 --status ready
+    torc jobs list 123 --status failed
+    torc jobs list 123 --status running
+
+    # Get JSON output for scripting
+    torc -f json jobs list 123
+
+    # Include dependency information
+    torc jobs list 123 --include-relationships
+
+    # Paginate results
+    torc jobs list 123 --limit 100 --offset 0
+")]
     List {
         /// List jobs for this workflow (optional - will prompt if not provided)
         #[arg()]
@@ -152,12 +212,28 @@ pub enum JobCommands {
         include_relationships: bool,
     },
     /// Get a specific job by ID
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Get job details
+    torc jobs get 456
+
+    # Get as JSON
+    torc -f json jobs get 456
+")]
     Get {
         /// ID of the job to get
         #[arg()]
         id: i64,
     },
     /// Update an existing job
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Update job name
+    torc jobs update 456 --name 'new_name'
+
+    # Update job command
+    torc jobs update 456 --command 'python new_script.py'
+")]
     Update {
         /// ID of the job to update
         #[arg()]
@@ -170,20 +246,48 @@ pub enum JobCommands {
         command: Option<String>,
     },
     /// Delete one or more jobs
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Delete a single job
+    torc jobs delete 456
+
+    # Delete multiple jobs
+    torc jobs delete 456 457 458
+")]
     Delete {
         /// IDs of the jobs to remove
         #[arg(num_args = 1..)]
         ids: Vec<i64>,
     },
     /// Delete all jobs for a workflow
-    #[command(name = "delete-all")]
+    #[command(
+        name = "delete-all",
+        after_long_help = "\
+EXAMPLES:
+    # Delete all jobs from a workflow
+    torc jobs delete-all 123
+"
+    )]
     DeleteAll {
         /// Workflow ID to delete all jobs from (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
     },
     /// List jobs with their resource requirements
-    #[command(name = "list-resource-requirements")]
+    #[command(
+        name = "list-resource-requirements",
+        after_long_help = "\
+EXAMPLES:
+    # List all jobs with their resource requirements
+    torc jobs list-resource-requirements 123
+
+    # Get JSON output
+    torc -f json jobs list-resource-requirements 123
+
+    # Filter by specific job
+    torc jobs list-resource-requirements 123 --job-id 456
+"
+    )]
     ListResourceRequirements {
         /// Workflow ID to list jobs from (optional - will prompt if not provided)
         #[arg()]

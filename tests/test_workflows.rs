@@ -392,10 +392,16 @@ fn test_workflows_delete_command_json(start_server: &ServerProcess) {
     );
     let workflow_id = workflow.id.unwrap();
 
-    // Test the CLI delete command
-    let args = ["workflows", "delete", "--force", &workflow_id.to_string()];
+    // Test the CLI delete command (run as the workflow owner)
+    let args = [
+        "workflows",
+        "delete",
+        "--no-prompts",
+        &workflow_id.to_string(),
+    ];
 
-    run_cli_with_json(&args, start_server, None).expect("Failed to run workflows delete command");
+    run_cli_with_json(&args, start_server, Some("delete_user"))
+        .expect("Failed to run workflows delete command");
 
     // Verify the workflow is actually deleted by trying to get it
     let get_result = default_api::get_workflow(config, workflow_id);

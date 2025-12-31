@@ -2489,15 +2489,18 @@ textarea.text-input {
 }
 
 /* Clickable table rows */
-tr.clickable {
+tr.clickable,
+tr.clickable-row {
     cursor: pointer;
 }
 
-tr.clickable:hover {
+tr.clickable:hover,
+tr.clickable-row:hover {
     background-color: var(--bg-tertiary);
 }
 
-tr.clickable.selected {
+tr.clickable.selected,
+tr.clickable-row.selected {
     background-color: var(--bg-tertiary);
     outline: 2px solid var(--primary-color);
     outline-offset: -2px;

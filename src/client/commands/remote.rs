@@ -18,12 +18,36 @@ use crate::config::TorcConfig;
 
 /// Remote worker execution commands.
 #[derive(Subcommand)]
+#[command(after_long_help = "\
+EXAMPLES:
+    # Add remote workers
+    torc remote add-workers 123 user@host1 user@host2
+
+    # List workers
+    torc remote list-workers 123
+
+    # Run workers via SSH
+    torc remote run 123
+
+    # Check worker status
+    torc remote status 123
+
+    # Stop all workers
+    torc remote stop 123
+")]
 pub enum RemoteCommands {
     /// Add one or more remote workers to a workflow
     ///
     /// Workers are stored in the database and used by subsequent commands.
     /// Format: [user@]hostname[:port]
-    #[command(name = "add-workers")]
+    #[command(
+        name = "add-workers",
+        after_long_help = "\
+EXAMPLES:
+    torc remote add-workers 123 user@host1 user@host2
+    torc remote add-workers 123 host1 host2 host3
+"
+    )]
     AddWorkers {
         /// Workflow ID
         #[arg()]
