@@ -15,7 +15,7 @@ use log::{LevelFilter, error, info};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use sysinfo::{System, SystemExt};
+use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 
 /// A writer that writes to both stdout and a file
 struct MultiWriter {
@@ -224,7 +224,12 @@ pub fn run(args: &Args) {
         None
     };
 
-    let mut system = System::new_all();
+    // Use new_with_specifics to only refresh CPU and memory, avoiding user enumeration
+    // which can crash on HPC systems with large LDAP user databases
+    let refresh_kind = RefreshKind::new()
+        .with_cpu(CpuRefreshKind::everything())
+        .with_memory();
+    let mut system = System::new_with_specifics(refresh_kind);
     system.refresh_all();
     let system_cpus = system.cpus().len() as i64;
     let system_memory_gb = (system.total_memory() as f64) / (1024.0 * 1024.0 * 1024.0);

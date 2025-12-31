@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
-use sysinfo::SystemExt;
+use sysinfo::{RefreshKind, System, SystemExt};
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -401,7 +401,10 @@ impl HpcInterface for SlurmInterface {
         // Special handling for Kestrel cluster
         if env::var("SLURM_CLUSTER_NAME").unwrap_or_default() == "kestrel" {
             // Note: This may not be correct for shared nodes
-            return sysinfo::System::new_all().total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
+            // Use new_with_specifics to only refresh memory, avoiding user enumeration
+            // which can crash on HPC systems with large LDAP user databases
+            let sys = System::new_with_specifics(RefreshKind::new().with_memory());
+            return sys.total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
         }
 
         let mem_per_node = env::var("SLURM_MEM_PER_NODE").expect("SLURM_MEM_PER_NODE not set");

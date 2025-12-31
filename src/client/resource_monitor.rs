@@ -6,7 +6,9 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-use sysinfo::{Pid, ProcessExt, System, SystemExt};
+use sysinfo::{
+    CpuRefreshKind, Pid, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt,
+};
 
 const DB_FILENAME_PREFIX: &str = "resource_metrics";
 
@@ -199,7 +201,13 @@ fn run_monitoring_loop(
     rx: Receiver<MonitorCommand>,
     metrics: Arc<Mutex<HashMap<u32, JobMetrics>>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut sys = System::new_all();
+    // Use new_with_specifics to only refresh processes, CPU, and memory, avoiding user enumeration
+    // which can crash on HPC systems with large LDAP user databases
+    let refresh_kind = RefreshKind::new()
+        .with_processes(ProcessRefreshKind::everything())
+        .with_cpu(CpuRefreshKind::everything())
+        .with_memory();
+    let mut sys = System::new_with_specifics(refresh_kind);
     let mut monitored_jobs: HashMap<u32, MonitoredJob> = HashMap::new();
     let sample_interval = Duration::from_secs(config.sample_interval_seconds as u64);
 
