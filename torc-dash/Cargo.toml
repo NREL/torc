@@ -11,7 +11,7 @@ name = "torc-dash"
 path = "src/main.rs"
 
 [dependencies]
-# Torc library for config and client APIs
+# Torc library for config, client APIs, and network utilities
 torc = { path = "..", features = ["config", "client"] }
 
 # Web server

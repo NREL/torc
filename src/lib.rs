@@ -8,6 +8,7 @@
 pub mod memory_utils;
 #[allow(clippy::to_string_trait_impl, clippy::too_many_arguments)]
 pub mod models;
+pub mod network_utils;
 pub mod time_utils;
 
 // Configuration module (requires config feature, enabled by client)

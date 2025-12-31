@@ -27,6 +27,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::Mutex;
 use torc::config::TorcConfig;
+use torc::network_utils::find_available_port;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -387,9 +388,19 @@ async fn main() -> Result<()> {
         )
         .with_state(state);
 
-    let addr = format!("{}:{}", host, port);
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    info!("Dashboard available at http://{}", addr);
+    // Try to bind to the requested port, incrementing if in use
+    let (std_listener, actual_port) = find_available_port(&host, port)?;
+    info!("Dashboard available at http://{}:{}", host, actual_port);
+    if actual_port != port {
+        info!(
+            "Note: Requested port {} was in use, using port {} instead",
+            port, actual_port
+        );
+    }
+
+    // Convert std listener to tokio listener for axum
+    std_listener.set_nonblocking(true)?;
+    let listener = tokio::net::TcpListener::from_std(std_listener)?;
 
     axum::serve(listener, app).await?;
 
