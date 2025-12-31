@@ -139,6 +139,65 @@ torc hpc match <PROFILE> [OPTIONS]
 
 ---
 
+### `torc hpc generate`
+
+Generate an HPC profile configuration from the current Slurm cluster.
+
+```bash
+torc hpc generate [OPTIONS]
+```
+
+**Options:**
+
+| Option                  | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `--name <NAME>`         | Profile name (defaults to cluster name or hostname)  |
+| `--display-name <NAME>` | Human-readable display name                          |
+| `-o, --output <FILE>`   | Output file path (prints to stdout if not specified) |
+| `--skip-stdby`          | Skip standby partitions (names ending in `-stdby`)   |
+
+**How it works:**
+
+1. Queries `sinfo` to get partition names, CPUs, memory, time limits, and GRES
+2. Queries `scontrol show partition` for each partition to get additional details
+3. Parses GRES strings to extract GPU count and type
+4. Generates hostname-based detection pattern from current hostname
+5. Outputs TOML configuration ready to add to your config file
+
+**Example:**
+
+```bash
+# Generate profile from current cluster
+torc hpc generate
+
+# Output:
+# [client.hpc.custom_profiles.mycluster]
+# display_name = "Mycluster"
+# detect_hostname = ".*\\.mycluster\\.edu"
+#
+# [[client.hpc.custom_profiles.mycluster.partitions]]
+# name = "compute"
+# cpus_per_node = 64
+# memory_mb = 256000
+# max_walltime_secs = 172800
+# ...
+```
+
+**Fields extracted automatically:**
+
+- Partition name, CPUs per node, memory (MB), max walltime (seconds)
+- GPU count and type from GRES (e.g., `gpu:a100:4`)
+- Shared node support from OverSubscribe setting
+
+**Fields that may need manual adjustment:**
+
+- `requires_explicit_request`: Defaults to `false`; set to `true` for partitions that shouldn't be
+  auto-selected
+- `description`: Not available from Slurm; add human-readable descriptions
+- `gpu_memory_gb`: Not available from Slurm; add if known
+
+---
+
 ### `torc slurm generate`
 
 Generate Slurm schedulers for a workflow based on job resource requirements.

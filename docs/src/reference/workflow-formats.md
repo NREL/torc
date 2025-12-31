@@ -7,7 +7,7 @@ same functionality with different syntaxes to suit different preferences and use
 
 | Feature                 | YAML | JSON5 | KDL |
 | ----------------------- | ---- | ----- | --- |
-| Parameter Expansion     | ✓    | ✓     | ✗   |
+| Parameter Expansion     | ✓    | ✓     | ✓   |
 | Comments                | ✓    | ✓     | ✓   |
 | Trailing Commas         | ✗    | ✓     | N/A |
 | Human-Readable          | ✓✓✓  | ✓✓    | ✓✓✓ |
@@ -21,7 +21,7 @@ same functionality with different syntaxes to suit different preferences and use
 
 ## YAML Format
 
-**Best for:** Most workflows, especially those using parameter expansion.
+**Best for:** Most workflows, especially those using multi-line commands.
 
 **File Extension:** `.yaml` or `.yml`
 
@@ -73,13 +73,11 @@ actions:
 
 - Most widely used configuration format
 - Excellent for complex workflows with many jobs
-- Full parameter expansion support
 - Clean, readable syntax without brackets
 
 **Disadvantages:**
 
 - Indentation-sensitive
-- No trailing commas allowed
 - Can be verbose for deeply nested structures
 
 ## JSON5 Format
@@ -147,18 +145,16 @@ actions:
 
 - JSON-compatible (easy programmatic manipulation)
 - Supports comments and trailing commas
-- Full parameter expansion support
 - Familiar to JavaScript/JSON users
 
 **Disadvantages:**
 
 - More verbose than YAML
-- Requires quotes around all string values
 - More brackets and commas than YAML
 
 ## KDL Format
 
-**Best for:** Simple to moderate workflows with clean, modern syntax.
+**Best for:** Simple to moderate workflows with clean syntax.
 
 **File Extension:** `.kdl`
 
@@ -207,12 +203,10 @@ action {
 
 - Clean, minimal syntax
 - No indentation requirements
-- Modern configuration language
 - Supports all core Torc features
 
 **Disadvantages:**
 
-- **No parameter expansion support**
 - Less familiar to most users
 - Boolean values use special syntax (`#true`, `#false`)
 
@@ -266,20 +260,6 @@ All formats support:
 - **Workflow actions**: triggers, action types, commands
 - **Resource monitoring**: enabled, granularity, sampling interval
 
-## Parameter Expansion (YAML/JSON5 Only)
-
-YAML and JSON5 support parameter expansion to generate many jobs from concise specifications:
-
-```yaml
-jobs:
-  - name: "process_{dataset_id}"
-    command: "python process.py --id {dataset_id}"
-    parameters:
-      dataset_id: "1:100"  # Creates 100 jobs
-```
-
-**KDL does not support parameter expansion.** For parameterized workflows, use YAML or JSON5.
-
 ## Examples Directory
 
 The Torc repository includes comprehensive examples in all three formats:
@@ -322,12 +302,11 @@ torc submit examples/yaml/workflow_actions_data_pipeline.yaml
 
 ## Recommendations
 
-**Start with YAML** if you're unsure - it's the most widely supported and includes full parameter
-expansion.
+**Start with YAML** if you're unsure.
 
 **Switch to JSON5** if you need to programmatically generate workflows or prefer JSON syntax.
 
-**Try KDL** if you prefer minimal syntax and don't need parameter expansion.
+**Try KDL** if you prefer minimal syntax.
 
 All three formats are fully supported and maintained. Choose based on your workflow complexity and
 personal preference.
