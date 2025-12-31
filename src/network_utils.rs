@@ -35,7 +35,7 @@ pub const MAX_PORT_ATTEMPTS: u16 = 100;
 /// Returns an error if:
 /// - No available port is found after `MAX_PORT_ATTEMPTS` attempts
 /// - A non-"address in use" error occurs (e.g., permission denied)
-/// - The port number wraps around
+/// - The port number reaches `u16::MAX`
 ///
 /// # Example
 ///
@@ -69,14 +69,15 @@ pub fn find_available_port(host: &str, start_port: u16) -> anyhow::Result<(TcpLi
                 }
                 // Check if it's an "address in use" error
                 if e.kind() == ErrorKind::AddrInUse {
-                    log::info!("Port {} is in use, trying port {}", port, port + 1);
-                    port = port.saturating_add(1);
-                    // Avoid wrapping around to privileged ports
-                    if port < start_port {
+                    // Avoid exceeding the maximum port number
+                    if port == u16::MAX {
                         return Err(anyhow::anyhow!(
-                            "Port number wrapped around while searching for available port"
+                            "Port number reached maximum value while searching for available port"
                         ));
                     }
+                    let next_port = port + 1;
+                    log::info!("Port {} is in use, trying port {}", port, next_port);
+                    port = next_port;
                 } else {
                     // Different error (e.g., permission denied), don't retry
                     return Err(anyhow::anyhow!("Failed to bind to {}: {}", addr, e));
@@ -113,5 +114,45 @@ mod tests {
         assert!(second_port > first_port);
 
         drop(first_listener);
+    }
+
+    #[test]
+    fn test_find_available_port_max_port_error() {
+        // Starting from u16::MAX with a port already in use should fail
+        // since there's no port after 65535 to try.
+
+        // Try to bind to port 65535 to block it
+        if let Ok(_blocker) = TcpListener::bind("127.0.0.1:65535") {
+            // Port 65535 is now blocked, try to find an available port starting there
+            let result = find_available_port("127.0.0.1", 65535);
+            assert!(result.is_err());
+            let err_msg = result.unwrap_err().to_string();
+            assert!(
+                err_msg.contains("maximum value"),
+                "Expected 'maximum value' error, got: {}",
+                err_msg
+            );
+        }
+        // If we can't bind to 65535 (e.g., permission denied), skip the test
+    }
+
+    #[test]
+    fn test_find_available_port_non_addr_in_use_error() {
+        // Using an invalid host should trigger a non-AddrInUse error
+        // and should fail immediately without retrying
+        let result = find_available_port("999.999.999.999", 8080);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        // Should get "Failed to bind" error, not "Failed to find available port after N attempts"
+        assert!(
+            err_msg.contains("Failed to bind"),
+            "Expected 'Failed to bind' error, got: {}",
+            err_msg
+        );
+        assert!(
+            !err_msg.contains("attempts"),
+            "Should not have retried on non-AddrInUse error, got: {}",
+            err_msg
+        );
     }
 }
