@@ -1,4 +1,5 @@
-use std::io::{self, Write};
+use std::fs;
+use std::io::{self, Read, Write};
 
 use clap::Subcommand;
 
@@ -6,11 +7,16 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::hpc::create_registry_with_config_public;
 use crate::client::commands::pagination::{
-    JobListParams, ResourceRequirementsListParams, ScheduledComputeNodeListParams,
-    SlurmSchedulersListParams, WorkflowListParams, paginate_jobs, paginate_resource_requirements,
-    paginate_scheduled_compute_nodes, paginate_slurm_schedulers, paginate_workflows,
+    EventListParams, FileListParams, JobListParams, ResourceRequirementsListParams,
+    ResultListParams, ScheduledComputeNodeListParams, SlurmSchedulersListParams,
+    UserDataListParams, WorkflowListParams, paginate_events, paginate_files, paginate_jobs,
+    paginate_resource_requirements, paginate_results, paginate_scheduled_compute_nodes,
+    paginate_slurm_schedulers, paginate_user_data, paginate_workflows,
 };
 use crate::client::commands::slurm::{GroupByStrategy, generate_schedulers_for_workflow};
+use crate::client::commands::workflow_export::{
+    EXPORT_VERSION, ExportImportStats, IdMappings, WorkflowExport,
+};
 use crate::client::commands::{
     get_env_user_name, print_error, select_workflow_interactively,
     table_format::display_table_with_count,
@@ -20,6 +26,7 @@ use crate::client::workflow_manager::WorkflowManager;
 use crate::client::workflow_spec::WorkflowSpec;
 use crate::config::TorcConfig;
 use crate::models;
+use crate::models::JobStatus;
 use serde_json;
 use tabled::Tabled;
 
@@ -491,6 +498,83 @@ EXAMPLES:
         /// ID of the workflow to check (optional - will prompt if not provided)
         #[arg()]
         id: Option<i64>,
+    },
+
+    /// Export a workflow to a portable JSON file
+    ///
+    /// Creates a self-contained export that can be imported into the same or
+    /// different torc-server instance. All entity IDs are preserved in the export
+    /// and remapped during import.
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Export workflow to stdout
+    torc workflows export 123
+
+    # Export to a file
+    torc workflows export 123 -o workflow.json
+
+    # Include job results in export
+    torc workflows export 123 --include-results -o backup.json
+
+    # Include events (history) in export
+    torc workflows export 123 --include-events -o full-backup.json
+
+    # Export with all optional data
+    torc workflows export 123 --include-results --include-events -o complete.json
+")]
+    Export {
+        /// ID of the workflow to export (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+
+        /// Output file path (default: stdout)
+        #[arg(short, long)]
+        output: Option<String>,
+
+        /// Include job results in export
+        #[arg(long)]
+        include_results: bool,
+
+        /// Include events (workflow history) in export
+        #[arg(long)]
+        include_events: bool,
+    },
+
+    /// Import a workflow from an exported JSON file
+    ///
+    /// Imports a workflow that was previously exported. All entity IDs are
+    /// remapped to new IDs assigned by the server. By default, all job statuses
+    /// are reset to uninitialized for a fresh start.
+    #[command(after_long_help = "\
+EXAMPLES:
+    # Import a workflow (resets job statuses by default)
+    torc workflows import workflow.json
+
+    # Import from stdin
+    cat workflow.json | torc workflows import -
+
+    # Import with a different name
+    torc workflows import workflow.json --name 'my-copy'
+
+    # Skip importing results even if present in file
+    torc workflows import workflow.json --skip-results
+")]
+    Import {
+        /// Path to the exported workflow JSON file (use '-' for stdin)
+        #[arg()]
+        file: String,
+
+        /// Override the workflow name
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Skip importing results even if present in export
+        #[arg(long)]
+        skip_results: bool,
+
+        /// Skip importing events even if present in export
+        #[arg(long)]
+        skip_events: bool,
     },
 }
 
@@ -2617,5 +2701,619 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::IsComplete { id } => {
             handle_is_complete(config, *id, format);
         }
+        WorkflowCommands::Export {
+            workflow_id,
+            output,
+            include_results,
+            include_events,
+        } => {
+            handle_export(
+                config,
+                workflow_id,
+                output.as_deref(),
+                *include_results,
+                *include_events,
+                &current_user,
+                format,
+            );
+        }
+        WorkflowCommands::Import {
+            file,
+            name,
+            skip_results,
+            skip_events,
+        } => {
+            handle_import(
+                config,
+                file,
+                name.as_deref(),
+                *skip_results,
+                *skip_events,
+                &current_user,
+                format,
+            );
+        }
+    }
+}
+
+// ============================================================================
+// Export/Import Implementation
+// ============================================================================
+
+fn handle_export(
+    config: &Configuration,
+    workflow_id: &Option<i64>,
+    output: Option<&str>,
+    include_results: bool,
+    include_events: bool,
+    current_user: &str,
+    format: &str,
+) {
+    // Get workflow ID (prompt if not provided)
+    let workflow_id = match workflow_id {
+        Some(id) => *id,
+        None => match select_workflow_interactively(config, current_user) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!("Error selecting workflow: {}", e);
+                std::process::exit(1);
+            }
+        },
+    };
+
+    // Get workflow
+    let workflow = match default_api::get_workflow(config, workflow_id) {
+        Ok(w) => w,
+        Err(e) => {
+            print_error("getting workflow", &e);
+            std::process::exit(1);
+        }
+    };
+
+    let workflow_name = workflow.name.clone();
+
+    // Build export document
+    let mut export = WorkflowExport::new(workflow);
+
+    // Get all files
+    let file_params = FileListParams {
+        workflow_id,
+        ..Default::default()
+    };
+    export.files = match paginate_files(config, workflow_id, file_params) {
+        Ok(files) => files,
+        Err(e) => {
+            print_error("listing files", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get all user_data
+    let user_data_params = UserDataListParams {
+        workflow_id,
+        ..Default::default()
+    };
+    export.user_data = match paginate_user_data(config, workflow_id, user_data_params) {
+        Ok(ud) => ud,
+        Err(e) => {
+            print_error("listing user_data", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get all resource requirements
+    let rr_params = ResourceRequirementsListParams {
+        workflow_id,
+        ..Default::default()
+    };
+    export.resource_requirements =
+        match paginate_resource_requirements(config, workflow_id, rr_params) {
+            Ok(rr) => rr,
+            Err(e) => {
+                print_error("listing resource requirements", &e);
+                std::process::exit(1);
+            }
+        };
+
+    // Get all slurm schedulers
+    let slurm_params = SlurmSchedulersListParams {
+        workflow_id,
+        ..Default::default()
+    };
+    export.slurm_schedulers = match paginate_slurm_schedulers(config, workflow_id, slurm_params) {
+        Ok(s) => s,
+        Err(e) => {
+            print_error("listing slurm schedulers", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get all local schedulers
+    export.local_schedulers = match default_api::list_local_schedulers(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ) {
+        Ok(response) => response.items.unwrap_or_default(),
+        Err(e) => {
+            print_error("listing local schedulers", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get all jobs (with relationships)
+    let job_params = JobListParams {
+        workflow_id,
+        include_relationships: Some(true),
+        ..Default::default()
+    };
+    export.jobs = match paginate_jobs(config, workflow_id, job_params) {
+        Ok(jobs) => jobs,
+        Err(e) => {
+            print_error("listing jobs", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Get workflow actions
+    export.workflow_actions = match default_api::get_workflow_actions(config, workflow_id) {
+        Ok(actions) => actions,
+        Err(e) => {
+            print_error("getting workflow actions", &e);
+            std::process::exit(1);
+        }
+    };
+
+    // Optionally get results
+    if include_results {
+        let result_params = ResultListParams {
+            workflow_id,
+            all_runs: Some(true), // Include results from all runs
+            ..Default::default()
+        };
+        export.results = match paginate_results(config, workflow_id, result_params) {
+            Ok(results) => Some(results),
+            Err(e) => {
+                print_error("listing results", &e);
+                std::process::exit(1);
+            }
+        };
+    }
+
+    // Optionally get events
+    if include_events {
+        let event_params = EventListParams {
+            workflow_id,
+            ..Default::default()
+        };
+        export.events = match paginate_events(config, workflow_id, event_params) {
+            Ok(events) => Some(events),
+            Err(e) => {
+                print_error("listing events", &e);
+                std::process::exit(1);
+            }
+        };
+    }
+
+    // Serialize to JSON
+    let json = match serde_json::to_string_pretty(&export) {
+        Ok(j) => j,
+        Err(e) => {
+            eprintln!("Error serializing export: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Calculate stats
+    let stats = ExportImportStats::from_export(&export);
+
+    // Write output
+    match output {
+        Some(path) => {
+            if let Err(e) = fs::write(path, &json) {
+                eprintln!("Error writing to file: {}", e);
+                std::process::exit(1);
+            }
+            if format == "json" {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "success": true,
+                        "workflow_id": workflow_id,
+                        "workflow_name": workflow_name,
+                        "output_file": path,
+                        "jobs": stats.jobs,
+                        "files": stats.files,
+                        "user_data": stats.user_data,
+                        "results": stats.results,
+                        "events": stats.events,
+                    })
+                );
+            } else {
+                eprintln!(
+                    "Exported workflow '{}' ({} jobs, {} files) to {}",
+                    workflow_name, stats.jobs, stats.files, path
+                );
+            }
+        }
+        None => {
+            // Write to stdout
+            println!("{}", json);
+        }
+    }
+}
+
+fn handle_import(
+    config: &Configuration,
+    file: &str,
+    name_override: Option<&str>,
+    skip_results: bool,
+    _skip_events: bool, // Events import not yet implemented
+    current_user: &str,
+    format: &str,
+) {
+    // Read input
+    let json = if file == "-" {
+        let mut buffer = String::new();
+        if let Err(e) = io::stdin().read_to_string(&mut buffer) {
+            eprintln!("Error reading from stdin: {}", e);
+            std::process::exit(1);
+        }
+        buffer
+    } else {
+        match fs::read_to_string(file) {
+            Ok(content) => content,
+            Err(e) => {
+                eprintln!("Error reading file '{}': {}", file, e);
+                std::process::exit(1);
+            }
+        }
+    };
+
+    // Parse export document
+    let export: WorkflowExport = match serde_json::from_str(&json) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("Error parsing export file: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Check version compatibility
+    if export.export_version != EXPORT_VERSION {
+        eprintln!(
+            "Warning: Export version {} differs from current version {}",
+            export.export_version, EXPORT_VERSION
+        );
+    }
+
+    let mut mappings = IdMappings::new();
+
+    // Create workflow with optional name override
+    let mut new_workflow = export.workflow.clone();
+    new_workflow.id = None; // Clear ID for creation
+    if let Some(name) = name_override {
+        new_workflow.name = name.to_string();
+    }
+    new_workflow.user = current_user.to_string(); // Set current user as owner
+
+    let created_workflow = match default_api::create_workflow(config, new_workflow) {
+        Ok(w) => w,
+        Err(e) => {
+            print_error("creating workflow", &e);
+            std::process::exit(1);
+        }
+    };
+    let new_workflow_id = created_workflow.id.unwrap();
+    let workflow_name = created_workflow.name.clone();
+
+    // Create files and build mapping
+    for file_model in &export.files {
+        let mut new_file = file_model.clone();
+        let old_id = new_file.id.unwrap();
+        new_file.id = None;
+        new_file.workflow_id = new_workflow_id;
+
+        match default_api::create_file(config, new_file) {
+            Ok(created) => {
+                mappings.files.insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating file", &e);
+                // Clean up: delete the workflow we just created
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create user_data and build mapping
+    // Note: consumer_job_id and producer_job_id relationships are established
+    // via job's input_user_data_ids and output_user_data_ids, not here
+    for ud_model in &export.user_data {
+        let mut new_ud = ud_model.clone();
+        let old_id = new_ud.id.unwrap();
+        new_ud.id = None;
+        new_ud.workflow_id = new_workflow_id;
+
+        match default_api::create_user_data(config, new_ud, None, None) {
+            Ok(created) => {
+                mappings.user_data.insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating user_data", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create resource requirements and build mapping
+    // First, get the 'default' resource requirement that was auto-created with the workflow
+    // so we can map old 'default' IDs to it
+    let default_rr = default_api::list_resource_requirements(
+        config,
+        new_workflow_id,
+        None,            // job_id
+        None,            // offset
+        None,            // limit
+        None,            // sort_by
+        None,            // reverse_sort
+        Some("default"), // name
+        None,            // memory
+        None,            // num_cpus
+        None,            // num_gpus
+        None,            // num_nodes
+        None,            // runtime
+    )
+    .ok()
+    .and_then(|response| response.items)
+    .and_then(|items| items.into_iter().next());
+
+    for rr_model in &export.resource_requirements {
+        let old_id = rr_model.id.unwrap();
+
+        // Skip 'default' resource requirements since they're auto-created,
+        // but map the old ID to the new workflow's default ID
+        if rr_model.name == "default" {
+            if let Some(ref default) = default_rr {
+                mappings
+                    .resource_requirements
+                    .insert(old_id, default.id.unwrap());
+            } else {
+                eprintln!(
+                    "Warning: Default resource requirement for workflow {} could not be found; \
+                     exported 'default' resource requirement with old ID {} will not be mapped.",
+                    new_workflow_id, old_id
+                );
+            }
+            continue;
+        }
+
+        let mut new_rr = rr_model.clone();
+        new_rr.id = None;
+        new_rr.workflow_id = new_workflow_id;
+
+        match default_api::create_resource_requirements(config, new_rr) {
+            Ok(created) => {
+                mappings
+                    .resource_requirements
+                    .insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating resource requirements", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create slurm schedulers and build mapping
+    for scheduler in &export.slurm_schedulers {
+        let mut new_scheduler = scheduler.clone();
+        let old_id = new_scheduler.id.unwrap();
+        new_scheduler.id = None;
+        new_scheduler.workflow_id = new_workflow_id;
+
+        match default_api::create_slurm_scheduler(config, new_scheduler) {
+            Ok(created) => {
+                mappings
+                    .slurm_schedulers
+                    .insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating slurm scheduler", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create local schedulers and build mapping
+    for scheduler in &export.local_schedulers {
+        let mut new_scheduler = scheduler.clone();
+        let old_id = new_scheduler.id.unwrap();
+        new_scheduler.id = None;
+        new_scheduler.workflow_id = new_workflow_id;
+
+        match default_api::create_local_scheduler(config, new_scheduler) {
+            Ok(created) => {
+                mappings
+                    .local_schedulers
+                    .insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating local scheduler", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create jobs with remapped IDs (but without depends_on_job_ids yet)
+    for job_model in &export.jobs {
+        let mut new_job = job_model.clone();
+        let old_id = new_job.id.unwrap();
+        new_job.id = None;
+        new_job.workflow_id = new_workflow_id;
+
+        // Remap file IDs
+        if let Some(ref ids) = new_job.input_file_ids {
+            new_job.input_file_ids = Some(mappings.remap_file_ids(ids));
+        }
+        if let Some(ref ids) = new_job.output_file_ids {
+            new_job.output_file_ids = Some(mappings.remap_file_ids(ids));
+        }
+
+        // Remap user_data IDs
+        if let Some(ref ids) = new_job.input_user_data_ids {
+            new_job.input_user_data_ids = Some(mappings.remap_user_data_ids(ids));
+        }
+        if let Some(ref ids) = new_job.output_user_data_ids {
+            new_job.output_user_data_ids = Some(mappings.remap_user_data_ids(ids));
+        }
+
+        // Remap resource_requirements_id
+        if let Some(rr_id) = new_job.resource_requirements_id {
+            new_job.resource_requirements_id = mappings.remap_resource_requirements_id(rr_id);
+        }
+
+        // Remap scheduler_id
+        if let Some(sched_id) = new_job.scheduler_id {
+            new_job.scheduler_id = mappings.remap_scheduler_id(sched_id);
+        }
+
+        // Clear depends_on_job_ids - we'll set these after all jobs are created
+        new_job.depends_on_job_ids = None;
+
+        // Always reset status to uninitialized - status is computed by server
+        // based on dependencies and cannot be preserved through update_job API
+        new_job.status = Some(JobStatus::Uninitialized);
+
+        match default_api::create_job(config, new_job) {
+            Ok(created) => {
+                mappings.jobs.insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating job", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Now update jobs with their depends_on_job_ids
+    // This must be done while jobs are in Uninitialized status (server constraint)
+    for job_model in &export.jobs {
+        if let Some(ref depends_on) = job_model.depends_on_job_ids
+            && !depends_on.is_empty()
+        {
+            let old_job_id = job_model.id.unwrap();
+            let new_job_id = mappings.jobs.get(&old_job_id).unwrap();
+            let new_depends_on = mappings.remap_job_ids(depends_on);
+
+            // Create update request preserving the job's name/command
+            // Keep status as Uninitialized so depends_on can be modified
+            let mut update_job = models::JobModel::new(
+                new_workflow_id,
+                job_model.name.clone(),
+                job_model.command.clone(),
+            );
+            update_job.depends_on_job_ids = Some(new_depends_on);
+            // Keep Uninitialized so we can modify depends_on_job_ids
+            update_job.status = Some(JobStatus::Uninitialized);
+
+            if let Err(e) = default_api::update_job(config, *new_job_id, update_job) {
+                print_error("updating job dependencies", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Create workflow actions with remapped scheduler IDs
+    for action in &export.workflow_actions {
+        let mut new_action = action.clone();
+        new_action.id = None;
+        new_action.workflow_id = new_workflow_id;
+
+        // Remap scheduler_id in action_config if present
+        // The action_config may contain a scheduler_id field for schedule_nodes actions
+        if let Some(obj) = new_action.action_config.as_object_mut()
+            && let Some(serde_json::Value::Number(n)) = obj.get("scheduler_id")
+            && let Some(old_id) = n.as_i64()
+            && let Some(new_id) = mappings.remap_scheduler_id(old_id)
+        {
+            obj.insert(
+                "scheduler_id".to_string(),
+                serde_json::Value::Number(new_id.into()),
+            );
+        }
+
+        // Remap job_ids in the action if present
+        if let Some(ref job_ids) = new_action.job_ids {
+            new_action.job_ids = Some(mappings.remap_job_ids(job_ids));
+        }
+
+        // Serialize to JSON Value for the API
+        let action_json = serde_json::to_value(&new_action).unwrap_or_default();
+
+        if let Err(e) = default_api::create_workflow_action(config, new_workflow_id, action_json) {
+            print_error("creating workflow action", &e);
+            let _ = default_api::delete_workflow(config, new_workflow_id, None);
+            std::process::exit(1);
+        }
+    }
+
+    // Import results if present and not skipped
+    if !skip_results && let Some(ref results) = export.results {
+        for result in results {
+            let mut new_result = result.clone();
+            new_result.id = None;
+            new_result.workflow_id = new_workflow_id;
+            // Remap job_id - job_id is required (i64, not Option<i64>)
+            if let Some(new_job_id) = mappings.remap_job_id(new_result.job_id) {
+                new_result.job_id = new_job_id;
+            } else {
+                // Skip this result if we can't remap the job_id
+                continue;
+            }
+
+            if let Err(e) = default_api::create_result(config, new_result) {
+                print_error("creating result", &e);
+                // Continue anyway - results are optional
+            }
+        }
+    }
+
+    // Note: Events are typically not imported as they represent historical data
+    // that would be recreated by new operations on the imported workflow.
+    // The skip_events flag exists for future use or special cases.
+
+    // Calculate stats
+    let stats = ExportImportStats::from_export(&export);
+
+    if format == "json" {
+        println!(
+            "{}",
+            serde_json::json!({
+                "success": true,
+                "workflow_id": new_workflow_id,
+                "workflow_name": workflow_name,
+                "jobs": stats.jobs,
+                "files": stats.files,
+                "user_data": stats.user_data,
+            })
+        );
+    } else {
+        eprintln!(
+            "Imported workflow '{}' as ID {} ({} jobs, {} files, status reset)",
+            workflow_name, new_workflow_id, stats.jobs, stats.files
+        );
     }
 }
