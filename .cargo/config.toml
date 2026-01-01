@@ -1,0 +1,8 @@
+# Increase default stack size on Windows from 1MB to 8MB (matching Linux/macOS)
+# This is needed because debug builds have larger stack frames, and complex
+# CLI parsing with many subcommands can exhaust the default 1MB Windows stack.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-args=/STACK:8388608"]
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "link-args=-Wl,--stack,8388608"]
