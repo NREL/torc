@@ -293,7 +293,7 @@ torc slurm schedule-nodes -n 5 $WORKFLOW_ID
 ### Check Slurm Job Status
 
 ```bash
-squeue -u $USER
+squeue --me
 ```
 
 ### View Torc Worker Logs

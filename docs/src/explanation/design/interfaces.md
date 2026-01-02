@@ -46,7 +46,7 @@ graph TD
     end
 
     subgraph "Server"
-        HTTP["HTTP REST API<br/>(torc-server)"]
+        HTTP["HTTP API<br/>(torc-server)"]
         DB[(SQLite Database)]
     end
 

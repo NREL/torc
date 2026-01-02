@@ -65,7 +65,7 @@ Note the workflow ID in the output.
 Start workers on all remote machines. Each worker will poll for available jobs and execute them:
 
 ```console
-torc remote run workers.txt <workflow-id> --poll-interval 1
+torc remote run --workers workers.txt <workflow-id> --poll-interval 5
 ```
 
 This will:
@@ -80,7 +80,7 @@ This will:
 Monitor which workers are still running:
 
 ```console
-torc remote status workers.txt <workflow-id>
+torc remote status <workflow-id>
 ```
 
 ## View Workflow Progress
@@ -102,7 +102,7 @@ torc tui
 After the workflow completes, collect logs from all workers:
 
 ```console
-torc remote collect-logs workers.txt <workflow-id> --local-output-dir ./logs
+torc remote collect-logs <workflow-id> --local-output-dir ./logs
 ```
 
 This creates a tarball for each worker containing:
@@ -116,7 +116,7 @@ This creates a tarball for each worker containing:
 If you need to stop workers before the workflow completes:
 
 ```console
-torc remote stop workers.txt <workflow-id>
+torc remote stop <workflow-id>
 ```
 
 Add `--force` to send SIGKILL instead of SIGTERM.

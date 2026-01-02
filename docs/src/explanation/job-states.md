@@ -32,6 +32,5 @@ stateDiagram-v2
 - **running** (4) - Currently executing
 - **completed** (5) - Finished successfully (exit code 0)
 - **failed** (6) - Finished with error (exit code != 0)
-- **canceled** (7) - Explicitly canceled by user or system
-- **terminated** (8) - Explicitly terminated by system, such as for checkpointing before wall-time
-  timeout
+- **canceled** (7) - Explicitly canceled by user or torc. Never executed.
+- **terminated** (8) - Explicitly terminated by system, such as at wall-time timeout

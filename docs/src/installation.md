@@ -14,6 +14,45 @@ xattr -cr /path/to/torc*
 
 Alternatively, you can right-click each binary and select "Open" to add a security exception.
 
+## Site-Specific Installations
+
+Some HPC facilities maintain pre-installed Torc binaries and shared servers. Check if your site is
+listed below.
+
+### NREL Kestrel
+
+**Pre-installed binaries** are available at:
+
+```
+/scratch/dthom/torc/
+├── 0.8.0/
+├── ...
+└── latest -> 0.8.0  (symlink to current version)
+```
+
+> **Recommended**: Use the `latest` directory. Torc maintains backwards compatibility, so you'll
+> automatically receive updates and bug fixes without changing your configuration.
+
+Add to your PATH:
+
+```bash
+export PATH="/scratch/dthom/torc/latest:$PATH"
+```
+
+Or add to your `~/.bashrc` for persistence:
+
+```bash
+echo 'export PATH="/scratch/dthom/torc/latest:$PATH"' >> ~/.bashrc
+```
+
+**Shared server**: A `torc-server` instance runs on a dedicated VM within the Kestrel environment.
+Contact Daniel Thom for access credentials and the server URL. Once you have access:
+
+```bash
+export TORC_API_URL="http://<server-address>/torc-service/v1"
+export TORC_PASSWORD="<your-password>"
+```
+
 ## Building from Source
 
 ### Prerequisites
@@ -67,8 +106,10 @@ cargo build --release -p torc-dash
 cargo build --release -p torc-slurm-job-runner
 ```
 
-Binaries will be in `target/release/`. We recommend adding this directory to your system path so
-that you can run all binaries without specifying the full path.
+Binaries will be in `target/release/`.
+
+**Required**: Add this directory to your system path or copy the binaries to a directory already in
+your path (e.g., `~/.local/bin/`).
 
 ## Python Client
 
@@ -81,7 +122,7 @@ The Python client provides programmatic workflow management for Python users.
 ### Installation
 
 ```bash
-pip install "torc @ git+https://github.com/NREL/torc.git#subdirectory=python_client"
+pip install torc-client
 ```
 
 The `pytorc` command will be available after installation.

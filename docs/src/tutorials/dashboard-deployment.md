@@ -402,7 +402,7 @@ netstat -tuln | grep 8090
 
 ```bash
 # Check Slurm queue
-squeue -u $USER
+squeue --me
 
 # Check Slurm job logs
 cat output/slurm_output_*.e
