@@ -5,7 +5,7 @@ Complete guide for configuring AI assistants (Claude Code, GitHub Copilot) to wo
 ## Overview
 
 Torc provides an MCP (Model Context Protocol) server that enables AI assistants to interact with
-workflows. The `torc-mcp-server` binary acts as a bridge between AI assistants and the Torc REST
+workflows. The `torc-mcp-server` binary acts as a bridge between AI assistants and the Torc HTTP
 API.
 
 ## Available Tools
@@ -219,7 +219,7 @@ Torc uses the Model Context Protocol (MCP), an open standard for connecting AI a
 external tools. The `torc-mcp-server` binary:
 
 1. **Receives tool calls** from the AI assistant via stdio
-2. **Translates them** to Torc REST API calls
+2. **Translates them** to Torc HTTP API calls
 3. **Returns results** in a format the assistant can understand
 
 The server is stateless—it simply proxies requests to your running Torc server. All workflow state

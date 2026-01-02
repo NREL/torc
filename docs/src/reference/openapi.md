@@ -1,6 +1,6 @@
 # OpenAPI Specification
 
-The Torc server implements a REST API defined in `api/openapi.yaml`. All endpoints are prefixed with
+The Torc server implements a HTTP API defined in `api/openapi.yaml`. All endpoints are prefixed with
 `/torc-service/v1`.
 
 ## Core Endpoints

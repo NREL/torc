@@ -28,7 +28,7 @@ export SLURM_QOS=normal
 torc workflows create tests/workflows/slurm_oom_test.yaml
 torc slurm schedule-nodes <workflow_id>
 
-# Wait for job to fail (check with: squeue -u $USER)
+# Wait for job to fail (check with: squeue --me)
 
 # Test the debugging tools
 torc slurm parse-logs <workflow_id>

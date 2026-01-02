@@ -7,7 +7,7 @@ coordination, while clients create workflows and job runners execute tasks on co
 
 **Key Components:**
 
-- **Server**: REST API service that manages workflow state via a SQLite database
+- **Server**: HTTP API service that manages workflow state via a SQLite database
 - **Client**: CLI tool and library for creating and managing workflows
 - **Job Runner**: Worker process that pulls ready jobs, executes them, and reports results
 - **Database**: Central SQLite database that stores all workflow state and coordinates distributed
@@ -18,7 +18,7 @@ coordination, while clients create workflows and job runners execute tasks on co
 ```mermaid
 graph TB
     subgraph Server["Torc Server"]
-        API["REST API (Tokio 1-thread)<br/>/workflows /jobs /files<br/>/user_data /results"]
+        API["HTTP API (Tokio 1-thread)<br/>/workflows /jobs /files<br/>/user_data /results"]
         DB["SQLite Database (WAL)<br/>• Workflow state<br/>• Job dependencies<br/>• Resource tracking<br/>• Execution results"]
         API --> DB
     end

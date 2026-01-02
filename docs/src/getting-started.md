@@ -10,23 +10,28 @@ coordination, while clients create workflows and job runners execute tasks on co
 
 Choose the interface that fits your workflow:
 
-- **Dashboard** — Web UI ([torc-dash](./how-to/dashboard.md)) for visual monitoring
+- **CLI** — Primary interface which provides access to all torc functionality
+- **Dashboard** — Web UI ([torc-dash](./how-to/dashboard.md)) for visual configuration and monitoring
+- **TUI** — Terminal User Interface (`torc tui`) for visual monitoring in a terminal
 - **AI Assistants** — Use [Claude Code](https://claude.ai/code) or GitHub Copilot to manage
   workflows through natural language. _"Create a workflow with 10 parallel jobs"_ or _"Why did job 5
   fail?"_
-- **TUI** — Terminal User Interface (`torc tui`) for visual monitoring in a terminal
-- **CLI** — The `torc` command for scripting and automation
 - **Spec Files** — YAML, KDL, or JSON5 files for version-controlled workflow definitions
 - **Python/Julia APIs** — Libraries for programmatic workflow generation
 
-All interfaces work with the same server—mix and match as needed.
+All interfaces work with the same server — mix and match as needed.
+
+TODO DT: change the diagram below.
+- Make it Mermaid
+- Other apps use the CLI as well as HTTP
+- AI assistant uses the torc-mcp-server
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Torc Server                              │
-│                   (REST API + SQLite DB)                        │
+│                   (HTTP API + SQLite DB)                        │
 └─────────────────────────────────────────────────────────────────┘
         ▲              ▲              ▲              ▲
         │              │              │              │
@@ -38,23 +43,23 @@ All interfaces work with the same server—mix and match as needed.
 
 **Key components:**
 
-- **Server** — REST API service managing workflow state via SQLite
+- **Server** — HTTP API service managing workflow state via SQLite
 - **Job Runners** — Worker processes that execute jobs on compute resources
 - **Clients** — CLI, dashboard, AI assistants, or API libraries
 
 ## Features
 
-- **AI-Assisted Management** — Create, debug, and manage workflows through conversation
 - **Declarative Workflow Specifications** — Define workflows in YAML, JSON5, JSON, or KDL
-- **Automatic Dependency Resolution** — Dependencies inferred from file and data relationships
 - **Job Parameterization** — Create parameter sweeps and grid searches with simple syntax
+- **Automatic Dependency Resolution** — Dependencies inferred from file and data relationships
 - **Distributed Execution** — Run jobs across multiple compute nodes with resource tracking
 - **Slurm Integration** — Native support for HPC cluster job submission
 - **Automatic Failure Recovery** — Detect OOM/timeout failures and retry with adjusted resources
 - **Workflow Resumption** — Restart workflows after failures without losing progress
 - **Change Detection** — Automatically detect input changes and re-run affected jobs
-- **Resource Management** — Track CPU, memory, and GPU usage across all jobs
+- **Resource Management** — Track CPU and memory across all jobs
 - **RESTful API** — Complete OpenAPI-specified REST API for integration
+- **AI-Assisted Management** — Create, debug, and manage workflows through conversation
 
 ## Next: Quick Start
 

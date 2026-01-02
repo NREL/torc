@@ -105,7 +105,7 @@ torc tui
 Check Slurm queue:
 
 ```console
-squeue -u $USER
+squeue --me
 ```
 
 ## View Results

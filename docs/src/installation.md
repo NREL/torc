@@ -4,6 +4,8 @@
 
 Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases).
 
+TODO DT: add hpc-specific links so that we can point to /scratch/dthom/torc/latest
+
 **macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS
 Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute
 after downloading:
@@ -66,6 +68,7 @@ cargo build --release -p torc-dash
 # Slurm job runner
 cargo build --release -p torc-slurm-job-runner
 ```
+TODO DT: system path is required for dash and tui
 
 Binaries will be in `target/release/`. We recommend adding this directory to your system path so
 that you can run all binaries without specifying the full path.
@@ -80,6 +83,8 @@ The Python client provides programmatic workflow management for Python users.
 
 ### Installation
 
+TODO DT: update pypi
+
 ```bash
 pip install "torc @ git+https://github.com/NREL/torc.git#subdirectory=python_client"
 ```
@@ -91,6 +96,9 @@ The `pytorc` command will be available after installation.
 The Julia client provides programmatic workflow management for Julia users.
 
 ### Prerequisites
+
+TODO DT: register on Julia package registry
+TODO DT: add Sienna automation
 
 - Julia 1.10 or later
 

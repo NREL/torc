@@ -38,7 +38,7 @@ jobs:
     command: echo "Hello again from torc!"
 ```
 
-> **Note:** Torc also accepts `.json5` and `.kdl` workflow specifications. See
+> **Note:** Torc also accepts `.json`, `.json5` and `.kdl` workflow specifications. See
 > [Workflow Specification Formats](./reference/workflow-formats.md) for details.
 
 ## Run the Workflow
