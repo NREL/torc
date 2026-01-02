@@ -7,7 +7,7 @@ name = "torc-client"
 # Note: Do not update manually. Use bump-my-version, such as
 # $ bump-my-version bump minor
 # After running the command, rebuild the OpenAPI packages from /db_service.
-version = "0.7.0"
+version = "0.8.0"
 description = "Workflow management system"
 requires-python = ">=3.11,<3.14"
 license = "BSD-3-Clause"
@@ -36,10 +36,6 @@ dependencies = [
     "urllib3 >= 2.1.0, < 3.0.0",
     "python-dateutil >= 2.8.2",
     "typing-extensions >= 4.7.1",
-    # Dash dependencies for web UI
-    "dash >= 2.14, < 3",
-    "dash-bootstrap-components >= 1.5, < 2",
-    "dash_cytoscape",
 ]
 
 [project.scripts]
