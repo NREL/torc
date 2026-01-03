@@ -532,6 +532,10 @@ pub fn generate_schedulers_for_workflow(
 
     use crate::client::scheduler_plan::{apply_plan_to_spec, generate_scheduler_plan};
 
+    // Save original jobs and files before expansion so we can restore them later
+    let original_jobs = spec.jobs.clone();
+    let original_files = spec.files.clone();
+
     // Expand parameters before building the graph to properly detect file-based dependencies
     spec.expand_parameters()
         .map_err(|e| format!("Failed to expand parameters: {}", e))?;
@@ -580,11 +584,31 @@ pub fn generate_schedulers_for_workflow(
     warnings.extend(plan.warnings.clone());
 
     if plan.schedulers.is_empty() {
-        return Err("No schedulers could be generated. Check resource requirements.".to_string());
+        let mut msg = String::from("No schedulers could be generated.\n");
+        if warnings.is_empty() {
+            msg.push_str("No jobs with resource_requirements found.");
+        } else {
+            msg.push_str("\nReasons:\n");
+            let max_warnings = 5;
+            for warning in warnings.iter().take(max_warnings) {
+                msg.push_str(&format!("  - {}\n", warning));
+            }
+            if warnings.len() > max_warnings {
+                msg.push_str(&format!(
+                    "  ... and {} more issues\n",
+                    warnings.len() - max_warnings
+                ));
+            }
+        }
+        return Err(msg);
     }
 
     // Apply the plan to the spec
     apply_plan_to_spec(&plan, spec);
+
+    // Restore original jobs and files to preserve parameterized format in output
+    spec.jobs = original_jobs;
+    spec.files = original_files;
 
     Ok(GenerateResult {
         scheduler_count: plan.schedulers.len(),
@@ -2543,7 +2567,7 @@ fn handle_generate(
         Some("json") => serde_json::to_string_pretty(&spec).unwrap(),
         Some("json5") => serde_json::to_string_pretty(&spec).unwrap(), // Output as JSON
         Some("kdl") => spec.to_kdl_str(),
-        Some("yaml") | Some("yml") => serde_yaml::to_string(&spec).unwrap(),
+        Some("yaml") | Some("yml") => pretty_print_yaml(&spec),
         _ => serde_json::to_string_pretty(&spec).unwrap(), // Default to JSON
     };
 
@@ -2602,6 +2626,30 @@ fn handle_generate(
             }
         }
     }
+}
+
+/// Pretty-print a WorkflowSpec as YAML with blank lines between top-level sections
+fn pretty_print_yaml(spec: &WorkflowSpec) -> String {
+    let yaml = serde_yaml::to_string(spec).unwrap();
+    let mut result = String::new();
+    let mut prev_was_section_start = false;
+
+    for line in yaml.lines() {
+        // Check if this is a top-level key (not indented, ends with colon or has value)
+        let is_top_level = !line.starts_with(' ') && !line.starts_with('-') && !line.is_empty();
+
+        // Add blank line before top-level sections (except the first one)
+        if is_top_level && !result.is_empty() && !prev_was_section_start {
+            result.push('\n');
+        }
+
+        result.push_str(line);
+        result.push('\n');
+
+        prev_was_section_start = is_top_level;
+    }
+
+    result
 }
 
 /// Result of regenerating schedulers for an existing workflow

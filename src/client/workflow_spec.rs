@@ -135,10 +135,13 @@ impl FileSpec {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UserDataSpec {
     /// Whether the user data is ephemeral
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub is_ephemeral: Option<bool>,
     /// Name of the user data
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// The data content as JSON value
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
 }
 
@@ -213,28 +216,36 @@ impl ResourceRequirementsSpec {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SlurmSchedulerSpec {
     /// Name of the scheduler
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// Slurm account
     pub account: String,
     /// Generic resources (GRES)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gres: Option<String>,
     /// Memory specification
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mem: Option<String>,
     /// Number of nodes (defaults to 1)
     #[serde(default = "SlurmSchedulerSpec::default_nodes")]
     pub nodes: i64,
     /// Number of tasks per node
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ntasks_per_node: Option<i64>,
     /// Partition name
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub partition: Option<String>,
     /// Quality of service
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub qos: Option<String>,
     /// Temporary storage
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tmp: Option<String>,
     /// Wall time limit (defaults to 1 hour)
     #[serde(default = "SlurmSchedulerSpec::default_walltime")]
     pub walltime: String,
     /// Extra parameters
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra: Option<String>,
 }
 
@@ -256,39 +267,49 @@ pub struct JobSpec {
     /// Command to execute for this job
     pub command: String,
     /// Optional script for job invocation
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub invocation_script: Option<String>,
     /// Whether to cancel this job if a blocking job fails
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cancel_on_blocking_job_failure: Option<bool>,
     /// Whether this job supports termination
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub supports_termination: Option<bool>,
     /// Name of the resource requirements configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_requirements: Option<String>,
     /// Names of jobs that must complete before this job can run (exact matches)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub depends_on: Option<Vec<String>>,
     /// Regex patterns for jobs that must complete before this job can run
     #[serde(skip_serializing_if = "Option::is_none")]
     pub depends_on_regexes: Option<Vec<String>>,
     /// Names of input files required by this job (exact matches)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub input_files: Option<Vec<String>>,
     /// Regex patterns for input files required by this job
     #[serde(skip_serializing_if = "Option::is_none")]
     pub input_file_regexes: Option<Vec<String>>,
     /// Names of output files produced by this job (exact matches)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub output_files: Option<Vec<String>>,
     /// Regex patterns for output files produced by this job
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_file_regexes: Option<Vec<String>>,
     /// Names of input user data required by this job (exact matches)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub input_user_data: Option<Vec<String>>,
     /// Regex patterns for input user data required by this job
     #[serde(skip_serializing_if = "Option::is_none")]
     pub input_user_data_regexes: Option<Vec<String>>,
     /// Names of output data produced by this job (exact matches)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub output_user_data: Option<Vec<String>>,
     /// Regex patterns for output data produced by this job
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_user_data_regexes: Option<Vec<String>>,
     /// Name of the scheduler to use for this job
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scheduler: Option<String>,
     /// Optional parameters for generating multiple jobs
     /// Supports range notation (e.g., "1:100" or "1:100:5") and lists (e.g., "[1,5,10]")
@@ -510,14 +531,19 @@ pub struct WorkflowSpec {
     /// Jobs that make up this workflow
     pub jobs: Vec<JobSpec>,
     /// Files associated with this workflow
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub files: Option<Vec<FileSpec>>,
     /// User data associated with this workflow
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub user_data: Option<Vec<UserDataSpec>>,
     /// Resource requirements available for this workflow
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_requirements: Option<Vec<ResourceRequirementsSpec>>,
     /// Slurm schedulers available for this workflow
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub slurm_schedulers: Option<Vec<SlurmSchedulerSpec>>,
     /// Resource monitoring configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_monitor: Option<crate::client::resource_monitor::ResourceMonitorConfig>,
     /// Actions to execute based on workflow/job state transitions
     #[serde(skip_serializing_if = "Option::is_none")]
