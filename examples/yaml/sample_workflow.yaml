@@ -68,23 +68,18 @@ jobs:
 files:
   - name: raw_data
     path: /data/input/raw_data.csv
-    st_mtime: null  # Will be set when file is created
 
   - name: validated_data
     path: /data/processed/validated_data.csv
-    st_mtime: null
 
   - name: analysis_results
     path: /data/output/results.json
-    st_mtime: null
 
   - name: validation_script
     path: /scripts/validate_data.py
-    st_mtime: 1640995200.0  # Pre-existing script file
 
   - name: analysis_script
     path: /scripts/analyze_data.py
-    st_mtime: 1640995200.0  # Pre-existing script file
 
 # User data - structured metadata passed between jobs
 user_data:

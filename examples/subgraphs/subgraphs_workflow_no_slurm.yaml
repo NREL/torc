@@ -8,11 +8,9 @@ files:
   # Stage 1 inputs
   - name: input_a
     path: input_a.txt
-    must_exist: true
 
   - name: input_b
     path: input_b.txt
-    must_exist: true
 
   # Stage 1 outputs
   - name: prep_a_out

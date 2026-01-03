@@ -50,21 +50,6 @@ resource_monitor:
     - cpu_percent
     - memory_bytes
 
-# Define scheduling rules for automated stage execution
-# via the compute node allocation API before starting the workflow
-scheduling_rules:
-  # Stage 1: Launch setup job when workflow starts
-  - trigger_type: "on_workflow_start"
-    start_one_worker_per_node: false
-
-  # Stage 2: Launch work jobs when setup completes (all jobs ready)
-  - trigger_type: "when_jobs_ready"
-    start_one_worker_per_node: true
-
-  # Stage 3: Launch postprocessing when all work jobs complete
-  - trigger_type: "when_jobs_complete"
-    start_one_worker_per_node: false
-
 # Define input files created by setup job
 files:
   - name: "input_001"

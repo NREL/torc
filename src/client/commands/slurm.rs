@@ -606,7 +606,26 @@ pub fn generate_schedulers_for_workflow(
     // Apply the plan to the spec
     apply_plan_to_spec(&plan, spec);
 
-    // Restore original jobs and files to preserve parameterized format in output
+    // Restore original jobs and files to preserve parameterized format in output,
+    // but keep scheduler assignments from the expanded jobs
+    let mut original_jobs = original_jobs;
+    for orig_job in &mut original_jobs {
+        // Try direct lookup first (for non-parameterized jobs)
+        if let Some(scheduler) = plan.job_assignments.get(&orig_job.name) {
+            orig_job.scheduler = Some(scheduler.clone());
+        } else if orig_job.use_parameters.is_some() || orig_job.parameters.is_some() {
+            // For parameterized jobs, find any expanded job that matches and use its scheduler
+            // All expansions of the same job will have the same resource_requirements,
+            // so they'll all get the same scheduler
+            let pattern_prefix = orig_job.name.split('{').next().unwrap_or(&orig_job.name);
+            for (expanded_name, scheduler) in &plan.job_assignments {
+                if expanded_name.starts_with(pattern_prefix) {
+                    orig_job.scheduler = Some(scheduler.clone());
+                    break;
+                }
+            }
+        }
+    }
     spec.jobs = original_jobs;
     spec.files = original_files;
 
@@ -2635,8 +2654,23 @@ fn pretty_print_yaml(spec: &WorkflowSpec) -> String {
     let mut prev_was_section_start = false;
 
     for line in yaml.lines() {
-        // Check if this is a top-level key (not indented, ends with colon or has value)
-        let is_top_level = !line.starts_with(' ') && !line.starts_with('-') && !line.is_empty();
+        // Check if this is a top-level key (must contain colon and not be indented/list/marker/comment)
+        let trimmed = line.trim_start();
+        let is_top_level = if trimmed.is_empty() {
+            false
+        } else if line.starts_with(' ') || line.starts_with('-') {
+            // Indented content or list items are not top-level keys
+            false
+        } else if trimmed.starts_with("---")
+            || trimmed.starts_with("...")
+            || trimmed.starts_with('#')
+        {
+            // YAML document markers and comments are not top-level sections
+            false
+        } else {
+            // A top-level key must contain a colon (either "key:" or "key: value")
+            trimmed.contains(':')
+        };
 
         // Add blank line before top-level sections (except the first one)
         if is_top_level && !result.is_empty() && !prev_was_section_start {

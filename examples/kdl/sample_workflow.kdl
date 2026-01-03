@@ -9,8 +9,8 @@ description "A sample workflow that demonstrates data processing with multiple j
 file "raw_data" path="/data/input/raw_data.csv"
 file "validated_data" path="/data/processed/validated_data.csv"
 file "analysis_results" path="/data/output/results.json"
-file "validation_script" path="/scripts/validate_data.py" st_mtime=1640995200.0
-file "analysis_script" path="/scripts/analyze_data.py" st_mtime=1640995200.0
+file "validation_script" path="/scripts/validate_data.py"
+file "analysis_script" path="/scripts/analyze_data.py"
 
 // User data - structured metadata passed between jobs
 user_data "download_metadata" {
