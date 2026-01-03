@@ -59,6 +59,7 @@ use kdl::{KdlDocument, KdlNode};
 
 /// File specification for JSON serialization (without workflow_id, id, and st_mtime)
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FileSpec {
     /// Name of the file
     pub name: String,
@@ -133,6 +134,7 @@ impl FileSpec {
 
 /// User data specification for JSON serialization (without workflow_id and id)
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct UserDataSpec {
     /// Whether the user data is ephemeral
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -184,6 +186,7 @@ pub struct WorkflowActionSpec {
 
 /// Resource requirements specification for JSON serialization (without workflow_id and id)
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ResourceRequirementsSpec {
     /// Name of the resource requirements configuration
     pub name: String,
@@ -214,6 +217,7 @@ impl ResourceRequirementsSpec {
 
 /// Slurm scheduler specification for JSON serialization (without workflow_id and id)
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SlurmSchedulerSpec {
     /// Name of the scheduler
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -261,6 +265,7 @@ impl SlurmSchedulerSpec {
 
 /// Specification for a job within a workflow
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct JobSpec {
     /// Name of the job
     pub name: String,
@@ -500,6 +505,7 @@ impl JobSpec {
 
 /// Specification for a complete workflow
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WorkflowSpec {
     /// Name of the workflow
     pub name: String,
