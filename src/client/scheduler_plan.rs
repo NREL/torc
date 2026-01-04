@@ -7,9 +7,20 @@
 //!
 //! The plan can then be applied to either a WorkflowSpec or to the database via API.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+
+/// Threshold for auto-merging deferred and non-deferred scheduler groups.
+///
+/// When using `--group-by partition`, if a partition has both deferred (jobs with dependencies)
+/// and non-deferred (jobs without dependencies) groups, and their combined allocation count
+/// is at or below this threshold, they are merged into a single scheduler with an
+/// `on_workflow_start` trigger. This reduces the number of Slurm job submissions.
+///
+/// When both groups exist, each needs at least 1 allocation, so the minimum total is 2.
+/// A threshold of 2 means we merge when exactly 2 allocations are needed (the minimum case).
+pub const MERGE_THRESHOLD: i64 = 2;
 
 use crate::client::hpc::HpcProfile;
 use crate::client::workflow_graph::{SchedulerGroup, WorkflowGraph};
@@ -496,7 +507,6 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
 
     // Merge pass: combine deferred and non-deferred groups for the same partition
     // when their total allocations are small (reduces Slurm submissions)
-    const MERGE_THRESHOLD: i64 = 2;
 
     // Group partition groups by partition name to find merge candidates
     let mut by_partition: HashMap<String, Vec<(String, bool)>> = HashMap::new();
@@ -573,7 +583,13 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
             non_deferred
                 .job_name_patterns
                 .extend(deferred.job_name_patterns);
-            non_deferred.rr_names.extend(deferred.rr_names);
+            // Deduplicate rr_names to avoid redundant entries when same RR appears in both groups
+            let existing: HashSet<_> = non_deferred.rr_names.iter().cloned().collect();
+            for name in deferred.rr_names {
+                if !existing.contains(&name) {
+                    non_deferred.rr_names.push(name);
+                }
+            }
             non_deferred.max_memory_mb = non_deferred.max_memory_mb.max(deferred.max_memory_mb);
             non_deferred.max_runtime_secs =
                 non_deferred.max_runtime_secs.max(deferred.max_runtime_secs);

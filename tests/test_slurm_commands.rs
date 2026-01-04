@@ -1938,17 +1938,18 @@ fn test_slurm_generate_auto_merge_small_allocations() {
   ]
 }"#;
 
-    // Write to a temp file
-    let temp_dir = env::temp_dir();
-    let workflow_file = temp_dir.join("test_auto_merge_workflow.json");
-    fs::write(&workflow_file, workflow_json).expect("Failed to write temp workflow file");
+    // Write to a unique temp file using tempfile crate
+    let mut workflow_file =
+        tempfile::NamedTempFile::new().expect("Failed to create temp workflow file");
+    std::io::Write::write_all(&mut workflow_file, workflow_json.as_bytes())
+        .expect("Failed to write temp workflow file");
 
     // Run slurm generate with --group-by partition
     let output = Command::new(common::get_exe_path("./target/debug/torc"))
         .args([
             "slurm",
             "generate",
-            workflow_file.to_str().unwrap(),
+            workflow_file.path().to_str().unwrap(),
             "--account",
             "test_account",
             "--group-by",
@@ -2013,28 +2014,50 @@ fn test_slurm_generate_auto_merge_small_allocations() {
     );
 
     // Verify all jobs are assigned to the same scheduler
+    // Note: slurm generate returns the spec before parameter expansion,
+    // so we have 3 job specs (build, job_{i}, join), not 12 expanded jobs
     let jobs = generated
         .get("jobs")
         .and_then(|j| j.as_array())
         .expect("Expected jobs array");
+
+    assert_eq!(
+        jobs.len(),
+        3,
+        "Expected 3 job specs before parameter expansion"
+    );
 
     let scheduler_name = schedulers[0]
         .get("name")
         .and_then(|n| n.as_str())
         .expect("Expected scheduler name");
 
+    // Verify ALL jobs have scheduler assignments (not just some)
+    let mut jobs_with_scheduler = 0;
     for job in jobs {
-        let job_scheduler = job.get("scheduler").and_then(|s| s.as_str());
-        if let Some(s) = job_scheduler {
-            assert_eq!(
-                s, scheduler_name,
-                "All jobs should be assigned to the merged scheduler"
-            );
-        }
+        let job_name = job
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown");
+        let job_scheduler = job
+            .get("scheduler")
+            .and_then(|s| s.as_str())
+            .unwrap_or_else(|| panic!("Job '{}' should have a scheduler assignment", job_name));
+        assert_eq!(
+            job_scheduler, scheduler_name,
+            "Job '{}' should be assigned to the merged scheduler",
+            job_name
+        );
+        jobs_with_scheduler += 1;
     }
 
-    // Clean up
-    let _ = fs::remove_file(&workflow_file);
+    assert_eq!(
+        jobs_with_scheduler,
+        jobs.len(),
+        "All jobs should have scheduler assignments"
+    );
+
+    // Temp file is automatically cleaned up when workflow_file goes out of scope
 }
 
 /// Test that auto-merge does NOT combine groups when total allocations exceed the threshold.
@@ -2074,17 +2097,18 @@ fn test_slurm_generate_no_merge_large_allocations() {
   ]
 }"#;
 
-    // Write to a temp file
-    let temp_dir = env::temp_dir();
-    let workflow_file = temp_dir.join("test_no_merge_workflow.json");
-    fs::write(&workflow_file, workflow_json).expect("Failed to write temp workflow file");
+    // Write to a unique temp file using tempfile crate
+    let mut workflow_file =
+        tempfile::NamedTempFile::new().expect("Failed to create temp workflow file");
+    std::io::Write::write_all(&mut workflow_file, workflow_json.as_bytes())
+        .expect("Failed to write temp workflow file");
 
     // Run slurm generate with --group-by partition
     let output = Command::new(common::get_exe_path("./target/debug/torc"))
         .args([
             "slurm",
             "generate",
-            workflow_file.to_str().unwrap(),
+            workflow_file.path().to_str().unwrap(),
             "--account",
             "test_account",
             "--group-by",
@@ -2151,6 +2175,5 @@ fn test_slurm_generate_no_merge_large_allocations() {
         "Should have on_jobs_ready action for deferred jobs"
     );
 
-    // Clean up
-    let _ = fs::remove_file(&workflow_file);
+    // Temp file is automatically cleaned up when workflow_file goes out of scope
 }
