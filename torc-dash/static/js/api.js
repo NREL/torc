@@ -270,6 +270,25 @@ class TorcAPI {
     }
 
     /**
+     * Create a workflow with auto-generated Slurm schedulers
+     * @param {string} spec - File path or inline JSON/YAML content
+     * @param {boolean} isFile - True if spec is a file path
+     * @param {string} [fileExtension] - Original file extension (e.g., '.yaml', '.kdl')
+     * @param {string} account - Slurm account name (required)
+     * @param {string} [profile] - HPC profile name (optional, auto-detected if not provided)
+     */
+    async cliCreateSlurmWorkflow(spec, isFile, fileExtension, account, profile = null) {
+        const body = { spec, is_file: isFile, account };
+        if (fileExtension) {
+            body.file_extension = fileExtension;
+        }
+        if (profile) {
+            body.profile = profile;
+        }
+        return this.cliRequest('/api/cli/create-slurm', body);
+    }
+
+    /**
      * Run a workflow locally using the CLI
      * @param {string} workflowId - Workflow ID
      */
@@ -406,21 +425,6 @@ class TorcAPI {
             console.error('HPC profiles error:', error);
             return { success: false, profiles: [], error: error.message };
         }
-    }
-
-    /**
-     * Generate Slurm schedulers from a workflow specification
-     * @param {object} spec - Workflow specification object
-     * @param {string} account - Slurm account name
-     * @param {string} [profile] - HPC profile name (auto-detected if not provided)
-     * @returns {object} Response with schedulers and actions arrays
-     */
-    async generateSlurmSchedulers(spec, account, profile = null) {
-        const body = { spec, account };
-        if (profile) {
-            body.profile = profile;
-        }
-        return this.cliRequest('/api/cli/slurm-generate', body);
     }
 
     // ==================== Server Management ====================

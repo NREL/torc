@@ -22,12 +22,6 @@ Object.assign(TorcDashboard.prototype, {
         };
         this.wizardParallelizationStrategy = 'resource_aware';
 
-        // HPC profile state for auto-generation
-        this.wizardHpcProfiles = [];
-        this.wizardDetectedProfile = null;
-        this.wizardSelectedProfile = null;
-        this.wizardSlurmAccount = '';
-
         this.resourcePresets = {
             'small': { name: 'Small', num_cpus: 1, memory: '1g', num_gpus: 0 },
             'medium': { name: 'Medium', num_cpus: 4, memory: '10g', num_gpus: 0 },
@@ -77,10 +71,6 @@ Object.assign(TorcDashboard.prototype, {
         this.wizardResourceMonitor = { enabled: true, granularity: 'summary', sample_interval_seconds: 5 };
         this.wizardParallelizationStrategy = 'resource_aware';
 
-        // Reset HPC profile state but keep the profiles list and detected profile
-        this.wizardSelectedProfile = this.wizardDetectedProfile;
-        this.wizardSlurmAccount = '';
-
         const nameInput = document.getElementById('wizard-name');
         const descInput = document.getElementById('wizard-description');
         if (nameInput) nameInput.value = '';
@@ -125,13 +115,7 @@ Object.assign(TorcDashboard.prototype, {
         });
 
         if (step === 2) this.wizardRenderJobs();
-        else if (step === 3) {
-            // Load HPC profiles if not already loaded
-            if (this.wizardHpcProfiles.length === 0) {
-                this.wizardLoadHpcProfiles();
-            }
-            this.wizardRenderSchedulers();
-        }
+        else if (step === 3) this.wizardRenderSchedulers();
         else if (step === 4) this.wizardRenderActions();
 
         document.getElementById('wizard-prev').disabled = step === 1;
@@ -154,14 +138,28 @@ Object.assign(TorcDashboard.prototype, {
             if (!name) { this.showToast('Please enter a workflow name', 'warning'); return; }
         } else if (this.wizardStep === 2) {
             if (this.wizardJobs.length === 0) { this.showToast('Please add at least one job', 'warning'); return; }
+            const jobNames = new Set();
             for (const job of this.wizardJobs) {
                 if (!job.name?.trim()) { this.showToast('All jobs must have a name', 'warning'); return; }
                 if (!job.command?.trim()) { this.showToast('All jobs must have a command', 'warning'); return; }
+                const normalizedName = job.name.trim().toLowerCase();
+                if (jobNames.has(normalizedName)) {
+                    this.showToast(`Duplicate job name: "${job.name.trim()}"`, 'warning');
+                    return;
+                }
+                jobNames.add(normalizedName);
             }
         } else if (this.wizardStep === 3) {
+            const schedulerNames = new Set();
             for (const scheduler of this.wizardSchedulers) {
                 if (!scheduler.name?.trim()) { this.showToast('All schedulers must have a name', 'warning'); return; }
                 if (!scheduler.account?.trim()) { this.showToast('All schedulers must have an account', 'warning'); return; }
+                const normalizedName = scheduler.name.trim().toLowerCase();
+                if (schedulerNames.has(normalizedName)) {
+                    this.showToast(`Duplicate scheduler name: "${scheduler.name.trim()}"`, 'warning');
+                    return;
+                }
+                schedulerNames.add(normalizedName);
             }
         } else if (this.wizardStep === 4) {
             for (const action of this.wizardActions) {
@@ -436,12 +434,6 @@ Object.assign(TorcDashboard.prototype, {
         const container = document.getElementById('wizard-schedulers-list');
         if (!container) return;
 
-        // Render the auto-generate section at the top
-        const autoGenContainer = document.getElementById('wizard-auto-generate-container');
-        if (autoGenContainer) {
-            autoGenContainer.innerHTML = this.wizardRenderAutoGenerateUI();
-        }
-
         const expandedSchedulerIds = [];
         container.querySelectorAll('.wizard-scheduler-card.expanded').forEach(card => {
             const schedulerId = parseInt(card.dataset.schedulerId);
@@ -449,7 +441,15 @@ Object.assign(TorcDashboard.prototype, {
         });
 
         if (this.wizardSchedulers.length === 0) {
-            container.innerHTML = `<div class="wizard-empty-state"><p>No schedulers defined yet</p><p>Use "Auto-Generate Schedulers" above or click "+ Add Scheduler" below.</p></div>`;
+            // Check if Slurm auto-generation is enabled
+            const slurmCheckbox = document.getElementById('create-option-slurm');
+            const slurmEnabled = slurmCheckbox && !slurmCheckbox.disabled && slurmCheckbox.checked;
+
+            if (slurmEnabled) {
+                container.innerHTML = `<div class="wizard-empty-state"><p>Schedulers will be auto-generated</p><p>The "Generate Slurm schedulers" option is enabled. Schedulers will be created automatically based on your job resource requirements.</p></div>`;
+            } else {
+                container.innerHTML = `<div class="wizard-empty-state"><p>No schedulers defined</p><p>Click "+ Add Scheduler" to manually configure Slurm schedulers, or enable "Generate Slurm schedulers" in the Options section.</p></div>`;
+            }
             return;
         }
 
@@ -548,12 +548,28 @@ Object.assign(TorcDashboard.prototype, {
         const jobNames = this.wizardGetJobNames();
 
         if (this.wizardActions.length === 0) {
-            container.innerHTML = `<div class="wizard-empty-state"><p>No actions defined</p><p>Click "+ Add Action" to automatically schedule nodes.</p><p class="wizard-help-text">Actions are optional.</p></div>`;
+            // Check if Slurm auto-generation is enabled
+            const slurmCheckbox = document.getElementById('create-option-slurm');
+            const slurmEnabled = slurmCheckbox && !slurmCheckbox.disabled && slurmCheckbox.checked;
+
+            if (slurmEnabled) {
+                container.innerHTML = `<div class="wizard-empty-state"><p>Actions will be auto-generated</p><p>The "Generate Slurm schedulers" option is enabled. Actions will be created automatically to schedule nodes when jobs are ready.</p></div>`;
+            } else {
+                container.innerHTML = `<div class="wizard-empty-state"><p>No actions defined</p><p>Click "+ Add Action" to configure automatic node scheduling, or enable "Generate Slurm schedulers" in the Options section.</p><p class="wizard-help-text">Actions are optional for local execution.</p></div>`;
+            }
             return;
         }
 
         if (schedulerNames.length === 0) {
-            container.innerHTML = `<div class="wizard-empty-state"><p>No schedulers available</p><p>Define at least one scheduler in step 3.</p></div>`;
+            // Check if Slurm auto-generation is enabled
+            const slurmCheckbox = document.getElementById('create-option-slurm');
+            const slurmEnabled = slurmCheckbox && !slurmCheckbox.disabled && slurmCheckbox.checked;
+
+            if (slurmEnabled) {
+                container.innerHTML = `<div class="wizard-empty-state"><p>Actions will be auto-generated</p><p>The "Generate Slurm schedulers" option is enabled. Schedulers and actions will be created automatically.</p></div>`;
+            } else {
+                container.innerHTML = `<div class="wizard-empty-state"><p>No schedulers available</p><p>Define at least one scheduler in step 3, or enable "Generate Slurm schedulers" in the Options section.</p></div>`;
+            }
             return;
         }
 
@@ -754,14 +770,56 @@ Object.assign(TorcDashboard.prototype, {
         const spec = this.wizardGenerateSpec();
         const preview = document.getElementById('wizard-preview');
         if (preview) preview.textContent = JSON.stringify(spec, null, 2);
+
+        // Show/hide Slurm note based on checkbox state
+        const slurmCheckbox = document.getElementById('create-option-slurm');
+        const slurmEnabled = slurmCheckbox && !slurmCheckbox.disabled && slurmCheckbox.checked;
+        const slurmNote = document.getElementById('wizard-preview-slurm-note');
+
+        if (slurmNote) {
+            if (slurmEnabled) {
+                const account = document.getElementById('create-slurm-account')?.value?.trim() || '(account)';
+                const profile = this.detectedHpcProfile || 'auto-detected';
+                slurmNote.innerHTML = `<strong>Note:</strong> Slurm schedulers and actions will be automatically generated when the workflow is created, based on job resource requirements (account: <code>${this.escapeHtml(account)}</code>, profile: <code>${this.escapeHtml(profile)}</code>).`;
+                slurmNote.style.display = 'block';
+            } else {
+                slurmNote.style.display = 'none';
+            }
+        }
     },
 
     async wizardCreateWorkflow() {
         const spec = this.wizardGenerateSpec();
         const specJson = JSON.stringify(spec, null, 2);
 
+        // Check if Slurm option is selected
+        const useSlurmCheckbox = document.getElementById('create-option-slurm');
+        const useSlurm = useSlurmCheckbox && !useSlurmCheckbox.disabled && useSlurmCheckbox.checked;
+
+        if (useSlurm) {
+            // Validate Slurm account
+            const accountInput = document.getElementById('create-slurm-account')?.value?.trim();
+            if (!accountInput) {
+                this.showToast('Please enter a Slurm account name', 'warning');
+                return;
+            }
+        }
+
         try {
-            const result = await api.cliCreateWorkflow(specJson, false, '.json');
+            let result;
+            if (useSlurm) {
+                const accountInput = document.getElementById('create-slurm-account').value.trim();
+                result = await api.cliCreateSlurmWorkflow(
+                    specJson,
+                    false,
+                    '.json',
+                    accountInput,
+                    this.detectedHpcProfile
+                );
+            } else {
+                result = await api.cliCreateWorkflow(specJson, false, '.json');
+            }
+
             if (result.success) {
                 this.showToast('Workflow created successfully', 'success');
                 this.hideModal('create-workflow-modal');
@@ -782,191 +840,5 @@ Object.assign(TorcDashboard.prototype, {
         } catch (error) {
             this.showToast('Error creating workflow: ' + error.message, 'error');
         }
-    },
-
-    // ==================== HPC Profile & Auto-Generation ====================
-
-    /**
-     * Load available HPC profiles from the server
-     */
-    async wizardLoadHpcProfiles() {
-        try {
-            const result = await api.getHpcProfiles();
-            if (result.success) {
-                this.wizardHpcProfiles = result.profiles || [];
-                this.wizardDetectedProfile = result.detected_profile;
-                // Auto-select detected profile
-                if (this.wizardDetectedProfile && !this.wizardSelectedProfile) {
-                    this.wizardSelectedProfile = this.wizardDetectedProfile;
-                }
-                // Update UI if we're on the schedulers step
-                if (this.wizardStep === 3) {
-                    this.wizardRenderSchedulers();
-                }
-            } else {
-                console.warn('Failed to load HPC profiles:', result.error);
-            }
-        } catch (error) {
-            console.error('Error loading HPC profiles:', error);
-        }
-    },
-
-    /**
-     * Handle HPC profile selection change
-     */
-    wizardSelectHpcProfile(profileName) {
-        this.wizardSelectedProfile = profileName || null;
-    },
-
-    /**
-     * Handle Slurm account input change
-     */
-    wizardSetSlurmAccount(account) {
-        this.wizardSlurmAccount = account;
-    },
-
-    /**
-     * Auto-generate Slurm schedulers based on job resource requirements
-     */
-    async wizardAutoGenerateSchedulers() {
-        const account = this.wizardSlurmAccount?.trim();
-        if (!account) {
-            this.showToast('Please enter a Slurm account name', 'warning');
-            return;
-        }
-
-        if (!this.wizardSelectedProfile) {
-            this.showToast('Please select an HPC profile', 'warning');
-            return;
-        }
-
-        if (this.wizardJobs.length === 0) {
-            this.showToast('No jobs defined. Add jobs in step 2 first.', 'warning');
-            return;
-        }
-
-        // Build a partial spec with just jobs and resource_requirements
-        const spec = this.wizardGenerateSpec();
-
-        // Show loading state
-        const generateBtn = document.getElementById('wizard-auto-generate-btn');
-        if (generateBtn) {
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Generating...';
-        }
-
-        try {
-            const result = await api.generateSlurmSchedulers(spec, account, this.wizardSelectedProfile);
-
-            if (result.success && result.schedulers) {
-                // Apply the generated schedulers
-                this.wizardApplyGeneratedSchedulers(result.schedulers, result.actions);
-                this.showToast(`Generated ${result.schedulers.length} scheduler(s) and ${result.actions?.length || 0} action(s)`, 'success');
-            } else {
-                this.showToast('Error: ' + (result.error || 'Failed to generate schedulers'), 'error');
-            }
-        } catch (error) {
-            this.showToast('Error generating schedulers: ' + error.message, 'error');
-        } finally {
-            if (generateBtn) {
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'Auto-Generate Schedulers';
-            }
-        }
-    },
-
-    /**
-     * Apply generated schedulers and actions to the wizard state
-     */
-    wizardApplyGeneratedSchedulers(schedulers, actions) {
-        // Clear existing schedulers and actions
-        this.wizardSchedulers = [];
-        this.wizardActions = [];
-        this.wizardSchedulerIdCounter = 0;
-        this.wizardActionIdCounter = 0;
-
-        // Add generated schedulers
-        for (const s of schedulers) {
-            const schedulerId = ++this.wizardSchedulerIdCounter;
-            this.wizardSchedulers.push({
-                id: schedulerId,
-                name: s.name || '',
-                account: s.account || this.wizardSlurmAccount,
-                nodes: s.nodes || 1,
-                walltime: s.walltime || '01:00:00',
-                partition: s.partition || '',
-                qos: s.qos || '',
-                gres: s.gres || '',
-                mem: s.mem || '',
-                tmp: s.tmp || '',
-                extra: s.extra || ''
-            });
-        }
-
-        // Add generated actions
-        if (actions) {
-            for (const a of actions) {
-                const actionId = ++this.wizardActionIdCounter;
-                this.wizardActions.push({
-                    id: actionId,
-                    trigger_type: a.trigger_type || 'on_workflow_start',
-                    scheduler: a.scheduler || '',
-                    jobs: a.jobs || [],
-                    num_allocations: a.num_allocations || 1,
-                    max_parallel_jobs: a.max_parallel_jobs || 10,
-                    start_one_worker_per_node: a.start_one_worker_per_node || false
-                });
-            }
-        }
-
-        // Re-render the schedulers view
-        this.wizardRenderSchedulers();
-    },
-
-    /**
-     * Render the auto-generate UI for step 3
-     */
-    wizardRenderAutoGenerateUI() {
-        const hasProfiles = this.wizardHpcProfiles.length > 0;
-        const profileOptions = this.wizardHpcProfiles.map(p => {
-            const isDetected = p.is_detected ? ' (detected)' : '';
-            const isSelected = p.name === this.wizardSelectedProfile;
-            return `<option value="${this.escapeHtml(p.name)}" ${isSelected ? 'selected' : ''}>${this.escapeHtml(p.display_name)}${isDetected}</option>`;
-        }).join('');
-
-        return `
-            <div class="wizard-auto-generate-section">
-                <h5>Auto-Generate from HPC Profile</h5>
-                <p class="wizard-help-text">Automatically generate Slurm schedulers based on job resource requirements.</p>
-                <div class="wizard-auto-generate-form">
-                    <div class="form-group">
-                        <label>HPC Profile *</label>
-                        <select class="select-input" id="wizard-hpc-profile" onchange="app.wizardSelectHpcProfile(this.value)" ${!hasProfiles ? 'disabled' : ''}>
-                            ${hasProfiles ? profileOptions : '<option value="">No profiles available</option>'}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Slurm Account *</label>
-                        <input type="text" class="text-input" id="wizard-slurm-account"
-                            value="${this.escapeHtml(this.wizardSlurmAccount)}"
-                            placeholder="e.g., myproject"
-                            onchange="app.wizardSetSlurmAccount(this.value)">
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-primary" id="wizard-auto-generate-btn"
-                            onclick="app.wizardAutoGenerateSchedulers()"
-                            ${!hasProfiles ? 'disabled' : ''}>
-                            Auto-Generate Schedulers
-                        </button>
-                    </div>
-                </div>
-                ${!hasProfiles ? '<p class="wizard-warning">No HPC profiles available. You can still add schedulers manually below.</p>' : ''}
-            </div>
-            <hr class="wizard-section-divider">
-            <div class="wizard-manual-schedulers-header">
-                <h5>Schedulers</h5>
-                <p class="wizard-help-text">Or manually configure Slurm schedulers below.</p>
-            </div>
-        `;
     },
 });

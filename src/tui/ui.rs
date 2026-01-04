@@ -941,7 +941,7 @@ fn draw_workflow_path_input(f: &mut Frame, area: Rect, app: &App) {
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .title("Create Workflow from Spec File")
+        .title("Create Workflow")
         .border_style(Style::default().fg(Color::Green));
 
     let paragraph = ratatui::widgets::Paragraph::new(text)

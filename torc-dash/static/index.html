@@ -471,7 +471,7 @@
     <div class="modal" id="create-workflow-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Create Workflow from Spec</h3>
+                <h3>Create Workflow</h3>
                 <button class="modal-close" id="modal-close">&times;</button>
             </div>
             <div class="modal-body">
@@ -590,13 +590,11 @@
 
                     <!-- Step 3: Schedulers -->
                     <div class="wizard-content" id="wizard-step-3">
-                        <!-- Auto-generate section (populated by JS) -->
-                        <div id="wizard-auto-generate-container"></div>
-
                         <div class="wizard-schedulers-header">
-                            <h4>Manual Schedulers</h4>
+                            <h4>Slurm Schedulers</h4>
                             <button type="button" class="btn btn-sm btn-success" id="wizard-add-scheduler">+ Add Scheduler</button>
                         </div>
+                        <p class="wizard-help-text">Configure Slurm schedulers to allocate compute nodes for your workflow jobs.</p>
                         <div id="wizard-schedulers-list" class="wizard-schedulers-list">
                             <!-- Scheduler cards will be added here -->
                         </div>
@@ -653,6 +651,7 @@
                         <div class="form-group">
                             <label>Generated Workflow Spec</label>
                             <pre id="wizard-preview" class="wizard-preview"></pre>
+                            <div id="wizard-preview-slurm-note" class="wizard-slurm-note" style="display: none;"></div>
                         </div>
                     </div>
 
@@ -674,6 +673,25 @@
                         <input type="checkbox" id="create-option-run">
                         Run workflow immediately
                     </label>
+                </div>
+
+                <!-- Slurm Options -->
+                <div class="form-group" id="slurm-options-group" style="margin-top: 16px; display: none;">
+                    <label>Slurm Options</label>
+                    <label class="toggle-label" id="slurm-checkbox-label">
+                        <input type="checkbox" id="create-option-slurm" disabled>
+                        Generate Slurm schedulers
+                        <span id="slurm-profile-badge" class="badge badge-info" style="margin-left: 8px; display: none;"></span>
+                    </label>
+                    <small id="slurm-disabled-hint" style="color: var(--text-secondary); display: block; margin-top: 4px;">
+                        No HPC profile detected. Slurm scheduler generation is not available.
+                    </small>
+                    <div id="slurm-account-section" style="margin-top: 12px; display: none;">
+                        <label for="create-slurm-account">Slurm Account *</label>
+                        <input type="text" id="create-slurm-account" class="text-input"
+                               placeholder="e.g., myproject" style="max-width: 300px;">
+                        <small>The Slurm account to use for job submissions</small>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
