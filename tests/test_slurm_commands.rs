@@ -1881,3 +1881,276 @@ fn test_slurm_generate_group_by_strategy() {
         scheduler_count_default, stdout_default
     );
 }
+
+/// Test that auto-merge combines deferred and non-deferred groups when total allocations are small.
+///
+/// When using `--group-by partition`, if a partition has both:
+/// - Non-deferred jobs (no dependencies, can start at workflow start)
+/// - Deferred jobs (have dependencies, need on_jobs_ready trigger)
+///
+/// And the total number of allocations is ≤2, they should be merged into a single scheduler
+/// with a single `on_workflow_start` action. This reduces Slurm submissions.
+#[rstest]
+fn test_slurm_generate_auto_merge_small_allocations() {
+    // Create a temporary workflow file similar to workflow.json
+    // - 1 job without dependencies (build)
+    // - Multiple jobs with dependencies (job_1..job_10)
+    // - 1 job depending on all job_* (join)
+    // All should fit in ≤2 allocations on Kestrel's short partition
+    let workflow_json = r#"{
+  "name": "test_auto_merge",
+  "resource_requirements": [
+    {
+      "name": "small",
+      "runtime": "PT10M",
+      "memory": "2g",
+      "num_cpus": 1
+    },
+    {
+      "name": "medium",
+      "runtime": "PT10M",
+      "memory": "1g",
+      "num_cpus": 1
+    }
+  ],
+  "parameters": {
+    "i": "1:10"
+  },
+  "jobs": [
+    {
+      "name": "build",
+      "resource_requirements": "small",
+      "command": "echo build"
+    },
+    {
+      "name": "job_{i}",
+      "resource_requirements": "medium",
+      "depends_on": ["build"],
+      "command": "echo job {i}",
+      "use_parameters": ["i"]
+    },
+    {
+      "name": "join",
+      "resource_requirements": "small",
+      "depends_on_regexes": ["job_\\d+"],
+      "command": "echo join"
+    }
+  ]
+}"#;
+
+    // Write to a temp file
+    let temp_dir = env::temp_dir();
+    let workflow_file = temp_dir.join("test_auto_merge_workflow.json");
+    fs::write(&workflow_file, workflow_json).expect("Failed to write temp workflow file");
+
+    // Run slurm generate with --group-by partition
+    let output = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args([
+            "slurm",
+            "generate",
+            workflow_file.to_str().unwrap(),
+            "--account",
+            "test_account",
+            "--group-by",
+            "partition",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate");
+
+    assert!(
+        output.status.success(),
+        "slurm generate failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON output
+    let generated: serde_json::Value =
+        serde_json::from_str(&stdout).expect("Failed to parse JSON output");
+
+    // Verify only 1 scheduler was generated (auto-merge combined deferred + non-deferred)
+    let schedulers = generated
+        .get("slurm_schedulers")
+        .and_then(|s| s.as_array())
+        .expect("Expected slurm_schedulers array");
+
+    assert_eq!(
+        schedulers.len(),
+        1,
+        "Auto-merge should combine deferred and non-deferred groups into 1 scheduler when \
+         total allocations are small. Got {} schedulers:\n{}",
+        schedulers.len(),
+        serde_json::to_string_pretty(&schedulers).unwrap()
+    );
+
+    // Verify only 1 action was generated with on_workflow_start trigger
+    let actions = generated
+        .get("actions")
+        .and_then(|a| a.as_array())
+        .expect("Expected actions array");
+
+    assert_eq!(
+        actions.len(),
+        1,
+        "Auto-merge should result in 1 action. Got {} actions:\n{}",
+        actions.len(),
+        serde_json::to_string_pretty(&actions).unwrap()
+    );
+
+    // Verify the action uses on_workflow_start (not on_jobs_ready)
+    let action = &actions[0];
+    let trigger_type = action
+        .get("trigger_type")
+        .and_then(|t| t.as_str())
+        .expect("Expected trigger_type");
+
+    assert_eq!(
+        trigger_type, "on_workflow_start",
+        "Merged scheduler should use on_workflow_start trigger (not on_jobs_ready)"
+    );
+
+    // Verify all jobs are assigned to the same scheduler
+    let jobs = generated
+        .get("jobs")
+        .and_then(|j| j.as_array())
+        .expect("Expected jobs array");
+
+    let scheduler_name = schedulers[0]
+        .get("name")
+        .and_then(|n| n.as_str())
+        .expect("Expected scheduler name");
+
+    for job in jobs {
+        let job_scheduler = job.get("scheduler").and_then(|s| s.as_str());
+        if let Some(s) = job_scheduler {
+            assert_eq!(
+                s, scheduler_name,
+                "All jobs should be assigned to the merged scheduler"
+            );
+        }
+    }
+
+    // Clean up
+    let _ = fs::remove_file(&workflow_file);
+}
+
+/// Test that auto-merge does NOT combine groups when total allocations exceed the threshold.
+///
+/// When jobs require more than 2 allocations total, they should remain separate
+/// (deferred and non-deferred schedulers).
+#[rstest]
+fn test_slurm_generate_no_merge_large_allocations() {
+    // Create a workflow where jobs need many nodes (exceeding merge threshold)
+    // Each job needs 1 full node, so 100 jobs = 100 allocations
+    let workflow_json = r#"{
+  "name": "test_no_merge",
+  "resource_requirements": [
+    {
+      "name": "full_node",
+      "runtime": "PT10M",
+      "memory": "200g",
+      "num_cpus": 100
+    }
+  ],
+  "parameters": {
+    "i": "1:50"
+  },
+  "jobs": [
+    {
+      "name": "setup",
+      "resource_requirements": "full_node",
+      "command": "echo setup"
+    },
+    {
+      "name": "worker_{i}",
+      "resource_requirements": "full_node",
+      "depends_on": ["setup"],
+      "command": "echo worker {i}",
+      "use_parameters": ["i"]
+    }
+  ]
+}"#;
+
+    // Write to a temp file
+    let temp_dir = env::temp_dir();
+    let workflow_file = temp_dir.join("test_no_merge_workflow.json");
+    fs::write(&workflow_file, workflow_json).expect("Failed to write temp workflow file");
+
+    // Run slurm generate with --group-by partition
+    let output = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args([
+            "slurm",
+            "generate",
+            workflow_file.to_str().unwrap(),
+            "--account",
+            "test_account",
+            "--group-by",
+            "partition",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate");
+
+    assert!(
+        output.status.success(),
+        "slurm generate failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON output
+    let generated: serde_json::Value =
+        serde_json::from_str(&stdout).expect("Failed to parse JSON output");
+
+    // Verify 2 schedulers were generated (not merged due to large allocation count)
+    let schedulers = generated
+        .get("slurm_schedulers")
+        .and_then(|s| s.as_array())
+        .expect("Expected slurm_schedulers array");
+
+    assert_eq!(
+        schedulers.len(),
+        2,
+        "Should NOT merge when total allocations exceed threshold. Expected 2 schedulers \
+         (one for setup, one deferred for workers). Got {} schedulers:\n{}",
+        schedulers.len(),
+        serde_json::to_string_pretty(&schedulers).unwrap()
+    );
+
+    // Verify 2 actions were generated
+    let actions = generated
+        .get("actions")
+        .and_then(|a| a.as_array())
+        .expect("Expected actions array");
+
+    assert_eq!(
+        actions.len(),
+        2,
+        "Should have 2 actions when not merged. Got {} actions:\n{}",
+        actions.len(),
+        serde_json::to_string_pretty(&actions).unwrap()
+    );
+
+    // Verify we have both on_workflow_start and on_jobs_ready triggers
+    let trigger_types: Vec<&str> = actions
+        .iter()
+        .filter_map(|a| a.get("trigger_type").and_then(|t| t.as_str()))
+        .collect();
+
+    assert!(
+        trigger_types.contains(&"on_workflow_start"),
+        "Should have on_workflow_start action"
+    );
+    assert!(
+        trigger_types.contains(&"on_jobs_ready"),
+        "Should have on_jobs_ready action for deferred jobs"
+    );
+
+    // Clean up
+    let _ = fs::remove_file(&workflow_file);
+}

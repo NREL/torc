@@ -494,6 +494,95 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
         pg.max_nodes = pg.max_nodes.max(rr.num_nodes());
     }
 
+    // Merge pass: combine deferred and non-deferred groups for the same partition
+    // when their total allocations are small (reduces Slurm submissions)
+    const MERGE_THRESHOLD: i64 = 2;
+
+    // Group partition groups by partition name to find merge candidates
+    let mut by_partition: HashMap<String, Vec<(String, bool)>> = HashMap::new();
+    for key in partition_groups.keys() {
+        by_partition
+            .entry(key.0.clone())
+            .or_default()
+            .push(key.clone());
+    }
+
+    // Check each partition for merge opportunities
+    for (partition_name, _keys) in by_partition {
+        let deferred_key = (partition_name.clone(), true);
+        let non_deferred_key = (partition_name.clone(), false);
+
+        // Both must exist
+        let (deferred, non_deferred) = match (
+            partition_groups.get(&deferred_key),
+            partition_groups.get(&non_deferred_key),
+        ) {
+            (Some(d), Some(nd)) => (d, nd),
+            _ => continue,
+        };
+
+        // Calculate allocations for each group
+        let calc_allocations = |pg: &PartitionGroup| -> Option<i64> {
+            let gpus = if pg.max_gpus > 0 {
+                Some(pg.max_gpus as u32)
+            } else {
+                None
+            };
+            let partition = profile.find_best_partition(
+                pg.max_cpus as u32,
+                pg.max_memory_mb,
+                pg.max_runtime_secs,
+                gpus,
+            )?;
+            let jobs_per_node_by_cpu = partition.cpus_per_node / pg.max_cpus as u32;
+            let jobs_per_node_by_mem = (partition.memory_mb / pg.max_memory_mb) as u32;
+            let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
+                (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
+                _ => u32::MAX,
+            };
+            let jobs_per_node = std::cmp::max(
+                1,
+                std::cmp::min(
+                    jobs_per_node_by_cpu,
+                    std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
+                ),
+            );
+            let nodes_per_job = pg.max_nodes as u32;
+            let total_nodes = (pg.job_count as u32).div_ceil(jobs_per_node) * nodes_per_job;
+            let total_nodes = std::cmp::max(1, total_nodes) as i64;
+            if single_allocation {
+                Some(1)
+            } else {
+                Some(total_nodes)
+            }
+        };
+
+        let deferred_allocs = calc_allocations(deferred).unwrap_or(i64::MAX);
+        let non_deferred_allocs = calc_allocations(non_deferred).unwrap_or(i64::MAX);
+        let total_allocs = deferred_allocs.saturating_add(non_deferred_allocs);
+
+        // Merge if total allocations are small enough that a single scheduler makes sense.
+        // Note: When both groups exist, each needs at least 1 allocation, so total >= 2.
+        if total_allocs <= MERGE_THRESHOLD {
+            // Merge deferred into non-deferred (so we use on_workflow_start)
+            let deferred = partition_groups.remove(&deferred_key).unwrap();
+            let non_deferred = partition_groups.get_mut(&non_deferred_key).unwrap();
+
+            non_deferred.job_count += deferred.job_count;
+            non_deferred.job_names.extend(deferred.job_names);
+            non_deferred
+                .job_name_patterns
+                .extend(deferred.job_name_patterns);
+            non_deferred.rr_names.extend(deferred.rr_names);
+            non_deferred.max_memory_mb = non_deferred.max_memory_mb.max(deferred.max_memory_mb);
+            non_deferred.max_runtime_secs =
+                non_deferred.max_runtime_secs.max(deferred.max_runtime_secs);
+            non_deferred.max_cpus = non_deferred.max_cpus.max(deferred.max_cpus);
+            non_deferred.max_gpus = non_deferred.max_gpus.max(deferred.max_gpus);
+            non_deferred.max_nodes = non_deferred.max_nodes.max(deferred.max_nodes);
+        }
+    }
+
     // Second pass: create schedulers for each partition group
     for pg in partition_groups.into_values() {
         // Find the partition again to get its full info
