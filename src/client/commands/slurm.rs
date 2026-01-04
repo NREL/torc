@@ -532,6 +532,10 @@ pub fn generate_schedulers_for_workflow(
 
     use crate::client::scheduler_plan::{apply_plan_to_spec, generate_scheduler_plan};
 
+    // Save original jobs and files before expansion so we can restore them later
+    let original_jobs = spec.jobs.clone();
+    let original_files = spec.files.clone();
+
     // Expand parameters before building the graph to properly detect file-based dependencies
     spec.expand_parameters()
         .map_err(|e| format!("Failed to expand parameters: {}", e))?;
@@ -580,11 +584,50 @@ pub fn generate_schedulers_for_workflow(
     warnings.extend(plan.warnings.clone());
 
     if plan.schedulers.is_empty() {
-        return Err("No schedulers could be generated. Check resource requirements.".to_string());
+        let mut msg = String::from("No schedulers could be generated.\n");
+        if warnings.is_empty() {
+            msg.push_str("No jobs with resource_requirements found.");
+        } else {
+            msg.push_str("\nReasons:\n");
+            let max_warnings = 5;
+            for warning in warnings.iter().take(max_warnings) {
+                msg.push_str(&format!("  - {}\n", warning));
+            }
+            if warnings.len() > max_warnings {
+                msg.push_str(&format!(
+                    "  ... and {} more issues\n",
+                    warnings.len() - max_warnings
+                ));
+            }
+        }
+        return Err(msg);
     }
 
     // Apply the plan to the spec
     apply_plan_to_spec(&plan, spec);
+
+    // Restore original jobs and files to preserve parameterized format in output,
+    // but keep scheduler assignments from the expanded jobs
+    let mut original_jobs = original_jobs;
+    for orig_job in &mut original_jobs {
+        // Try direct lookup first (for non-parameterized jobs)
+        if let Some(scheduler) = plan.job_assignments.get(&orig_job.name) {
+            orig_job.scheduler = Some(scheduler.clone());
+        } else if orig_job.use_parameters.is_some() || orig_job.parameters.is_some() {
+            // For parameterized jobs, find any expanded job that matches and use its scheduler
+            // All expansions of the same job will have the same resource_requirements,
+            // so they'll all get the same scheduler
+            let pattern_prefix = orig_job.name.split('{').next().unwrap_or(&orig_job.name);
+            for (expanded_name, scheduler) in &plan.job_assignments {
+                if expanded_name.starts_with(pattern_prefix) {
+                    orig_job.scheduler = Some(scheduler.clone());
+                    break;
+                }
+            }
+        }
+    }
+    spec.jobs = original_jobs;
+    spec.files = original_files;
 
     Ok(GenerateResult {
         scheduler_count: plan.schedulers.len(),
@@ -2543,7 +2586,7 @@ fn handle_generate(
         Some("json") => serde_json::to_string_pretty(&spec).unwrap(),
         Some("json5") => serde_json::to_string_pretty(&spec).unwrap(), // Output as JSON
         Some("kdl") => spec.to_kdl_str(),
-        Some("yaml") | Some("yml") => serde_yaml::to_string(&spec).unwrap(),
+        Some("yaml") | Some("yml") => pretty_print_yaml(&spec),
         _ => serde_json::to_string_pretty(&spec).unwrap(), // Default to JSON
     };
 
@@ -2602,6 +2645,45 @@ fn handle_generate(
             }
         }
     }
+}
+
+/// Pretty-print a WorkflowSpec as YAML with blank lines between top-level sections
+fn pretty_print_yaml(spec: &WorkflowSpec) -> String {
+    let yaml = serde_yaml::to_string(spec).unwrap();
+    let mut result = String::new();
+    let mut prev_was_section_start = false;
+
+    for line in yaml.lines() {
+        // Check if this is a top-level key (must contain colon and not be indented/list/marker/comment)
+        let trimmed = line.trim_start();
+        let is_top_level = if trimmed.is_empty() {
+            false
+        } else if line.starts_with(' ') || line.starts_with('-') {
+            // Indented content or list items are not top-level keys
+            false
+        } else if trimmed.starts_with("---")
+            || trimmed.starts_with("...")
+            || trimmed.starts_with('#')
+        {
+            // YAML document markers and comments are not top-level sections
+            false
+        } else {
+            // A top-level key must contain a colon (either "key:" or "key: value")
+            trimmed.contains(':')
+        };
+
+        // Add blank line before top-level sections (except the first one)
+        if is_top_level && !result.is_empty() && !prev_was_section_start {
+            result.push('\n');
+        }
+
+        result.push_str(line);
+        result.push('\n');
+
+        prev_was_section_start = is_top_level;
+    }
+
+    result
 }
 
 /// Result of regenerating schedulers for an existing workflow

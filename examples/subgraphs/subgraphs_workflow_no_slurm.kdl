@@ -5,8 +5,8 @@ name "two_subgraph_pipeline"
 description "Demonstrates 2 independent sub-graphs with 4 stages, implicit file dependencies"
 
 // Stage 1 inputs
-file "input_a" path="input_a.txt" must_exist=#true
-file "input_b" path="input_b.txt" must_exist=#true
+file "input_a" path="input_a.txt"
+file "input_b" path="input_b.txt"
 
 // Stage 1 outputs
 file "prep_a_out" path="output/prep_a.txt"

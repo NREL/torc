@@ -80,28 +80,23 @@
   "files": [
     {
       "name": "raw_data",
-      "path": "/data/input/raw_data.csv",
-      "st_mtime": null
+      "path": "/data/input/raw_data.csv"
     },
     {
       "name": "validated_data",
-      "path": "/data/processed/validated_data.csv",
-      "st_mtime": null
+      "path": "/data/processed/validated_data.csv"
     },
     {
       "name": "analysis_results",
-      "path": "/data/output/results.json",
-      "st_mtime": null
+      "path": "/data/output/results.json"
     },
     {
       "name": "validation_script",
-      "path": "/scripts/validate_data.py",
-      "st_mtime": 1640995200.0
+      "path": "/scripts/validate_data.py"
     },
     {
       "name": "analysis_script",
-      "path": "/scripts/analyze_data.py",
-      "st_mtime": 1640995200.0
+      "path": "/scripts/analyze_data.py"
     }
   ],
   

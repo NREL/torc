@@ -8,8 +8,8 @@
   // ============================================================================
   files: [
     // Stage 1 inputs (must exist before workflow starts)
-    {name: "input_a", path: "data/input_a.txt", must_exist: true},
-    {name: "input_b", path: "data/input_b.txt", must_exist: true},
+    {name: "input_a", path: "data/input_a.txt"},
+    {name: "input_b", path: "data/input_b.txt"},
 
     // Stage 1 outputs -> Stage 2 inputs
     {name: "prep_a_out", path: "output/prep_a.txt"},
@@ -113,7 +113,7 @@
       name: "prep_sched",
       account: "myproject",
       partition: "standard",
-      num_nodes: 1,
+      nodes: 1,
       walltime: "01:00:00",
     },
     // Stage 2: Sub-graph A gets 3 CPU nodes
@@ -121,7 +121,7 @@
       name: "work_a_sched",
       account: "myproject",
       partition: "standard",
-      num_nodes: 3,
+      nodes: 3,
       walltime: "04:00:00",
     },
     // Stage 2: Sub-graph B gets 2 GPU nodes
@@ -129,23 +129,23 @@
       name: "work_b_sched",
       account: "myproject",
       partition: "gpu",
-      num_nodes: 2,
+      nodes: 2,
       walltime: "06:00:00",
-      extra_args: "--gres=gpu:1",
+      extra: "--gres=gpu:1",
     },
     // Stage 3: Each post job gets its own node
     {
       name: "post_a_sched",
       account: "myproject",
       partition: "standard",
-      num_nodes: 1,
+      nodes: 1,
       walltime: "02:00:00",
     },
     {
       name: "post_b_sched",
       account: "myproject",
       partition: "standard",
-      num_nodes: 1,
+      nodes: 1,
       walltime: "02:00:00",
     },
     // Stage 4: Final job gets its own node
@@ -153,7 +153,7 @@
       name: "final_sched",
       account: "myproject",
       partition: "standard",
-      num_nodes: 1,
+      nodes: 1,
       walltime: "03:00:00",
     },
   ],
