@@ -795,25 +795,21 @@ Object.assign(TorcDashboard.prototype, {
         // Check if Slurm option is selected
         const useSlurmCheckbox = document.getElementById('create-option-slurm');
         const useSlurm = useSlurmCheckbox && !useSlurmCheckbox.disabled && useSlurmCheckbox.checked;
+        const slurmAccount = document.getElementById('create-slurm-account')?.value?.trim();
 
-        if (useSlurm) {
-            // Validate Slurm account
-            const accountInput = document.getElementById('create-slurm-account')?.value?.trim();
-            if (!accountInput) {
-                this.showToast('Please enter a Slurm account name', 'warning');
-                return;
-            }
+        if (useSlurm && !slurmAccount) {
+            this.showToast('Please enter a Slurm account name', 'warning');
+            return;
         }
 
         try {
             let result;
             if (useSlurm) {
-                const accountInput = document.getElementById('create-slurm-account').value.trim();
                 result = await api.cliCreateSlurmWorkflow(
                     specJson,
                     false,
                     '.json',
-                    accountInput,
+                    slurmAccount,
                     this.detectedHpcProfile
                 );
             } else {

@@ -51,12 +51,14 @@ Object.assign(TorcDashboard.prototype, {
             if (accountSection) {
                 accountSection.style.display = slurmCheckbox.checked ? 'block' : 'none';
             }
-            // Re-render wizard steps if we're on them (to update the messages)
+            // Re-render wizard steps if we're on them (to update the messages/preview)
             if (this.currentCreateTab === 'wizard') {
                 if (this.wizardStep === 3) {
                     this.wizardRenderSchedulers();
                 } else if (this.wizardStep === 4) {
                     this.wizardRenderActions();
+                } else if (this.wizardStep === 6) {
+                    this.wizardGeneratePreview();
                 }
             }
         });
@@ -216,25 +218,21 @@ Object.assign(TorcDashboard.prototype, {
         // Check if Slurm option is selected
         const useSlurmCheckbox = document.getElementById('create-option-slurm');
         const useSlurm = useSlurmCheckbox && !useSlurmCheckbox.disabled && useSlurmCheckbox.checked;
+        const slurmAccount = document.getElementById('create-slurm-account')?.value?.trim();
 
-        if (useSlurm) {
-            // Validate Slurm account
-            const accountInput = document.getElementById('create-slurm-account')?.value?.trim();
-            if (!accountInput) {
-                this.showToast('Please enter a Slurm account name', 'warning');
-                return;
-            }
+        if (useSlurm && !slurmAccount) {
+            this.showToast('Please enter a Slurm account name', 'warning');
+            return;
         }
 
         try {
             let result;
             if (useSlurm) {
-                const accountInput = document.getElementById('create-slurm-account').value.trim();
                 result = await api.cliCreateSlurmWorkflow(
                     specContent,
                     isFilePath,
                     fileExtension,
-                    accountInput,
+                    slurmAccount,
                     this.detectedHpcProfile
                 );
             } else {
