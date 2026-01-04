@@ -329,6 +329,7 @@ async fn main() -> Result<()> {
         .route("/static/*path", get(static_handler))
         // CLI command endpoints
         .route("/api/cli/create", post(cli_create_handler))
+        .route("/api/cli/create-slurm", post(cli_create_slurm_handler))
         .route("/api/cli/validate", post(cli_validate_handler))
         .route("/api/cli/run", post(cli_run_handler))
         .route("/api/cli/submit", post(cli_submit_handler))
@@ -360,8 +361,7 @@ async fn main() -> Result<()> {
             post(cli_slurm_parse_logs_handler),
         )
         .route("/api/cli/slurm-sacct", post(cli_slurm_sacct_handler))
-        // Slurm scheduler generation endpoints
-        .route("/api/cli/slurm-generate", post(cli_slurm_generate_handler))
+        // HPC profile detection (used for Slurm checkbox in create modal)
         .route("/api/cli/hpc-profiles", get(cli_hpc_profiles_handler))
         // Server management endpoints
         .route("/api/server/start", post(server_start_handler))
@@ -516,6 +516,23 @@ struct CreateRequest {
 }
 
 #[derive(Deserialize)]
+struct CreateSlurmRequest {
+    /// Path to workflow spec file OR inline spec content
+    spec: String,
+    /// If true, spec is file path; if false, spec is inline content
+    #[serde(default)]
+    is_file: bool,
+    /// File extension for inline content (e.g., ".yaml", ".kdl")
+    #[serde(default)]
+    file_extension: Option<String>,
+    /// Slurm account name (required)
+    account: String,
+    /// HPC profile name (optional - auto-detected if not provided)
+    #[serde(default)]
+    profile: Option<String>,
+}
+
+#[derive(Deserialize)]
 struct WorkflowIdRequest {
     workflow_id: String,
 }
@@ -591,7 +608,8 @@ async fn cli_create_handler(
     } else {
         // Spec is inline content - write to temp file with correct extension
         let extension = req.file_extension.as_deref().unwrap_or(".json");
-        let temp_path = format!("/tmp/torc_spec_{}{}", std::process::id(), extension);
+        let unique_id = uuid::Uuid::new_v4();
+        let temp_path = format!("/tmp/torc_spec_{}{}", unique_id, extension);
         if let Err(e) = tokio::fs::write(&temp_path, &req.spec).await {
             return Json(CliResponse {
                 success: false,
@@ -606,6 +624,48 @@ async fn cli_create_handler(
             &state.api_url,
         )
         .await;
+        let _ = tokio::fs::remove_file(&temp_path).await;
+        result
+    };
+
+    Json(result)
+}
+
+/// Create a workflow with auto-generated Slurm schedulers
+async fn cli_create_slurm_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateSlurmRequest>,
+) -> impl IntoResponse {
+    // Build command args
+    let mut args = vec!["workflows", "create-slurm", "--account", &req.account];
+
+    // Add profile if specified
+    let profile_arg;
+    if let Some(ref profile) = req.profile {
+        profile_arg = profile.clone();
+        args.push("--hpc-profile");
+        args.push(&profile_arg);
+    }
+
+    let result = if req.is_file {
+        // Spec is a file path - add it to args
+        args.push(&req.spec);
+        run_torc_command(&state.torc_bin, &args, &state.api_url).await
+    } else {
+        // Spec is inline content - write to temp file with correct extension
+        let extension = req.file_extension.as_deref().unwrap_or(".json");
+        let unique_id = uuid::Uuid::new_v4();
+        let temp_path = format!("/tmp/torc_spec_{}{}", unique_id, extension);
+        if let Err(e) = tokio::fs::write(&temp_path, &req.spec).await {
+            return Json(CliResponse {
+                success: false,
+                stdout: String::new(),
+                stderr: format!("Failed to write temp file: {}", e),
+                exit_code: None,
+            });
+        }
+        args.push(&temp_path);
+        let result = run_torc_command(&state.torc_bin, &args, &state.api_url).await;
         let _ = tokio::fs::remove_file(&temp_path).await;
         result
     };
@@ -1659,30 +1719,7 @@ async fn cli_slurm_sacct_handler(
     }
 }
 
-// ============== Slurm Scheduler Generation Handlers ==============
-
-#[derive(Deserialize)]
-struct SlurmGenerateRequest {
-    /// Workflow specification (as JSON)
-    spec: serde_json::Value,
-    /// Slurm account name
-    account: String,
-    /// HPC profile name (optional, auto-detected if not provided)
-    #[serde(default)]
-    profile: Option<String>,
-}
-
-#[derive(Serialize)]
-struct SlurmGenerateResponse {
-    success: bool,
-    /// Generated slurm_schedulers array
-    schedulers: Option<Vec<serde_json::Value>>,
-    /// Generated actions array
-    actions: Option<Vec<serde_json::Value>>,
-    /// Profile that was used
-    profile_used: Option<String>,
-    error: Option<String>,
-}
+// ============== HPC Profile Detection Handlers ==============
 
 #[derive(Serialize)]
 struct HpcProfileInfo {
@@ -1698,125 +1735,6 @@ struct HpcProfilesResponse {
     profiles: Vec<HpcProfileInfo>,
     detected_profile: Option<String>,
     error: Option<String>,
-}
-
-/// Generate Slurm schedulers from a workflow specification
-async fn cli_slurm_generate_handler(
-    State(state): State<Arc<AppState>>,
-    Json(req): Json<SlurmGenerateRequest>,
-) -> impl IntoResponse {
-    // Write the spec to a temp file
-    let unique_id = uuid::Uuid::new_v4();
-    let temp_path = format!("/tmp/torc_spec_{}.json", unique_id);
-
-    let spec_str = match serde_json::to_string_pretty(&req.spec) {
-        Ok(s) => s,
-        Err(e) => {
-            return Json(SlurmGenerateResponse {
-                success: false,
-                schedulers: None,
-                actions: None,
-                profile_used: None,
-                error: Some(format!("Failed to serialize spec: {}", e)),
-            });
-        }
-    };
-
-    if let Err(e) = tokio::fs::write(&temp_path, &spec_str).await {
-        return Json(SlurmGenerateResponse {
-            success: false,
-            schedulers: None,
-            actions: None,
-            profile_used: None,
-            error: Some(format!("Failed to write temp file: {}", e)),
-        });
-    }
-
-    // Build command arguments
-    let mut args = vec![
-        "-f".to_string(),
-        "json".to_string(),
-        "slurm".to_string(),
-        "generate".to_string(),
-        "--account".to_string(),
-        req.account.clone(),
-    ];
-
-    if let Some(ref profile) = req.profile {
-        args.push("--profile".to_string());
-        args.push(profile.clone());
-    }
-
-    args.push(temp_path.clone());
-
-    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    info!("Running: {} {}", state.torc_bin, args_refs.join(" "));
-
-    let output = Command::new(&state.torc_bin)
-        .args(&args_refs)
-        .env("TORC_API_URL", &state.api_url)
-        .output()
-        .await;
-
-    // Clean up temp file
-    let _ = tokio::fs::remove_file(&temp_path).await;
-
-    match output {
-        Ok(output) => {
-            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-
-            if !output.status.success() {
-                return Json(SlurmGenerateResponse {
-                    success: false,
-                    schedulers: None,
-                    actions: None,
-                    profile_used: None,
-                    error: Some(format!("Command failed: {}", stderr)),
-                });
-            }
-
-            // Parse the JSON output - it should contain the full spec with schedulers and actions
-            match serde_json::from_str::<serde_json::Value>(&stdout) {
-                Ok(data) => {
-                    let schedulers = data
-                        .get("slurm_schedulers")
-                        .and_then(|v| v.as_array())
-                        .cloned();
-                    let actions = data.get("actions").and_then(|v| v.as_array()).cloned();
-                    let profile_used = data
-                        .get("profile_used")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string());
-
-                    Json(SlurmGenerateResponse {
-                        success: true,
-                        schedulers,
-                        actions,
-                        profile_used,
-                        error: None,
-                    })
-                }
-                Err(e) => Json(SlurmGenerateResponse {
-                    success: false,
-                    schedulers: None,
-                    actions: None,
-                    profile_used: None,
-                    error: Some(format!(
-                        "Failed to parse JSON output: {}. Output: {}",
-                        e, stdout
-                    )),
-                }),
-            }
-        }
-        Err(e) => Json(SlurmGenerateResponse {
-            success: false,
-            schedulers: None,
-            actions: None,
-            profile_used: None,
-            error: Some(format!("Failed to execute command: {}", e)),
-        }),
-    }
 }
 
 /// List available HPC profiles and detect current profile

@@ -475,6 +475,32 @@ body {
     font-size: 12px;
 }
 
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-info {
+    background: var(--info-color);
+    color: white;
+}
+
+.badge-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.badge-warning {
+    background: var(--warning-color);
+    color: #333;
+}
+
 /* Tables */
 .table-container {
     background: var(--bg-primary);
@@ -2115,6 +2141,22 @@ textarea.text-input {
     margin: 0;
 }
 
+.wizard-slurm-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--info-color);
+    color: white;
+    border-radius: var(--border-radius);
+    font-size: 13px;
+}
+
+.wizard-slurm-note code {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
 .wizard-empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -2143,56 +2185,6 @@ textarea.text-input {
     font-size: 13px;
     color: var(--text-secondary);
     margin-bottom: 16px;
-}
-
-/* Auto-generate section in Schedulers step */
-.wizard-auto-generate-section {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 16px;
-    margin-bottom: 16px;
-}
-
-.wizard-auto-generate-section h5 {
-    margin: 0 0 8px 0;
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.wizard-auto-generate-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-.wizard-auto-generate-form .form-group {
-    flex: 1;
-    min-width: 180px;
-    margin-bottom: 0;
-}
-
-.wizard-auto-generate-form .form-group:last-child {
-    flex: 0 0 auto;
-}
-
-.wizard-section-divider {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 16px 0;
-}
-
-.wizard-manual-schedulers-header h5 {
-    margin: 0 0 8px 0;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.wizard-warning {
-    color: var(--warning-color, #ffc107);
-    font-size: 13px;
-    margin-top: 8px;
 }
 
 .wizard-schedulers-list {

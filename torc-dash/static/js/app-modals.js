@@ -38,6 +38,72 @@ Object.assign(TorcDashboard.prototype, {
 
         // File upload zone
         this.setupFileUpload();
+
+        // Slurm checkbox toggle
+        this.setupSlurmOptions();
+    },
+
+    setupSlurmOptions() {
+        const slurmCheckbox = document.getElementById('create-option-slurm');
+        const accountSection = document.getElementById('slurm-account-section');
+
+        slurmCheckbox?.addEventListener('change', () => {
+            if (accountSection) {
+                accountSection.style.display = slurmCheckbox.checked ? 'block' : 'none';
+            }
+            // Re-render wizard steps if we're on them (to update the messages/preview)
+            if (this.currentCreateTab === 'wizard') {
+                if (this.wizardStep === 3) {
+                    this.wizardRenderSchedulers();
+                } else if (this.wizardStep === 4) {
+                    this.wizardRenderActions();
+                } else if (this.wizardStep === 6) {
+                    this.wizardGeneratePreview();
+                }
+            }
+        });
+    },
+
+    async checkHpcProfiles() {
+        // Check for available HPC profiles
+        const slurmGroup = document.getElementById('slurm-options-group');
+        const slurmCheckbox = document.getElementById('create-option-slurm');
+        const slurmBadge = document.getElementById('slurm-profile-badge');
+        const slurmHint = document.getElementById('slurm-disabled-hint');
+        const accountSection = document.getElementById('slurm-account-section');
+
+        if (!slurmGroup) return;
+
+        try {
+            const result = await api.getHpcProfiles();
+
+            if (result.success && result.detected_profile) {
+                // HPC profile detected - enable the option
+                this.detectedHpcProfile = result.detected_profile;
+                slurmGroup.style.display = 'block';
+                slurmCheckbox.disabled = false;
+                slurmHint.style.display = 'none';
+                slurmBadge.style.display = 'inline';
+                slurmBadge.textContent = result.detected_profile;
+            } else if (result.success && result.profiles && result.profiles.length > 0) {
+                // Profiles available but none detected - show disabled
+                this.detectedHpcProfile = null;
+                slurmGroup.style.display = 'block';
+                slurmCheckbox.disabled = true;
+                slurmCheckbox.checked = false;
+                slurmHint.style.display = 'block';
+                slurmBadge.style.display = 'none';
+                accountSection.style.display = 'none';
+            } else {
+                // No profiles available - hide the section entirely
+                this.detectedHpcProfile = null;
+                slurmGroup.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error checking HPC profiles:', error);
+            slurmGroup.style.display = 'none';
+            this.detectedHpcProfile = null;
+        }
     },
 
     setupFileUpload() {
@@ -101,6 +167,11 @@ Object.assign(TorcDashboard.prototype, {
 
     showModal(modalId) {
         document.getElementById(modalId)?.classList.add('active');
+
+        // Check HPC profiles when create workflow modal is opened
+        if (modalId === 'create-workflow-modal') {
+            this.checkHpcProfiles();
+        }
     },
 
     hideModal(modalId) {
@@ -144,8 +215,29 @@ Object.assign(TorcDashboard.prototype, {
                 return;
         }
 
+        // Check if Slurm option is selected
+        const useSlurmCheckbox = document.getElementById('create-option-slurm');
+        const useSlurm = useSlurmCheckbox && !useSlurmCheckbox.disabled && useSlurmCheckbox.checked;
+        const slurmAccount = document.getElementById('create-slurm-account')?.value?.trim();
+
+        if (useSlurm && !slurmAccount) {
+            this.showToast('Please enter a Slurm account name', 'warning');
+            return;
+        }
+
         try {
-            const result = await api.cliCreateWorkflow(specContent, isFilePath, fileExtension);
+            let result;
+            if (useSlurm) {
+                result = await api.cliCreateSlurmWorkflow(
+                    specContent,
+                    isFilePath,
+                    fileExtension,
+                    slurmAccount,
+                    this.detectedHpcProfile
+                );
+            } else {
+                result = await api.cliCreateWorkflow(specContent, isFilePath, fileExtension);
+            }
 
             if (result.success) {
                 this.showToast('Workflow created successfully', 'success');
