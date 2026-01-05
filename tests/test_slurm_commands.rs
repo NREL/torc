@@ -1881,3 +1881,309 @@ fn test_slurm_generate_group_by_strategy() {
         scheduler_count_default, stdout_default
     );
 }
+
+/// Test that auto-merge combines deferred and non-deferred groups when total allocations are small.
+///
+/// When using `--group-by partition`, if a partition has both:
+/// - Non-deferred jobs (no dependencies, can start at workflow start)
+/// - Deferred jobs (have dependencies, need on_jobs_ready trigger)
+///
+/// And the total number of allocations is ≤2, they should be merged into a single scheduler
+/// with a single `on_workflow_start` action. This reduces Slurm submissions.
+///
+/// This test specifically verifies that runtime is factored into allocation calculations:
+/// - With num_cpus=52, only 2 jobs can run concurrently (104 CPUs / 52)
+/// - Without runtime factor: 12 jobs / 2 concurrent = 6 allocations (would NOT merge)
+/// - With runtime factor: 4h walltime / 10min = 24 time slots
+///   - Jobs per allocation = 2 concurrent × 24 slots = 48
+///   - 12 jobs / 48 = 1 allocation (WILL merge)
+#[rstest]
+fn test_slurm_generate_auto_merge_small_allocations() {
+    // Create a temporary workflow file that tests runtime-aware allocation calculation
+    // - 1 job without dependencies (build)
+    // - Multiple jobs with dependencies (job_1..job_10)
+    // - 1 job depending on all job_* (join)
+    //
+    // With num_cpus=52, concurrent capacity is only 2 jobs per node.
+    // But with 10-minute jobs and 4-hour walltime, 24 time slots are available,
+    // so jobs_per_allocation = 2 * 24 = 48, which can handle all 12 jobs in 1 allocation.
+    let workflow_json = r#"{
+  "name": "test_auto_merge",
+  "resource_requirements": [
+    {
+      "name": "small",
+      "runtime": "PT10M",
+      "memory": "2g",
+      "num_cpus": 1
+    },
+    {
+      "name": "medium",
+      "runtime": "PT10M",
+      "memory": "1g",
+      "num_cpus": 52
+    }
+  ],
+  "parameters": {
+    "i": "1:10"
+  },
+  "jobs": [
+    {
+      "name": "build",
+      "resource_requirements": "small",
+      "command": "echo build"
+    },
+    {
+      "name": "job_{i}",
+      "resource_requirements": "medium",
+      "depends_on": ["build"],
+      "command": "echo job {i}",
+      "use_parameters": ["i"]
+    },
+    {
+      "name": "join",
+      "resource_requirements": "small",
+      "depends_on_regexes": ["job_\\d+"],
+      "command": "echo join"
+    }
+  ]
+}"#;
+
+    // Write to a unique temp file using tempfile crate
+    let mut workflow_file =
+        tempfile::NamedTempFile::new().expect("Failed to create temp workflow file");
+    std::io::Write::write_all(&mut workflow_file, workflow_json.as_bytes())
+        .expect("Failed to write temp workflow file");
+
+    // Run slurm generate with --group-by partition
+    let output = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args([
+            "slurm",
+            "generate",
+            workflow_file.path().to_str().unwrap(),
+            "--account",
+            "test_account",
+            "--group-by",
+            "partition",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate");
+
+    assert!(
+        output.status.success(),
+        "slurm generate failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON output
+    let generated: serde_json::Value =
+        serde_json::from_str(&stdout).expect("Failed to parse JSON output");
+
+    // Verify only 1 scheduler was generated (auto-merge combined deferred + non-deferred)
+    let schedulers = generated
+        .get("slurm_schedulers")
+        .and_then(|s| s.as_array())
+        .expect("Expected slurm_schedulers array");
+
+    assert_eq!(
+        schedulers.len(),
+        1,
+        "Auto-merge should combine deferred and non-deferred groups into 1 scheduler when \
+         total allocations are small. Got {} schedulers:\n{}",
+        schedulers.len(),
+        serde_json::to_string_pretty(&schedulers).unwrap()
+    );
+
+    // Verify only 1 action was generated with on_workflow_start trigger
+    let actions = generated
+        .get("actions")
+        .and_then(|a| a.as_array())
+        .expect("Expected actions array");
+
+    assert_eq!(
+        actions.len(),
+        1,
+        "Auto-merge should result in 1 action. Got {} actions:\n{}",
+        actions.len(),
+        serde_json::to_string_pretty(&actions).unwrap()
+    );
+
+    // Verify the action uses on_workflow_start (not on_jobs_ready)
+    let action = &actions[0];
+    let trigger_type = action
+        .get("trigger_type")
+        .and_then(|t| t.as_str())
+        .expect("Expected trigger_type");
+
+    assert_eq!(
+        trigger_type, "on_workflow_start",
+        "Merged scheduler should use on_workflow_start trigger (not on_jobs_ready)"
+    );
+
+    // Verify all jobs are assigned to the same scheduler
+    // Note: slurm generate returns the spec before parameter expansion,
+    // so we have 3 job specs (build, job_{i}, join), not 12 expanded jobs
+    let jobs = generated
+        .get("jobs")
+        .and_then(|j| j.as_array())
+        .expect("Expected jobs array");
+
+    assert_eq!(
+        jobs.len(),
+        3,
+        "Expected 3 job specs before parameter expansion"
+    );
+
+    let scheduler_name = schedulers[0]
+        .get("name")
+        .and_then(|n| n.as_str())
+        .expect("Expected scheduler name");
+
+    // Verify ALL jobs have scheduler assignments (not just some)
+    let mut jobs_with_scheduler = 0;
+    for job in jobs {
+        let job_name = job
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown");
+        let job_scheduler = job
+            .get("scheduler")
+            .and_then(|s| s.as_str())
+            .unwrap_or_else(|| panic!("Job '{}' should have a scheduler assignment", job_name));
+        assert_eq!(
+            job_scheduler, scheduler_name,
+            "Job '{}' should be assigned to the merged scheduler",
+            job_name
+        );
+        jobs_with_scheduler += 1;
+    }
+
+    assert_eq!(
+        jobs_with_scheduler,
+        jobs.len(),
+        "All jobs should have scheduler assignments"
+    );
+
+    // Temp file is automatically cleaned up when workflow_file goes out of scope
+}
+
+/// Test that auto-merge does NOT combine groups when total allocations exceed the threshold.
+///
+/// When jobs require more than 2 allocations total, they should remain separate
+/// (deferred and non-deferred schedulers).
+#[rstest]
+fn test_slurm_generate_no_merge_large_allocations() {
+    // Create a workflow where jobs need many nodes (exceeding merge threshold)
+    // Each job needs 1 full node, so 100 jobs = 100 allocations
+    let workflow_json = r#"{
+  "name": "test_no_merge",
+  "resource_requirements": [
+    {
+      "name": "full_node",
+      "runtime": "PT10M",
+      "memory": "200g",
+      "num_cpus": 100
+    }
+  ],
+  "parameters": {
+    "i": "1:50"
+  },
+  "jobs": [
+    {
+      "name": "setup",
+      "resource_requirements": "full_node",
+      "command": "echo setup"
+    },
+    {
+      "name": "worker_{i}",
+      "resource_requirements": "full_node",
+      "depends_on": ["setup"],
+      "command": "echo worker {i}",
+      "use_parameters": ["i"]
+    }
+  ]
+}"#;
+
+    // Write to a unique temp file using tempfile crate
+    let mut workflow_file =
+        tempfile::NamedTempFile::new().expect("Failed to create temp workflow file");
+    std::io::Write::write_all(&mut workflow_file, workflow_json.as_bytes())
+        .expect("Failed to write temp workflow file");
+
+    // Run slurm generate with --group-by partition
+    let output = Command::new(common::get_exe_path("./target/debug/torc"))
+        .args([
+            "slurm",
+            "generate",
+            workflow_file.path().to_str().unwrap(),
+            "--account",
+            "test_account",
+            "--group-by",
+            "partition",
+            "--profile",
+            "kestrel",
+        ])
+        .output()
+        .expect("Failed to execute slurm generate");
+
+    assert!(
+        output.status.success(),
+        "slurm generate failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Parse the JSON output
+    let generated: serde_json::Value =
+        serde_json::from_str(&stdout).expect("Failed to parse JSON output");
+
+    // Verify 2 schedulers were generated (not merged due to large allocation count)
+    let schedulers = generated
+        .get("slurm_schedulers")
+        .and_then(|s| s.as_array())
+        .expect("Expected slurm_schedulers array");
+
+    assert_eq!(
+        schedulers.len(),
+        2,
+        "Should NOT merge when total allocations exceed threshold. Expected 2 schedulers \
+         (one for setup, one deferred for workers). Got {} schedulers:\n{}",
+        schedulers.len(),
+        serde_json::to_string_pretty(&schedulers).unwrap()
+    );
+
+    // Verify 2 actions were generated
+    let actions = generated
+        .get("actions")
+        .and_then(|a| a.as_array())
+        .expect("Expected actions array");
+
+    assert_eq!(
+        actions.len(),
+        2,
+        "Should have 2 actions when not merged. Got {} actions:\n{}",
+        actions.len(),
+        serde_json::to_string_pretty(&actions).unwrap()
+    );
+
+    // Verify we have both on_workflow_start and on_jobs_ready triggers
+    let trigger_types: Vec<&str> = actions
+        .iter()
+        .filter_map(|a| a.get("trigger_type").and_then(|t| t.as_str()))
+        .collect();
+
+    assert!(
+        trigger_types.contains(&"on_workflow_start"),
+        "Should have on_workflow_start action"
+    );
+    assert!(
+        trigger_types.contains(&"on_jobs_ready"),
+        "Should have on_jobs_ready action for deferred jobs"
+    );
+
+    // Temp file is automatically cleaned up when workflow_file goes out of scope
+}
