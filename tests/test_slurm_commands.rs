@@ -1890,13 +1890,23 @@ fn test_slurm_generate_group_by_strategy() {
 ///
 /// And the total number of allocations is ≤2, they should be merged into a single scheduler
 /// with a single `on_workflow_start` action. This reduces Slurm submissions.
+///
+/// This test specifically verifies that runtime is factored into allocation calculations:
+/// - With num_cpus=52, only 2 jobs can run concurrently (104 CPUs / 52)
+/// - Without runtime factor: 12 jobs / 2 concurrent = 6 allocations (would NOT merge)
+/// - With runtime factor: 4h walltime / 10min = 24 time slots
+///   - Jobs per allocation = 2 concurrent × 24 slots = 48
+///   - 12 jobs / 48 = 1 allocation (WILL merge)
 #[rstest]
 fn test_slurm_generate_auto_merge_small_allocations() {
-    // Create a temporary workflow file similar to workflow.json
+    // Create a temporary workflow file that tests runtime-aware allocation calculation
     // - 1 job without dependencies (build)
     // - Multiple jobs with dependencies (job_1..job_10)
     // - 1 job depending on all job_* (join)
-    // All should fit in ≤2 allocations on Kestrel's short partition
+    //
+    // With num_cpus=52, concurrent capacity is only 2 jobs per node.
+    // But with 10-minute jobs and 4-hour walltime, 24 time slots are available,
+    // so jobs_per_allocation = 2 * 24 = 48, which can handle all 12 jobs in 1 allocation.
     let workflow_json = r#"{
   "name": "test_auto_merge",
   "resource_requirements": [
@@ -1910,7 +1920,7 @@ fn test_slurm_generate_auto_merge_small_allocations() {
       "name": "medium",
       "runtime": "PT10M",
       "memory": "1g",
-      "num_cpus": 1
+      "num_cpus": 52
     }
   ],
   "parameters": {
