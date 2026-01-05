@@ -932,9 +932,12 @@ fn test_generate_schedulers_auto_calculates_allocations() {
     let actions = spec.actions.as_ref().unwrap();
     let action = &actions[0];
 
-    // 10 jobs, 4 jobs per node (104 CPUs / 26 CPUs) = 3 nodes needed (rounded up)
-    // With 1 node per allocation = 3 allocations
-    assert_eq!(action.num_allocations, Some(3));
+    // 10 jobs, 26 CPUs each, 1 hour runtime
+    // Concurrent capacity: 104 CPUs / 26 CPUs = 4 jobs per node
+    // Time slots: 4h walltime / 1h runtime = 4 sequential batches
+    // Jobs per allocation: 4 concurrent × 4 time slots = 16 jobs
+    // Allocations needed: ceil(10 / 16) = 1
+    assert_eq!(action.num_allocations, Some(1));
 }
 
 /// Test auto-calculation with parameterized jobs
@@ -987,9 +990,12 @@ fn test_generate_schedulers_auto_calculates_with_parameters() {
     let actions = spec.actions.as_ref().unwrap();
     let action = &actions[0];
 
-    // 100 jobs (from parameterized expansion), 2 jobs per node (104 CPUs / 52 CPUs) = 50 nodes needed
-    // With 1 node per allocation = 50 allocations
-    assert_eq!(action.num_allocations, Some(50));
+    // 100 jobs (from parameterized expansion), 52 CPUs each, 1 hour runtime
+    // Concurrent capacity: 104 CPUs / 52 CPUs = 2 jobs per node
+    // Time slots: 4h walltime / 1h runtime = 4 sequential batches
+    // Jobs per allocation: 2 concurrent × 4 time slots = 8 jobs
+    // Allocations needed: ceil(100 / 8) = 13
+    assert_eq!(action.num_allocations, Some(13));
 }
 
 /// Test stage-aware scheduling: jobs with and without dependencies get separate schedulers.
@@ -1129,12 +1135,15 @@ fn test_generate_schedulers_memory_constrained_allocation() {
     assert_eq!(actions.len(), 1);
 
     let action = &actions[0];
-    // With memory as limiting factor (1 job per node), we need 10 allocations for 10 jobs
-    // If only CPU was considered, it would be ceil(10/13) = 1 allocation (wrong!)
+    // 10 jobs, 120GB memory each, 1 hour runtime
+    // Concurrent by memory: 240GB / 120GB = 2 (but actually 240000MB / 122880MB = 1.95, so 1)
+    // Time slots: 4h walltime / 1h runtime = 4 sequential batches
+    // Jobs per allocation: 1 concurrent × 4 time slots = 4 jobs
+    // Allocations needed: ceil(10 / 4) = 3
     assert_eq!(
         action.num_allocations,
-        Some(10),
-        "Should allocate 10 nodes for 10 memory-heavy jobs (1 job per node due to 120GB memory)"
+        Some(3),
+        "Should allocate 3 nodes for 10 memory-heavy jobs (1 concurrent × 4 time slots = 4 jobs per allocation)"
     );
 }
 
@@ -1199,14 +1208,17 @@ fn test_generate_schedulers_cpu_vs_memory_constraint() {
     let actions = spec.actions.as_ref().unwrap();
     let action = &actions[0];
 
-    // CPU is limiting: 104/52 = 2 jobs per node
-    // Memory would allow: 240000/61440 = 3.9 = 3 jobs per node
-    // min(2, 3) = 2 jobs per node
-    // 4 jobs / 2 per node = 2 allocations
+    // 4 jobs, 52 CPUs each, 60GB memory, 1 hour runtime
+    // Concurrent by CPU: 104/52 = 2 jobs per node
+    // Concurrent by memory: 240000/61440 = 3.9 = 3 jobs per node
+    // Concurrent = min(2, 3) = 2 jobs per node (CPU-limited)
+    // Time slots: 4h walltime / 1h runtime = 4 sequential batches
+    // Jobs per allocation: 2 concurrent × 4 time slots = 8 jobs
+    // Allocations needed: ceil(4 / 8) = 1
     assert_eq!(
         action.num_allocations,
-        Some(2),
-        "Should allocate 2 nodes for 4 CPU-heavy jobs (2 jobs per node, CPU-limited)"
+        Some(1),
+        "Should allocate 1 node for 4 CPU-heavy jobs (2 concurrent × 4 time slots = 8 jobs per allocation)"
     );
 }
 
@@ -1403,14 +1415,17 @@ fn test_generate_schedulers_gpu_constrained_allocation() {
     let actions = spec.actions.as_ref().unwrap();
     let action = &actions[0];
 
-    // GPU is limiting: 4/2 = 2 jobs per node
-    // CPU would allow: 128/32 = 4 jobs per node
-    // Memory would allow: 360000/92160 = 3.9 = 3 jobs per node
-    // min(4, 3, 2) = 2 jobs per node
-    // 8 jobs / 2 per node = 4 allocations
+    // 8 jobs, 2 GPUs each, 32 CPUs, 90GB memory, 1 hour runtime
+    // Concurrent by GPU: 4/2 = 2 jobs per node (GPU is limiting)
+    // Concurrent by CPU: 128/32 = 4 jobs per node
+    // Concurrent by memory: 360000/92160 = 3.9 = 3 jobs per node
+    // Concurrent = min(4, 3, 2) = 2 jobs per node
+    // Time slots: 4h walltime / 1h runtime = 4 sequential batches
+    // Jobs per allocation: 2 concurrent × 4 time slots = 8 jobs
+    // Allocations needed: ceil(8 / 8) = 1
     assert_eq!(
         action.num_allocations,
-        Some(4),
-        "Should allocate 4 nodes for 8 GPU jobs (2 jobs per node due to GPU constraint)"
+        Some(1),
+        "Should allocate 1 node for 8 GPU jobs (2 concurrent × 4 time slots = 8 jobs per allocation)"
     );
 }

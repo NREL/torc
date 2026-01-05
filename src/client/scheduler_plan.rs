@@ -27,6 +27,76 @@ use crate::client::workflow_graph::{SchedulerGroup, WorkflowGraph};
 use crate::time_utils::duration_string_to_seconds;
 
 use super::commands::slurm::{GroupByStrategy, parse_memory_mb, secs_to_walltime};
+use crate::client::hpc::HpcPartition;
+
+/// Parameters for calculating the number of allocations needed for a group of jobs.
+struct AllocationParams {
+    /// Maximum CPUs required by any job in the group
+    max_cpus: u32,
+    /// Maximum memory (MB) required by any job in the group
+    max_memory_mb: u64,
+    /// Maximum runtime (seconds) of any job in the group
+    max_runtime_secs: u64,
+    /// Maximum GPUs required by any job in the group (0 if none)
+    max_gpus: u32,
+    /// Number of nodes required per job
+    nodes_per_job: u32,
+    /// Total number of jobs in the group
+    job_count: usize,
+}
+
+/// Calculate the number of allocations needed for a group of jobs.
+///
+/// This calculation considers:
+/// - Concurrent job capacity per node (based on CPUs, memory, GPUs)
+/// - Sequential job capacity over the walltime (based on job runtime vs partition walltime)
+///
+/// Returns `None` if the parameters are invalid (e.g., zero CPUs or memory).
+fn calculate_allocations(
+    params: &AllocationParams,
+    partition: &HpcPartition,
+    single_allocation: bool,
+) -> Option<i64> {
+    // Guard against division by zero
+    if params.max_cpus == 0 || params.max_memory_mb == 0 {
+        return None;
+    }
+
+    // Calculate concurrent jobs per node based on resources
+    let jobs_per_node_by_cpu = partition.cpus_per_node / params.max_cpus;
+    let jobs_per_node_by_mem = (partition.memory_mb / params.max_memory_mb) as u32;
+    let jobs_per_node_by_gpu = match (params.max_gpus, partition.gpus_per_node) {
+        (job_gpus, Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
+        _ => u32::MAX,
+    };
+    let concurrent_jobs_per_node = std::cmp::max(
+        1,
+        std::cmp::min(
+            jobs_per_node_by_cpu,
+            std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
+        ),
+    );
+
+    // Factor in runtime: how many sequential batches can run within the walltime
+    let time_slots = if params.max_runtime_secs > 0 {
+        std::cmp::max(1, partition.max_walltime_secs / params.max_runtime_secs)
+    } else {
+        1
+    };
+
+    // Total jobs per allocation = concurrent capacity × time slots
+    let jobs_per_allocation = (concurrent_jobs_per_node as u64) * time_slots;
+
+    let total_nodes =
+        (params.job_count as u64).div_ceil(jobs_per_allocation) * (params.nodes_per_job as u64);
+    let total_nodes = std::cmp::max(1, total_nodes) as i64;
+
+    if single_allocation {
+        Some(1)
+    } else {
+        Some(total_nodes)
+    }
+}
 
 /// A planned Slurm scheduler configuration.
 ///
@@ -278,42 +348,29 @@ fn process_scheduler_group<RR: ResourceRequirements>(
             )
         })?;
 
-    // Calculate concurrent jobs per node based on resources
-    let jobs_per_node_by_cpu = partition.cpus_per_node / rr.num_cpus() as u32;
-    let jobs_per_node_by_mem = (partition.memory_mb / memory_mb) as u32;
-    let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
-        (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
-        _ => u32::MAX,
+    // Calculate allocations using the shared helper function
+    let alloc_params = AllocationParams {
+        max_cpus: rr.num_cpus() as u32,
+        max_memory_mb: memory_mb,
+        max_runtime_secs: runtime_secs,
+        max_gpus: gpus.unwrap_or(0),
+        nodes_per_job: rr.num_nodes() as u32,
+        job_count: group.job_count,
     };
-    let concurrent_jobs_per_node = std::cmp::max(
-        1,
-        std::cmp::min(
-            jobs_per_node_by_cpu,
-            std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
-        ),
-    );
 
-    // Factor in runtime: how many sequential batches can run within the walltime
-    let runtime_secs = duration_string_to_seconds(rr.runtime()).unwrap_or(0) as u64;
-    let time_slots = if runtime_secs > 0 {
-        std::cmp::max(1, partition.max_walltime_secs / runtime_secs)
+    let num_allocations = calculate_allocations(&alloc_params, partition, single_allocation)
+        .ok_or_else(|| {
+            format!(
+                "Invalid resource requirements for '{}': CPUs or memory is zero",
+                rr.name()
+            )
+        })?;
+
+    // For single allocation mode, nodes_per_alloc equals total nodes needed
+    let nodes_per_alloc = if single_allocation {
+        num_allocations
     } else {
         1
-    };
-
-    // Total jobs per allocation = concurrent capacity × time slots
-    let jobs_per_allocation = (concurrent_jobs_per_node as u64) * time_slots;
-
-    let nodes_per_job = rr.num_nodes() as u32;
-    let total_nodes_needed =
-        (group.job_count as u64).div_ceil(jobs_per_allocation) * (nodes_per_job as u64);
-    let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
-
-    // Allocation strategy
-    let (nodes_per_alloc, num_allocations) = if single_allocation {
-        (total_nodes_needed, 1i64)
-    } else {
-        (1i64, total_nodes_needed)
     };
 
     // Generate scheduler name
@@ -520,17 +577,38 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
     // Merge pass: combine deferred and non-deferred groups for the same partition
     // when their total allocations are small (reduces Slurm submissions)
 
-    // Group partition groups by partition name to find merge candidates
-    let mut by_partition: HashMap<String, Vec<(String, bool)>> = HashMap::new();
-    for key in partition_groups.keys() {
-        by_partition
-            .entry(key.0.clone())
-            .or_default()
-            .push(key.clone());
-    }
+    // Helper to calculate allocations for a partition group
+    let calc_group_allocations = |pg: &PartitionGroup| -> Option<i64> {
+        let gpus = if pg.max_gpus > 0 {
+            Some(pg.max_gpus as u32)
+        } else {
+            None
+        };
+        let partition = profile.find_best_partition(
+            pg.max_cpus as u32,
+            pg.max_memory_mb,
+            pg.max_runtime_secs,
+            gpus,
+        )?;
+
+        let params = AllocationParams {
+            max_cpus: pg.max_cpus as u32,
+            max_memory_mb: pg.max_memory_mb,
+            max_runtime_secs: pg.max_runtime_secs,
+            max_gpus: pg.max_gpus as u32,
+            nodes_per_job: pg.max_nodes as u32,
+            job_count: pg.job_count,
+        };
+
+        calculate_allocations(&params, partition, single_allocation)
+    };
+
+    // Collect unique partition names for merge checking
+    // (we need to collect first to avoid borrowing issues during mutation)
+    let partition_names: HashSet<String> = partition_groups.keys().map(|k| k.0.clone()).collect();
 
     // Check each partition for merge opportunities
-    for (partition_name, _keys) in by_partition {
+    for partition_name in partition_names {
         let deferred_key = (partition_name.clone(), true);
         let non_deferred_key = (partition_name.clone(), false);
 
@@ -543,58 +621,8 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
             _ => continue,
         };
 
-        // Calculate allocations for each group
-        let calc_allocations = |pg: &PartitionGroup| -> Option<i64> {
-            let gpus = if pg.max_gpus > 0 {
-                Some(pg.max_gpus as u32)
-            } else {
-                None
-            };
-            let partition = profile.find_best_partition(
-                pg.max_cpus as u32,
-                pg.max_memory_mb,
-                pg.max_runtime_secs,
-                gpus,
-            )?;
-            // Calculate concurrent jobs per node based on resources
-            let jobs_per_node_by_cpu = partition.cpus_per_node / pg.max_cpus as u32;
-            let jobs_per_node_by_mem = (partition.memory_mb / pg.max_memory_mb) as u32;
-            let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
-                (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
-                _ => u32::MAX,
-            };
-            let concurrent_jobs_per_node = std::cmp::max(
-                1,
-                std::cmp::min(
-                    jobs_per_node_by_cpu,
-                    std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
-                ),
-            );
-
-            // Factor in runtime: how many sequential batches can run within the walltime
-            // This accounts for jobs running sequentially over time, not just concurrently
-            let time_slots = if pg.max_runtime_secs > 0 {
-                std::cmp::max(1, partition.max_walltime_secs / pg.max_runtime_secs)
-            } else {
-                1
-            };
-
-            // Total jobs per allocation = concurrent capacity × time slots
-            let jobs_per_allocation = (concurrent_jobs_per_node as u64) * time_slots;
-
-            let nodes_per_job = pg.max_nodes as u32;
-            let total_nodes =
-                (pg.job_count as u64).div_ceil(jobs_per_allocation) * (nodes_per_job as u64);
-            let total_nodes = std::cmp::max(1, total_nodes) as i64;
-            if single_allocation {
-                Some(1)
-            } else {
-                Some(total_nodes)
-            }
-        };
-
-        let deferred_allocs = calc_allocations(deferred).unwrap_or(i64::MAX);
-        let non_deferred_allocs = calc_allocations(non_deferred).unwrap_or(i64::MAX);
+        let deferred_allocs = calc_group_allocations(deferred).unwrap_or(i64::MAX);
+        let non_deferred_allocs = calc_group_allocations(non_deferred).unwrap_or(i64::MAX);
         let total_allocs = deferred_allocs.saturating_add(non_deferred_allocs);
 
         // Merge if total allocations are small enough that a single scheduler makes sense.
@@ -650,41 +678,33 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
             }
         };
 
-        // Calculate concurrent jobs per node based on resources
-        let jobs_per_node_by_cpu = partition.cpus_per_node / pg.max_cpus as u32;
-        let jobs_per_node_by_mem = (partition.memory_mb / pg.max_memory_mb) as u32;
-        let jobs_per_node_by_gpu = match (gpus, partition.gpus_per_node) {
-            (Some(job_gpus), Some(node_gpus)) if job_gpus > 0 => node_gpus / job_gpus,
-            _ => u32::MAX,
+        // Calculate allocations using the shared helper function
+        let alloc_params = AllocationParams {
+            max_cpus: pg.max_cpus as u32,
+            max_memory_mb: pg.max_memory_mb,
+            max_runtime_secs: pg.max_runtime_secs,
+            max_gpus: gpus.unwrap_or(0),
+            nodes_per_job: pg.max_nodes as u32,
+            job_count: pg.job_count,
         };
-        let concurrent_jobs_per_node = std::cmp::max(
-            1,
-            std::cmp::min(
-                jobs_per_node_by_cpu,
-                std::cmp::min(jobs_per_node_by_mem, jobs_per_node_by_gpu),
-            ),
-        );
 
-        // Factor in runtime: how many sequential batches can run within the walltime
-        let time_slots = if pg.max_runtime_secs > 0 {
-            std::cmp::max(1, partition.max_walltime_secs / pg.max_runtime_secs)
+        let num_allocations =
+            match calculate_allocations(&alloc_params, partition, single_allocation) {
+                Some(n) => n,
+                None => {
+                    plan.warnings.push(format!(
+                        "Invalid resource parameters for group '{}': CPUs or memory is zero",
+                        pg.partition_name
+                    ));
+                    continue;
+                }
+            };
+
+        // For single allocation mode, nodes_per_alloc equals total nodes needed
+        let nodes_per_alloc = if single_allocation {
+            num_allocations
         } else {
             1
-        };
-
-        // Total jobs per allocation = concurrent capacity × time slots
-        let jobs_per_allocation = (concurrent_jobs_per_node as u64) * time_slots;
-
-        let nodes_per_job = pg.max_nodes as u32;
-        let total_nodes_needed =
-            (pg.job_count as u64).div_ceil(jobs_per_allocation) * (nodes_per_job as u64);
-        let total_nodes_needed = std::cmp::max(1, total_nodes_needed) as i64;
-
-        // Allocation strategy
-        let (nodes_per_alloc, num_allocations) = if single_allocation {
-            (total_nodes_needed, 1i64)
-        } else {
-            (1i64, total_nodes_needed)
         };
 
         // Generate scheduler name based on partition
