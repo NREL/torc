@@ -770,8 +770,10 @@ fn test_generate_schedulers_sets_memory() {
     .unwrap();
 
     let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
-    // Memory should be set
-    assert_eq!(scheduler.mem.as_deref(), Some("128g"));
+    // Memory should be set to the partition's max memory, not the job's requirement.
+    // This allows jobs to use more memory than their estimates.
+    // Kestrel standard partition has 240,000 MB = 234g.
+    assert_eq!(scheduler.mem.as_deref(), Some("234g"));
 }
 
 #[rstest]
