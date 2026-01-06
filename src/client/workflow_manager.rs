@@ -135,14 +135,12 @@ impl WorkflowManager {
     ///
     /// If force is false:
     ///   - Return an error if required input files are missing.
-    ///   - Prompt the user to confirm deletion of any output files that already exist.
     ///
     /// If force is true:
     ///   - Ignore missing input files.
-    ///   - Delete any output files that already exist.
     pub fn initialize(&self, force: bool) -> Result<(), TorcError> {
         self.check_workflow(force)?;
-        self.cleanup_output_files(force)?;
+        self.cleanup_output_files(false)?;
         match default_api::reset_workflow_status(&self.config, self.workflow_id, None, None) {
             Ok(_) => {}
             Err(err) => {
@@ -442,9 +440,9 @@ impl WorkflowManager {
         Ok(())
     }
 
-    /// Check for existing output files and offer to delete them.
-    /// This should be called before initializing a workflow to avoid stale outputs.
-    pub fn cleanup_output_files(&self, force: bool) -> Result<(), TorcError> {
+    /// Check for existing output files and optionally delete them.
+    /// If delete_files is true, deletes the files. If false, logs warnings only.
+    pub fn cleanup_output_files(&self, delete_files: bool) -> Result<(), TorcError> {
         info!(
             "Checking for existing output files for workflow {}",
             self.workflow_id
@@ -478,33 +476,16 @@ impl WorkflowManager {
             return Ok(());
         }
 
-        // Display list of files to user
-        eprintln!("\nFound {} existing output file(s):", existing_files.len());
-        for file in &existing_files {
-            eprintln!("  - {}", file.path);
-        }
-
-        // Confirm deletion (unless force flag is set)
-        let should_delete = if force {
-            true
-        } else {
-            eprintln!("\nDelete these files before initializing? [y/N]: ");
-            std::io::Write::flush(&mut std::io::stdout())
-                .map_err(|e| TorcError::CommandFailed(e.to_string()))?;
-
-            let mut input = String::new();
-            std::io::stdin()
-                .read_line(&mut input)
-                .map_err(|e| TorcError::CommandFailed(e.to_string()))?;
-
-            let trimmed = input.trim().to_lowercase();
-            trimmed == "y" || trimmed == "yes"
-        };
-
-        if !should_delete {
-            return Err(TorcError::OperationNotAllowed(
-                "User chose not to delete existing output files. Operation aborted.".to_string(),
-            ));
+        // If not deleting, just log warnings and return
+        if !delete_files {
+            warn!(
+                "Found {} existing output file(s) that may be overwritten:",
+                existing_files.len()
+            );
+            for file in &existing_files {
+                warn!("  - {}", file.path);
+            }
+            return Ok(());
         }
 
         // Delete the files

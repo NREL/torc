@@ -95,25 +95,10 @@ Object.assign(TorcDashboard.prototype, {
         }
     },
 
-    async reinitializeWorkflow(workflowId, force = false) {
+    async reinitializeWorkflow(workflowId) {
         try {
-            if (!force) {
-                const checkResult = await api.cliCheckReinitialize(workflowId);
-                if (checkResult.success && checkResult.stdout) {
-                    try {
-                        const dryRunData = JSON.parse(checkResult.stdout);
-                        const fileCount = dryRunData.existing_output_file_count || 0;
-                        if (fileCount > 0) {
-                            this.showReinitializeConfirmModal(workflowId, fileCount, dryRunData.existing_output_files || []);
-                            return;
-                        }
-                    } catch (parseError) {
-                        console.warn('Could not parse dry-run response:', parseError);
-                    }
-                }
-            }
-
-            const result = await api.cliReinitializeWorkflow(workflowId, force);
+            // Existing output files just generate warnings - no confirmation needed
+            const result = await api.cliReinitializeWorkflow(workflowId, false);
             if (result.success) {
                 this.showToast('Workflow reinitialized', 'success');
                 await this.loadWorkflows();

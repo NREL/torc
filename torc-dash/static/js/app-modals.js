@@ -332,7 +332,7 @@ Object.assign(TorcDashboard.prototype, {
         document.getElementById('btn-confirm-reinit')?.addEventListener('click', async () => {
             this.hideModal('reinit-confirm-modal');
             if (this.pendingReinitializeWorkflowId) {
-                await this.reinitializeWorkflow(this.pendingReinitializeWorkflowId, true);
+                await this.reinitializeWorkflow(this.pendingReinitializeWorkflowId);
                 this.pendingReinitializeWorkflowId = null;
             }
         });

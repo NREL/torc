@@ -33,7 +33,7 @@ pub enum DetailViewType {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WorkflowAction {
     Initialize,
-    InitializeForce, // Initialize with --force (delete existing output files)
+    InitializeForce, // Initialize with --force (ignore missing input files)
     Reinitialize,
     ReinitializeForce, // Reinitialize with --force
     Reset,
@@ -1215,99 +1215,10 @@ impl App {
         Ok(())
     }
 
-    /// Reinitialize workflow using CLI command (following torc-dash pattern)
-    /// First does a dry-run check, then prompts user if there are existing files
+    /// Reinitialize workflow using CLI command.
+    /// Existing output files generate warnings but do not block the operation.
     fn reinitialize_workflow_cli(&mut self, workflow_id: i64, workflow_name: &str) -> Result<()> {
-        self.set_status(StatusMessage::info(&format!(
-            "Checking workflow '{}'...",
-            workflow_name
-        )));
-
-        let exe_path = self.get_torc_exe_path();
-        let url = self.client.get_base_url();
-        let workflow_id_str = workflow_id.to_string();
-
-        // First, do a dry-run check to see if there are existing output files
-        let check_output = std::process::Command::new(&exe_path)
-            .args([
-                "--url",
-                url,
-                "-f",
-                "json",
-                "workflows",
-                "reinitialize",
-                &workflow_id_str,
-                "--dry-run",
-            ])
-            .output();
-
-        match check_output {
-            Ok(output) => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-
-                // Try to parse JSON response
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
-                    let existing_count = json
-                        .get("existing_output_file_count")
-                        .and_then(|v| v.as_i64())
-                        .unwrap_or(0);
-
-                    // Check for existing output files (needs confirmation)
-                    if existing_count > 0 {
-                        let existing_files = json
-                            .get("existing_output_files")
-                            .and_then(|v| v.as_array())
-                            .map(|arr| {
-                                arr.iter()
-                                    .filter_map(|v| v.as_str())
-                                    .take(5)
-                                    .collect::<Vec<_>>()
-                                    .join("\n  - ")
-                            })
-                            .unwrap_or_default();
-
-                        let msg = if existing_count > 5 {
-                            format!(
-                                "Found {} existing output file(s):\n  - {}\n  ... and {} more.\n\nDelete these files and re-initialize?",
-                                existing_count,
-                                existing_files,
-                                existing_count - 5
-                            )
-                        } else {
-                            format!(
-                                "Found {} existing output file(s):\n  - {}\n\nDelete these files and re-initialize?",
-                                existing_count, existing_files
-                            )
-                        };
-
-                        let dialog =
-                            ConfirmationDialog::new("Re-initialize with Existing Files", &msg)
-                                .destructive();
-                        self.previous_focus = self.focus;
-                        self.focus = Focus::Popup;
-                        self.popup = Some(PopupType::Confirmation {
-                            dialog,
-                            action: PendingAction::Workflow(
-                                WorkflowAction::ReinitializeForce,
-                                workflow_id,
-                                workflow_name.to_string(),
-                            ),
-                        });
-                        return Ok(());
-                    }
-                }
-
-                // No existing files or couldn't parse JSON - proceed with normal reinitialize
-                self.run_reinitialize_command(workflow_id, workflow_name, false)
-            }
-            Err(e) => {
-                self.set_status(StatusMessage::error(&format!(
-                    "Failed to check re-initialization: {}",
-                    e
-                )));
-                Ok(())
-            }
-        }
+        self.run_reinitialize_command(workflow_id, workflow_name, false)
     }
 
     /// Run the actual reinitialize command (with or without --force)

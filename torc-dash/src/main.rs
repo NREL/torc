@@ -341,10 +341,6 @@ async fn main() -> Result<()> {
         .route("/api/cli/delete", post(cli_delete_handler))
         .route("/api/cli/cancel", post(cli_cancel_handler))
         .route("/api/cli/reinitialize", post(cli_reinitialize_handler))
-        .route(
-            "/api/cli/check-reinitialize",
-            post(cli_check_reinitialize_handler),
-        )
         .route("/api/cli/reset-status", post(cli_reset_status_handler))
         .route("/api/cli/execution-plan", post(cli_execution_plan_handler))
         .route("/api/cli/run-stream", get(cli_run_stream_handler))
@@ -810,28 +806,6 @@ async fn cli_reinitialize_handler(
         args.push("--force");
     }
     let result = run_torc_command(&state.torc_bin, &args, &state.api_url).await;
-    Json(result)
-}
-
-/// Check reinitialize status using --dry-run to see if there are existing output files
-async fn cli_check_reinitialize_handler(
-    State(state): State<Arc<AppState>>,
-    Json(req): Json<WorkflowIdRequest>,
-) -> impl IntoResponse {
-    // Run with -f json and --dry-run to get structured output about existing files
-    let result = run_torc_command(
-        &state.torc_bin,
-        &[
-            "-f",
-            "json",
-            "workflows",
-            "reinitialize",
-            &req.workflow_id,
-            "--dry-run",
-        ],
-        &state.api_url,
-    )
-    .await;
     Json(result)
 }
 
