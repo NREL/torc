@@ -384,6 +384,13 @@ fn process_scheduler_group<RR: ResourceRequirements>(
         None => format!("{}_scheduler", base_name),
     };
 
+    // Format memory for the scheduler (use partition's max memory to allow jobs to consume more than estimates)
+    let mem_str = if partition.memory_mb >= 1024 {
+        format!("{}g", partition.memory_mb / 1024)
+    } else {
+        format!("{}m", partition.memory_mb)
+    };
+
     let scheduler = PlannedScheduler {
         name: scheduler_name.clone(),
         account: account.to_string(),
@@ -392,7 +399,7 @@ fn process_scheduler_group<RR: ResourceRequirements>(
         } else {
             None
         },
-        mem: Some(rr.memory().to_string()),
+        mem: Some(mem_str),
         walltime: secs_to_walltime(partition.max_walltime_secs),
         nodes: nodes_per_alloc,
         gres: gpus.map(|g| format!("gpu:{}", g)),
@@ -718,11 +725,11 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
             None => format!("{}_scheduler", base_name),
         };
 
-        // Format memory for the scheduler (use max memory)
-        let mem_str = if pg.max_memory_mb >= 1024 {
-            format!("{}g", pg.max_memory_mb / 1024)
+        // Format memory for the scheduler (use partition's max memory to allow jobs to consume more than estimates)
+        let mem_str = if partition.memory_mb >= 1024 {
+            format!("{}g", partition.memory_mb / 1024)
         } else {
-            format!("{}m", pg.max_memory_mb)
+            format!("{}m", partition.memory_mb)
         };
 
         let scheduler = PlannedScheduler {
