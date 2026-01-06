@@ -331,18 +331,9 @@ class TorcAPI {
     }
 
     /**
-     * Check reinitialize status (dry-run) to see if there are existing output files
-     * @param {string} workflowId - Workflow ID
-     * @returns {object} CLI response with JSON in stdout containing existing_output_file_count
-     */
-    async cliCheckReinitialize(workflowId) {
-        return this.cliRequest('/api/cli/check-reinitialize', { workflow_id: workflowId });
-    }
-
-    /**
      * Reinitialize a workflow using CLI
      * @param {string} workflowId - Workflow ID
-     * @param {boolean} force - Force reinitialization (delete existing output files)
+     * @param {boolean} force - Force reinitialization (when true: ignore missing input files)
      */
     async cliReinitializeWorkflow(workflowId, force = false) {
         return this.cliRequest('/api/cli/reinitialize', { workflow_id: workflowId, force });

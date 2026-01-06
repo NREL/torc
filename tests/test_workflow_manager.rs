@@ -2469,7 +2469,7 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
     // Create f1 (input to preprocess) BEFORE initialization
     fs::write(&f1_path, r#"{"input": "data"}"#).expect("Failed to write f1");
 
-    // Initialize the workflow (force=true to auto-delete existing output files without prompting)
+    // Initialize the workflow (ignore missing input files)
     manager.initialize(true).expect("Failed to initialize");
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
