@@ -837,6 +837,10 @@ impl JobRunner {
                 if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
                     self.increment_resources(&job_rr);
                 }
+                // Reset the idle timer when a job completes, since blocked jobs may now
+                // become ready. This gives dependent jobs time to be picked up before
+                // the runner exits due to no jobs being claimed.
+                self.last_job_claimed_time = Some(Instant::now());
             }
             Err(e) => {
                 error!("Error completing job {}: {}", job_id, e);
