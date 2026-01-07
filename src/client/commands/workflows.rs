@@ -576,6 +576,41 @@ EXAMPLES:
         #[arg(long)]
         skip_events: bool,
     },
+
+    /// Synchronize job statuses with Slurm (detect and fail orphaned jobs)
+    ///
+    /// This command detects jobs that are stuck in "running" status because their
+    /// Slurm allocation terminated unexpectedly (e.g., due to timeout, node failure,
+    /// or admin intervention). It marks these orphaned jobs as failed so the workflow
+    /// can be recovered or restarted.
+    ///
+    /// Use this when:
+    /// - `torc recover` reports "there are active Slurm allocations" but squeue shows none
+    /// - Jobs appear stuck in "running" status after a Slurm allocation ended
+    /// - You want to clean up workflow state before running `torc recover`
+    #[command(
+        name = "sync-status",
+        after_long_help = "\
+EXAMPLES:
+    # Preview what would be cleaned up
+    torc workflows sync-status 123 --dry-run
+
+    # Clean up orphaned jobs
+    torc workflows sync-status 123
+
+    # Get JSON output for scripting
+    torc -f json workflows sync-status 123
+"
+    )]
+    SyncStatus {
+        /// ID of the workflow to sync (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+
+        /// Preview changes without applying them
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 fn show_execution_plan_from_spec(file_path: &str, format: &str) {
@@ -2548,6 +2583,109 @@ fn handle_is_complete(config: &Configuration, id: Option<i64>, format: &str) {
     }
 }
 
+fn handle_sync_status(
+    config: &Configuration,
+    workflow_id: Option<i64>,
+    dry_run: bool,
+    current_user: &str,
+    format: &str,
+) {
+    // Get workflow ID (prompt if not provided)
+    let workflow_id = match workflow_id {
+        Some(id) => id,
+        None => match select_workflow_interactively(config, current_user) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!("Error selecting workflow: {}", e);
+                std::process::exit(1);
+            }
+        },
+    };
+
+    // Status messages go to stderr so they don't pollute JSON output
+    if dry_run {
+        eprintln!(
+            "[DRY RUN] Checking for orphaned jobs in workflow {}...",
+            workflow_id
+        );
+    } else {
+        eprintln!("Synchronizing job statuses for workflow {}...", workflow_id);
+    }
+
+    match super::orphan_detection::cleanup_orphaned_jobs(config, workflow_id, dry_run) {
+        Ok(result) => {
+            if format == "json" {
+                match serde_json::to_string_pretty(&result) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing result to JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else if result.any_cleaned() {
+                let action = if dry_run {
+                    "Would clean up"
+                } else {
+                    "Cleaned up"
+                };
+                println!("\n{} orphaned jobs:", action);
+                if result.slurm_jobs_failed > 0 {
+                    println!(
+                        "  - {} job(s) from terminated Slurm allocations",
+                        result.slurm_jobs_failed
+                    );
+                }
+                if result.pending_allocations_cleaned > 0 {
+                    println!(
+                        "  - {} pending allocation(s) that no longer exist in Slurm",
+                        result.pending_allocations_cleaned
+                    );
+                }
+                if result.running_jobs_failed > 0 {
+                    println!(
+                        "  - {} job(s) stuck in running with no active compute nodes",
+                        result.running_jobs_failed
+                    );
+                }
+
+                if !result.failed_job_details.is_empty() {
+                    println!("\nAffected jobs:");
+                    for detail in &result.failed_job_details {
+                        // Use a simplified reason when Slurm job ID is available to avoid
+                        // redundant output like "Slurm job 12345 no longer running (Slurm job 12345)"
+                        let (reason, slurm_info) = if let Some(id) = detail.slurm_job_id.as_ref() {
+                            ("Allocation terminated", format!(" (Slurm job {})", id))
+                        } else {
+                            (detail.reason.as_str(), String::new())
+                        };
+                        println!(
+                            "  - Job {} ({}): {}{}",
+                            detail.job_id, detail.job_name, reason, slurm_info
+                        );
+                    }
+                }
+
+                if !dry_run {
+                    println!(
+                        "\nTotal: {} job(s) marked as failed",
+                        result.total_jobs_failed()
+                    );
+                    println!(
+                        "\nYou can now run `torc recover {}` to retry failed jobs.",
+                        workflow_id
+                    );
+                }
+            } else {
+                println!("No orphaned jobs found. Workflow state is in sync with Slurm.");
+            }
+        }
+        Err(e) => {
+            eprintln!("Error synchronizing job statuses: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
 pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowCommands, format: &str) {
     // Get the current user from environment
     let current_user = std::env::var("USER")
@@ -2732,6 +2870,12 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 &current_user,
                 format,
             );
+        }
+        WorkflowCommands::SyncStatus {
+            workflow_id,
+            dry_run,
+        } => {
+            handle_sync_status(config, *workflow_id, *dry_run, &current_user, format);
         }
     }
 }

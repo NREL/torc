@@ -41,11 +41,16 @@ torc recover 42
 
 This command:
 
-1. Checks that the workflow is complete and no workers are active
-2. Diagnoses failure causes (OOM, timeout, etc.)
-3. Adjusts resource requirements based on heuristics
-4. Resets failed jobs
-5. Regenerates Slurm schedulers and submits new allocations
+1. Detects and cleans up orphaned jobs from terminated Slurm allocations
+2. Checks that the workflow is complete and no workers are active
+3. Diagnoses failure causes (OOM, timeout, etc.)
+4. Adjusts resource requirements based on heuristics
+5. Resets failed jobs
+6. Regenerates Slurm schedulers and submits new allocations
+
+> **Note:** Step 1 (orphan cleanup) handles the case where Slurm terminated an allocation
+> unexpectedly, leaving jobs stuck in "running" status. This is done automatically before checking
+> preconditions.
 
 ### Recovery Options
 
@@ -396,6 +401,25 @@ torc reports check-resource-utilization 42
 This helps tune future job specifications.
 
 ## Troubleshooting
+
+### Jobs Stuck in "Running" Status
+
+If jobs appear stuck in "running" status after a Slurm allocation ended:
+
+1. This usually means the allocation was terminated unexpectedly (timeout, node failure, etc.)
+2. The `torc recover` command automatically handles this as its first step
+3. To manually clean up without triggering recovery, use:
+   ```bash
+   torc workflows sync-status <workflow_id>
+   ```
+4. To preview what would be cleaned up:
+   ```bash
+   torc workflows sync-status <workflow_id> --dry-run
+   ```
+
+See
+[Debugging Slurm Workflows](../how-to/debugging-slurm.md#orphaned-jobs-and-status-synchronization)
+for more details.
 
 ### Jobs Keep Failing After Recovery
 

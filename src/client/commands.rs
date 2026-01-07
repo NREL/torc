@@ -7,6 +7,7 @@ pub mod hpc;
 pub mod job_dependencies;
 pub mod jobs;
 pub mod logs;
+pub mod orphan_detection;
 pub mod output;
 pub mod pagination;
 pub mod recover;
