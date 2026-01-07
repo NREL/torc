@@ -286,6 +286,72 @@ When a Slurm job fails, follow this debugging workflow:
    cat output/dmesg_slurm_wf<workflow_id>_sl<slurm_job_id>_*.log
    ```
 
+## Orphaned Jobs and Status Synchronization
+
+When a Slurm allocation terminates unexpectedly (e.g., due to timeout, node failure, or admin
+intervention), jobs may become "orphaned" - stuck in "running" status in Torc's database even though
+no process is actually executing them.
+
+### Detecting Orphaned Jobs
+
+Common signs of orphaned jobs:
+
+- Jobs remain in "running" status long after the Slurm allocation ended
+- `torc recover` reports "there are active Slurm allocations" but `squeue` shows none
+- Workflow appears stuck but no Slurm jobs are actually running
+
+### Synchronizing Status with Slurm
+
+The `torc workflows sync-status` command detects and fixes orphaned jobs by checking the actual
+Slurm state:
+
+```bash
+# Preview what would be cleaned up (recommended first)
+torc workflows sync-status <workflow_id> --dry-run
+
+# Clean up orphaned jobs
+torc workflows sync-status <workflow_id>
+
+# Get JSON output for scripting
+torc -f json workflows sync-status <workflow_id>
+```
+
+This command:
+
+1. Checks each "active" scheduled compute node against `squeue`
+2. If Slurm reports the job is no longer running, marks associated Torc jobs as failed
+3. Updates scheduled compute node status to "complete"
+4. Also handles "pending" allocations that were cancelled before starting
+
+### Example Output
+
+```
+Synchronizing job statuses for workflow 42...
+
+Cleaned up orphaned jobs:
+  - 3 job(s) from terminated Slurm allocations
+  - 1 pending allocation(s) that no longer exist in Slurm
+
+Affected jobs:
+  - Job 107 (train_model_7): Slurm job 12345 no longer running (Slurm job 12345)
+  - Job 112 (train_model_12): Slurm job 12345 no longer running (Slurm job 12345)
+  - Job 123 (train_model_23): Slurm job 12345 no longer running (Slurm job 12345)
+
+Total: 3 job(s) marked as failed
+
+You can now run `torc recover 42` to retry failed jobs.
+```
+
+### Automatic Cleanup in Recovery
+
+The `torc recover` command automatically performs orphan detection as its first step, so you
+typically don't need to run `sync-status` manually before recovery. However, `sync-status` is useful
+when:
+
+- You want to clean up orphaned jobs without triggering a full recovery
+- You want to preview what `recover` would clean up (using `--dry-run`)
+- You're debugging why `recover` reports active allocations
+
 ## Common Slurm Issues and Solutions
 
 ### Out of Memory (OOM) Kills
@@ -344,6 +410,7 @@ When a Slurm job fails, follow this debugging workflow:
 
 - **`torc slurm parse-logs`**: Parse Slurm logs for known error patterns
 - **`torc slurm sacct`**: Collect Slurm accounting data for workflow jobs
+- **`torc workflows sync-status`**: Detect and fix orphaned jobs from terminated Slurm allocations
 - **`torc reports results`**: Generate debug report with all log file paths
 - **`torc results list`**: View summary of job results in table format
 - **`torc-dash`**: Launch web interface with Slurm log viewing

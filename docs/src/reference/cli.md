@@ -54,6 +54,8 @@ This document contains the help content for the `torc` command-line program.
   - [`torc workflows list-actions`](#torc-workflows-list-actions) - [**Arguments:**](#arguments-18)
     - [**Options:**](#options-18)
   - [`torc workflows is-complete`](#torc-workflows-is-complete) - [**Arguments:**](#arguments-19)
+  - [`torc workflows sync-status`](#torc-workflows-sync-status) - [**Arguments:**](#arguments-20) -
+    [**Options:**](#options-18)
   - [`torc compute-nodes`](#torc-compute-nodes) - [**Subcommands:**](#subcommands-2)
   - [`torc compute-nodes get`](#torc-compute-nodes-get) - [**Arguments:**](#arguments-20)
   - [`torc compute-nodes list`](#torc-compute-nodes-list) - [**Arguments:**](#arguments-21) -
@@ -503,6 +505,7 @@ Workflow management commands
 - `is-complete` — Check if a workflow is complete
 - `export` — Export a workflow to a portable JSON file
 - `import` — Import a workflow from an exported JSON file
+- `sync-status` — Synchronize job statuses with Slurm (detect and fail orphaned jobs)
 
 ## `torc workflows create`
 
@@ -960,6 +963,43 @@ torc workflows import workflow.json --name 'my-copy'
 
 # Skip importing results even if present in file
 torc workflows import workflow.json --skip-results
+```
+
+## `torc workflows sync-status`
+
+Synchronize job statuses with Slurm (detect and fail orphaned jobs)
+
+This command detects jobs that are stuck in "running" status because their Slurm allocation
+terminated unexpectedly (e.g., due to timeout, node failure, or admin intervention). It marks these
+orphaned jobs as failed so the workflow can be recovered or restarted.
+
+Use this when:
+
+- `torc recover` reports "there are active Slurm allocations" but `squeue` shows none
+- Jobs appear stuck in "running" status after a Slurm allocation ended
+- You want to clean up workflow state before running `torc recover`
+
+**Usage:** `torc workflows sync-status [OPTIONS] [WORKFLOW_ID]`
+
+###### **Arguments:**
+
+- `<WORKFLOW_ID>` — ID of the workflow to sync (optional - will prompt if not provided)
+
+###### **Options:**
+
+- `--dry-run` — Preview changes without applying them
+
+###### **Examples:**
+
+```bash
+# Preview what would be cleaned up
+torc workflows sync-status 123 --dry-run
+
+# Clean up orphaned jobs
+torc workflows sync-status 123
+
+# Get JSON output for scripting
+torc -f json workflows sync-status 123
 ```
 
 ## `torc compute-nodes`

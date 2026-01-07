@@ -11,13 +11,75 @@ leaves workflows in a partial state with:
 
 1. **Ready/uninitialized jobs** - Jobs that were waiting to run but never got scheduled
 2. **Blocked jobs** - Jobs whose dependencies haven't completed yet
+3. **Orphaned running jobs** - Jobs still marked as "running" in the database even though their
+   Slurm allocation has terminated
 
 Simply creating new Slurm schedulers and submitting allocations isn't enough because:
 
-1. **Duplicate allocations**: If the workflow had `on_workflow_start` actions to schedule nodes,
+1. **Orphaned jobs block recovery**: Jobs stuck in "running" status prevent the workflow from being
+   considered complete, blocking recovery precondition checks
+2. **Duplicate allocations**: If the workflow had `on_workflow_start` actions to schedule nodes,
    those actions would fire again when the workflow is reinitialized, creating duplicate allocations
-2. **Missing allocations for blocked jobs**: Blocked jobs will eventually become ready, but there's
+3. **Missing allocations for blocked jobs**: Blocked jobs will eventually become ready, but there's
    no mechanism to schedule new allocations for them
+
+## Orphan Detection
+
+Before recovery can proceed, orphaned jobs must be detected and their status corrected. This is
+handled by the **orphan detection** module (`src/client/commands/orphan_detection.rs`).
+
+### How It Works
+
+The orphan detection logic checks for three types of orphaned resources:
+
+1. **Active allocations with terminated Slurm jobs**: ScheduledComputeNodes marked as "active" in
+   the database, but whose Slurm job is no longer running (verified via `squeue`)
+
+2. **Pending allocations that disappeared**: ScheduledComputeNodes marked as "pending" whose Slurm
+   job no longer exists (cancelled or failed before starting)
+
+3. **Running jobs with no active compute nodes**: Jobs marked as "running" but with no active
+   compute nodes to process them (fallback for non-Slurm cases)
+
+```mermaid
+flowchart TD
+    A[Start Orphan Detection] --> B[List active ScheduledComputeNodes]
+    B --> C{For each Slurm allocation}
+    C --> D[Check squeue for job status]
+    D --> E{Job still running?}
+    E -->|Yes| C
+    E -->|No| F[Find jobs on this allocation]
+    F --> G[Mark jobs as failed]
+    G --> H[Update ScheduledComputeNode to complete]
+    H --> C
+    C --> I[List pending ScheduledComputeNodes]
+    I --> J{For each pending allocation}
+    J --> K[Check squeue for job status]
+    K --> L{Job exists?}
+    L -->|Yes| J
+    L -->|No| M[Update ScheduledComputeNode to complete]
+    M --> J
+    J --> N[Check for running jobs with no active nodes]
+    N --> O[Mark orphaned jobs as failed]
+    O --> P[Done]
+```
+
+### Integration Points
+
+Orphan detection is integrated into two commands:
+
+1. **`torc recover`**: Runs orphan detection automatically as the first step before checking
+   preconditions. This ensures that orphaned jobs don't block recovery.
+
+2. **`torc workflows sync-status`**: Standalone command to run orphan detection without triggering a
+   full recovery. Useful for debugging or when you want to clean up orphaned jobs without submitting
+   new allocations.
+
+### The `torc watch` Command
+
+The `torc watch` command also performs orphan detection during its polling loop. When it detects
+that no valid Slurm allocations exist (via a quick `squeue` check), it runs the full orphan
+detection logic to clean up any orphaned jobs before checking if the workflow can make progress.
 
 ## Recovery Actions
 
@@ -166,7 +228,10 @@ torc slurm regenerate <workflow_id> --account <account> --profile kestrel
 
 The recovery logic is implemented in:
 
-- `src/client/commands/slurm.rs`: `handle_regenerate` function
+- `src/client/commands/orphan_detection.rs`: Shared orphan detection logic used by `recover`,
+  `watch`, and `workflows sync-status`
+- `src/client/commands/recover.rs`: Main recovery command implementation
+- `src/client/commands/slurm.rs`: `handle_regenerate` function for Slurm scheduler regeneration
 - `src/client/workflow_graph.rs`: `WorkflowGraph::from_jobs()` and `scheduler_groups()` methods
 - `src/server/api/workflow_actions.rs`: `reset_actions_for_reinitialize` function
 - `migrations/20251225000000_add_is_recovery_to_workflow_action.up.sql`: Schema migration

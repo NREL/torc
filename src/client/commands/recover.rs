@@ -146,19 +146,52 @@ pub fn format_duration_iso8601(secs: u64) -> String {
 }
 
 /// Recover a Slurm workflow by:
-/// 1. Checking preconditions (workflow complete, no active workers)
-/// 2. Diagnosing failures (OOM, timeout, etc.)
-/// 3. Applying recovery heuristics (adjusting resources)
-/// 4. Running recovery hook (if provided)
-/// 5. Resetting failed jobs
-/// 6. Reinitializing workflow
-/// 7. Regenerating and submitting Slurm schedulers
+/// 1. Cleaning up orphaned jobs (from terminated Slurm allocations)
+/// 2. Checking preconditions (workflow complete, no active workers)
+/// 3. Diagnosing failures (OOM, timeout, etc.)
+/// 4. Applying recovery heuristics (adjusting resources)
+/// 5. Running recovery hook (if provided)
+/// 6. Resetting failed jobs
+/// 7. Reinitializing workflow
+/// 8. Regenerating and submitting Slurm schedulers
 pub fn recover_workflow(
     config: &Configuration,
     args: &RecoverArgs,
 ) -> Result<RecoveryResult, String> {
     if args.dry_run {
         info!("[DRY RUN] Showing what would be done without making changes");
+    }
+
+    // Step 0: Clean up orphaned jobs from terminated Slurm allocations
+    // This must happen before checking preconditions because orphaned jobs/allocations
+    // would otherwise block recovery (preconditions check for no active workers)
+    info!("Checking for orphaned jobs from terminated Slurm allocations...");
+    match super::orphan_detection::cleanup_orphaned_jobs(config, args.workflow_id, args.dry_run) {
+        Ok(result) => {
+            if result.any_cleaned() {
+                if args.dry_run {
+                    info!(
+                        "[DRY RUN] Would clean up: {} Slurm jobs, {} pending allocations, {} running jobs",
+                        result.slurm_jobs_failed,
+                        result.pending_allocations_cleaned,
+                        result.running_jobs_failed
+                    );
+                } else {
+                    info!(
+                        "Cleaned up orphaned jobs: {} Slurm jobs failed, {} pending allocations cleaned, {} running jobs failed",
+                        result.slurm_jobs_failed,
+                        result.pending_allocations_cleaned,
+                        result.running_jobs_failed
+                    );
+                }
+            } else {
+                info!("No orphaned jobs found");
+            }
+        }
+        Err(e) => {
+            warn!("Warning: Error during orphan cleanup: {}", e);
+            // Continue with recovery - orphan cleanup is best-effort
+        }
     }
 
     // Step 1: Check preconditions
