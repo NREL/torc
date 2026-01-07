@@ -2602,13 +2602,14 @@ fn handle_sync_status(
         },
     };
 
+    // Status messages go to stderr so they don't pollute JSON output
     if dry_run {
-        println!(
+        eprintln!(
             "[DRY RUN] Checking for orphaned jobs in workflow {}...",
             workflow_id
         );
     } else {
-        println!("Synchronizing job statuses for workflow {}...", workflow_id);
+        eprintln!("Synchronizing job statuses for workflow {}...", workflow_id);
     }
 
     match super::orphan_detection::cleanup_orphaned_jobs(config, workflow_id, dry_run) {
@@ -2650,14 +2651,16 @@ fn handle_sync_status(
                 if !result.failed_job_details.is_empty() {
                     println!("\nAffected jobs:");
                     for detail in &result.failed_job_details {
-                        let slurm_info = detail
-                            .slurm_job_id
-                            .as_ref()
-                            .map(|id| format!(" (Slurm job {})", id))
-                            .unwrap_or_default();
+                        // Use a simplified reason when Slurm job ID is available to avoid
+                        // redundant output like "Slurm job 12345 no longer running (Slurm job 12345)"
+                        let (reason, slurm_info) = if let Some(id) = detail.slurm_job_id.as_ref() {
+                            ("Allocation terminated", format!(" (Slurm job {})", id))
+                        } else {
+                            (detail.reason.as_str(), String::new())
+                        };
                         println!(
                             "  - Job {} ({}): {}{}",
-                            detail.job_id, detail.job_name, detail.reason, slurm_info
+                            detail.job_id, detail.job_name, reason, slurm_info
                         );
                     }
                 }

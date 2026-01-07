@@ -333,9 +333,9 @@ Cleaned up orphaned jobs:
   - 1 pending allocation(s) that no longer exist in Slurm
 
 Affected jobs:
-  - Job 107 (train_model_7): Slurm job 12345 no longer running (Slurm job 12345)
-  - Job 112 (train_model_12): Slurm job 12345 no longer running (Slurm job 12345)
-  - Job 123 (train_model_23): Slurm job 12345 no longer running (Slurm job 12345)
+  - Job 107 (train_model_7): Allocation terminated (Slurm job 12345)
+  - Job 112 (train_model_12): Allocation terminated (Slurm job 12345)
+  - Job 123 (train_model_23): Allocation terminated (Slurm job 12345)
 
 Total: 3 job(s) marked as failed
 
