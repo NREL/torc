@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -162,11 +162,9 @@ where
         };
 
         let deleted_count = result.rows_affected();
-        debug!(
-            "delete_files({}) - Deleted {} files - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} files for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteFilesResponse::SuccessfulResponse(serde_json::json!({
@@ -540,7 +538,10 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Removed file with id: {}", id);
+                    info!(
+                        "Deleted file {} (path: {:?}) from workflow {}",
+                        id, file.path, file.workflow_id
+                    );
                     Ok(DeleteFileResponse::SuccessfulResponse(file))
                 }
             }

@@ -1,7 +1,7 @@
 //! Remote workers API endpoints
 
 use async_trait::async_trait;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -244,11 +244,9 @@ where
                         error_response,
                     ));
                 }
-                debug!(
-                    "delete_remote_worker({}, {}) deleted - X-Span-ID: {:?}",
-                    workflow_id,
-                    worker,
-                    context.get().0.clone()
+                info!(
+                    "Deleted remote worker {} from workflow {}",
+                    worker, workflow_id
                 );
                 Ok(DeleteRemoteWorkerResponse::SuccessfulResponse(
                     models::RemoteWorkerModel::new(worker, workflow_id),

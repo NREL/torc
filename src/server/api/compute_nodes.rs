@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -185,11 +185,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_compute_nodes({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} compute nodes for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteComputeNodesResponse::SuccessfulResponse(
@@ -578,7 +576,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Deleted compute node with id: {}", id);
+                    info!("Deleted compute node with id: {}", id);
                     Ok(DeleteComputeNodeResponse::SuccessfulResponse(compute_node))
                 }
             }

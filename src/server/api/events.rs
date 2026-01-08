@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use chrono::Utc;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -414,6 +414,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
+                    info!("Deleted event with id: {}", id);
                     Ok(DeleteEventResponse::SuccessfulResponse(event))
                 }
             }

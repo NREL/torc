@@ -1198,6 +1198,10 @@ where
                         res.rows_affected()
                     )))
                 } else {
+                    info!(
+                        "Successfully deleted workflow {} (name: {:?})",
+                        id, workflow.name
+                    );
                     Ok(DeleteWorkflowResponse::SuccessfulResponse(workflow))
                 }
             }

@@ -1165,11 +1165,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_jobs({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} jobs for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteJobsResponse::SuccessfulResponse(serde_json::json!({
@@ -2055,6 +2053,10 @@ where
                     error!("No rows affected when deleting job {}", id);
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
+                    info!(
+                        "Deleted job {} (name: {:?}) from workflow {}",
+                        id, job.name, job.workflow_id
+                    );
                     Ok(DeleteJobResponse::SuccessfulResponse(job))
                 }
             }
