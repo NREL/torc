@@ -687,7 +687,6 @@ impl JobRunner {
                 && let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids)
             {
                 error!("Output file validation failed for job {}: {}", job_id, e);
-                // Mark job as failed - must update both return_code AND status
                 result.return_code = 1;
                 result.status = JobStatus::Failed;
             }

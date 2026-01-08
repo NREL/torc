@@ -1341,7 +1341,7 @@ impl<C> Server<C> {
                       JOIN workflow_status ws ON j_fail.workflow_id = ws.id AND r_fail.run_id = ws.run_id
                       WHERE jbb_fail.job_id = job.id
                         AND jbb_fail.workflow_id = ?
-                        AND j_fail.status IN (?, ?, ?, ?)
+                        AND j_fail.status IN (?, ?, ?)
                         AND r_fail.return_code != 0
                   )
                 "#,
@@ -1356,7 +1356,6 @@ impl<C> Server<C> {
                 canceled_status,
                 terminated_status,
                 workflow_id,
-                completed_status,
                 failed_status,
                 canceled_status,
                 terminated_status
@@ -1453,8 +1452,8 @@ impl<C> Server<C> {
                 -- Base case: find jobs directly blocked by the completed job
                 SELECT
                     jbb.job_id,
-                    -- Cancel if: ANY dependency has non-zero return code AND cancel_on_blocking_job_failure = true
-                    -- We check ALL completed dependencies, not just the current one being processed
+                    -- Cancel if: ANY dependency has failed (status is failed/canceled/terminated with non-zero return code)
+                    -- AND cancel_on_blocking_job_failure = true. We check ALL failed dependencies, not just the current one.
                     CASE
                         WHEN j.cancel_on_blocking_job_failure != 0 AND EXISTS (
                             SELECT 1
@@ -1464,7 +1463,7 @@ impl<C> Server<C> {
                             JOIN workflow_status ws ON j_dep.workflow_id = ws.id AND r_dep.run_id = ws.run_id
                             WHERE jbb_dep.job_id = jbb.job_id
                               AND jbb_dep.workflow_id = ?
-                              AND j_dep.status IN (?, ?, ?, ?)
+                              AND j_dep.status IN (?, ?, ?)
                               AND r_dep.return_code != 0
                         ) THEN 1
                         ELSE 0
@@ -1523,8 +1522,7 @@ impl<C> Server<C> {
             "#,
         )
         .bind(workflow_id)           // Base case: workflow_id for subquery
-        .bind(completed_status)      // Base case: complete statuses for subquery
-        .bind(failed_status)
+        .bind(failed_status)         // Base case: failed statuses for subquery (not completed - status is source of truth)
         .bind(canceled_status)
         .bind(terminated_status)
         .bind(completed_job_id)      // Base case: depends_on_job_id
