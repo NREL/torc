@@ -304,6 +304,38 @@ ValueError: Invalid input
 }
 
 #[rstest]
+fn test_analyze_bundle_detects_missing_output_files() {
+    ensure_binary_built();
+
+    let temp_dir = TempDir::new().unwrap();
+    let output_dir = temp_dir.path().join("output");
+    fs::create_dir_all(&output_dir).unwrap();
+
+    // Create log file with missing output files error (as logged by JobRunner)
+    create_log_file(
+        &output_dir,
+        "job_runner_wf42_hostname_r1.log",
+        r#"INFO: Starting job 123
+INFO: Job 123 completed with return_code=0
+ERROR: Output file validation failed for job 123: Job 123 completed successfully but expected output files are missing: /path/to/output1.csv, /path/to/output2.parquet
+INFO: Job ID 123 completed return_code=1 status=Failed
+"#,
+    );
+
+    let bundle_path = temp_dir.path().join("wf42.tar.gz");
+    create_test_bundle(&output_dir, &bundle_path, 42);
+
+    let (success, stdout, stderr) = run_torc(&["logs", "analyze", bundle_path.to_str().unwrap()]);
+
+    assert!(success, "Analyze should succeed. stderr: {}", stderr);
+    assert!(
+        stdout.contains("Missing Output Files"),
+        "Should detect missing output files error. stdout: {}",
+        stdout
+    );
+}
+
+#[rstest]
 fn test_analyze_bundle_no_errors() {
     ensure_binary_built();
 

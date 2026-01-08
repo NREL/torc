@@ -385,33 +385,28 @@ impl JobsApiImpl {
         })
     }
 
-    /// Reset only failed jobs (jobs with non-zero return_code) to uninitialized status.
+    /// Reset only failed/canceled/terminated jobs to uninitialized status.
     async fn reset_failed_jobs_only(
         &self,
         workflow_id: i64,
     ) -> Result<ResetJobStatusResponse, ApiError> {
         let uninitialized_status = JobStatus::Uninitialized.to_int();
-        let completed_status = JobStatus::Completed.to_int();
         let failed_status = JobStatus::Failed.to_int();
         let canceled_status = JobStatus::Canceled.to_int();
         let terminated_status = JobStatus::Terminated.to_int();
 
-        // Get the list of jobs that actually failed (have a result with non-zero return code).
-        // Canceled/terminated jobs that never ran are NOT included here - they will be
-        // handled by reinitialize_jobs which uses a recursive CTE to find all jobs
-        // blocked by the reset jobs and transitions them appropriately.
+        // Get jobs with failed/canceled/terminated status. The status field is the source
+        // of truth - we don't check return_code since status should always be consistent
+        // with the actual outcome. This also handles jobs that were canceled/terminated
+        // before running (which have no result record).
         let failed_jobs = match sqlx::query!(
             r#"
-            SELECT j.id, j.status
-            FROM job j
-            JOIN workflow_result wr ON j.id = wr.job_id AND j.workflow_id = wr.workflow_id
-            JOIN result r ON wr.result_id = r.id
-            WHERE j.workflow_id = $1
-              AND j.status IN ($2, $3, $4, $5)
-              AND r.return_code != 0
+            SELECT id, status
+            FROM job
+            WHERE workflow_id = $1
+              AND status IN ($2, $3, $4)
             "#,
             workflow_id,
-            completed_status,
             failed_status,
             canceled_status,
             terminated_status

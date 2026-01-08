@@ -70,7 +70,10 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
     let compute_node = create_test_compute_node(config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    // Complete job1 with failure (return_code = 1)
+    // Complete job1 with failure (return_code = 1, status = Failed)
+    // Note: The job status must match the return_code - a non-zero return_code
+    // should have status = Failed, not Completed. The reset_failed_jobs_only
+    // query filters by status, not return_code.
     let job1_result = models::ResultModel::new(
         job1_id,
         workflow_id,
@@ -79,7 +82,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         1,   // return_code (failure)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Completed,
+        JobStatus::Failed,
     );
 
     default_api::complete_job(
@@ -136,12 +139,12 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
     )
     .expect("Failed to complete job3");
 
-    // Verify all jobs are now completed
+    // Verify all jobs are now in their expected final states
     let job1_completed = default_api::get_job(config, job1_id).expect("Failed to get job1");
     let job2_completed = default_api::get_job(config, job2_id).expect("Failed to get job2");
     let job3_completed = default_api::get_job(config, job3_id).expect("Failed to get job3");
 
-    assert_eq!(job1_completed.status.unwrap(), JobStatus::Completed);
+    assert_eq!(job1_completed.status.unwrap(), JobStatus::Failed);
     assert_eq!(job2_completed.status.unwrap(), JobStatus::Completed);
     assert_eq!(job3_completed.status.unwrap(), JobStatus::Completed);
 
@@ -246,15 +249,16 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
     let compute_node = create_test_compute_node(config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    // Complete all jobs (simulating a scenario where they all completed despite job1 failure)
-    let jobs_and_return_codes = vec![
-        (job1_id, 1), // job1 fails
-        (job2_id, 0), // job2 succeeds
-        (job3_id, 0), // job3 succeeds
-        (job4_id, 0), // job4 succeeds
+    // Complete all jobs - job1 fails, others succeed
+    // Note: status must match return_code - non-zero return_code requires Failed status
+    let jobs_and_results: Vec<(i64, i64, JobStatus)> = vec![
+        (job1_id, 1, JobStatus::Failed),    // job1 fails
+        (job2_id, 0, JobStatus::Completed), // job2 succeeds
+        (job3_id, 0, JobStatus::Completed), // job3 succeeds
+        (job4_id, 0, JobStatus::Completed), // job4 succeeds
     ];
 
-    for (job_id, return_code) in jobs_and_return_codes {
+    for (job_id, return_code, status) in jobs_and_results {
         let result = models::ResultModel::new(
             job_id,
             workflow_id,
@@ -263,15 +267,22 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
             return_code,
             1.0,
             chrono::Utc::now().to_rfc3339(),
-            JobStatus::Completed,
+            status,
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)
             .unwrap_or_else(|_| panic!("Failed to complete job {}", job_id));
     }
 
-    // Verify all jobs are completed
-    for job_id in [job1_id, job2_id, job3_id, job4_id] {
+    // Verify all jobs are in their expected states
+    assert_eq!(
+        default_api::get_job(config, job1_id)
+            .expect("Failed to get job1")
+            .status
+            .unwrap(),
+        JobStatus::Failed
+    );
+    for job_id in [job2_id, job3_id, job4_id] {
         let job = default_api::get_job(config, job_id).expect("Failed to get job");
         assert_eq!(job.status.unwrap(), JobStatus::Completed);
     }
@@ -356,15 +367,16 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
     let compute_node = create_test_compute_node(config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    // Complete all jobs
-    let jobs_and_return_codes = vec![
-        (job1_id, 1), // job1 fails
-        (job2_id, 0), // job2 succeeds
-        (job3_id, 0), // job3 succeeds
-        (job4_id, 0), // job4 succeeds
+    // Complete all jobs - job1 fails, others succeed
+    // Note: status must match return_code - non-zero return_code requires Failed status
+    let jobs_and_results: Vec<(i64, i64, JobStatus)> = vec![
+        (job1_id, 1, JobStatus::Failed),    // job1 fails
+        (job2_id, 0, JobStatus::Completed), // job2 succeeds
+        (job3_id, 0, JobStatus::Completed), // job3 succeeds
+        (job4_id, 0, JobStatus::Completed), // job4 succeeds
     ];
 
-    for (job_id, return_code) in jobs_and_return_codes {
+    for (job_id, return_code, status) in jobs_and_results {
         let result = models::ResultModel::new(
             job_id,
             workflow_id,
@@ -373,7 +385,7 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
             return_code,
             1.0,
             chrono::Utc::now().to_rfc3339(),
-            JobStatus::Completed,
+            status,
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)

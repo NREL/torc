@@ -478,10 +478,12 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     let run_id_1 = status.run_id;
 
     // Complete jobs for run 1 using complete_job (which updates workflow_result table)
+    // Note: status must match return_code - non-zero return_code requires Failed status
+    // so that reset_job_status with failed_only=true will reset these jobs
     default_api::complete_job(
         config,
         job1_id,
-        models::JobStatus::Completed,
+        models::JobStatus::Failed,
         run_id_1,
         models::ResultModel::new(
             job1_id,
@@ -491,7 +493,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             1, // failed return_code
             2.5,
             "2024-01-01T10:00:00.000Z".to_string(),
-            models::JobStatus::Completed,
+            models::JobStatus::Failed,
         ),
     )
     .expect("Failed to complete job1 for run 1");
@@ -499,7 +501,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     default_api::complete_job(
         config,
         job2_id,
-        models::JobStatus::Completed,
+        models::JobStatus::Failed,
         run_id_1,
         models::ResultModel::new(
             job2_id,
@@ -509,7 +511,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             1, // failed return_code
             3.5,
             "2024-01-01T11:00:00.000Z".to_string(),
-            models::JobStatus::Completed,
+            models::JobStatus::Failed,
         ),
     )
     .expect("Failed to complete job2 for run 1");
