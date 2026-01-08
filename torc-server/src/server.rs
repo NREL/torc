@@ -2615,6 +2615,12 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<CancelWorkflowResponse, ApiError> {
+        info!(
+            "cancel_workflow(workflow_id={}) - X-Span-ID: {:?}",
+            id,
+            Has::<XSpanIdString>::get(context).0.clone()
+        );
+
         // Check access control
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
@@ -4543,6 +4549,12 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<DeleteWorkflowResponse, ApiError> {
+        info!(
+            "delete_workflow(workflow_id={}) - X-Span-ID: {:?}",
+            id,
+            Has::<XSpanIdString>::get(context).0.clone()
+        );
+
         // Check access control
         match self.check_workflow_access_for_context(id, context).await {
             AccessCheckResult::Allowed => {}
@@ -4582,6 +4594,13 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ResetJobStatusResponse, ApiError> {
+        info!(
+            "reset_job_status(workflow_id={}, failed_only={:?}) - X-Span-ID: {:?}",
+            id,
+            failed_only,
+            Has::<XSpanIdString>::get(context).0.clone()
+        );
+
         // Check if workflow exists
         let workflow_exists = self.workflows_api.does_workflow_exist(id, context).await?;
         if !workflow_exists {
@@ -4610,6 +4629,13 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ResetWorkflowStatusResponse, ApiError> {
+        info!(
+            "reset_workflow_status(workflow_id={}, force={:?}) - X-Span-ID: {:?}",
+            id,
+            force,
+            Has::<XSpanIdString>::get(context).0.clone()
+        );
+
         // Clear in-memory failure tracking for this workflow
         if let Ok(mut set) = self.workflows_with_failures.write() {
             set.remove(&id);

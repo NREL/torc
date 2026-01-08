@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -210,11 +210,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_all_resource_requirements({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} resource requirements for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteAllResourceRequirementsResponse::SuccessfulResponse(
@@ -545,6 +543,10 @@ where
         .await
         {
             Ok(_) => {
+                info!(
+                    "Updated resource requirements with id: {} (name: {:?})",
+                    id, body.name
+                );
                 let mut updated_body = body;
                 updated_body.id = Some(id);
                 Ok(UpdateResourceRequirementsResponse::SuccessfulResponse(
@@ -597,7 +599,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Removed resource requirements with id: {}", id);
+                    info!("Deleted resource requirements with id: {}", id);
                     Ok(DeleteResourceRequirementsResponse::SuccessfulResponse(
                         resource_requirements,
                     ))

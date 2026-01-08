@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -367,11 +367,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_local_schedulers({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} local schedulers for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteLocalSchedulersResponse::SuccessfulResponse(
@@ -411,11 +409,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_scheduled_compute_nodes({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} scheduled compute nodes for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteScheduledComputeNodesResponse::SuccessfulResponse(
@@ -455,11 +451,9 @@ where
 
         let deleted_count = result.rows_affected() as i64;
 
-        debug!(
-            "delete_slurm_schedulers({}) deleted {} records - X-Span-ID: {:?}",
-            workflow_id,
-            deleted_count,
-            context.get().0.clone()
+        info!(
+            "Deleted {} slurm schedulers for workflow {}",
+            deleted_count, workflow_id
         );
 
         Ok(DeleteSlurmSchedulersResponse::Message(serde_json::json!({
@@ -1224,7 +1218,10 @@ where
             }
         };
 
-        debug!("Updated Slurm scheduler with id: {}", id);
+        info!(
+            "Updated Slurm scheduler with id: {} (name: {:?})",
+            id, updated_slurm_scheduler.name
+        );
         Ok(UpdateSlurmSchedulerResponse::SuccessfulResponse(
             updated_slurm_scheduler,
         ))
@@ -1269,7 +1266,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Deleted local scheduler with id: {}", id);
+                    info!("Deleted local scheduler with id: {}", id);
                     Ok(
                         DeleteLocalSchedulerResponse::LocalComputeNodeConfigurationStoredInTheTable(
                             local_scheduler,
@@ -1325,7 +1322,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Deleted scheduled compute node with id: {}", id);
+                    info!("Deleted scheduled compute node with id: {}", id);
                     Ok(DeleteScheduledComputeNodeResponse::SuccessfulResponse(
                         scheduled_compute_node,
                     ))
@@ -1377,7 +1374,7 @@ where
                 } else if res.rows_affected() == 0 {
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
-                    debug!("Deleted Slurm scheduler with id: {}", id);
+                    info!("Deleted Slurm scheduler with id: {}", id);
                     Ok(DeleteSlurmSchedulerResponse::SuccessfulResponse(
                         slurm_scheduler,
                     ))

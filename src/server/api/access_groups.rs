@@ -2,7 +2,7 @@
 
 #![allow(clippy::too_many_arguments)]
 
-use log::{debug, error};
+use log::{debug, error, info};
 use serde_json::json;
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
@@ -308,6 +308,7 @@ impl AccessGroupsApiImpl {
                         })),
                     ));
                 }
+                info!("Deleted access group with id: {}", id);
                 Ok(DeleteAccessGroupResponse::SuccessfulResponse(group))
             }
             Err(e) => Err(database_error(e)),

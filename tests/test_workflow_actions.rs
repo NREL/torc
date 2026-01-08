@@ -571,6 +571,7 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         create_test_compute_node(config, workflow_id).expect("Failed to create compute node");
 
     // === First run: Complete job1 with FAILURE ===
+    // Note: status must match return_code - non-zero return_code requires Failed status
     default_api::manage_status_change(
         config,
         job1_id,
@@ -584,10 +585,10 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         workflow_id,
         run_id,
         compute_node_id,
-        1,
+        1, // non-zero return_code = failure
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        torc::models::JobStatus::Completed,
+        torc::models::JobStatus::Failed,
     );
     default_api::complete_job(config, job1_id, result1.status, run_id, result1)
         .expect("Failed to complete job1 with failure");

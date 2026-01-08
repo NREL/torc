@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
-use log::debug;
+use log::{debug, info};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
 
@@ -239,7 +239,7 @@ where
         };
 
         let rows_affected = result.rows_affected();
-        debug!(
+        info!(
             "Deleted {} user_data records for workflow {}",
             rows_affected, workflow_id
         );
@@ -636,7 +636,10 @@ where
             return Err(ApiError(format!("User data not found with ID: {}", id)));
         }
 
-        debug!("Deleted user data with id: {}", id);
+        info!(
+            "Deleted user_data {} (name: {:?}) from workflow {}",
+            id, existing_user_data.name, existing_user_data.workflow_id
+        );
 
         Ok(DeleteUserDataResponse::SuccessfulResponse(
             existing_user_data,

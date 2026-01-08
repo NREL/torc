@@ -468,6 +468,16 @@ pub fn analyze_workflow_logs(
 /// Get the error patterns to search for in log files
 fn get_error_patterns() -> Vec<ErrorPattern> {
     vec![
+        // Torc-specific patterns (more specific, checked first)
+        ErrorPattern {
+            name: "Missing Output Files",
+            pattern: Regex::new(
+                r"(?i)(expected output files are missing|Output file validation failed)",
+            )
+            .unwrap(),
+            severity: ErrorSeverity::Error,
+        },
+        // General system errors
         ErrorPattern {
             name: "OOM Killed",
             pattern: Regex::new(r"(?i)(out of memory|oom|killed|cannot allocate memory)").unwrap(),
