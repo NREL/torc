@@ -87,6 +87,35 @@ impl std::fmt::Display for GroupByStrategy {
     }
 }
 
+/// Strategy for determining Slurm job walltime
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum, Serialize, Deserialize)]
+pub enum WalltimeStrategy {
+    /// Use the maximum job runtime multiplied by a safety factor (default)
+    ///
+    /// Calculates walltime based on the longest job's runtime requirement,
+    /// multiplied by --walltime-multiplier. This typically results in shorter
+    /// walltime requests, which can improve queue priority on HPC systems.
+    #[default]
+    #[value(name = "max-job-runtime")]
+    MaxJobRuntime,
+
+    /// Use the partition's maximum allowed walltime
+    ///
+    /// Sets walltime to the maximum time allowed by the target partition.
+    /// This is more conservative but may negatively impact queue scheduling.
+    #[value(name = "max-partition-time")]
+    MaxPartitionTime,
+}
+
+impl std::fmt::Display for WalltimeStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WalltimeStrategy::MaxJobRuntime => write!(f, "max-job-runtime"),
+            WalltimeStrategy::MaxPartitionTime => write!(f, "max-partition-time"),
+        }
+    }
+}
+
 #[derive(Tabled)]
 struct SlurmSchedulerTableRow {
     #[tabled(rename = "ID")]
@@ -447,6 +476,22 @@ EXAMPLES:
         #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
         group_by: GroupByStrategy,
 
+        /// Strategy for determining Slurm job walltime
+        ///
+        /// - max-job-runtime: Use the maximum job runtime multiplied by --walltime-multiplier.
+        ///   This typically results in shorter walltime requests, improving queue priority.
+        /// - max-partition-time: Use the partition's maximum allowed walltime. More conservative
+        ///   but may negatively impact queue scheduling.
+        #[arg(long, value_enum, default_value_t = WalltimeStrategy::MaxJobRuntime)]
+        walltime_strategy: WalltimeStrategy,
+
+        /// Multiplier for job runtime when using --walltime-strategy=max-job-runtime
+        ///
+        /// The maximum job runtime is multiplied by this value to provide a safety margin.
+        /// For example, 1.5 means requesting 50% more time than the longest job estimate.
+        #[arg(long, default_value = "1.5")]
+        walltime_multiplier: f64,
+
         /// Don't add workflow actions for scheduling nodes
         #[arg(long)]
         no_actions: bool,
@@ -488,6 +533,22 @@ EXAMPLES:
         /// Strategy for grouping jobs into schedulers
         #[arg(long, value_enum, default_value_t = GroupByStrategy::ResourceRequirements)]
         group_by: GroupByStrategy,
+
+        /// Strategy for determining Slurm job walltime
+        ///
+        /// - max-job-runtime: Use the maximum job runtime multiplied by --walltime-multiplier.
+        ///   This typically results in shorter walltime requests, improving queue priority.
+        /// - max-partition-time: Use the partition's maximum allowed walltime. More conservative
+        ///   but may negatively impact queue scheduling.
+        #[arg(long, value_enum, default_value_t = WalltimeStrategy::MaxJobRuntime)]
+        walltime_strategy: WalltimeStrategy,
+
+        /// Multiplier for job runtime when using --walltime-strategy=max-job-runtime
+        ///
+        /// The maximum job runtime is multiplied by this value to provide a safety margin.
+        /// For example, 1.5 means requesting 50% more time than the longest job estimate.
+        #[arg(long, default_value = "1.5")]
+        walltime_multiplier: f64,
 
         /// Submit the generated allocations immediately
         #[arg(long)]
@@ -540,14 +601,19 @@ pub fn secs_to_walltime(secs: u64) -> String {
 /// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode).
 ///   If false (default), create N allocations with 1 node each (N×1 mode).
 /// * `group_by` - Strategy for grouping jobs into schedulers
+/// * `walltime_strategy` - Strategy for determining walltime
+/// * `walltime_multiplier` - Multiplier for job runtime when using max-job-runtime strategy
 /// * `add_actions` - Whether to add workflow actions for scheduling
 /// * `overwrite` - If true, overwrite existing schedulers/actions. If false, error when they exist.
+#[allow(clippy::too_many_arguments)]
 pub fn generate_schedulers_for_workflow(
     spec: &mut WorkflowSpec,
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
     group_by: GroupByStrategy,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     add_actions: bool,
     overwrite: bool,
 ) -> Result<GenerateResult, String> {
@@ -623,6 +689,8 @@ pub fn generate_schedulers_for_workflow(
         account,
         single_allocation,
         group_by,
+        walltime_strategy,
+        walltime_multiplier,
         add_actions,
         None,  // No suffix for regular generation (uses "_scheduler")
         false, // Not a recovery scenario
@@ -1148,6 +1216,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             output,
             single_allocation,
             group_by,
+            walltime_strategy,
+            walltime_multiplier,
             no_actions,
             overwrite,
             dry_run,
@@ -1159,6 +1229,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 output.as_ref(),
                 *single_allocation,
                 *group_by,
+                *walltime_strategy,
+                *walltime_multiplier,
                 *no_actions,
                 *overwrite,
                 *dry_run,
@@ -1171,6 +1243,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             profile: profile_name,
             single_allocation,
             group_by,
+            walltime_strategy,
+            walltime_multiplier,
             submit,
             output_dir,
             poll_interval,
@@ -1184,6 +1258,8 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 profile_name.as_deref(),
                 *single_allocation,
                 *group_by,
+                *walltime_strategy,
+                *walltime_multiplier,
                 *submit,
                 output_dir,
                 *poll_interval,
@@ -2505,6 +2581,8 @@ fn handle_generate(
     output: Option<&PathBuf>,
     single_allocation: bool,
     group_by: GroupByStrategy,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     no_actions: bool,
     force: bool,
     dry_run: bool,
@@ -2550,6 +2628,8 @@ fn handle_generate(
         account,
         single_allocation,
         group_by,
+        walltime_strategy,
+        walltime_multiplier,
         !no_actions,
         force,
     ) {
@@ -2804,6 +2884,8 @@ fn handle_regenerate(
     profile_name: Option<&str>,
     single_allocation: bool,
     group_by: GroupByStrategy,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     submit: bool,
     output_dir: &PathBuf,
     poll_interval: i32,
@@ -3046,6 +3128,8 @@ fn handle_regenerate(
         &account_to_use,
         single_allocation,
         group_by,
+        walltime_strategy,
+        walltime_multiplier,
         true, // add_actions (we'll create them as recovery actions)
         Some(&format!("regen_{}", timestamp)),
         true, // is_recovery

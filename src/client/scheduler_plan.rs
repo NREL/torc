@@ -26,7 +26,9 @@ use crate::client::hpc::HpcProfile;
 use crate::client::workflow_graph::{SchedulerGroup, WorkflowGraph};
 use crate::time_utils::duration_string_to_seconds;
 
-use super::commands::slurm::{GroupByStrategy, parse_memory_mb, secs_to_walltime};
+use super::commands::slurm::{
+    GroupByStrategy, WalltimeStrategy, parse_memory_mb, secs_to_walltime,
+};
 use crate::client::hpc::HpcPartition;
 
 /// Parameters for calculating the number of allocations needed for a group of jobs.
@@ -95,6 +97,37 @@ fn calculate_allocations(
         Some(1)
     } else {
         Some(total_nodes)
+    }
+}
+
+/// Calculate walltime based on the selected strategy.
+///
+/// # Arguments
+/// * `max_job_runtime_secs` - Maximum runtime of any job in the group
+/// * `partition_max_walltime_secs` - Maximum walltime allowed by the partition
+/// * `strategy` - Walltime calculation strategy
+/// * `multiplier` - Multiplier for job runtime (only used with MaxJobRuntime strategy)
+///
+/// # Returns
+/// The calculated walltime in seconds, capped at the partition maximum.
+fn calculate_walltime(
+    max_job_runtime_secs: u64,
+    partition_max_walltime_secs: u64,
+    strategy: WalltimeStrategy,
+    multiplier: f64,
+) -> u64 {
+    match strategy {
+        WalltimeStrategy::MaxPartitionTime => partition_max_walltime_secs,
+        WalltimeStrategy::MaxJobRuntime => {
+            // If runtime is 0 or not specified, fall back to partition max
+            if max_job_runtime_secs == 0 {
+                return partition_max_walltime_secs;
+            }
+
+            // Apply multiplier and cap at partition max
+            let scaled_runtime = (max_job_runtime_secs as f64 * multiplier).ceil() as u64;
+            std::cmp::min(scaled_runtime, partition_max_walltime_secs)
+        }
     }
 }
 
@@ -216,6 +249,8 @@ pub trait ResourceRequirements {
 /// * `account` - Slurm account to use
 /// * `single_allocation` - If true, create 1 allocation with N nodes (1×N mode)
 /// * `group_by` - Strategy for grouping jobs into schedulers
+/// * `walltime_strategy` - Strategy for determining walltime
+/// * `walltime_multiplier` - Multiplier for job runtime when using max-job-runtime strategy
 /// * `add_actions` - Whether to add workflow actions for scheduling
 /// * `scheduler_name_suffix` - Optional suffix for scheduler names (e.g., "_regen_20240101")
 /// * `is_recovery` - Whether this is a recovery scenario (actions marked as recovery)
@@ -227,6 +262,8 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
     account: &str,
     single_allocation: bool,
     group_by: GroupByStrategy,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     add_actions: bool,
     scheduler_name_suffix: Option<&str>,
     is_recovery: bool,
@@ -246,6 +283,8 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
                 profile,
                 account,
                 single_allocation,
+                walltime_strategy,
+                walltime_multiplier,
                 add_actions,
                 scheduler_name_suffix,
                 is_recovery,
@@ -261,6 +300,8 @@ pub fn generate_scheduler_plan<RR: ResourceRequirements>(
                     profile,
                     account,
                     single_allocation,
+                    walltime_strategy,
+                    walltime_multiplier,
                     add_actions,
                     scheduler_name_suffix,
                     is_recovery,
@@ -297,6 +338,8 @@ fn process_scheduler_group<RR: ResourceRequirements>(
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     add_actions: bool,
     scheduler_name_suffix: Option<&str>,
     is_recovery: bool,
@@ -391,6 +434,14 @@ fn process_scheduler_group<RR: ResourceRequirements>(
         format!("{}m", partition.memory_mb)
     };
 
+    // Calculate walltime based on strategy
+    let walltime_secs = calculate_walltime(
+        runtime_secs,
+        partition.max_walltime_secs,
+        walltime_strategy,
+        walltime_multiplier,
+    );
+
     let scheduler = PlannedScheduler {
         name: scheduler_name.clone(),
         account: account.to_string(),
@@ -400,7 +451,7 @@ fn process_scheduler_group<RR: ResourceRequirements>(
             None
         },
         mem: Some(mem_str),
-        walltime: secs_to_walltime(partition.max_walltime_secs),
+        walltime: secs_to_walltime(walltime_secs),
         nodes: nodes_per_alloc,
         gres: gpus.map(|g| format!("gpu:{}", g)),
         qos: partition.default_qos.clone(),
@@ -475,6 +526,8 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
     profile: &HpcProfile,
     account: &str,
     single_allocation: bool,
+    walltime_strategy: WalltimeStrategy,
+    walltime_multiplier: f64,
     add_actions: bool,
     scheduler_name_suffix: Option<&str>,
     is_recovery: bool,
@@ -732,6 +785,14 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
             format!("{}m", partition.memory_mb)
         };
 
+        // Calculate walltime based on strategy
+        let walltime_secs = calculate_walltime(
+            pg.max_runtime_secs,
+            partition.max_walltime_secs,
+            walltime_strategy,
+            walltime_multiplier,
+        );
+
         let scheduler = PlannedScheduler {
             name: scheduler_name.clone(),
             account: account.to_string(),
@@ -741,7 +802,7 @@ fn generate_plan_grouped_by_partition<RR: ResourceRequirements>(
                 None
             },
             mem: Some(mem_str),
-            walltime: secs_to_walltime(partition.max_walltime_secs),
+            walltime: secs_to_walltime(walltime_secs),
             nodes: nodes_per_alloc,
             gres: gpus.map(|g| format!("gpu:{}", g)),
             qos: partition.default_qos.clone(),

@@ -284,6 +284,51 @@ torc slurm generate --account myproject --group-by partition workflow.yaml
 When grouping by partition, the scheduler uses the **maximum** resource values from all grouped
 requirements (max memory, max CPUs, max runtime, etc.) to ensure all jobs can run.
 
+#### Walltime Strategy Options
+
+The `--walltime-strategy` option controls how Torc calculates the walltime for generated schedulers:
+
+```bash
+# Default: use max job runtime with a safety multiplier (1.5x)
+torc slurm generate --account myproject workflow.yaml
+torc slurm generate --account myproject --walltime-strategy max-job-runtime workflow.yaml
+
+# Use the partition's maximum allowed walltime
+torc slurm generate --account myproject --walltime-strategy max-partition-time workflow.yaml
+```
+
+**Walltime strategies:**
+
+| Strategy             | Description                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `max-job-runtime`    | Uses the longest job's runtime × multiplier (default: 1.5x). Capped at partition max.     |
+| `max-partition-time` | Uses the partition's maximum walltime. More conservative but may impact queue scheduling. |
+
+**Customizing the multiplier:**
+
+The `--walltime-multiplier` option (default: 1.5) provides a safety margin when using
+`max-job-runtime`:
+
+```bash
+# Use 2x the max job runtime for extra buffer
+torc slurm generate --account myproject --walltime-multiplier 2.0 workflow.yaml
+
+# Use exact job runtime (no buffer - use with caution)
+torc slurm generate --account myproject --walltime-multiplier 1.0 workflow.yaml
+```
+
+**When to use `max-job-runtime` (default):**
+
+- You want better queue scheduling (shorter walltime requests often get prioritized)
+- Your job runtime estimates are reasonably accurate
+- You prefer the Torc runner to exit early rather than holding idle allocations
+
+**When to use `max-partition-time`:**
+
+- Your job runtimes are highly variable or unpredictable
+- You consistently underestimate job runtimes
+- Queue priority is not a concern
+
 ```yaml
 name: data_analysis_pipeline
 # ... original content ...
