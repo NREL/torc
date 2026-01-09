@@ -321,7 +321,8 @@ EXAMPLES:
         #[arg(long)]
         owner_user: Option<String>,
     },
-    /// Cancel a workflow and all associated Slurm jobs
+    /// Cancel a workflow and all associated Slurm jobs. All state will be preserved and the
+    /// workflow can be resumed after it is reinitialized.
     #[command(
         hide = true,
         after_long_help = "\
@@ -1200,7 +1201,9 @@ fn handle_reset_status(
         if failed_only {
             eprintln!("This will reset the status of all failed jobs.");
         } else {
-            eprintln!("This will reset the status of all jobs.");
+            eprintln!(
+                "This will reset the status of all jobs as well as results of completed jobs."
+            );
         }
         if reinitialize {
             eprintln!("The workflow will be reinitialized after reset.");

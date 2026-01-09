@@ -1,6 +1,31 @@
 use chrono::Utc;
 use clap::{Subcommand, ValueEnum};
 use log::{debug, error, info, warn};
+
+const SLURM_HELP_TEMPLATE: &str = "\
+{before-help}{about-with-newline}
+{usage-heading} {usage}
+
+{all-args}
+
+\x1b[1;32mScheduler Configuration:\x1b[0m
+  \x1b[1;36mcreate\x1b[0m           Add a Slurm scheduler to the database
+  \x1b[1;36mupdate\x1b[0m           Modify a Slurm scheduler in the database
+  \x1b[1;36mlist\x1b[0m             List Slurm schedulers for a workflow
+  \x1b[1;36mget\x1b[0m              Get a specific Slurm scheduler by ID
+  \x1b[1;36mdelete\x1b[0m           Delete a Slurm scheduler by ID
+
+\x1b[1;32mScheduler Generation:\x1b[0m
+  \x1b[1;36mgenerate\x1b[0m         Generate Slurm schedulers for a workflow spec
+  \x1b[1;36mregenerate\x1b[0m       Regenerate schedulers for pending jobs (recovery)
+
+\x1b[1;32mExecution:\x1b[0m
+  \x1b[1;36mschedule-nodes\x1b[0m   Submit Slurm allocations for a scheduler
+
+\x1b[1;32mDiagnostics:\x1b[0m
+  \x1b[1;36mparse-logs\x1b[0m       Parse Slurm logs for error messages
+  \x1b[1;36msacct\x1b[0m            Show Slurm accounting info for allocations
+{after-help}";
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -151,7 +176,10 @@ fn select_slurm_scheduler_interactively(
 }
 
 #[derive(Subcommand)]
-#[command(after_long_help = "\
+#[command(
+    help_template = SLURM_HELP_TEMPLATE,
+    subcommand_help_heading = None,
+    after_long_help = "\
 EXAMPLES:
     # List Slurm schedulers for a workflow
     torc slurm list 123
@@ -167,7 +195,9 @@ EXAMPLES:
 ")]
 pub enum SlurmCommands {
     /// Add a Slurm config to the database
-    #[command(after_long_help = "\
+    #[command(
+        hide = true,
+        after_long_help = "\
 EXAMPLES:
     # Create a basic Slurm scheduler
     torc slurm create 123 --name cpu_jobs --account myproject --walltime 04:00:00
@@ -179,7 +209,8 @@ EXAMPLES:
     # Create with specific partition and QOS
     torc slurm create 123 --name large_jobs --account myproject \\
         --partition bigmem --qos high --nodes 2
-")]
+"
+    )]
     Create {
         /// Workflow ID
         #[arg()]
@@ -216,6 +247,7 @@ EXAMPLES:
         extra: Option<String>,
     },
     /// Modify a Slurm config in the database
+    #[command(hide = true)]
     Update {
         #[arg()]
         scheduler_id: i64,
@@ -251,11 +283,14 @@ EXAMPLES:
         extra: Option<String>,
     },
     /// Show the current Slurm configs in the database
-    #[command(after_long_help = "\
+    #[command(
+        hide = true,
+        after_long_help = "\
 EXAMPLES:
     torc slurm list 123
     torc -f json slurm list 123
-")]
+"
+    )]
     List {
         /// Workflow ID
         #[arg()]
@@ -268,19 +303,23 @@ EXAMPLES:
         offset: i64,
     },
     /// Get a specific Slurm config by ID
+    #[command(hide = true)]
     Get {
         /// ID of the Slurm config to get
         #[arg()]
         id: i64,
     },
     /// Delete a Slurm config by ID
+    #[command(hide = true)]
     Delete {
         /// ID of the Slurm config to delete
         #[arg()]
         id: i64,
     },
     /// Schedule compute nodes using Slurm
-    #[command(after_long_help = "\
+    #[command(
+        hide = true,
+        after_long_help = "\
 EXAMPLES:
     # Schedule 4 compute nodes
     torc slurm schedule-nodes 123 --num-hpc-jobs 4
@@ -290,7 +329,8 @@ EXAMPLES:
 
     # Keep submission scripts for debugging
     torc slurm schedule-nodes 123 --keep-submission-scripts --num-hpc-jobs 4
-")]
+"
+    )]
     ScheduleNodes {
         /// Workflow ID
         #[arg()]
@@ -321,6 +361,7 @@ EXAMPLES:
         start_one_worker_per_node: bool,
     },
     /// Parse Slurm log files for known error messages
+    #[command(hide = true)]
     ParseLogs {
         /// Workflow ID
         #[arg()]
@@ -333,11 +374,14 @@ EXAMPLES:
         errors_only: bool,
     },
     /// Call sacct for scheduled compute nodes and display summary
-    #[command(after_long_help = "\
+    #[command(
+        hide = true,
+        after_long_help = "\
 EXAMPLES:
     torc slurm sacct 123
     torc slurm sacct 123 --save-json --output-dir ./reports
-")]
+"
+    )]
     Sacct {
         /// Workflow ID
         #[arg()]
@@ -350,7 +394,9 @@ EXAMPLES:
         save_json: bool,
     },
     /// Generate Slurm schedulers for a workflow based on job resource requirements
-    #[command(after_long_help = "\
+    #[command(
+        hide = true,
+        after_long_help = "\
 EXAMPLES:
     # Preview generated schedulers
     torc slurm generate --account myproject workflow.yaml
@@ -363,7 +409,8 @@ EXAMPLES:
 
     # Group by partition instead of resource requirements
     torc slurm generate --account myproject --group-by partition workflow.yaml
-")]
+"
+    )]
     Generate {
         /// Path to workflow specification file (YAML, JSON, JSON5, or KDL)
         #[arg()]
@@ -420,6 +467,7 @@ EXAMPLES:
     ///
     /// This is useful for recovery after job failures: update job resources,
     /// reset failed jobs, then regenerate schedulers to submit new allocations.
+    #[command(hide = true)]
     Regenerate {
         /// Workflow ID
         #[arg()]

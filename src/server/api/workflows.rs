@@ -377,7 +377,39 @@ where
             return Ok(CancelWorkflowResponse::DefaultErrorResponse(error_response));
         }
 
-        debug!("Successfully canceled workflow with ID: {}", id);
+        info!("Successfully canceled workflow with ID: {}", id);
+
+        // Create an event to record the workflow cancellation
+        let timestamp = Utc::now().timestamp_millis();
+        let event_data = serde_json::json!({
+            "category": "workflow_canceled",
+            "message": format!("Workflow {} (run_id={}) was canceled", id, current_status.run_id),
+            "workflow_id": id,
+            "run_id": current_status.run_id,
+        });
+        let event_data_str = event_data.to_string();
+
+        match sqlx::query(
+            r#"
+            INSERT INTO event (workflow_id, timestamp, data)
+            VALUES ($1, $2, $3)
+            "#,
+        )
+        .bind(id)
+        .bind(timestamp)
+        .bind(&event_data_str)
+        .execute(&mut *tx)
+        .await
+        {
+            Ok(_) => {
+                debug!("Created workflow_canceled event for workflow {}", id);
+            }
+            Err(e) => {
+                let _ = tx.rollback().await;
+                error!("Failed to create workflow_canceled event: {}", e);
+                return Err(database_error(e));
+            }
+        }
 
         // Cancel all running and pending jobs in the workflow
         let submitted_status = models::JobStatus::Running.to_int();
