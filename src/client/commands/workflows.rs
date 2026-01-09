@@ -53,7 +53,9 @@ use crate::client::commands::pagination::{
     paginate_resource_requirements, paginate_results, paginate_scheduled_compute_nodes,
     paginate_slurm_schedulers, paginate_user_data, paginate_workflows,
 };
-use crate::client::commands::slurm::{GroupByStrategy, generate_schedulers_for_workflow};
+use crate::client::commands::slurm::{
+    GroupByStrategy, WalltimeStrategy, generate_schedulers_for_workflow,
+};
 use crate::client::commands::workflow_export::{
     EXPORT_VERSION, ExportImportStats, IdMappings, WorkflowExport,
 };
@@ -2587,6 +2589,8 @@ fn handle_create_slurm(
         account,
         single_allocation,
         group_by,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5, // Default walltime multiplier
         true,
         false,
     ) {

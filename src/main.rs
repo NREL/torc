@@ -354,7 +354,9 @@ fn main() {
             skip_checks,
             overwrite,
         } => {
-            use torc::client::commands::slurm::generate_schedulers_for_workflow;
+            use torc::client::commands::slurm::{
+                WalltimeStrategy, generate_schedulers_for_workflow,
+            };
 
             // Load the workflow spec
             let mut spec = match WorkflowSpec::from_spec_file(workflow_spec) {
@@ -397,6 +399,8 @@ fn main() {
                 account,
                 *single_allocation,
                 *group_by,
+                WalltimeStrategy::MaxJobRuntime,
+                1.5, // Default walltime multiplier
                 true,
                 *overwrite,
             ) {

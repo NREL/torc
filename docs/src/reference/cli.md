@@ -2202,12 +2202,27 @@ Generate Slurm schedulers for a workflow based on job resource requirements
 
   With this flag, creates one large allocation with all nodes (1×N mode), which requires all nodes
   to be available simultaneously but uses a single sbatch.
+- `--group-by <GROUP_BY>` — Strategy for grouping jobs into schedulers
+
+  Possible values: `resource-requirements` (default), `partition`
+- `--walltime-strategy <STRATEGY>` — Strategy for determining Slurm job walltime
+
+  Possible values: `max-job-runtime` (default), `max-partition-time`
+
+  - `max-job-runtime`: Uses the maximum job runtime multiplied by `--walltime-multiplier`. This
+    typically results in shorter walltime requests, improving queue priority.
+  - `max-partition-time`: Uses the partition's maximum allowed walltime. More conservative but may
+    negatively impact queue scheduling.
+- `--walltime-multiplier <MULTIPLIER>` — Multiplier for job runtime when using
+  `--walltime-strategy=max-job-runtime`
+
+  Default value: `1.5`
+
+  The maximum job runtime is multiplied by this value to provide a safety margin. For example, 1.5
+  means requesting 50% more time than the longest job estimate.
 - `--no-actions` — Don't add workflow actions for scheduling nodes
-- `--force` — Force overwrite of existing schedulers in the workflow With this flag, creates one
-  large allocation with all nodes (1×N mode), which requires all nodes to be available
-  simultaneously but uses a single sbatch.
-- `--no-actions` — Don't add workflow actions for scheduling nodes
-- `--force` — Force overwrite of existing schedulers in the workflow
+- `--overwrite` — Overwrite existing schedulers in the workflow
+- `--dry-run` — Show what would be generated without writing to output
 
 ## `torc slurm regenerate`
 
@@ -2244,9 +2259,21 @@ update job resources, reset failed jobs, then regenerate schedulers to submit ne
 
   Default value: `output`
 - `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds (used when submitting)
-- `-p`, `--poll-interval <POLL_INTERVAL>` — Poll interval in seconds (used when submitting)
 
   Default value: `60`
+- `--group-by <GROUP_BY>` — Strategy for grouping jobs into schedulers
+
+  Possible values: `resource-requirements` (default), `partition`
+- `--walltime-strategy <STRATEGY>` — Strategy for determining Slurm job walltime
+
+  Possible values: `max-job-runtime` (default), `max-partition-time`
+- `--walltime-multiplier <MULTIPLIER>` — Multiplier for job runtime when using
+  `--walltime-strategy=max-job-runtime`
+
+  Default value: `1.5`
+- `--dry-run` — Show what would be created without making changes
+- `--include-job-ids <JOB_IDS>` — Include specific job IDs in planning regardless of their status
+  (useful for recovery dry-run to include failed jobs)
 
 ## `torc remote`
 

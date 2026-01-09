@@ -3,8 +3,8 @@
 use rstest::rstest;
 use std::collections::HashMap;
 use torc::client::commands::slurm::{
-    GroupByStrategy, generate_schedulers_for_workflow, parse_memory_mb, parse_walltime_secs,
-    secs_to_walltime,
+    GroupByStrategy, WalltimeStrategy, generate_schedulers_for_workflow, parse_memory_mb,
+    parse_walltime_secs, secs_to_walltime,
 };
 use torc::client::hpc::kestrel::kestrel_profile;
 use torc::client::hpc::{HpcDetection, HpcPartition, HpcProfile, HpcProfileRegistry};
@@ -307,6 +307,8 @@ fn test_generate_schedulers_basic() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -392,6 +394,8 @@ fn test_generate_schedulers_with_gpus() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -441,6 +445,8 @@ fn test_generate_schedulers_no_actions() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         false,
         false,
     )
@@ -494,6 +500,8 @@ fn test_generate_schedulers_shared_by_jobs() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -532,6 +540,8 @@ fn test_generate_schedulers_errors_no_resource_requirements() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     );
@@ -589,6 +599,8 @@ fn test_generate_schedulers_existing_schedulers_no_force() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     );
@@ -645,6 +657,8 @@ fn test_generate_schedulers_existing_schedulers_with_force() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         true,
     )
@@ -686,6 +700,8 @@ fn test_generate_schedulers_sets_correct_account() {
         "my_project_account",
         false,                                 // single_allocation
         GroupByStrategy::ResourceRequirements, // group_by
+        WalltimeStrategy::MaxJobRuntime,       // walltime_strategy
+        1.5,                                   // walltime_multiplier
         true,                                  // add_actions
         false,                                 // overwrite
     )
@@ -695,8 +711,11 @@ fn test_generate_schedulers_sets_correct_account() {
     assert_eq!(scheduler.account, "my_project_account");
 }
 
+// ============== Walltime Strategy Tests ==============
+
 #[rstest]
-fn test_generate_schedulers_sets_walltime() {
+fn test_generate_schedulers_walltime_max_job_runtime_default() {
+    // Test default behavior: MaxJobRuntime with 1.5x multiplier
     let mut spec = WorkflowSpec {
         name: "test_workflow".to_string(),
         description: None,
@@ -712,7 +731,7 @@ fn test_generate_schedulers_sets_walltime() {
             num_gpus: 0,
             num_nodes: 1,
             memory: "8g".to_string(),
-            runtime: "PT12H".to_string(), // 12 hours - matches standard partition
+            runtime: "PT12H".to_string(), // 12 hours
         }]),
         ..Default::default()
     };
@@ -724,15 +743,277 @@ fn test_generate_schedulers_sets_walltime() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime, // default strategy
+        1.5,                             // default multiplier
         true,
         false,
     )
     .unwrap();
 
     let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
-    // Walltime should be set to the partition's max (2 days for standard), not the job's runtime.
-    // This provides headroom for jobs that run slightly longer than expected.
+    // 12 hours * 1.5 = 18 hours
+    assert_eq!(scheduler.walltime, "18:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_max_partition_time() {
+    // Test MaxPartitionTime strategy: should use partition's max walltime
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("long_job".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "long_job".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT12H".to_string(), // 12 hours
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxPartitionTime, // use partition max
+        1.5,                                // multiplier ignored for this strategy
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // Standard partition max is 2 days
     assert_eq!(scheduler.walltime, "2-00:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_custom_multiplier() {
+    // Test MaxJobRuntime with custom multiplier (2.0x)
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("job_rr".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "job_rr".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT6H".to_string(), // 6 hours
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        2.0, // 2x multiplier
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // 6 hours * 2.0 = 12 hours
+    assert_eq!(scheduler.walltime, "12:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_capped_at_partition_max() {
+    // Test that walltime is capped at partition max even with high multiplier
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("long_job".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "long_job".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "P1DT12H".to_string(), // 36 hours
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5, // 36 hours * 1.5 = 54 hours, but partition max is 48 hours
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // Should be capped at standard partition max (2 days = 48 hours)
+    assert_eq!(scheduler.walltime, "2-00:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_uses_max_job_runtime_in_group() {
+    // Test that when multiple jobs have different runtimes, the max is used
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![
+            JobSpec {
+                name: "short_job".to_string(),
+                command: "echo short".to_string(),
+                resource_requirements: Some("shared_rr".to_string()),
+                ..Default::default()
+            },
+            JobSpec {
+                name: "long_job".to_string(),
+                command: "echo long".to_string(),
+                resource_requirements: Some("shared_rr".to_string()),
+                ..Default::default()
+            },
+        ],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "shared_rr".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT8H".to_string(), // 8 hours - this is the max for all jobs using this RR
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // 8 hours * 1.5 = 12 hours
+    assert_eq!(scheduler.walltime, "12:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_zero_runtime_fallback() {
+    // Test that when runtime is zero, it falls back to partition max
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("zero_runtime".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "zero_runtime".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT0S".to_string(), // zero seconds
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime, // would normally use runtime * multiplier
+        1.5,
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // With zero runtime, the "short" partition (4 hours max) is selected based on CPU/memory,
+    // and walltime falls back to that partition's max
+    assert_eq!(scheduler.walltime, "04:00:00");
+}
+
+#[rstest]
+fn test_generate_schedulers_walltime_multiplier_one() {
+    // Test with multiplier of 1.0 (exact runtime, no buffer)
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: None,
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("job_rr".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "job_rr".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT4H".to_string(), // 4 hours
+        }]),
+        ..Default::default()
+    };
+
+    let profile = kestrel_profile();
+    let _result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.0, // exact runtime
+        true,
+        false,
+    )
+    .unwrap();
+
+    let scheduler = &spec.slurm_schedulers.as_ref().unwrap()[0];
+    // 4 hours * 1.0 = 4 hours
+    assert_eq!(scheduler.walltime, "04:00:00");
 }
 
 #[rstest]
@@ -764,6 +1045,8 @@ fn test_generate_schedulers_sets_memory() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -834,6 +1117,8 @@ fn test_generate_schedulers_per_resource_requirement() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -923,6 +1208,8 @@ fn test_generate_schedulers_auto_calculates_allocations() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -981,6 +1268,8 @@ fn test_generate_schedulers_auto_calculates_with_parameters() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -1046,6 +1335,8 @@ fn test_generate_schedulers_stage_aware_for_dependent_jobs() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -1124,6 +1415,8 @@ fn test_generate_schedulers_memory_constrained_allocation() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -1202,6 +1495,8 @@ fn test_generate_schedulers_cpu_vs_memory_constraint() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
@@ -1406,6 +1701,8 @@ fn test_generate_schedulers_gpu_constrained_allocation() {
         "testaccount",
         false,
         GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
         true,
         false,
     )
