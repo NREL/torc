@@ -367,6 +367,27 @@ fn main() {
                 }
             };
 
+            // Resolve account: CLI option takes precedence, then slurm_defaults
+            let resolved_account = if let Some(acct) = account {
+                acct.clone()
+            } else if let Some(ref defaults) = spec.slurm_defaults {
+                defaults
+                    .0
+                    .get("account")
+                    .and_then(|v| v.as_str().map(String::from))
+                    .unwrap_or_else(|| {
+                        eprintln!(
+                            "Error: No account specified. Use --account or set 'account' in slurm_defaults."
+                        );
+                        std::process::exit(1);
+                    })
+            } else {
+                eprintln!(
+                    "Error: No account specified. Use --account or set 'account' in slurm_defaults."
+                );
+                std::process::exit(1);
+            };
+
             // Get HPC profile
             let torc_config = TorcConfig::load().unwrap_or_default();
             let registry = torc::client::commands::hpc::create_registry_with_config_public(
@@ -396,7 +417,7 @@ fn main() {
             match generate_schedulers_for_workflow(
                 &mut spec,
                 profile,
-                account,
+                &resolved_account,
                 *single_allocation,
                 *group_by,
                 WalltimeStrategy::MaxJobRuntime,
@@ -427,7 +448,7 @@ fn main() {
             eprintln!("TIP: To preview and validate the configuration before submitting, use:");
             eprintln!(
                 "     torc slurm generate --account {} {}",
-                account, workflow_spec
+                resolved_account, workflow_spec
             );
             eprintln!();
 

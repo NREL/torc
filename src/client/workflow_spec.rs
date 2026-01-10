@@ -263,6 +263,89 @@ impl SlurmSchedulerSpec {
     }
 }
 
+/// Parameters that are managed by torc and cannot be set in slurm_defaults
+/// Note: "account" is allowed in slurm_defaults as a workflow-level default
+pub const SLURM_EXCLUDED_PARAMS: &[&str] = &[
+    "partition",
+    "nodes",
+    "walltime",
+    "time",
+    "mem",
+    "gres",
+    "name",
+    "job-name",
+];
+
+/// Default Slurm parameters to apply to all schedulers in a workflow
+///
+/// These parameters are applied at runtime to both user-defined and auto-generated
+/// Slurm schedulers. Any valid sbatch parameter can be specified except for those
+/// managed by torc: partition, nodes, walltime/time, mem, gres, name/job-name.
+///
+/// The "account" parameter is allowed and can be used as a workflow-level default.
+///
+/// Parameters should use the sbatch long option name (without the leading --).
+/// For example: "qos", "constraint", "mail-user", "mail-type", "reservation", etc.
+#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SlurmDefaultsSpec(pub std::collections::HashMap<String, serde_json::Value>);
+
+impl SlurmDefaultsSpec {
+    /// Validate that no excluded parameters are present
+    /// Returns an error listing all excluded parameters found
+    pub fn validate(&self) -> Result<(), String> {
+        let excluded_found: Vec<&str> = self
+            .0
+            .keys()
+            .filter(|k| {
+                let key_lower = k.to_lowercase();
+                SLURM_EXCLUDED_PARAMS
+                    .iter()
+                    .any(|excluded| key_lower == *excluded)
+            })
+            .map(|k| k.as_str())
+            .collect();
+
+        if excluded_found.is_empty() {
+            Ok(())
+        } else {
+            Err(format!(
+                "slurm_defaults contains excluded parameters managed by torc: {}. \
+                 These cannot be set as defaults.",
+                excluded_found.join(", ")
+            ))
+        }
+    }
+
+    /// Convert all values to strings for use in config map
+    ///
+    /// Only string, number, and boolean values are supported. Arrays, objects, and null
+    /// values are skipped with a warning since they cannot be meaningfully converted
+    /// to Slurm parameter values.
+    pub fn to_string_map(&self) -> std::collections::HashMap<String, String> {
+        self.0
+            .iter()
+            .filter_map(|(k, v)| {
+                let value_str = match v {
+                    serde_json::Value::String(s) => Some(s.clone()),
+                    serde_json::Value::Number(n) => Some(n.to_string()),
+                    serde_json::Value::Bool(b) => Some(b.to_string()),
+                    serde_json::Value::Array(_)
+                    | serde_json::Value::Object(_)
+                    | serde_json::Value::Null => {
+                        log::warn!(
+                            "Skipping slurm_defaults key '{}': unsupported value type (arrays, objects, and null are not valid Slurm parameter values)",
+                            k
+                        );
+                        None
+                    }
+                };
+                value_str.map(|v| (k.clone(), v))
+            })
+            .collect()
+    }
+}
+
 /// Specification for a job within a workflow
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -548,6 +631,9 @@ pub struct WorkflowSpec {
     /// Slurm schedulers available for this workflow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slurm_schedulers: Option<Vec<SlurmSchedulerSpec>>,
+    /// Default Slurm parameters to apply to all schedulers
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slurm_defaults: Option<SlurmDefaultsSpec>,
     /// Resource monitoring configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_monitor: Option<crate::client::resource_monitor::ResourceMonitorConfig>,
@@ -580,6 +666,7 @@ impl WorkflowSpec {
             user_data: None,
             resource_requirements: None,
             slurm_schedulers: None,
+            slurm_defaults: None,
             resource_monitor: None,
             actions: None,
         }
@@ -1538,6 +1625,15 @@ impl WorkflowSpec {
             let config_json = serde_json::to_string(resource_monitor)
                 .map_err(|e| format!("Failed to serialize resource monitor config: {}", e))?;
             workflow_model.resource_monitor_config = Some(config_json);
+        }
+
+        // Validate and serialize slurm_defaults if present
+        if let Some(ref slurm_defaults) = spec.slurm_defaults {
+            // Validate that no excluded parameters are present
+            slurm_defaults.validate()?;
+            let config_json = serde_json::to_string(slurm_defaults)
+                .map_err(|e| format!("Failed to serialize slurm_defaults config: {}", e))?;
+            workflow_model.slurm_defaults = Some(config_json);
         }
 
         let created_workflow = default_api::create_workflow(config, workflow_model)
@@ -2895,6 +2991,38 @@ impl WorkflowSpec {
         Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL slurm_defaults node to a JSON object
+    ///
+    /// Parses slurm_defaults block containing arbitrary key-value pairs for Slurm parameters.
+    /// Values can be strings, integers, or booleans.
+    #[cfg(feature = "client")]
+    fn kdl_slurm_defaults_to_json(
+        node: &KdlNode,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mut obj = serde_json::Map::new();
+
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                let key = child.name().value().to_string();
+                if let Some(entry) = child.entries().first() {
+                    let value = entry.value();
+                    if let Some(s) = value.as_string() {
+                        obj.insert(key, serde_json::Value::String(s.to_string()));
+                    } else if let Some(i) = value.as_integer() {
+                        obj.insert(
+                            key,
+                            serde_json::Value::Number(serde_json::Number::from(i as i64)),
+                        );
+                    } else if let Some(b) = value.as_bool() {
+                        obj.insert(key, serde_json::Value::Bool(b));
+                    }
+                }
+            }
+        }
+
+        Ok(serde_json::Value::Object(obj))
+    }
+
     /// Convert a KDL document string to a serde_json::Value
     /// This is the intermediate representation used by all file formats
     #[cfg(feature = "client")]
@@ -3030,6 +3158,12 @@ impl WorkflowSpec {
                     obj.insert(
                         "resource_monitor".to_string(),
                         Self::kdl_resource_monitor_to_json(node)?,
+                    );
+                }
+                "slurm_defaults" => {
+                    obj.insert(
+                        "slurm_defaults".to_string(),
+                        Self::kdl_slurm_defaults_to_json(node)?,
                     );
                 }
                 _ => {
@@ -4162,6 +4296,7 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
             user_data: None,
             resource_requirements: None,
             slurm_schedulers: None,
+            slurm_defaults: None,
             resource_monitor: None,
             actions: None,
         };

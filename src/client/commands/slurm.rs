@@ -54,7 +54,7 @@ use crate::client::hpc::hpc_interface::HpcInterface;
 use crate::client::utils;
 use crate::client::workflow_graph::WorkflowGraph;
 use crate::client::workflow_manager::WorkflowManager;
-use crate::client::workflow_spec::{ResourceRequirementsSpec, WorkflowSpec};
+use crate::client::workflow_spec::{ResourceRequirementsSpec, SlurmDefaultsSpec, WorkflowSpec};
 use crate::config::TorcConfig;
 use crate::models;
 use tabled::Tabled;
@@ -445,9 +445,9 @@ EXAMPLES:
         #[arg()]
         workflow_file: PathBuf,
 
-        /// Slurm account to use
+        /// Slurm account to use (can also be specified in workflow's slurm_defaults)
         #[arg(short, long)]
-        account: String,
+        account: Option<String>,
 
         /// HPC profile to use (if not specified, tries to detect current system)
         #[arg(long)]
@@ -1222,9 +1222,14 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             overwrite,
             dry_run,
         } => {
+            // Validate walltime_multiplier
+            if *walltime_multiplier <= 0.0 {
+                eprintln!("Error: --walltime-multiplier must be greater than 0");
+                std::process::exit(1);
+            }
             handle_generate(
                 workflow_file,
-                account,
+                account.as_deref(),
                 profile_name.as_deref(),
                 output.as_ref(),
                 *single_allocation,
@@ -1251,6 +1256,11 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             dry_run,
             include_job_ids,
         } => {
+            // Validate walltime_multiplier
+            if *walltime_multiplier <= 0.0 {
+                eprintln!("Error: --walltime-multiplier must be greater than 0");
+                std::process::exit(1);
+            }
             handle_regenerate(
                 config,
                 *workflow_id,
@@ -1314,6 +1324,18 @@ pub fn schedule_slurm_nodes(
         }
     };
 
+    // Fetch workflow to get slurm_defaults
+    let workflow = match utils::send_with_retries(
+        config,
+        || default_api::get_workflow(config, workflow_id),
+        WAIT_FOR_HEALTHY_DATABASE_MINUTES,
+    ) {
+        Ok(w) => w,
+        Err(e) => {
+            return Err(format!("Failed to get workflow: {}", e).into());
+        }
+    };
+
     let slurm_interface = match crate::client::hpc::slurm_interface::SlurmInterface::new() {
         Ok(interface) => interface,
         Err(e) => {
@@ -1322,6 +1344,28 @@ pub fn schedule_slurm_nodes(
     };
 
     let mut config_map = HashMap::new();
+
+    // Apply workflow-level slurm_defaults first (scheduler-specific values will override)
+    if let Some(ref defaults_json) = workflow.slurm_defaults {
+        match serde_json::from_str::<SlurmDefaultsSpec>(defaults_json) {
+            Ok(defaults) => {
+                // Validate that no excluded parameters are present
+                if let Err(e) = defaults.validate() {
+                    return Err(e.into());
+                }
+                debug!("Applying slurm_defaults from workflow");
+                // Apply all default parameters to config_map
+                for (key, value) in defaults.to_string_map() {
+                    config_map.insert(key, value);
+                }
+            }
+            Err(e) => {
+                warn!("Failed to parse slurm_defaults: {}", e);
+            }
+        }
+    }
+
+    // Apply scheduler-specific values (these override defaults)
     config_map.insert("account".to_string(), scheduler.account.clone());
     config_map.insert("walltime".to_string(), scheduler.walltime.clone());
     config_map.insert("nodes".to_string(), scheduler.nodes.to_string());
@@ -2576,7 +2620,7 @@ pub fn run_sacct_for_workflow(
 #[allow(clippy::too_many_arguments)]
 fn handle_generate(
     workflow_file: &PathBuf,
-    account: &str,
+    account: Option<&str>,
     profile_name: Option<&str>,
     output: Option<&PathBuf>,
     single_allocation: bool,
@@ -2621,11 +2665,30 @@ fn handle_generate(
         }
     };
 
+    // Resolve account: CLI option takes precedence, then slurm_defaults
+    let resolved_account = if let Some(acct) = account {
+        acct.to_string()
+    } else if let Some(ref defaults) = spec.slurm_defaults {
+        defaults
+            .0
+            .get("account")
+            .and_then(|v| v.as_str().map(String::from))
+            .unwrap_or_else(|| {
+                eprintln!(
+                    "Error: No account specified. Use --account or set 'account' in slurm_defaults."
+                );
+                std::process::exit(1);
+            })
+    } else {
+        eprintln!("Error: No account specified. Use --account or set 'account' in slurm_defaults.");
+        std::process::exit(1);
+    };
+
     // Generate schedulers
     let result = match generate_schedulers_for_workflow(
         &mut spec,
         profile,
-        account,
+        &resolved_account,
         single_allocation,
         group_by,
         walltime_strategy,

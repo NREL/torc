@@ -4,6 +4,13 @@
   "user": "demo_user",
   "description": "Demonstrates resource monitoring with CPU and memory intensive Python jobs",
 
+  // Default Slurm parameters applied to all schedulers
+  "slurm_defaults": {
+    "account": "myproject",
+    "mail-type": "BEGIN,END,FAIL",
+    "mail-user": "user@example.com"
+  },
+
   // Job definitions
   "jobs": [
     {

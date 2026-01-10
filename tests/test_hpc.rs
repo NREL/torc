@@ -1728,3 +1728,317 @@ fn test_generate_schedulers_gpu_constrained_allocation() {
         "Should allocate 1 node for 8 GPU jobs (2 concurrent × 4 time slots = 8 jobs per allocation)"
     );
 }
+
+// ============== SlurmDefaultsSpec Tests ==============
+
+#[rstest]
+fn test_slurm_defaults_spec_serialization() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    let mut map = HashMap::new();
+    map.insert("ntasks-per-node".to_string(), serde_json::json!(4));
+    map.insert("qos".to_string(), serde_json::json!("high"));
+    map.insert("tmp".to_string(), serde_json::json!("100G"));
+    map.insert("constraint".to_string(), serde_json::json!("cpu"));
+    map.insert(
+        "reservation".to_string(),
+        serde_json::json!("my_reservation"),
+    );
+    map.insert(
+        "mail-user".to_string(),
+        serde_json::json!("user@example.com"),
+    );
+    map.insert("mail-type".to_string(), serde_json::json!("BEGIN,END,FAIL"));
+    map.insert("extra".to_string(), serde_json::json!("--exclusive"));
+    let defaults = SlurmDefaultsSpec(map);
+
+    // Validate passes (no excluded params)
+    assert!(defaults.validate().is_ok());
+
+    // Serialize to JSON
+    let json = serde_json::to_string(&defaults).unwrap();
+
+    // Deserialize back
+    let parsed: SlurmDefaultsSpec = serde_json::from_str(&json).unwrap();
+
+    let string_map = parsed.to_string_map();
+    assert_eq!(string_map.get("ntasks-per-node"), Some(&"4".to_string()));
+    assert_eq!(string_map.get("qos"), Some(&"high".to_string()));
+    assert_eq!(string_map.get("constraint"), Some(&"cpu".to_string()));
+}
+
+#[rstest]
+fn test_slurm_defaults_spec_partial_fields() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    let mut map = HashMap::new();
+    map.insert("qos".to_string(), serde_json::json!("normal"));
+    map.insert("mail-user".to_string(), serde_json::json!("test@test.com"));
+    let defaults = SlurmDefaultsSpec(map);
+
+    let json = serde_json::to_string(&defaults).unwrap();
+    let parsed: SlurmDefaultsSpec = serde_json::from_str(&json).unwrap();
+
+    let string_map = parsed.to_string_map();
+    assert_eq!(string_map.get("qos"), Some(&"normal".to_string()));
+    assert_eq!(
+        string_map.get("mail-user"),
+        Some(&"test@test.com".to_string())
+    );
+    assert!(!string_map.contains_key("constraint"));
+}
+
+#[rstest]
+fn test_slurm_defaults_spec_empty() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    let defaults = SlurmDefaultsSpec::default();
+    let json = serde_json::to_string(&defaults).unwrap();
+
+    // Empty struct should serialize to "{}"
+    assert_eq!(json, "{}");
+
+    let parsed: SlurmDefaultsSpec = serde_json::from_str(&json).unwrap();
+    assert!(parsed.0.is_empty());
+}
+
+#[rstest]
+fn test_slurm_defaults_spec_validates_excluded_params() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    // Test each excluded parameter
+    // Note: "account" is NOT in this list as it's now allowed in slurm_defaults
+    let excluded_params = vec![
+        "partition",
+        "nodes",
+        "walltime",
+        "time",
+        "mem",
+        "gres",
+        "name",
+        "job-name",
+    ];
+
+    for param in excluded_params {
+        let mut map = HashMap::new();
+        map.insert(param.to_string(), serde_json::json!("test_value"));
+        let defaults = SlurmDefaultsSpec(map);
+
+        let result = defaults.validate();
+        assert!(
+            result.is_err(),
+            "Expected error for excluded param '{}', but got Ok",
+            param
+        );
+        assert!(
+            result.unwrap_err().contains(param),
+            "Error message should mention the excluded param '{}'",
+            param
+        );
+    }
+}
+
+#[rstest]
+fn test_slurm_defaults_spec_validates_excluded_params_case_insensitive() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    // Test that excluded parameters are rejected regardless of case
+    let case_variants = vec![
+        ("PARTITION", "partition"),
+        ("Partition", "partition"),
+        ("NODES", "nodes"),
+        ("Nodes", "nodes"),
+        ("WallTime", "walltime"),
+        ("WALLTIME", "walltime"),
+        ("TIME", "time"),
+        ("Time", "time"),
+        ("MEM", "mem"),
+        ("Mem", "mem"),
+        ("GRES", "gres"),
+        ("Gres", "gres"),
+        ("NAME", "name"),
+        ("Name", "name"),
+        ("JOB-NAME", "job-name"),
+        ("Job-Name", "job-name"),
+    ];
+
+    for (input_key, _expected_lower) in case_variants {
+        let mut map = HashMap::new();
+        map.insert(input_key.to_string(), serde_json::json!("test_value"));
+        let defaults = SlurmDefaultsSpec(map);
+
+        let result = defaults.validate();
+        assert!(
+            result.is_err(),
+            "Expected error for case variant '{}', but got Ok",
+            input_key
+        );
+    }
+}
+
+#[rstest]
+fn test_slurm_defaults_spec_allows_arbitrary_params() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    // Test that arbitrary sbatch params are allowed
+    // Including "account" which is allowed as a workflow-level default
+    let mut map = HashMap::new();
+    map.insert("nice".to_string(), serde_json::json!(100));
+    map.insert("exclude".to_string(), serde_json::json!("node[1-5]"));
+    map.insert("comment".to_string(), serde_json::json!("My job comment"));
+    map.insert("exclusive".to_string(), serde_json::json!(true));
+    map.insert("requeue".to_string(), serde_json::json!(true));
+    map.insert("account".to_string(), serde_json::json!("myproject"));
+    let defaults = SlurmDefaultsSpec(map);
+
+    // Validation should pass
+    assert!(defaults.validate().is_ok());
+
+    let string_map = defaults.to_string_map();
+    assert_eq!(string_map.get("nice"), Some(&"100".to_string()));
+    assert_eq!(string_map.get("exclude"), Some(&"node[1-5]".to_string()));
+    assert_eq!(
+        string_map.get("comment"),
+        Some(&"My job comment".to_string())
+    );
+    assert_eq!(string_map.get("exclusive"), Some(&"true".to_string()));
+    assert_eq!(string_map.get("account"), Some(&"myproject".to_string()));
+}
+
+#[rstest]
+fn test_workflow_spec_with_slurm_defaults() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    let mut defaults_map = HashMap::new();
+    defaults_map.insert("qos".to_string(), serde_json::json!("high"));
+    defaults_map.insert(
+        "mail-user".to_string(),
+        serde_json::json!("user@example.com"),
+    );
+    defaults_map.insert("mail-type".to_string(), serde_json::json!("END,FAIL"));
+
+    let mut spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: Some("Test workflow with slurm_defaults".to_string()),
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            resource_requirements: Some("small".to_string()),
+            ..Default::default()
+        }],
+        resource_requirements: Some(vec![ResourceRequirementsSpec {
+            name: "small".to_string(),
+            num_cpus: 4,
+            num_gpus: 0,
+            num_nodes: 1,
+            memory: "8g".to_string(),
+            runtime: "PT1H".to_string(),
+        }]),
+        slurm_defaults: Some(SlurmDefaultsSpec(defaults_map)),
+        ..Default::default()
+    };
+
+    // Verify slurm_defaults is set and validates
+    assert!(spec.slurm_defaults.is_some());
+    let defaults = spec.slurm_defaults.as_ref().unwrap();
+    assert!(defaults.validate().is_ok());
+    let string_map = defaults.to_string_map();
+    assert_eq!(string_map.get("qos"), Some(&"high".to_string()));
+    assert_eq!(
+        string_map.get("mail-user"),
+        Some(&"user@example.com".to_string())
+    );
+
+    // Verify workflow spec can still be used for scheduler generation
+    let profile = kestrel_profile();
+    let result = generate_schedulers_for_workflow(
+        &mut spec,
+        &profile,
+        "testaccount",
+        false,
+        GroupByStrategy::ResourceRequirements,
+        WalltimeStrategy::MaxJobRuntime,
+        1.5,
+        true,
+        false,
+    )
+    .unwrap();
+
+    assert_eq!(result.scheduler_count, 1);
+}
+
+#[rstest]
+fn test_slurm_defaults_yaml_parsing() {
+    // Test parsing YAML with slurm_defaults (using hyphenated key names)
+    let yaml = r#"
+name: test_workflow
+jobs:
+  - name: job1
+    command: echo hello
+    resource_requirements: small
+resource_requirements:
+  - name: small
+    num_cpus: 4
+    num_gpus: 0
+    num_nodes: 1
+    memory: 8g
+    runtime: PT1H
+slurm_defaults:
+  qos: normal
+  mail-user: test@example.com
+  mail-type: END
+  constraint: cpu
+"#;
+
+    let spec: WorkflowSpec = serde_yaml::from_str(yaml).unwrap();
+
+    assert!(spec.slurm_defaults.is_some());
+    let defaults = spec.slurm_defaults.as_ref().unwrap();
+    assert!(defaults.validate().is_ok());
+    let string_map = defaults.to_string_map();
+    assert_eq!(string_map.get("qos"), Some(&"normal".to_string()));
+    assert_eq!(
+        string_map.get("mail-user"),
+        Some(&"test@example.com".to_string())
+    );
+    assert_eq!(string_map.get("mail-type"), Some(&"END".to_string()));
+    assert_eq!(string_map.get("constraint"), Some(&"cpu".to_string()));
+}
+
+#[rstest]
+fn test_slurm_defaults_json_roundtrip() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    let mut defaults_map = HashMap::new();
+    defaults_map.insert("ntasks-per-node".to_string(), serde_json::json!(8));
+    defaults_map.insert("qos".to_string(), serde_json::json!("priority"));
+    defaults_map.insert("reservation".to_string(), serde_json::json!("special"));
+    defaults_map.insert("extra".to_string(), serde_json::json!("--nice=100"));
+
+    let spec = WorkflowSpec {
+        name: "test_workflow".to_string(),
+        description: Some("Test".to_string()),
+        jobs: vec![JobSpec {
+            name: "job1".to_string(),
+            command: "echo hello".to_string(),
+            ..Default::default()
+        }],
+        slurm_defaults: Some(SlurmDefaultsSpec(defaults_map)),
+        ..Default::default()
+    };
+
+    // Serialize to JSON
+    let json = serde_json::to_string_pretty(&spec).unwrap();
+
+    // Deserialize back
+    let parsed: WorkflowSpec = serde_json::from_str(&json).unwrap();
+
+    assert!(parsed.slurm_defaults.is_some());
+    let defaults = parsed.slurm_defaults.as_ref().unwrap();
+    assert!(defaults.validate().is_ok());
+    let string_map = defaults.to_string_map();
+    assert_eq!(string_map.get("ntasks-per-node"), Some(&"8".to_string()));
+    assert_eq!(string_map.get("qos"), Some(&"priority".to_string()));
+    assert_eq!(string_map.get("reservation"), Some(&"special".to_string()));
+    assert_eq!(string_map.get("extra"), Some(&"--nice=100".to_string()));
+}

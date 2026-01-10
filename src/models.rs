@@ -9515,6 +9515,11 @@ pub struct WorkflowModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_monitor_config: Option<String>,
 
+    /// Default Slurm parameters to apply to all schedulers as JSON string
+    #[serde(rename = "slurm_defaults")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slurm_defaults: Option<String>,
+
     #[serde(rename = "status_id")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_id: Option<i64>,
@@ -9536,6 +9541,7 @@ impl WorkflowModel {
             compute_node_min_time_for_new_jobs_seconds: Some(300),
             jobs_sort_method: None,
             resource_monitor_config: None,
+            slurm_defaults: None,
             status_id: None,
         }
     }
@@ -9638,6 +9644,7 @@ impl std::str::FromStr for WorkflowModel {
             pub compute_node_min_time_for_new_jobs_seconds: Vec<i64>,
             pub jobs_sort_method: Vec<models::ClaimJobsSortMethod>,
             pub resource_monitor_config: Vec<String>,
+            pub slurm_defaults: Vec<String>,
             pub status_id: Vec<i64>,
         }
 
@@ -9757,6 +9764,7 @@ impl std::str::FromStr for WorkflowModel {
                 .next(),
             jobs_sort_method: intermediate_rep.jobs_sort_method.into_iter().next(),
             resource_monitor_config: intermediate_rep.resource_monitor_config.into_iter().next(),
+            slurm_defaults: intermediate_rep.slurm_defaults.into_iter().next(),
             status_id: intermediate_rep.status_id.into_iter().next(),
         })
     }
