@@ -3162,6 +3162,16 @@ fn handle_export(
         }
     };
 
+    // Get all failure handlers
+    export.failure_handlers =
+        match default_api::list_failure_handlers(config, workflow_id, None, None) {
+            Ok(response) => response.items.unwrap_or_default(),
+            Err(e) => {
+                print_error("listing failure handlers", &e);
+                std::process::exit(1);
+            }
+        };
+
     // Get all jobs (with relationships)
     let job_params = JobListParams {
         workflow_id,
@@ -3471,6 +3481,27 @@ fn handle_import(
         }
     }
 
+    // Create failure handlers and build mapping
+    for handler in &export.failure_handlers {
+        let mut new_handler = handler.clone();
+        let old_id = new_handler.id.unwrap();
+        new_handler.id = None;
+        new_handler.workflow_id = new_workflow_id;
+
+        match default_api::create_failure_handler(config, new_handler) {
+            Ok(created) => {
+                mappings
+                    .failure_handlers
+                    .insert(old_id, created.id.unwrap());
+            }
+            Err(e) => {
+                print_error("creating failure handler", &e);
+                let _ = default_api::delete_workflow(config, new_workflow_id, None);
+                std::process::exit(1);
+            }
+        }
+    }
+
     // Create jobs with remapped IDs (but without depends_on_job_ids yet)
     for job_model in &export.jobs {
         let mut new_job = job_model.clone();
@@ -3502,6 +3533,11 @@ fn handle_import(
         // Remap scheduler_id
         if let Some(sched_id) = new_job.scheduler_id {
             new_job.scheduler_id = mappings.remap_scheduler_id(sched_id);
+        }
+
+        // Remap failure_handler_id
+        if let Some(fh_id) = new_job.failure_handler_id {
+            new_job.failure_handler_id = mappings.remap_failure_handler_id(fh_id);
         }
 
         // Clear depends_on_job_ids - we'll set these after all jobs are created

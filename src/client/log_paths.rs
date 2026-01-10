@@ -40,13 +40,15 @@ pub fn get_job_stdout_path(
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
+    attempt_id: i64,
 ) -> String {
     format!(
-        "{}/job_stdio/job_wf{}_j{}_r{}.o",
+        "{}/job_stdio/job_wf{}_j{}_r{}_a{}.o",
         output_dir.display(),
         workflow_id,
         job_id,
-        run_id
+        run_id,
+        attempt_id
     )
 }
 
@@ -56,13 +58,15 @@ pub fn get_job_stderr_path(
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
+    attempt_id: i64,
 ) -> String {
     format!(
-        "{}/job_stdio/job_wf{}_j{}_r{}.e",
+        "{}/job_stdio/job_wf{}_j{}_r{}_a{}.e",
         output_dir.display(),
         workflow_id,
         job_id,
-        run_id
+        run_id,
+        attempt_id
     )
 }
 

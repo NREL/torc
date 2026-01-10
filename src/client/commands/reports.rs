@@ -99,6 +99,7 @@ EXAMPLES:
     torc reports results 123
     torc -f json reports results 123 > results.json
     torc reports results 123 --all-runs
+    torc reports results 123 --job-id 45 --job-id 46
 ")]
     Results {
         /// Workflow ID to analyze (optional - will prompt if not provided)
@@ -110,6 +111,9 @@ EXAMPLES:
         /// Include all runs for each job (default: only latest run)
         #[arg(long)]
         all_runs: bool,
+        /// Filter results to only include these job IDs (can be specified multiple times)
+        #[arg(long = "job-id", short = 'j')]
+        job_ids: Vec<i64>,
     },
     /// Generate a summary of workflow results (requires workflow to be complete)
     #[command(after_long_help = "\
@@ -145,8 +149,9 @@ pub fn handle_report_commands(config: &Configuration, command: &ReportCommands, 
             workflow_id,
             output_dir,
             all_runs,
+            job_ids,
         } => {
-            generate_results_report(config, *workflow_id, output_dir, *all_runs);
+            generate_results_report(config, *workflow_id, output_dir, *all_runs, job_ids);
         }
         ReportCommands::Summary { workflow_id } => {
             generate_summary(config, *workflow_id, format);
@@ -595,6 +600,7 @@ fn generate_results_report(
     workflow_id: Option<i64>,
     output_dir: &Path,
     all_runs: bool,
+    job_ids: &[i64],
 ) {
     // Validate that output directory exists
     if !output_dir.exists() {
@@ -658,8 +664,25 @@ fn generate_results_report(
         }
     };
 
+    // Filter results by job IDs if specified
+    let results: Vec<_> = if job_ids.is_empty() {
+        results
+    } else {
+        results
+            .into_iter()
+            .filter(|r| job_ids.contains(&r.job_id))
+            .collect()
+    };
+
     if results.is_empty() {
-        eprintln!("No results found for workflow {}", wf_id);
+        if job_ids.is_empty() {
+            eprintln!("No results found for workflow {}", wf_id);
+        } else {
+            eprintln!(
+                "No results found for workflow {} with job IDs {:?}",
+                wf_id, job_ids
+            );
+        }
         std::process::exit(0);
     }
 
@@ -679,8 +702,9 @@ fn generate_results_report(
         };
 
         // Add job stdio log paths
-        let job_stdout = get_job_stdout_path(output_dir, wf_id, job_id, result.run_id);
-        let job_stderr = get_job_stderr_path(output_dir, wf_id, job_id, result.run_id);
+        let attempt_id = result.attempt_id.unwrap_or(1);
+        let job_stdout = get_job_stdout_path(output_dir, wf_id, job_id, result.run_id, attempt_id);
+        let job_stderr = get_job_stderr_path(output_dir, wf_id, job_id, result.run_id, attempt_id);
         check_log_file_exists(&job_stdout, "job stdout", job_id);
         check_log_file_exists(&job_stderr, "job stderr", job_id);
 

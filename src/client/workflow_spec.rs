@@ -215,6 +215,41 @@ impl ResourceRequirementsSpec {
     }
 }
 
+/// A rule for handling specific exit codes in a failure handler
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FailureHandlerRuleSpec {
+    /// Exit codes that trigger this rule. Can be omitted if match_all_exit_codes is true.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exit_codes: Vec<i32>,
+    /// If true, this rule matches any non-zero exit code.
+    /// Use this for simple retry-on-any-failure behavior.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub match_all_exit_codes: bool,
+    /// Optional recovery script to run before retrying
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recovery_script: Option<String>,
+    /// Maximum number of retry attempts (defaults to 3)
+    #[serde(default = "FailureHandlerRuleSpec::default_max_retries")]
+    pub max_retries: i32,
+}
+
+impl FailureHandlerRuleSpec {
+    fn default_max_retries() -> i32 {
+        3
+    }
+}
+
+/// Failure handler specification for JSON serialization (without workflow_id and id)
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FailureHandlerSpec {
+    /// Name of the failure handler
+    pub name: String,
+    /// Rules for handling different exit codes
+    pub rules: Vec<FailureHandlerRuleSpec>,
+}
+
 /// Slurm scheduler specification for JSON serialization (without workflow_id and id)
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -366,6 +401,9 @@ pub struct JobSpec {
     /// Name of the resource requirements configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_requirements: Option<String>,
+    /// Name of the failure handler for this job
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_handler: Option<String>,
     /// Names of jobs that must complete before this job can run (exact matches)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub depends_on: Option<Vec<String>>,
@@ -425,6 +463,7 @@ impl JobSpec {
             cancel_on_blocking_job_failure: Some(false),
             supports_termination: Some(false),
             resource_requirements: None,
+            failure_handler: None,
             depends_on: None,
             depends_on_regexes: None,
             input_files: None,
@@ -628,6 +667,9 @@ pub struct WorkflowSpec {
     /// Resource requirements available for this workflow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_requirements: Option<Vec<ResourceRequirementsSpec>>,
+    /// Failure handlers available for this workflow
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_handlers: Option<Vec<FailureHandlerSpec>>,
     /// Slurm schedulers available for this workflow
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slurm_schedulers: Option<Vec<SlurmSchedulerSpec>>,
@@ -665,6 +707,7 @@ impl WorkflowSpec {
             files: None,
             user_data: None,
             resource_requirements: None,
+            failure_handlers: None,
             slurm_schedulers: None,
             slurm_defaults: None,
             resource_monitor: None,
@@ -1555,6 +1598,15 @@ impl WorkflowSpec {
             }
         };
 
+        let failure_handler_name_to_id =
+            match Self::create_failure_handlers(config, workflow_id, &spec) {
+                Ok(mapping) => mapping,
+                Err(e) => {
+                    rollback(workflow_id);
+                    return Err(e);
+                }
+            };
+
         // Step 4: Create JobModels (with dependencies set during creation)
         let (job_name_to_id, _created_jobs) = match Self::create_jobs(
             config,
@@ -1564,6 +1616,7 @@ impl WorkflowSpec {
             &user_data_name_to_id,
             &resource_req_name_to_id,
             &slurm_scheduler_to_id,
+            &failure_handler_name_to_id,
         ) {
             Ok((mapping, jobs)) => (mapping, jobs),
             Err(e) => {
@@ -1814,6 +1867,51 @@ impl WorkflowSpec {
         Ok(slurm_scheduler_to_id)
     }
 
+    /// Create failure handlers and build name-to-id mapping
+    fn create_failure_handlers(
+        config: &Configuration,
+        workflow_id: i64,
+        spec: &WorkflowSpec,
+    ) -> Result<HashMap<String, i64>, Box<dyn std::error::Error>> {
+        let mut failure_handler_name_to_id = HashMap::new();
+
+        if let Some(failure_handlers) = &spec.failure_handlers {
+            for handler_spec in failure_handlers {
+                // Check for duplicate names
+                if failure_handler_name_to_id.contains_key(&handler_spec.name) {
+                    return Err(
+                        format!("Duplicate failure handler name: {}", handler_spec.name).into(),
+                    );
+                }
+
+                // Serialize the rules to JSON
+                let rules_json = serde_json::to_string(&handler_spec.rules)
+                    .map_err(|e| format!("Failed to serialize failure handler rules: {}", e))?;
+
+                let handler_model = models::FailureHandlerModel::new(
+                    workflow_id,
+                    handler_spec.name.clone(),
+                    rules_json,
+                );
+
+                let created_handler = default_api::create_failure_handler(config, handler_model)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to create failure handler {}: {:?}",
+                            handler_spec.name, e
+                        )
+                    })?;
+
+                let handler_id = created_handler
+                    .id
+                    .ok_or("Created failure handler missing ID")?;
+                failure_handler_name_to_id.insert(handler_spec.name.clone(), handler_id);
+            }
+        }
+
+        Ok(failure_handler_name_to_id)
+    }
+
     /// Create workflow actions
     fn create_actions(
         config: &Configuration,
@@ -2040,7 +2138,7 @@ impl WorkflowSpec {
 
     /// Create JobModels with proper ID mapping using bulk API in batches of 1000
     /// Jobs are created in dependency order with depends_on_job_ids set during initial creation
-    #[allow(clippy::type_complexity)]
+    #[allow(clippy::type_complexity, clippy::too_many_arguments)]
     fn create_jobs(
         config: &Configuration,
         workflow_id: i64,
@@ -2049,6 +2147,7 @@ impl WorkflowSpec {
         user_data_name_to_id: &HashMap<String, i64>,
         resource_req_name_to_id: &HashMap<String, i64>,
         slurm_scheduler_to_id: &HashMap<String, i64>,
+        failure_handler_name_to_id: &HashMap<String, i64>,
     ) -> Result<(HashMap<String, i64>, HashMap<String, models::JobModel>), Box<dyn std::error::Error>>
     {
         let mut job_name_to_id = HashMap::new();
@@ -2211,6 +2310,20 @@ impl WorkflowSpec {
                             return Err(format!(
                                 "Scheduler '{}' not found for job '{}'",
                                 scheduler, job_spec.name
+                            )
+                            .into());
+                        }
+                    }
+                }
+
+                // Map failure handler name to ID
+                if let Some(failure_handler) = &job_spec.failure_handler {
+                    match failure_handler_name_to_id.get(failure_handler) {
+                        Some(&handler_id) => job_model.failure_handler_id = Some(handler_id),
+                        None => {
+                            return Err(format!(
+                                "Failure handler '{}' not found for job '{}'",
+                                failure_handler, job_spec.name
                             )
                             .into());
                         }
@@ -2385,6 +2498,15 @@ impl WorkflowSpec {
                         {
                             obj.insert(
                                 "resource_requirements".to_string(),
+                                serde_json::Value::String(v.to_string()),
+                            );
+                        }
+                    }
+                    "failure_handler" => {
+                        if let Some(v) = child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            obj.insert(
+                                "failure_handler".to_string(),
                                 serde_json::Value::String(v.to_string()),
                             );
                         }
@@ -3023,6 +3145,98 @@ impl WorkflowSpec {
         Ok(serde_json::Value::Object(obj))
     }
 
+    /// Convert a KDL failure_handler node to a JSON object
+    #[cfg(feature = "client")]
+    fn kdl_failure_handler_to_json(
+        node: &KdlNode,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let name = node
+            .entries()
+            .first()
+            .and_then(|e| e.value().as_string())
+            .ok_or("failure_handler must have a name")?
+            .to_string();
+
+        let mut obj = serde_json::Map::new();
+        obj.insert("name".to_string(), serde_json::Value::String(name));
+
+        let mut rules: Vec<serde_json::Value> = Vec::new();
+
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                if child.name().value() == "rule" {
+                    let mut rule_obj = serde_json::Map::new();
+
+                    if let Some(rule_children) = child.children() {
+                        for rule_child in rule_children.nodes() {
+                            match rule_child.name().value() {
+                                "exit_codes" => {
+                                    let codes: Vec<serde_json::Value> = rule_child
+                                        .entries()
+                                        .iter()
+                                        .filter_map(|e| {
+                                            e.value().as_integer().map(|i| {
+                                                serde_json::Value::Number((i as i64).into())
+                                            })
+                                        })
+                                        .collect();
+                                    if !codes.is_empty() {
+                                        rule_obj.insert(
+                                            "exit_codes".to_string(),
+                                            serde_json::Value::Array(codes),
+                                        );
+                                    }
+                                }
+                                "match_all_exit_codes" => {
+                                    if let Some(v) = rule_child
+                                        .entries()
+                                        .first()
+                                        .and_then(|e| e.value().as_bool())
+                                    {
+                                        rule_obj.insert(
+                                            "match_all_exit_codes".to_string(),
+                                            serde_json::Value::Bool(v),
+                                        );
+                                    }
+                                }
+                                "recovery_script" => {
+                                    if let Some(v) = rule_child
+                                        .entries()
+                                        .first()
+                                        .and_then(|e| e.value().as_string())
+                                    {
+                                        rule_obj.insert(
+                                            "recovery_script".to_string(),
+                                            serde_json::Value::String(v.to_string()),
+                                        );
+                                    }
+                                }
+                                "max_retries" => {
+                                    if let Some(v) = rule_child
+                                        .entries()
+                                        .first()
+                                        .and_then(|e| e.value().as_integer())
+                                    {
+                                        rule_obj.insert(
+                                            "max_retries".to_string(),
+                                            serde_json::Value::Number((v as i64).into()),
+                                        );
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+
+                    rules.push(serde_json::Value::Object(rule_obj));
+                }
+            }
+        }
+
+        obj.insert("rules".to_string(), serde_json::Value::Array(rules));
+        Ok(serde_json::Value::Object(obj))
+    }
+
     /// Convert a KDL document string to a serde_json::Value
     /// This is the intermediate representation used by all file formats
     #[cfg(feature = "client")]
@@ -3068,6 +3282,7 @@ impl WorkflowSpec {
         let mut files: Vec<serde_json::Value> = Vec::new();
         let mut user_data: Vec<serde_json::Value> = Vec::new();
         let mut resource_requirements: Vec<serde_json::Value> = Vec::new();
+        let mut failure_handlers: Vec<serde_json::Value> = Vec::new();
         let mut slurm_schedulers: Vec<serde_json::Value> = Vec::new();
         let mut actions: Vec<serde_json::Value> = Vec::new();
 
@@ -3148,6 +3363,9 @@ impl WorkflowSpec {
                 "resource_requirements" => {
                     resource_requirements.push(Self::kdl_resource_requirements_to_json(node)?);
                 }
+                "failure_handler" => {
+                    failure_handlers.push(Self::kdl_failure_handler_to_json(node)?);
+                }
                 "slurm_scheduler" => {
                     slurm_schedulers.push(Self::kdl_slurm_scheduler_to_json(node)?);
                 }
@@ -3184,6 +3402,12 @@ impl WorkflowSpec {
             obj.insert(
                 "resource_requirements".to_string(),
                 serde_json::Value::Array(resource_requirements),
+            );
+        }
+        if !failure_handlers.is_empty() {
+            obj.insert(
+                "failure_handlers".to_string(),
+                serde_json::Value::Array(failure_handlers),
             );
         }
         if !slurm_schedulers.is_empty() {
@@ -4282,6 +4506,7 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
                 }),
                 parameter_mode: None,
                 use_parameters: None,
+                failure_handler: None,
             }],
             files: Some(vec![{
                 let mut file =
@@ -4299,6 +4524,7 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
             slurm_defaults: None,
             resource_monitor: None,
             actions: None,
+            failure_handlers: None,
         };
 
         spec.expand_parameters()

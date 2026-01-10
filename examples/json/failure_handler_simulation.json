@@ -1,0 +1,47 @@
+{
+  "name": "failure_handler_simulation",
+  "description": "Simulation sweep with automatic failure recovery",
+
+  "failure_handlers": [
+    {
+      "name": "simulation_recovery",
+      "rules": [
+        {
+          "exit_codes": [10],
+          "recovery_script": "examples/scripts/recovery_demo.sh",
+          "max_retries": 3
+        },
+        {
+          "exit_codes": [11],
+          "recovery_script": "examples/scripts/recovery_demo.sh",
+          "max_retries": 2
+        },
+        {
+          "exit_codes": [12],
+          "max_retries": 3
+        }
+      ]
+    }
+  ],
+
+  "jobs": [
+    {
+      "name": "simulate_m{model}_s{scenario}",
+      "command": "bash examples/scripts/failure_demo_job.sh --fail-rate 0.7 --work-time 0.3",
+      "failure_handler": "simulation_recovery",
+      "parameters": {
+        "model": "0:2",
+        "scenario": "0:2"
+      }
+    },
+    {
+      "name": "aggregate_results",
+      "command": "echo \"All simulations completed successfully!\"",
+      "depends_on": ["simulate_m{model}_s{scenario}"],
+      "parameters": {
+        "model": "0:2",
+        "scenario": "0:2"
+      }
+    }
+  ]
+}

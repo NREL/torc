@@ -22,8 +22,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::models::{
-    EventModel, FileModel, JobModel, LocalSchedulerModel, ResourceRequirementsModel, ResultModel,
-    SlurmSchedulerModel, UserDataModel, WorkflowActionModel, WorkflowModel,
+    EventModel, FailureHandlerModel, FileModel, JobModel, LocalSchedulerModel,
+    ResourceRequirementsModel, ResultModel, SlurmSchedulerModel, UserDataModel,
+    WorkflowActionModel, WorkflowModel,
 };
 
 /// Current version of the export format
@@ -56,6 +57,10 @@ pub struct WorkflowExport {
     /// Local schedulers in the workflow
     pub local_schedulers: Vec<LocalSchedulerModel>,
 
+    /// Failure handlers in the workflow
+    #[serde(default)]
+    pub failure_handlers: Vec<FailureHandlerModel>,
+
     /// All jobs in the workflow (includes relationship IDs)
     pub jobs: Vec<JobModel>,
 
@@ -83,6 +88,7 @@ impl WorkflowExport {
             resource_requirements: Vec::new(),
             slurm_schedulers: Vec::new(),
             local_schedulers: Vec::new(),
+            failure_handlers: Vec::new(),
             jobs: Vec::new(),
             workflow_actions: Vec::new(),
             results: None,
@@ -100,6 +106,7 @@ pub struct ExportImportStats {
     pub resource_requirements: usize,
     pub slurm_schedulers: usize,
     pub local_schedulers: usize,
+    pub failure_handlers: usize,
     pub workflow_actions: usize,
     pub results: usize,
     pub events: usize,
@@ -114,6 +121,7 @@ impl ExportImportStats {
             resource_requirements: export.resource_requirements.len(),
             slurm_schedulers: export.slurm_schedulers.len(),
             local_schedulers: export.local_schedulers.len(),
+            failure_handlers: export.failure_handlers.len(),
             workflow_actions: export.workflow_actions.len(),
             results: export.results.as_ref().map(|r| r.len()).unwrap_or(0),
             events: export.events.as_ref().map(|e| e.len()).unwrap_or(0),
@@ -131,6 +139,7 @@ pub struct IdMappings {
     pub resource_requirements: HashMap<i64, i64>,
     pub slurm_schedulers: HashMap<i64, i64>,
     pub local_schedulers: HashMap<i64, i64>,
+    pub failure_handlers: HashMap<i64, i64>,
     pub jobs: HashMap<i64, i64>,
 }
 
@@ -160,6 +169,11 @@ impl IdMappings {
             .get(&old_id)
             .or_else(|| self.local_schedulers.get(&old_id))
             .copied()
+    }
+
+    /// Remap a failure_handler ID using the mapping table
+    pub fn remap_failure_handler_id(&self, old_id: i64) -> Option<i64> {
+        self.failure_handlers.get(&old_id).copied()
     }
 
     /// Remap a job ID using the mapping table

@@ -3,6 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use async_trait::async_trait;
+use chrono::Utc;
 use log::{debug, error, info};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
@@ -12,7 +13,8 @@ use tracing::instrument;
 use crate::server::api_types::{
     ClaimNextJobsResponse, CreateJobResponse, CreateJobsResponse, DeleteJobResponse,
     DeleteJobsResponse, GetJobResponse, GetReadyJobRequirementsResponse, ListJobIdsResponse,
-    ListJobsResponse, ProcessChangedJobInputsResponse, ResetJobStatusResponse, UpdateJobResponse,
+    ListJobsResponse, ProcessChangedJobInputsResponse, ResetJobStatusResponse, RetryJobResponse,
+    UpdateJobResponse,
 };
 
 use crate::models::{self as models, JobStatus};
@@ -131,6 +133,20 @@ pub trait JobsApi<C> {
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ResetJobStatusResponse, ApiError>;
+
+    /// Retry a failed job by resetting its status to Ready and incrementing attempt_id.
+    ///
+    /// Prerequisites:
+    /// - Job must be in Failed or Terminated status
+    /// - run_id must match the workflow's current run_id
+    /// - attempt_id must be less than max_retries
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+        context: &C,
+    ) -> Result<RetryJobResponse, ApiError>;
 }
 
 /// Implementation of jobs API for the server
@@ -234,7 +250,8 @@ impl JobsApiImpl {
         let record = match sqlx::query(
             r#"
                 SELECT id, workflow_id, name, command, resource_requirements_id, invocation_script,
-                       status, cancel_on_blocking_job_failure, supports_termination, scheduler_id
+                       status, cancel_on_blocking_job_failure, supports_termination, scheduler_id,
+                       failure_handler_id, attempt_id
                 FROM job
                 WHERE id = ?
             "#,
@@ -382,6 +399,8 @@ impl JobsApiImpl {
             status: Some(status),
             scheduler_id: record.try_get("scheduler_id").ok(),
             schedule_compute_nodes: None, // This field is not stored in the database
+            failure_handler_id: record.try_get("failure_handler_id").ok(),
+            attempt_id: record.try_get("attempt_id").ok(),
         })
     }
 
@@ -490,8 +509,8 @@ impl JobsApiImpl {
         }
 
         info!(
-            "Reset {} failed job statuses to uninitialized for workflow {}",
-            total_reset_count, workflow_id
+            "Jobs status reset workflow_id={} count={} new_status=uninitialized",
+            workflow_id, total_reset_count
         );
 
         Ok(ResetJobStatusResponse::SuccessfulResponse(
@@ -597,8 +616,8 @@ impl JobsApiImpl {
                 }
 
                 info!(
-                    "Successfully reset {} downstream jobs for job_id={} in workflow={}",
-                    affected_rows, job_id, workflow_id
+                    "Jobs downstream reset workflow_id={} job_id={} count={}",
+                    workflow_id, job_id, affected_rows
                 );
 
                 Ok(())
@@ -804,9 +823,11 @@ where
                 supports_termination,
                 resource_requirements_id,
                 invocation_script,
-                status
+                status,
+                scheduler_id,
+                failure_handler_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING rowid
             "#,
             job.workflow_id,
@@ -817,6 +838,8 @@ where
             job.resource_requirements_id,
             invocation_script,
             status_int,
+            job.scheduler_id,
+            job.failure_handler_id,
         )
         .fetch_all(&mut *tx)
         .await
@@ -992,9 +1015,11 @@ where
                     supports_termination,
                     resource_requirements_id,
                     invocation_script,
-                    status
+                    status,
+                    scheduler_id,
+                    failure_handler_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING rowid
                 "#,
                 job.workflow_id,
@@ -1005,6 +1030,8 @@ where
                 job.resource_requirements_id,
                 invocation_script,
                 status_int,
+                job.scheduler_id,
+                job.failure_handler_id,
             )
             .fetch_one(&mut *transaction)
             .await
@@ -1130,7 +1157,12 @@ where
             return Err(database_error(e));
         }
 
-        info!("Created {} jobs in bulk", added_jobs.len());
+        let workflow_id = added_jobs.first().map(|j| j.workflow_id).unwrap_or(0);
+        info!(
+            "Jobs created workflow_id={} count={}",
+            workflow_id,
+            added_jobs.len()
+        );
         Ok(CreateJobsResponse::SuccessfulResponse(
             models::CreateJobsResponse {
                 jobs: Some(added_jobs),
@@ -1166,8 +1198,8 @@ where
         let deleted_count = result.rows_affected() as i64;
 
         info!(
-            "Deleted {} jobs for workflow {}",
-            deleted_count, workflow_id
+            "Jobs deleted workflow_id={} count={}",
+            workflow_id, deleted_count
         );
 
         Ok(DeleteJobsResponse::SuccessfulResponse(serde_json::json!({
@@ -1277,7 +1309,7 @@ where
         );
 
         // Build base query
-        let base_query = "SELECT id, workflow_id, name, command, resource_requirements_id, invocation_script, status, cancel_on_blocking_job_failure, supports_termination FROM job".to_string();
+        let base_query = "SELECT id, workflow_id, name, command, resource_requirements_id, invocation_script, status, cancel_on_blocking_job_failure, supports_termination, scheduler_id, failure_handler_id, attempt_id FROM job".to_string();
 
         // Build WHERE clause conditions
         let mut where_conditions = vec!["workflow_id = ?".to_string()];
@@ -1395,6 +1427,8 @@ where
                     status: Some(status),
                     scheduler_id: record.try_get("scheduler_id").ok(),
                     schedule_compute_nodes: None,
+                    failure_handler_id: record.try_get("failure_handler_id").ok(),
+                    attempt_id: record.try_get("attempt_id").ok(),
                 });
             }
         }
@@ -2054,8 +2088,8 @@ where
                     Err(ApiError("Database error: No rows affected".to_string()))
                 } else {
                     info!(
-                        "Deleted job {} (name: {:?}) from workflow {}",
-                        id, job.name, job.workflow_id
+                        "Job deleted workflow_id={} job_id={} job_name={}",
+                        job.workflow_id, id, job.name
                     );
                     Ok(DeleteJobResponse::SuccessfulResponse(job))
                 }
@@ -2126,8 +2160,8 @@ where
         }
 
         info!(
-            "Reset {} job statuses to uninitialized for workflow {}",
-            updated_count, id
+            "Jobs status reset workflow_id={} count={} new_status=uninitialized",
+            id, updated_count
         );
 
         Ok(ResetJobStatusResponse::SuccessfulResponse(
@@ -2137,5 +2171,224 @@ where
                 JobStatus::Uninitialized.to_string(),
             ),
         ))
+    }
+
+    /// Retry a failed job by resetting its status to Ready and incrementing attempt_id.
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+        context: &C,
+    ) -> Result<RetryJobResponse, ApiError> {
+        debug!(
+            "retry_job({}, {}, {}) - X-Span-ID: {:?}",
+            id,
+            run_id,
+            max_retries,
+            context.get().0.clone()
+        );
+
+        // Use a transaction with BEGIN IMMEDIATE to prevent race conditions
+        // where multiple processes might try to retry the same job simultaneously.
+        let mut tx = match self.context.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                error!("Failed to begin transaction: {}", e);
+                return Err(database_error(e));
+            }
+        };
+
+        // Acquire write lock immediately to prevent concurrent retries
+        if let Err(e) = sqlx::query("BEGIN IMMEDIATE").execute(&mut *tx).await {
+            // SQLite may return an error if already in a transaction, which is fine
+            debug!("BEGIN IMMEDIATE returned (expected in transaction): {}", e);
+        }
+
+        // Get the job and verify it's in a retryable state
+        // Using sqlx::query instead of sqlx::query! to handle nullable columns properly
+        let job_record = match sqlx::query(
+            r#"
+            SELECT j.id, j.workflow_id, j.name, j.command, j.status, j.failure_handler_id, j.attempt_id,
+                   j.invocation_script, j.cancel_on_blocking_job_failure, j.supports_termination,
+                   j.resource_requirements_id, j.scheduler_id,
+                   ws.run_id as workflow_run_id
+            FROM job j
+            JOIN workflow w ON j.workflow_id = w.id
+            JOIN workflow_status ws ON w.status_id = ws.id
+            WHERE j.id = ?
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&mut *tx)
+        .await
+        {
+            Ok(Some(record)) => record,
+            Ok(None) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Job not found with ID: {}", id)
+                }));
+                return Ok(RetryJobResponse::NotFoundErrorResponse(error_response));
+            }
+            Err(e) => {
+                error!("Database error: {}", e);
+                return Err(database_error(e));
+            }
+        };
+
+        // Extract fields from the row
+        let job_id: i64 = job_record.get("id");
+        let workflow_id: i64 = job_record.get("workflow_id");
+        let name: String = job_record.get("name");
+        let command: String = job_record.get("command");
+        let status_int: i32 = job_record.get("status");
+        let failure_handler_id: Option<i64> = job_record.get("failure_handler_id");
+        let attempt_id: i64 = job_record.get("attempt_id");
+        let invocation_script: Option<String> = job_record.get("invocation_script");
+        let cancel_on_blocking_job_failure: Option<bool> =
+            job_record.get("cancel_on_blocking_job_failure");
+        let supports_termination: Option<bool> = job_record.get("supports_termination");
+        let resource_requirements_id: Option<i64> = job_record.get("resource_requirements_id");
+        let scheduler_id: Option<i64> = job_record.get("scheduler_id");
+        let workflow_run_id: i64 = job_record.get("workflow_run_id");
+
+        // Verify run_id matches
+        if workflow_run_id != run_id {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!(
+                    "Run ID mismatch: provided {} but workflow is at run {}",
+                    run_id, workflow_run_id
+                )
+            }));
+            return Ok(RetryJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
+        }
+
+        // Verify job is in a retryable state (Running, Failed, or Terminated)
+        // Note: Running is allowed because the job runner may call retry_job before complete_job
+        // when handling failure recovery (the job has finished locally but the server hasn't been
+        // notified yet).
+        let current_status = match JobStatus::from_int(status_int) {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to parse job status: {}", e);
+                return Err(ApiError(format!("Failed to parse job status: {}", e)));
+            }
+        };
+
+        if current_status != JobStatus::Running
+            && current_status != JobStatus::Failed
+            && current_status != JobStatus::Terminated
+        {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!(
+                    "Job cannot be retried: status is {:?}, must be Running, Failed, or Terminated",
+                    current_status
+                )
+            }));
+            return Ok(RetryJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
+        }
+
+        // Validate max_retries (server-side enforcement)
+        if attempt_id >= max_retries as i64 {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!(
+                    "Job cannot be retried: attempt_id {} >= max_retries {}",
+                    attempt_id, max_retries
+                )
+            }));
+            return Ok(RetryJobResponse::UnprocessableContentErrorResponse(
+                error_response,
+            ));
+        }
+
+        // Get current attempt_id and increment
+        let new_attempt = attempt_id + 1;
+
+        // Update job status to Ready and increment attempt_id
+        let ready_status = JobStatus::Ready.to_int();
+        if let Err(e) = sqlx::query(
+            r#"
+            UPDATE job
+            SET status = ?, attempt_id = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(ready_status)
+        .bind(new_attempt)
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        {
+            error!("Failed to update job status: {}", e);
+            return Err(database_error(e));
+        }
+
+        // Create an event for the retry (within the transaction)
+        let event_data = serde_json::json!({
+            "event_type": "job_retried",
+            "job_id": id,
+            "job_name": name,
+            "previous_attempt": attempt_id,
+            "new_attempt": new_attempt,
+            "run_id": run_id,
+            "message": format!("Job with name = {} retried: attempt {} -> {}", name, attempt_id, new_attempt),
+        });
+        let timestamp = Utc::now().timestamp_millis();
+
+        if let Err(e) = sqlx::query(
+            r#"
+            INSERT INTO event (workflow_id, timestamp, data)
+            VALUES ($1, $2, $3)
+            "#,
+        )
+        .bind(workflow_id)
+        .bind(timestamp)
+        .bind(event_data.to_string())
+        .execute(&mut *tx)
+        .await
+        {
+            // Log the error but don't fail the retry operation
+            error!("Failed to create retry event for job {}: {}", id, e);
+        }
+
+        // Commit the transaction
+        if let Err(e) = tx.commit().await {
+            error!("Failed to commit transaction: {}", e);
+            return Err(database_error(e));
+        }
+
+        info!(
+            "Job retried workflow_id={} job_id={} job_name={} run_id={} attempt_id={} new_attempt_id={} status=ready",
+            workflow_id, id, name, run_id, attempt_id, new_attempt
+        );
+
+        // Return updated job model
+        let status = JobStatus::Ready;
+        let job_model = models::JobModel {
+            id: Some(job_id),
+            workflow_id,
+            name,
+            command,
+            invocation_script,
+            status: Some(status),
+            schedule_compute_nodes: None,
+            cancel_on_blocking_job_failure,
+            supports_termination,
+            depends_on_job_ids: None,
+            input_file_ids: None,
+            output_file_ids: None,
+            input_user_data_ids: None,
+            output_user_data_ids: None,
+            resource_requirements_id,
+            scheduler_id,
+            failure_handler_id,
+            attempt_id: Some(new_attempt),
+        };
+
+        Ok(RetryJobResponse::SuccessfulResponse(job_model))
     }
 }

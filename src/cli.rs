@@ -10,6 +10,7 @@ use crate::client::commands::access_groups::AccessGroupCommands;
 use crate::client::commands::compute_nodes::ComputeNodeCommands;
 use crate::client::commands::config::ConfigCommands;
 use crate::client::commands::events::EventCommands;
+use crate::client::commands::failure_handlers::FailureHandlerCommands;
 use crate::client::commands::files::FileCommands;
 use crate::client::commands::hpc::HpcCommands;
 use crate::client::commands::job_dependencies::JobDependencyCommands;
@@ -263,8 +264,11 @@ EXAMPLES:
     /// diagnoses failures, adjusts resource requirements, and resubmits jobs.
     ///
     /// Recovery heuristics:
+    ///
     /// - OOM (out of memory): Increase memory by --memory-multiplier (default 1.5x)
+    ///
     /// - Timeout: Increase runtime by --runtime-multiplier (default 1.5x)
+    ///
     /// - Other failures: Retry without changes (transient errors)
     ///
     /// Without --recover, reports failures and exits for manual intervention
@@ -272,18 +276,65 @@ EXAMPLES:
     #[command(
         hide = true,
         after_long_help = "\
+USAGE MODES:
+
+    1. Basic monitoring (no recovery):
+       torc watch 123
+       Reports failures and exits. Use for manual intervention or AI-assisted recovery.
+
+    2. With automatic recovery (--recover):
+       torc watch 123 --recover
+       Automatically diagnoses OOM/timeout failures, adjusts resources, and retries.
+       Runs until all jobs complete or max retries exceeded.
+
+    3. With auto-scheduling (--auto-schedule):
+       torc watch 123 --auto-schedule
+       Automatically submits new Slurm allocations when retry jobs are waiting.
+       Essential for workflows using failure handlers that create retry jobs.
+
 EXAMPLES:
-    # Watch until completion
+
+    # Basic: watch until completion, report failures
     torc watch 123
 
-    # Watch with automatic recovery
+    # Recovery: automatically fix OOM/timeout failures
     torc watch 123 --recover
 
-    # Custom poll interval and resource multipliers
-    torc watch 123 --recover -p 30 --memory-multiplier 2.0 --runtime-multiplier 1.5
+    # Recovery with aggressive resource increases
+    torc watch 123 --recover --memory-multiplier 2.0 --runtime-multiplier 2.0
 
-    # With custom recovery hook
-    torc watch 123 --recover --recovery-hook 'bash fix-cluster.sh'
+    # Recovery including unknown failures (transient errors)
+    torc watch 123 --recover --retry-unknown
+
+    # Auto-schedule: ensure retry jobs get scheduled
+    torc watch 123 --auto-schedule
+
+    # Full production setup: recovery + auto-scheduling
+    torc watch 123 --recover --auto-schedule
+
+    # Custom auto-schedule settings
+    torc watch 123 --auto-schedule \\
+        --auto-schedule-threshold 10 \\
+        --auto-schedule-cooldown 3600 \\
+        --auto-schedule-stranded-timeout 14400
+
+AUTO-SCHEDULING BEHAVIOR:
+
+    When --auto-schedule is enabled:
+
+    1. No schedulers available: Immediately submits new allocations if ready jobs exist.
+
+    2. Threshold exceeded: If retry jobs (attempt_id > 1) exceed --auto-schedule-threshold
+       while schedulers are running, submits additional allocations after cooldown.
+
+    3. Stranded jobs: If retry jobs are below threshold but waiting longer than
+       --auto-schedule-stranded-timeout, schedules anyway to prevent indefinite waiting.
+
+    Defaults: threshold=5 jobs, cooldown=30min, stranded-timeout=2hrs
+
+SEE ALSO:
+    torc recover    One-shot recovery (no continuous monitoring)
+    Docs: https://nrel.github.io/torc/specialized/fault-tolerance/automatic-recovery.html
 "
     )]
     Watch {
@@ -347,6 +398,46 @@ EXAMPLES:
         /// server load for large workflows. Only use for debugging or small workflows.
         #[arg(short, long)]
         show_job_counts: bool,
+
+        /// Automatically schedule new compute nodes when needed
+        ///
+        /// When enabled, the watch command will automatically regenerate and submit
+        /// Slurm schedulers in two scenarios:
+        ///
+        /// 1. No active/pending schedulers exist but there are ready jobs
+        /// 2. Retry jobs (from failure handlers) are accumulating and exceed the threshold
+        ///
+        /// This is useful for workflows with failure handlers that create retry jobs,
+        /// ensuring those jobs get scheduled without manual intervention.
+        #[arg(long)]
+        auto_schedule: bool,
+
+        /// Minimum number of retry jobs before auto-scheduling (when schedulers exist)
+        ///
+        /// When there are active schedulers, only auto-schedule if this many retry jobs
+        /// (jobs with attempt_id > 1) are waiting in the ready state. This prevents
+        /// over-provisioning when existing schedulers can handle the load.
+        ///
+        /// Set to 0 to auto-schedule as soon as any retry job is ready.
+        #[arg(long, default_value = "5")]
+        auto_schedule_threshold: u32,
+
+        /// Cooldown between auto-schedule attempts (in seconds)
+        ///
+        /// After auto-scheduling, wait this long before scheduling again. This gives
+        /// new allocations time to start and claim jobs, preventing thrashing.
+        #[arg(long, default_value = "1800")]
+        auto_schedule_cooldown: u64,
+
+        /// Maximum time to wait before scheduling stranded retry jobs (in seconds)
+        ///
+        /// If retry jobs have been waiting longer than this timeout and are below the
+        /// threshold, schedule anyway. This prevents jobs from being stranded indefinitely
+        /// when not enough failures occur to reach the threshold.
+        ///
+        /// Set to 0 to disable stranded job detection.
+        #[arg(long, default_value = "7200")]
+        auto_schedule_stranded_timeout: u64,
     },
     /// Recover a Slurm workflow from failures
     ///
@@ -354,11 +445,17 @@ EXAMPLES:
     /// and resubmits jobs. Use after a workflow has completed with failures.
     ///
     /// This command:
+    ///
     /// 1. Checks preconditions (workflow complete, no active workers)
+    ///
     /// 2. Diagnoses failures using resource utilization data
+    ///
     /// 3. Applies recovery heuristics (increase memory/runtime)
+    ///
     /// 4. Runs optional recovery hook for custom logic
+    ///
     /// 5. Resets failed jobs and regenerates Slurm schedulers
+    ///
     /// 6. Submits new allocations
     ///
     /// For continuous monitoring with automatic recovery, use `torc watch --recover`.
@@ -366,17 +463,37 @@ EXAMPLES:
         hide = true,
         after_long_help = "\
 EXAMPLES:
+
     # Basic recovery
     torc recover 123
 
-    # Dry run to preview changes
+    # Dry run to preview changes without modifying anything
     torc recover 123 --dry-run
 
     # Custom resource multipliers
     torc recover 123 --memory-multiplier 2.0 --runtime-multiplier 1.5
 
-    # Also retry unknown failures
+    # Also retry unknown failures (not just OOM/timeout)
     torc recover 123 --retry-unknown
+
+    # With custom recovery hook for domain-specific fixes
+    torc recover 123 --recovery-hook 'bash fix-cluster.sh'
+
+WHEN TO USE:
+
+    Use `torc recover` for:
+    - One-shot recovery after a workflow has completed with failures
+    - Manual investigation before retrying (use --dry-run first)
+    - Workflows where you want to inspect failures before retrying
+
+    Use `torc watch --recover` instead for:
+    - Continuous monitoring of long-running workflows
+    - Fully automated recovery without manual intervention
+    - Production workflows that should self-heal
+
+SEE ALSO:
+    torc watch --recover    Continuous monitoring with automatic recovery
+    Docs: https://nrel.github.io/torc/specialized/fault-tolerance/automatic-recovery.html
 "
     )]
     Recover {
@@ -536,6 +653,12 @@ EXAMPLES:
     ResourceRequirements {
         #[command(subcommand)]
         command: ResourceRequirementsCommands,
+    },
+    /// Failure handler management commands
+    #[command(hide = true)]
+    FailureHandlers {
+        #[command(subcommand)]
+        command: FailureHandlerCommands,
     },
 
     // =========================================================================

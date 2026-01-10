@@ -83,6 +83,23 @@ use crate::models::{
     WorkflowModel,
 };
 
+/// Rule definition for failure handler (parsed from JSON stored in database)
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct FailureHandlerRule {
+    #[serde(default)]
+    pub exit_codes: Vec<i32>,
+    /// If true, this rule matches any non-zero exit code
+    #[serde(default)]
+    pub match_all_exit_codes: bool,
+    pub recovery_script: Option<String>,
+    #[serde(default = "default_max_retries")]
+    pub max_retries: i32,
+}
+
+fn default_max_retries() -> i32 {
+    3
+}
+
 /// Result of running the job worker, indicating whether any jobs failed or were terminated.
 #[derive(Debug, Default, Clone)]
 pub struct WorkerResult {
@@ -374,24 +391,18 @@ impl JobRunner {
             }) {
                 Ok(response) => {
                     if response.is_canceled {
-                        info!(
-                            "Workflow {} is canceled. Cancel all jobs.",
-                            self.workflow_id
-                        );
+                        info!("Workflow canceled workflow_id={}", self.workflow_id);
                         self.cancel_jobs();
                         break;
                     }
                     if response.is_complete {
                         if self.rules.compute_node_ignore_workflow_completion {
                             info!(
-                                "Workflow {} is complete, but compute node is ignoring completion.",
+                                "Workflow complete (ignoring) workflow_id={}",
                                 self.workflow_id
                             );
                         } else {
-                            info!(
-                                "Workflow {} is complete. Exiting job runner.",
-                                self.workflow_id
-                            );
+                            info!("Workflow complete workflow_id={}", self.workflow_id);
                             break;
                         }
                     }
@@ -496,8 +507,12 @@ impl JobRunner {
         self.deactivate_compute_node();
 
         info!(
-            "Job runner completed for workflow ID: {} (had_failures={}, had_terminations={})",
-            self.workflow_id, self.had_failures, self.had_terminations
+            "Job runner completed workflow_id={} run_id={} compute_node_id={} had_failures={} had_terminations={}",
+            self.workflow_id,
+            self.run_id,
+            self.compute_node_id,
+            self.had_failures,
+            self.had_terminations
         );
         Ok(WorkerResult {
             had_failures: self.had_failures,
@@ -509,22 +524,24 @@ impl JobRunner {
     fn deactivate_compute_node(&self) {
         let duration_seconds = self.start_instant.elapsed().as_secs_f64();
         info!(
-            "Deactivating compute node {} (duration: {:.1}s)",
-            self.compute_node_id, duration_seconds
+            "Compute node deactivated workflow_id={} run_id={} compute_node_id={} duration_s={:.1}",
+            self.workflow_id, self.run_id, self.compute_node_id, duration_seconds
         );
 
-        let mut update_model = crate::models::ComputeNodeModel::new(
-            self.workflow_id,
-            String::new(), // hostname not needed for update
-            0,             // pid not needed for update
-            String::new(), // start_time not needed for update
-            0,             // num_cpus not needed for update
-            0.0,           // memory_gb not needed for update
-            0,             // num_gpus not needed for update
-            1,             // num_nodes not needed for update
-            String::new(), // compute_node_type not needed for update
-            None,          // scheduler_config_id not needed for update
-        );
+        // Fetch the existing compute node first to preserve all fields
+        let mut update_model =
+            match default_api::get_compute_node(&self.config, self.compute_node_id) {
+                Ok(node) => node,
+                Err(e) => {
+                    error!(
+                        "Failed to fetch compute node {} for deactivation: {}",
+                        self.compute_node_id, e
+                    );
+                    return;
+                }
+            };
+
+        // Only update the fields we need to change
         update_model.is_active = Some(false);
         update_model.duration_seconds = Some(duration_seconds);
 
@@ -542,7 +559,10 @@ impl JobRunner {
     fn cancel_jobs(&mut self) {
         let mut results = Vec::new();
         for (job_id, async_job) in self.running_jobs.iter_mut() {
-            info!("Canceling job {}", job_id);
+            info!(
+                "Job canceling workflow_id={} job_id={}",
+                self.workflow_id, job_id
+            );
             let _ = async_job.cancel();
         }
         for (job_id, async_job) in self.running_jobs.iter_mut() {
@@ -600,7 +620,11 @@ impl JobRunner {
             return;
         }
 
-        info!("Terminating {} running job(s)", self.running_jobs.len());
+        info!(
+            "Jobs terminating workflow_id={} count={}",
+            self.workflow_id,
+            self.running_jobs.len()
+        );
 
         // First pass: send termination signal to all jobs
         // Jobs that support termination get SIGTERM, others get killed immediately
@@ -608,19 +632,25 @@ impl JobRunner {
             let supports_termination = async_job.job.supports_termination.unwrap_or(false);
             if supports_termination {
                 info!(
-                    "Sending SIGTERM to job {} (supports_termination=true)",
-                    job_id
+                    "Job SIGTERM workflow_id={} job_id={} supports_termination=true",
+                    self.workflow_id, job_id
                 );
                 if let Err(e) = async_job.terminate() {
-                    warn!("Failed to send SIGTERM to job {}: {}", job_id, e);
+                    warn!(
+                        "Job SIGTERM failed workflow_id={} job_id={} error={}",
+                        self.workflow_id, job_id, e
+                    );
                 }
             } else {
                 info!(
-                    "Sending SIGKILL to job {} (supports_termination=false)",
-                    job_id
+                    "Job SIGKILL workflow_id={} job_id={} supports_termination=false",
+                    self.workflow_id, job_id
                 );
                 if let Err(e) = async_job.cancel() {
-                    warn!("Failed to kill job {}: {}", job_id, e);
+                    warn!(
+                        "Job SIGKILL failed workflow_id={} job_id={} error={}",
+                        self.workflow_id, job_id, e
+                    );
                 }
             }
         }
@@ -630,7 +660,10 @@ impl JobRunner {
         for (job_id, async_job) in self.running_jobs.iter_mut() {
             match async_job.wait_for_completion() {
                 Ok(exit_code) => {
-                    debug!("Job {} terminated with exit code {}", job_id, exit_code);
+                    debug!(
+                        "Job terminated workflow_id={} job_id={} exit_code={}",
+                        self.workflow_id, job_id, exit_code
+                    );
                     let result = async_job.get_result(
                         self.run_id,
                         self.compute_node_id,
@@ -639,7 +672,10 @@ impl JobRunner {
                     results.push((*job_id, result));
                 }
                 Err(e) => {
-                    error!("Error waiting for job {} to complete: {}", job_id, e);
+                    error!(
+                        "Job wait failed workflow_id={} job_id={} error={}",
+                        self.workflow_id, job_id, e
+                    );
                 }
             }
         }
@@ -813,13 +849,51 @@ impl JobRunner {
     }
 
     fn handle_job_completion(&mut self, job_id: i64, result: ResultModel) {
-        // Track failures and terminations
+        // Get job info before removing from running_jobs
+        let job_info = self.running_jobs.get(&job_id).map(|cmd| {
+            (
+                cmd.job.name.clone(),
+                cmd.job.attempt_id.unwrap_or(1),
+                cmd.job.failure_handler_id,
+            )
+        });
+
+        // Check if we should try to recover a failed job
+        if result.status == JobStatus::Failed
+            && let Some((job_name, attempt_id, failure_handler_id)) = &job_info
+        {
+            let return_code = result.return_code;
+            // Try to recover the job if it has a failure handler
+            if self.try_recover_job(
+                job_id,
+                job_name,
+                return_code,
+                *attempt_id,
+                *failure_handler_id,
+            ) {
+                // Job was successfully scheduled for retry - clean up but don't mark as failed
+                info!(
+                    "Job retry scheduled workflow_id={} job_id={} job_name={} return_code={} attempt_id={}",
+                    self.workflow_id, job_id, job_name, return_code, attempt_id
+                );
+                if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
+                    self.increment_resources(&job_rr);
+                }
+                self.last_job_claimed_time = Some(Instant::now());
+                self.running_jobs.remove(&job_id);
+                self.job_resources.remove(&job_id);
+                return;
+            }
+        }
+
+        // Track failures and terminations (if we reach here, no retry happened)
         match result.status {
             JobStatus::Failed => self.had_failures = true,
             JobStatus::Terminated => self.had_terminations = true,
             _ => {}
         }
 
+        let status_str = format!("{:?}", result.status).to_lowercase();
         match self.send_with_retries(|| {
             default_api::complete_job(
                 &self.config,
@@ -831,8 +905,8 @@ impl JobRunner {
         }) {
             Ok(_) => {
                 info!(
-                    "Successfully completed job {} with status {:?}",
-                    job_id, result.status
+                    "Job completed workflow_id={} job_id={} run_id={} status={}",
+                    self.workflow_id, job_id, result.run_id, status_str
                 );
                 if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
                     self.increment_resources(&job_rr);
@@ -843,11 +917,176 @@ impl JobRunner {
                 self.last_job_claimed_time = Some(Instant::now());
             }
             Err(e) => {
-                error!("Error completing job {}: {}", job_id, e);
+                error!(
+                    "Job complete failed workflow_id={} job_id={} error={}",
+                    self.workflow_id, job_id, e
+                );
             }
         }
         self.running_jobs.remove(&job_id);
         self.job_resources.remove(&job_id);
+    }
+
+    /// Run a recovery script with environment variables set.
+    /// Returns Ok(()) if the recovery script succeeds (exit code 0).
+    fn run_recovery_script(
+        &self,
+        job_id: i64,
+        job_name: &str,
+        script: &str,
+        exit_code: i64,
+        attempt_id: i64,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        info!(
+            "Recovery script running workflow_id={} job_id={} job_name={} attempt_id={} script={}",
+            self.workflow_id, job_id, job_name, attempt_id, script
+        );
+
+        // Run recovery script from the same working directory where job commands run
+        // (the original working directory where `torc run` was executed), not from output_dir.
+        // This ensures paths in recovery scripts are relative to the same base as job commands.
+        let output = crate::client::utils::shell_command()
+            .arg(script)
+            .env("TORC_WORKFLOW_ID", self.workflow_id.to_string())
+            .env("TORC_JOB_ID", job_id.to_string())
+            .env("TORC_JOB_NAME", job_name)
+            .env("TORC_API_URL", &self.config.base_path)
+            .env(
+                "TORC_OUTPUT_DIR",
+                self.output_dir.to_string_lossy().to_string(),
+            )
+            .env("TORC_ATTEMPT_ID", attempt_id.to_string())
+            .env("TORC_RETURN_CODE", exit_code.to_string())
+            .output()?;
+
+        if output.status.success() {
+            info!(
+                "Recovery script succeeded workflow_id={} job_id={} attempt_id={}",
+                self.workflow_id, job_id, attempt_id
+            );
+            Ok(())
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            Err(format!(
+                "Recovery script failed workflow_id={} job_id={} exit_code={:?} stderr={}",
+                self.workflow_id,
+                job_id,
+                output.status.code(),
+                stderr
+            )
+            .into())
+        }
+    }
+
+    /// Try to recover and retry a failed job based on its failure handler rules.
+    /// Returns true if the job was successfully scheduled for retry.
+    fn try_recover_job(
+        &self,
+        job_id: i64,
+        job_name: &str,
+        exit_code: i64,
+        attempt_id: i64,
+        failure_handler_id: Option<i64>,
+    ) -> bool {
+        // Fetch the failure handler for this job on demand
+        let fh_id = match failure_handler_id {
+            Some(id) => id,
+            None => return false,
+        };
+
+        let handler = match self
+            .send_with_retries(|| default_api::get_failure_handler(&self.config, fh_id))
+        {
+            Ok(h) => h,
+            Err(e) => {
+                warn!(
+                    "Failed to fetch failure handler {} for job {}: {}",
+                    fh_id, job_id, e
+                );
+                return false;
+            }
+        };
+
+        // Parse the rules JSON
+        let rules: Vec<FailureHandlerRule> = match serde_json::from_str(&handler.rules) {
+            Ok(r) => r,
+            Err(e) => {
+                warn!(
+                    "Failed to parse failure handler rules for job {}: {}",
+                    job_id, e
+                );
+                return false;
+            }
+        };
+
+        // Find a matching rule for this exit code
+        // First check for rules with specific exit_codes, then fall back to match_all_exit_codes
+        let matching_rule = rules
+            .iter()
+            .find(|rule| rule.exit_codes.contains(&(exit_code as i32)))
+            .or_else(|| rules.iter().find(|rule| rule.match_all_exit_codes));
+
+        let rule = match matching_rule {
+            Some(r) => r,
+            None => {
+                debug!(
+                    "No matching failure handler rule for job {} with exit code {}",
+                    job_id, exit_code
+                );
+                return false;
+            }
+        };
+
+        // Check if we've exceeded max retries
+        if attempt_id >= rule.max_retries as i64 {
+            info!(
+                "Job max retries reached workflow_id={} job_id={} max_retries={} exit_code={}",
+                self.workflow_id, job_id, rule.max_retries, exit_code
+            );
+            return false;
+        }
+
+        // Call retry_job API first to reserve the retry slot.
+        // This ensures we don't run recovery scripts for retries that won't happen.
+        // Pass max_retries for server-side validation.
+        match self.send_with_retries(|| {
+            default_api::retry_job(&self.config, job_id, self.run_id, rule.max_retries)
+        }) {
+            Ok(_) => {
+                info!(
+                    "Job retried workflow_id={} job_id={} run_id={} attempt_id={} new_attempt_id={}",
+                    self.workflow_id,
+                    job_id,
+                    self.run_id,
+                    attempt_id,
+                    attempt_id + 1
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Job retry failed workflow_id={} job_id={} error={}",
+                    self.workflow_id, job_id, e
+                );
+                return false;
+            }
+        }
+
+        // Run recovery script if defined (after retry is confirmed)
+        // If the recovery script fails, the job will still be retried but may fail again.
+        // This is safer than running recovery before retry_job, which could leave
+        // external resources in an inconsistent state if the retry API call fails.
+        if let Some(ref recovery_script) = rule.recovery_script
+            && let Err(e) =
+                self.run_recovery_script(job_id, job_name, recovery_script, exit_code, attempt_id)
+        {
+            warn!(
+                "Recovery script failed (job will still retry) workflow_id={} job_id={} error={}",
+                self.workflow_id, job_id, e
+            );
+            // Don't return false - the retry is already scheduled
+        }
+
+        true
     }
 
     fn decrement_resources(&mut self, rr: &ResourceRequirementsModel) {
@@ -966,21 +1205,33 @@ impl JobRunner {
                         }
                     }
 
+                    let attempt_id = async_job.job.attempt_id.unwrap_or(1);
                     match async_job.start(
                         &self.output_dir,
                         self.workflow_id,
                         self.run_id,
+                        attempt_id,
                         self.resource_monitor.as_ref(),
                         &self.config.base_path,
                     ) {
                         Ok(()) => {
-                            info!("Started job {}", job_id);
+                            info!(
+                                "Job started workflow_id={} job_id={} run_id={} compute_node_id={} attempt_id={}",
+                                self.workflow_id,
+                                job_id,
+                                self.run_id,
+                                self.compute_node_id,
+                                attempt_id
+                            );
                             self.running_jobs.insert(job_id, async_job);
                             self.decrement_resources(&job_rr);
                             self.job_resources.insert(job_id, job_rr);
                         }
                         Err(e) => {
-                            error!("Error starting job {}: {}", job_id, e);
+                            error!(
+                                "Job start failed workflow_id={} job_id={} error={}",
+                                self.workflow_id, job_id, e
+                            );
                             continue;
                         }
                     }
@@ -1077,19 +1328,31 @@ impl JobRunner {
                         }
                     }
 
+                    let attempt_id = async_job.job.attempt_id.unwrap_or(1);
                     match async_job.start(
                         &self.output_dir,
                         self.workflow_id,
                         self.run_id,
+                        attempt_id,
                         self.resource_monitor.as_ref(),
                         &self.config.base_path,
                     ) {
                         Ok(()) => {
-                            info!("Started job {}", job_id);
+                            info!(
+                                "Job started workflow_id={} job_id={} run_id={} compute_node_id={} attempt_id={}",
+                                self.workflow_id,
+                                job_id,
+                                self.run_id,
+                                self.compute_node_id,
+                                attempt_id
+                            );
                             self.running_jobs.insert(job_id, async_job);
                         }
                         Err(e) => {
-                            error!("Error starting job {}: {}", job_id, e);
+                            error!(
+                                "Job start failed workflow_id={} job_id={} error={}",
+                                self.workflow_id, job_id, e
+                            );
                             continue;
                         }
                     }
@@ -1097,8 +1360,8 @@ impl JobRunner {
             }
             Err(err) => {
                 error!(
-                    "Failed to prepare jobs for submission after retries: {}",
-                    err
+                    "Job preparation failed workflow_id={} error={}",
+                    self.workflow_id, err
                 );
                 panic!("Failed to prepare jobs for submission after retries");
             }
@@ -1510,20 +1773,11 @@ impl JobRunner {
 
                     info!("Executing command: {}", command);
 
-                    // Execute the command using std::process::Command
-                    let output = if cfg!(target_os = "windows") {
-                        std::process::Command::new("cmd")
-                            .arg("/C")
-                            .arg(command)
-                            .current_dir(&self.output_dir)
-                            .output()?
-                    } else {
-                        std::process::Command::new("sh")
-                            .arg("-c")
-                            .arg(command)
-                            .current_dir(&self.output_dir)
-                            .output()?
-                    };
+                    // Execute the command using cross-platform shell
+                    let output = crate::client::utils::shell_command()
+                        .arg(command)
+                        .current_dir(&self.output_dir)
+                        .output()?;
 
                     if output.status.success() {
                         let stdout = String::from_utf8_lossy(&output.stdout);

@@ -33,6 +33,37 @@ use crate::client::apis::default_api;
 
 const PING_INTERVAL_SECONDS: u64 = 30;
 
+/// Creates a cross-platform shell command for executing shell scripts/commands.
+///
+/// On Unix systems, uses `bash -c` for shell execution.
+/// On Windows, uses `cmd /C` for shell execution.
+///
+/// # Returns
+///
+/// A `Command` configured with the appropriate shell interpreter and argument flag.
+/// The caller should add the actual command string using `.arg(command_str)`.
+///
+/// # Example
+///
+/// ```ignore
+/// use torc::client::utils::shell_command;
+///
+/// let output = shell_command()
+///     .arg("echo hello")
+///     .output()?;
+/// ```
+pub fn shell_command() -> Command {
+    if cfg!(target_os = "windows") {
+        let mut cmd = Command::new("cmd");
+        cmd.arg("/C");
+        cmd
+    } else {
+        let mut cmd = Command::new("bash");
+        cmd.arg("-c");
+        cmd
+    }
+}
+
 /// Execute an API call with automatic retries for network errors
 ///
 /// This function will immediately return non-network errors, but will retry

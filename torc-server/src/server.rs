@@ -27,6 +27,8 @@ use torc::models;
 use torc::server::api::AccessGroupsApiImpl;
 use torc::server::api::ComputeNodesApi;
 use torc::server::api::EventsApi;
+use torc::server::api::FailureHandlersApi;
+use torc::server::api::FailureHandlersApiImpl;
 use torc::server::api::FilesApi;
 use torc::server::api::JobsApi;
 use torc::server::api::RemoteWorkersApi;
@@ -563,9 +565,9 @@ where
     }
 
     info!(
-        "Processed {} completions for workflow {}, {} jobs became ready",
-        completed_jobs.len(),
+        "Jobs unblocked workflow_id={} completed_count={} ready_count={}",
         workflow_id,
+        completed_jobs.len(),
         all_ready_job_ids.len()
     );
 
@@ -614,6 +616,7 @@ pub struct Server<C> {
     access_groups_api: AccessGroupsApiImpl,
     compute_nodes_api: ComputeNodesApiImpl,
     events_api: EventsApiImpl,
+    failure_handlers_api: FailureHandlersApiImpl,
     files_api: FilesApiImpl,
     jobs_api: JobsApiImpl,
     remote_workers_api: RemoteWorkersApiImpl,
@@ -645,6 +648,7 @@ impl<C> Server<C> {
             access_groups_api: AccessGroupsApiImpl::new(api_context.clone()),
             compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
             events_api: EventsApiImpl::new(api_context.clone()),
+            failure_handlers_api: FailureHandlersApiImpl::new(api_context.clone()),
             files_api: FilesApiImpl::new(api_context.clone()),
             jobs_api: JobsApiImpl::new(api_context.clone()),
             remote_workers_api: RemoteWorkersApiImpl::new(api_context.clone()),
@@ -2019,7 +2023,7 @@ use torc::server::{
     ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
     ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
     ManageStatusChangeResponse, PingResponse, ProcessChangedJobInputsResponse,
-    ResetJobStatusResponse, ResetWorkflowStatusResponse, StartJobResponse,
+    ResetJobStatusResponse, ResetWorkflowStatusResponse, RetryJobResponse, StartJobResponse,
     UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse, UpdateJobResponse,
     UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse, UpdateResultResponse,
     UpdateScheduledComputeNodeResponse, UpdateSlurmSchedulerResponse, UpdateUserDataResponse,
@@ -2233,6 +2237,68 @@ where
 
         self.schedulers_api
             .create_local_scheduler(body, context)
+            .await
+    }
+
+    /// Store a failure handler.
+    async fn create_failure_handler(
+        &self,
+        body: models::FailureHandlerModel,
+        context: &C,
+    ) -> Result<CreateFailureHandlerResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateFailureHandlerResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.failure_handlers_api
+            .create_failure_handler(body, context)
+            .await
+    }
+
+    /// Retrieve a failure handler by ID.
+    async fn get_failure_handler(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetFailureHandlerResponse, ApiError> {
+        self.failure_handlers_api
+            .get_failure_handler(id, context)
+            .await
+    }
+
+    /// Retrieve all failure handlers for one workflow.
+    async fn list_failure_handlers(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListFailureHandlersResponse, ApiError> {
+        let (offset, limit) = process_pagination_params(offset, limit)?;
+        self.failure_handlers_api
+            .list_failure_handlers(workflow_id, offset, limit, context)
+            .await
+    }
+
+    /// Delete a failure handler.
+    async fn delete_failure_handler(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteFailureHandlerResponse, ApiError> {
+        self.failure_handlers_api
+            .delete_failure_handler(id, body, context)
             .await
     }
 
@@ -4243,7 +4309,9 @@ where
                 status,
                 cancel_on_blocking_job_failure,
                 supports_termination,
-                resource_requirements_id
+                resource_requirements_id,
+                failure_handler_id,
+                attempt_id
             FROM job
             WHERE workflow_id = $1 AND status = $2
             LIMIT $3
@@ -4291,6 +4359,8 @@ where
                 output_user_data_ids: None,
                 resource_requirements_id: Some(row.get("resource_requirements_id")),
                 scheduler_id: None,
+                failure_handler_id: row.get("failure_handler_id"),
+                attempt_id: row.get("attempt_id"),
             };
 
             selected_jobs.push(job);
@@ -5126,6 +5196,26 @@ where
         Ok(CompleteJobResponse::SuccessfulResponse(job))
     }
 
+    /// Retry a failed job by resetting it to ready status and incrementing attempt_id.
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+        context: &C,
+    ) -> Result<RetryJobResponse, ApiError> {
+        debug!(
+            "retry_job({}, {}, {}) - X-Span-ID: {:?}",
+            id,
+            run_id,
+            max_retries,
+            Has::<XSpanIdString>::get(context).0.clone()
+        );
+        self.jobs_api
+            .retry_job(id, run_id, max_retries, context)
+            .await
+    }
+
     /// Get ready jobs that fit within the specified resource constraints.
     ///
     /// This function performs the following operations:
@@ -5279,6 +5369,8 @@ where
                 job.status,
                 job.cancel_on_blocking_job_failure,
                 job.supports_termination,
+                job.failure_handler_id,
+                job.attempt_id,
                 rr.id AS resource_requirements_id,
                 rr.memory_bytes,
                 rr.num_cpus,
@@ -5334,6 +5426,8 @@ where
                     job.status,
                     job.cancel_on_blocking_job_failure,
                     job.supports_termination,
+                    job.failure_handler_id,
+                    job.attempt_id,
                     rr.id AS resource_requirements_id,
                     rr.memory_bytes,
                     rr.num_cpus,
@@ -5464,6 +5558,8 @@ where
                     output_user_data_ids: None,
                     resource_requirements_id: Some(row.get("resource_requirements_id")),
                     scheduler_id: None,
+                    failure_handler_id: row.get("failure_handler_id"),
+                    attempt_id: row.get("attempt_id"),
                 };
 
                 selected_jobs.push(job);

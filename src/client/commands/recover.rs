@@ -159,37 +159,42 @@ pub fn recover_workflow(
     args: &RecoverArgs,
 ) -> Result<RecoveryResult, String> {
     if args.dry_run {
-        info!("[DRY RUN] Showing what would be done without making changes");
+        info!("Recovery dry_run workflow_id={}", args.workflow_id);
     }
 
     // Step 0: Clean up orphaned jobs from terminated Slurm allocations
     // This must happen before checking preconditions because orphaned jobs/allocations
     // would otherwise block recovery (preconditions check for no active workers)
-    info!("Checking for orphaned jobs from terminated Slurm allocations...");
+    info!("Orphan check workflow_id={}", args.workflow_id);
     match super::orphan_detection::cleanup_orphaned_jobs(config, args.workflow_id, args.dry_run) {
         Ok(result) => {
             if result.any_cleaned() {
                 if args.dry_run {
                     info!(
-                        "[DRY RUN] Would clean up: {} Slurm jobs, {} pending allocations, {} running jobs",
+                        "Orphan cleanup dry_run workflow_id={} slurm_jobs={} pending_allocations={} running_jobs={}",
+                        args.workflow_id,
                         result.slurm_jobs_failed,
                         result.pending_allocations_cleaned,
                         result.running_jobs_failed
                     );
                 } else {
                     info!(
-                        "Cleaned up orphaned jobs: {} Slurm jobs failed, {} pending allocations cleaned, {} running jobs failed",
+                        "Orphans cleaned workflow_id={} slurm_jobs_failed={} pending_allocations_cleaned={} running_jobs_failed={}",
+                        args.workflow_id,
                         result.slurm_jobs_failed,
                         result.pending_allocations_cleaned,
                         result.running_jobs_failed
                     );
                 }
             } else {
-                info!("No orphaned jobs found");
+                info!("No orphans found workflow_id={}", args.workflow_id);
             }
         }
         Err(e) => {
-            warn!("Warning: Error during orphan cleanup: {}", e);
+            warn!(
+                "Orphan cleanup error workflow_id={} error={}",
+                args.workflow_id, e
+            );
             // Continue with recovery - orphan cleanup is best-effort
         }
     }
@@ -362,20 +367,24 @@ pub fn recover_workflow(
 
     // Step 5: Reset failed jobs
     info!(
-        "Resetting {} job(s) for retry...",
+        "Jobs resetting workflow_id={} count={}",
+        args.workflow_id,
         result.jobs_to_retry.len()
     );
     let reset_count = reset_failed_jobs(config, args.workflow_id, &result.jobs_to_retry)?;
-    info!("  Reset {} job(s)", reset_count);
+    info!(
+        "Jobs reset workflow_id={} count={}",
+        args.workflow_id, reset_count
+    );
 
     // Step 6: Reinitialize workflow (must happen BEFORE regenerate)
     // reset_workflow_status rejects requests when there are pending scheduled compute nodes,
     // so we must reinitialize before creating new allocations.
-    info!("Reinitializing workflow...");
+    info!("Workflow reinitializing workflow_id={}", args.workflow_id);
     reinitialize_workflow(args.workflow_id)?;
 
     // Step 7: Regenerate Slurm schedulers and submit
-    info!("Regenerating Slurm schedulers...");
+    info!("Schedulers regenerating workflow_id={}", args.workflow_id);
     regenerate_and_submit(args.workflow_id, &args.output_dir)?;
 
     Ok(result)

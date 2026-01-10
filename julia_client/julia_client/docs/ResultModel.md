@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **job_id** | **Int64** | Database ID for the job tied to this result | [default to nothing]
 **workflow_id** | **Int64** | Database ID for the workflow tied to this result | [default to nothing]
 **run_id** | **Int64** | ID of the workflow run. Incremements on every start and restart. | [default to nothing]
+**attempt_id** | **Int64** | Retry attempt number for this result (starts at 1, increments on each retry) | [optional] [default to 1]
 **compute_node_id** | **Int64** | Database ID for the compute node that ran this job | [default to nothing]
 **return_code** | **Int64** | Code returned by the job. Zero is success; non-zero is a failure. | [default to nothing]
 **exec_time_minutes** | **Float64** | Job execution time in minutes | [default to nothing]

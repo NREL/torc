@@ -1,0 +1,66 @@
+# Failure Handler Demo
+# A simple, runnable example demonstrating automatic job retry with failure handlers.
+#
+# This workflow runs jobs that randomly fail with different exit codes. The failure
+# handler automatically retries jobs based on the error type.
+#
+# To run this example:
+#   1. Start the torc server
+#   2. Run: torc run examples/yaml/failure_handler_demo.yaml
+#   3. Watch the jobs retry automatically when they fail with recoverable errors
+#
+# Exit codes used:
+#   0:  Success
+#   1:  Unrecoverable error (not retried)
+#   10: Convergence failure (retried with recovery script)
+#   11: Resource issue (retried with recovery script)
+#   12: Transient error (retried without recovery script)
+
+name: failure_handler_demo
+description: Demo of automatic job retry with failure handlers
+
+failure_handlers:
+  - name: demo_recovery
+    rules:
+      # Convergence failures: run recovery script, retry up to 3 times
+      - exit_codes: [10]
+        recovery_script: examples/scripts/recovery_demo.sh
+        max_retries: 3
+
+      # Resource/timeout issues: run recovery script, retry up to 2 times
+      - exit_codes: [11]
+        recovery_script: examples/scripts/recovery_demo.sh
+        max_retries: 2
+
+      # Transient errors: simple retry without recovery script
+      - exit_codes: [12]
+        max_retries: 3
+
+      # Note: exit code 1 is intentionally NOT included.
+      # Jobs failing with exit code 1 will not be retried.
+
+jobs:
+  # A job that randomly fails - demonstrates failure handling
+  - name: flaky_job_1
+    command: bash examples/scripts/failure_demo_job.sh --fail-rate 0.8 --work-time 0.5
+    failure_handler: demo_recovery
+
+  # Another flaky job that depends on the first
+  - name: flaky_job_2
+    command: bash examples/scripts/failure_demo_job.sh --fail-rate 0.6 --work-time 0.5
+    failure_handler: demo_recovery
+    depends_on:
+      - flaky_job_1
+
+  # A reliable job that always succeeds
+  - name: reliable_job
+    command: echo "This job always succeeds"
+    depends_on:
+      - flaky_job_1
+
+  # Final job that runs after all others complete
+  - name: summary
+    command: echo "All jobs completed successfully!"
+    depends_on:
+      - flaky_job_2
+      - reliable_job

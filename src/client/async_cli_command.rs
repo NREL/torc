@@ -43,6 +43,8 @@ const JOB_STDIO_DIR: &str = "job_stdio";
 pub struct AsyncCliCommand {
     pub job: JobModel,
     pub job_id: i64,
+    workflow_id: Option<i64>,
+    run_id: Option<i64>,
     handle: Option<Child>,
     pid: Option<u32>,
     pub is_running: bool,
@@ -63,6 +65,8 @@ impl AsyncCliCommand {
         AsyncCliCommand {
             job,
             job_id,
+            workflow_id: None,
+            run_id: None,
             handle: None,
             pid: None,
             is_running: false,
@@ -82,6 +86,7 @@ impl AsyncCliCommand {
         output_dir: &Path,
         workflow_id: i64,
         run_id: i64,
+        attempt_id: i64,
         resource_monitor: Option<&ResourceMonitor>,
         api_url: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -91,28 +96,23 @@ impl AsyncCliCommand {
 
         let job_id_str = self.job_id.to_string();
         let workflow_id_str = workflow_id.to_string();
+        let attempt_id_str = attempt_id.to_string();
 
         // Create output file paths using consistent naming from log_paths
         let stdio_dir = output_dir.join(JOB_STDIO_DIR);
         std::fs::create_dir_all(&stdio_dir)?;
 
-        let stdout_path = get_job_stdout_path(output_dir, workflow_id, self.job_id, run_id);
-        let stderr_path = get_job_stderr_path(output_dir, workflow_id, self.job_id, run_id);
+        let stdout_path =
+            get_job_stdout_path(output_dir, workflow_id, self.job_id, run_id, attempt_id);
+        let stderr_path =
+            get_job_stderr_path(output_dir, workflow_id, self.job_id, run_id, attempt_id);
 
         let stdout_file = File::create(&stdout_path)?;
         let stderr_file = File::create(&stderr_path)?;
         self.stdout_fp = Some(BufWriter::new(stdout_file));
         self.stderr_fp = Some(BufWriter::new(stderr_file));
 
-        let mut cmd = if cfg!(target_os = "windows") {
-            let mut c = std::process::Command::new("cmd");
-            c.arg("/C");
-            c
-        } else {
-            let mut c = std::process::Command::new("bash");
-            c.arg("-c");
-            c
-        };
+        let mut cmd = crate::client::utils::shell_command();
 
         let command_str = if let Some(ref invocation_script) = self.job.invocation_script {
             format!("{} {}", invocation_script, self.job.command)
@@ -123,6 +123,9 @@ impl AsyncCliCommand {
             .arg(&command_str)
             .env("TORC_WORKFLOW_ID", workflow_id_str)
             .env("TORC_JOB_ID", job_id_str)
+            .env("TORC_JOB_NAME", &self.job.name)
+            .env("TORC_OUTPUT_DIR", output_dir.to_string_lossy().to_string())
+            .env("TORC_ATTEMPT_ID", attempt_id_str)
             .env("TORC_API_URL", api_url)
             .stdout(Stdio::from(File::create(&stdout_path)?))
             .stderr(Stdio::from(File::create(&stderr_path)?))
@@ -131,10 +134,15 @@ impl AsyncCliCommand {
         let pid = child.id();
         self.pid = Some(pid);
         self.handle = Some(child);
+        self.workflow_id = Some(workflow_id);
+        self.run_id = Some(run_id);
         self.is_running = true;
         self.start_time = Utc::now();
         self.status = JobStatus::Running;
-        debug!("Started job {} with PID {}", self.get_job_id(), pid);
+        debug!(
+            "Job process started workflow_id={} job_id={} pid={}",
+            workflow_id, self.job_id, pid
+        );
 
         // Start resource monitoring if enabled
         if let Some(monitor) = resource_monitor {
@@ -366,11 +374,14 @@ impl AsyncCliCommand {
         self.stdout_fp = None;
         self.stderr_fp = None;
         self.handle = None;
+        let status_str = format!("{:?}", status).to_lowercase();
         info!(
-            "Job ID {} completed return_code={} status={} exec_time_s={}",
-            self.get_job_id(),
+            "Job process completed workflow_id={} job_id={} run_id={} return_code={} status={} exec_time_s={:.3}",
+            self.workflow_id.unwrap_or(0),
+            self.job_id,
+            self.run_id.unwrap_or(0),
             return_code,
-            status,
+            status_str,
             self.exec_time_s
         );
         Ok(())

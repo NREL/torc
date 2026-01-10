@@ -2,6 +2,7 @@ pub mod access_groups;
 pub mod compute_nodes;
 pub mod config;
 pub mod events;
+pub mod failure_handlers;
 pub mod files;
 pub mod hpc;
 pub mod job_dependencies;

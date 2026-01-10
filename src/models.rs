@@ -1877,6 +1877,101 @@ impl std::convert::TryFrom<hyper::header::HeaderValue> for header::IntoHeaderVal
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct FailureHandlerModel {
+    /// Database ID of this record.
+    #[serde(rename = "id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+
+    /// Database ID of the workflow this record is associated with.
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+
+    /// Name of the failure handler
+    #[serde(rename = "name")]
+    pub name: String,
+
+    /// JSON array of rules specifying exit codes, recovery scripts, and max retries
+    #[serde(rename = "rules")]
+    pub rules: String,
+}
+
+impl FailureHandlerModel {
+    #[allow(clippy::new_without_default)]
+    pub fn new(workflow_id: i64, name: String, rules: String) -> FailureHandlerModel {
+        FailureHandlerModel {
+            id: None,
+            workflow_id,
+            name,
+            rules,
+        }
+    }
+}
+
+/// Converts the FailureHandlerModel value to the Query Parameters representation (style=form, explode=false)
+impl std::string::ToString for FailureHandlerModel {
+    fn to_string(&self) -> String {
+        let params: Vec<Option<String>> = vec![
+            self.id
+                .as_ref()
+                .map(|id| ["id".to_string(), id.to_string()].join(",")),
+            Some("workflow_id".to_string()),
+            Some(self.workflow_id.to_string()),
+            Some("name".to_string()),
+            Some(self.name.to_string()),
+            Some("rules".to_string()),
+            Some(self.rules.to_string()),
+        ];
+
+        params.into_iter().flatten().collect::<Vec<_>>().join(",")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListFailureHandlersResponse {
+    #[serde(rename = "items")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub items: Option<Vec<FailureHandlerModel>>,
+
+    #[serde(rename = "offset")]
+    pub offset: i64,
+
+    #[serde(rename = "max_limit")]
+    pub max_limit: i64,
+
+    #[serde(rename = "count")]
+    pub count: i64,
+
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+}
+
+impl ListFailureHandlersResponse {
+    #[allow(clippy::new_without_default)]
+    pub fn new(
+        offset: i64,
+        max_limit: i64,
+        count: i64,
+        total_count: i64,
+        has_more: bool,
+    ) -> ListFailureHandlersResponse {
+        ListFailureHandlersResponse {
+            items: None,
+            offset,
+            max_limit,
+            count,
+            total_count,
+            has_more,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
 pub struct GetDotGraphResponse {
     #[serde(rename = "graph")]
     pub graph: String,
@@ -2661,6 +2756,16 @@ pub struct JobModel {
     /// Optional database ID of scheduler needed by this job
     #[serde(rename = "scheduler_id")]
     pub scheduler_id: Option<i64>,
+
+    /// Optional database ID of failure handler for this job
+    #[serde(rename = "failure_handler_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_handler_id: Option<i64>,
+
+    /// Retry attempt number (starts at 1, increments on each retry)
+    #[serde(rename = "attempt_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attempt_id: Option<i64>,
 }
 
 impl JobModel {
@@ -2683,6 +2788,8 @@ impl JobModel {
             output_user_data_ids: None,
             resource_requirements_id: None,
             scheduler_id: None,
+            failure_handler_id: None,
+            attempt_id: Some(1),
         }
     }
 }
@@ -2833,6 +2940,8 @@ impl std::str::FromStr for JobModel {
             pub output_user_data_ids: Vec<Vec<i64>>,
             pub resource_requirements_id: Vec<i64>,
             pub scheduler_id: Vec<i64>,
+            pub failure_handler_id: Vec<i64>,
+            pub attempt_id: Vec<i64>,
         }
 
         let mut intermediate_rep = IntermediateRep::default();
@@ -2922,6 +3031,12 @@ impl std::str::FromStr for JobModel {
                     "scheduler_id" => intermediate_rep.scheduler_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
+                    "failure_handler_id" => intermediate_rep.failure_handler_id.push(
+                        <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                    ),
+                    "attempt_id" => intermediate_rep.attempt_id.push(
+                        <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                    ),
                     _ => {
                         return std::result::Result::Err(
                             "Unexpected key while parsing JobModel".to_string(),
@@ -2967,6 +3082,8 @@ impl std::str::FromStr for JobModel {
             output_user_data_ids: intermediate_rep.output_user_data_ids.into_iter().next(),
             resource_requirements_id: intermediate_rep.resource_requirements_id.into_iter().next(),
             scheduler_id: intermediate_rep.scheduler_id.into_iter().next(),
+            failure_handler_id: intermediate_rep.failure_handler_id.into_iter().next(),
+            attempt_id: intermediate_rep.attempt_id.into_iter().next(),
         })
     }
 }
@@ -8210,6 +8327,11 @@ pub struct ResultModel {
     #[serde(rename = "run_id")]
     pub run_id: i64,
 
+    /// Retry attempt number for this result (starts at 1, increments on each retry)
+    #[serde(rename = "attempt_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attempt_id: Option<i64>,
+
     /// Database ID for the compute node that ran this job
     #[serde(rename = "compute_node_id")]
     pub compute_node_id: i64,
@@ -8267,6 +8389,7 @@ impl ResultModel {
             job_id,
             workflow_id,
             run_id,
+            attempt_id: Some(1),
             compute_node_id,
             return_code,
             exec_time_minutes,
@@ -8323,6 +8446,7 @@ impl std::str::FromStr for ResultModel {
             pub job_id: Vec<i64>,
             pub workflow_id: Vec<i64>,
             pub run_id: Vec<i64>,
+            pub attempt_id: Vec<i64>,
             pub compute_node_id: Vec<i64>,
             pub return_code: Vec<i64>,
             pub exec_time_minutes: Vec<f64>,
@@ -8363,6 +8487,9 @@ impl std::str::FromStr for ResultModel {
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
                     "run_id" => intermediate_rep.run_id.push(
+                        <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                    ),
+                    "attempt_id" => intermediate_rep.attempt_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
                     "compute_node_id" => intermediate_rep.compute_node_id.push(
@@ -8411,6 +8538,7 @@ impl std::str::FromStr for ResultModel {
                 .into_iter()
                 .next()
                 .ok_or_else(|| "run_id missing in ResultModel".to_string())?,
+            attempt_id: intermediate_rep.attempt_id.into_iter().next(),
             compute_node_id: intermediate_rep
                 .compute_node_id
                 .into_iter()

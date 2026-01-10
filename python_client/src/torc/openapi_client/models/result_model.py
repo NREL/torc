@@ -30,6 +30,7 @@ class ResultModel(BaseModel):
     job_id: StrictInt = Field(description="Database ID for the job tied to this result")
     workflow_id: StrictInt = Field(description="Database ID for the workflow tied to this result")
     run_id: StrictInt = Field(description="ID of the workflow run. Incremements on every start and restart.")
+    attempt_id: Optional[StrictInt] = Field(default=1, description="Retry attempt number for this result (starts at 1, increments on each retry)")
     compute_node_id: StrictInt = Field(description="Database ID for the compute node that ran this job")
     return_code: StrictInt = Field(description="Code returned by the job. Zero is success; non-zero is a failure.")
     exec_time_minutes: Union[StrictFloat, StrictInt] = Field(description="Job execution time in minutes")
@@ -39,7 +40,7 @@ class ResultModel(BaseModel):
     avg_memory_bytes: Optional[StrictInt] = Field(default=None, description="Average memory usage in bytes")
     peak_cpu_percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Peak CPU usage as percentage (can exceed 100% for multi-core)")
     avg_cpu_percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Average CPU usage as percentage (can exceed 100% for multi-core)")
-    __properties: ClassVar[List[str]] = ["id", "job_id", "workflow_id", "run_id", "compute_node_id", "return_code", "exec_time_minutes", "completion_time", "status", "peak_memory_bytes", "avg_memory_bytes", "peak_cpu_percent", "avg_cpu_percent"]
+    __properties: ClassVar[List[str]] = ["id", "job_id", "workflow_id", "run_id", "attempt_id", "compute_node_id", "return_code", "exec_time_minutes", "completion_time", "status", "peak_memory_bytes", "avg_memory_bytes", "peak_cpu_percent", "avg_cpu_percent"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -101,6 +102,7 @@ class ResultModel(BaseModel):
             "job_id": obj.get("job_id"),
             "workflow_id": obj.get("workflow_id"),
             "run_id": obj.get("run_id"),
+            "attempt_id": obj.get("attempt_id") if obj.get("attempt_id") is not None else 1,
             "compute_node_id": obj.get("compute_node_id"),
             "return_code": obj.get("return_code"),
             "exec_time_minutes": obj.get("exec_time_minutes"),

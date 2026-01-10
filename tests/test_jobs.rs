@@ -1069,3 +1069,131 @@ fn test_jobs_delete_all_empty_workflow(start_server: &ServerProcess) {
         "Should delete 0 jobs"
     );
 }
+
+/// Test that retry_job works when job is in Running status.
+/// This is the case when a job runner detects a failure locally and wants to retry
+/// before calling complete_job (so the server still thinks the job is Running).
+#[rstest]
+fn test_retry_job_from_running_status(start_server: &ServerProcess) {
+    let config = &start_server.config;
+
+    // Create workflow and job
+    let workflow = create_test_workflow(config, "test_retry_running_workflow");
+    let workflow_id = workflow.id.unwrap();
+    let job = create_test_job(config, workflow_id, "test_retry_job");
+    let job_id = job.id.unwrap();
+
+    // Initialize workflow to get run_id and make job Ready
+    default_api::initialize_jobs(config, workflow_id, Some(false), Some(false), None)
+        .expect("Failed to initialize jobs");
+
+    // Get run_id
+    let workflow_status = default_api::get_workflow_status(config, workflow_id)
+        .expect("Failed to get workflow status");
+    let run_id = workflow_status.run_id;
+
+    // Set job to Running (simulating job runner claiming it)
+    default_api::manage_status_change(config, job_id, JobStatus::Running, run_id, None)
+        .expect("Failed to set job to Running");
+
+    // Verify job is Running
+    let job_before = default_api::get_job(config, job_id).expect("Failed to get job");
+    assert_eq!(job_before.status.unwrap(), JobStatus::Running);
+    assert_eq!(job_before.attempt_id.unwrap(), 1);
+
+    // Call retry_job while job is still in Running status
+    // This simulates the job runner detecting a failure and wanting to retry
+    // before it has called complete_job
+    let retried_job =
+        default_api::retry_job(config, job_id, run_id, 3).expect("retry_job should succeed");
+
+    // Verify job is now Ready with incremented attempt_id
+    assert_eq!(retried_job.status.unwrap(), JobStatus::Ready);
+    assert_eq!(retried_job.attempt_id.unwrap(), 2);
+}
+
+/// Test that retry_job works when job is in Failed status (the normal case).
+#[rstest]
+fn test_retry_job_from_failed_status(start_server: &ServerProcess) {
+    let config = &start_server.config;
+
+    // Create workflow and job
+    let workflow = create_test_workflow(config, "test_retry_failed_workflow");
+    let workflow_id = workflow.id.unwrap();
+    let job = create_test_job(config, workflow_id, "test_retry_job");
+    let job_id = job.id.unwrap();
+
+    // Initialize workflow
+    default_api::initialize_jobs(config, workflow_id, Some(false), Some(false), None)
+        .expect("Failed to initialize jobs");
+
+    // Get run_id
+    let workflow_status = default_api::get_workflow_status(config, workflow_id)
+        .expect("Failed to get workflow status");
+    let run_id = workflow_status.run_id;
+
+    // Create compute node for complete_job
+    let compute_node = create_test_compute_node(config, workflow_id);
+    let compute_node_id = compute_node.id.unwrap();
+
+    // Set job to Running then complete as Failed
+    default_api::manage_status_change(config, job_id, JobStatus::Running, run_id, None)
+        .expect("Failed to set job to Running");
+
+    let result = models::ResultModel::new(
+        job_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        1,   // return_code
+        1.0, // exec_time_minutes
+        "2020-01-01T00:00:00Z".to_string(),
+        models::JobStatus::Failed,
+    );
+    default_api::complete_job(config, job_id, JobStatus::Failed, run_id, result)
+        .expect("Failed to complete job as Failed");
+
+    // Verify job is Failed
+    let job_before = default_api::get_job(config, job_id).expect("Failed to get job");
+    assert_eq!(job_before.status.unwrap(), JobStatus::Failed);
+
+    // Call retry_job
+    let retried_job =
+        default_api::retry_job(config, job_id, run_id, 3).expect("retry_job should succeed");
+
+    // Verify job is now Ready with incremented attempt_id
+    assert_eq!(retried_job.status.unwrap(), JobStatus::Ready);
+    assert_eq!(retried_job.attempt_id.unwrap(), 2);
+}
+
+/// Test that retry_job rejects jobs in invalid states (e.g., Ready, Completed).
+#[rstest]
+fn test_retry_job_invalid_status(start_server: &ServerProcess) {
+    let config = &start_server.config;
+
+    // Create workflow and job
+    let workflow = create_test_workflow(config, "test_retry_invalid_workflow");
+    let workflow_id = workflow.id.unwrap();
+    let job = create_test_job(config, workflow_id, "test_retry_job");
+    let job_id = job.id.unwrap();
+
+    // Initialize workflow
+    default_api::initialize_jobs(config, workflow_id, Some(false), Some(false), None)
+        .expect("Failed to initialize jobs");
+
+    // Get run_id
+    let workflow_status = default_api::get_workflow_status(config, workflow_id)
+        .expect("Failed to get workflow status");
+    let run_id = workflow_status.run_id;
+
+    // Job should be Ready after initialization
+    let job_before = default_api::get_job(config, job_id).expect("Failed to get job");
+    assert_eq!(job_before.status.unwrap(), JobStatus::Ready);
+
+    // Try to retry a Ready job - should fail
+    let result = default_api::retry_job(config, job_id, run_id, 3);
+    assert!(
+        result.is_err(),
+        "retry_job should fail for job in Ready status"
+    );
+}

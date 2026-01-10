@@ -99,6 +99,61 @@ pub enum CreateLocalSchedulerResponse {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
+pub enum CreateFailureHandlerResponse {
+    /// Successful response
+    SuccessfulResponse(models::FailureHandlerModel),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum GetFailureHandlerResponse {
+    /// Successful response
+    SuccessfulResponse(models::FailureHandlerModel),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListFailureHandlersResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListFailureHandlersResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum DeleteFailureHandlerResponse {
+    /// Successful response
+    SuccessfulResponse(serde_json::Value),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum RetryJobResponse {
+    /// Successful response
+    SuccessfulResponse(models::JobModel),
+    /// Not found error response
+    NotFoundErrorResponse(models::ErrorResponse),
+    /// Unprocessable content error response
+    UnprocessableContentErrorResponse(models::ErrorResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
 pub enum CreateResourceRequirementsResponse {
     /// Successful response
     SuccessfulResponse(models::ResourceRequirementsModel),
@@ -1325,6 +1380,37 @@ pub trait Api<C: Send + Sync> {
         context: &C,
     ) -> Result<CreateLocalSchedulerResponse, ApiError>;
 
+    /// Store a failure handler.
+    async fn create_failure_handler(
+        &self,
+        body: models::FailureHandlerModel,
+        context: &C,
+    ) -> Result<CreateFailureHandlerResponse, ApiError>;
+
+    /// Retrieve a failure handler by ID.
+    async fn get_failure_handler(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetFailureHandlerResponse, ApiError>;
+
+    /// Retrieve all failure handlers for one workflow.
+    async fn list_failure_handlers(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListFailureHandlersResponse, ApiError>;
+
+    /// Delete a failure handler.
+    async fn delete_failure_handler(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteFailureHandlerResponse, ApiError>;
+
     /// Store one resource requirements record.
     async fn create_resource_requirements(
         &self,
@@ -2092,6 +2178,15 @@ pub trait Api<C: Send + Sync> {
         context: &C,
     ) -> Result<CompleteJobResponse, ApiError>;
 
+    /// Retry a failed job by resetting it to ready status and incrementing attempt_id.
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+        context: &C,
+    ) -> Result<RetryJobResponse, ApiError>;
+
     /// Get ready jobs that fit within the specified resource constraints.
     async fn prepare_ready_jobs(
         &self,
@@ -2855,6 +2950,14 @@ pub trait ApiNoContext<C: Send + Sync> {
         run_id: i64,
         body: models::ResultModel,
     ) -> Result<CompleteJobResponse, ApiError>;
+
+    /// Retry a failed job by resetting it to ready status and incrementing attempt_id.
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+    ) -> Result<RetryJobResponse, ApiError>;
 
     /// Get ready jobs that fit within the specified resource constraints.
     async fn get_ready_jobs(
@@ -4094,6 +4197,19 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         let context = self.context().clone();
         self.api()
             .complete_job(id, status, run_id, body, &context)
+            .await
+    }
+
+    /// Retry a failed job by resetting it to ready status and incrementing attempt_id.
+    async fn retry_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        max_retries: i32,
+    ) -> Result<RetryJobResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .retry_job(id, run_id, max_retries, &context)
             .await
     }
 

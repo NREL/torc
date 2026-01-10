@@ -7,6 +7,7 @@ use torc::client::commands::access_groups::handle_access_group_commands;
 use torc::client::commands::compute_nodes::handle_compute_node_commands;
 use torc::client::commands::config::handle_config_commands;
 use torc::client::commands::events::handle_event_commands;
+use torc::client::commands::failure_handlers::handle_failure_handler_commands;
 use torc::client::commands::files::handle_file_commands;
 use torc::client::commands::hpc::handle_hpc_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
@@ -513,6 +514,10 @@ fn main() {
             recovery_hook,
             output_dir,
             show_job_counts,
+            auto_schedule,
+            auto_schedule_threshold,
+            auto_schedule_cooldown,
+            auto_schedule_stranded_timeout,
         } => {
             let args = WatchArgs {
                 workflow_id: *workflow_id,
@@ -526,6 +531,10 @@ fn main() {
                 output_dir: output_dir.clone(),
                 show_job_counts: *show_job_counts,
                 log_level: log_level.clone(),
+                auto_schedule: *auto_schedule,
+                auto_schedule_threshold: *auto_schedule_threshold,
+                auto_schedule_cooldown: *auto_schedule_cooldown,
+                auto_schedule_stranded_timeout: *auto_schedule_stranded_timeout,
             };
             run_watch(&config, &args);
         }
@@ -661,6 +670,9 @@ fn main() {
         }
         Commands::ResourceRequirements { command } => {
             handle_resource_requirements_commands(&config, command, &format);
+        }
+        Commands::FailureHandlers { command } => {
+            handle_failure_handler_commands(&config, command, &format);
         }
         Commands::Events { command } => {
             handle_event_commands(&config, command, &format);
