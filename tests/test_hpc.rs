@@ -1839,6 +1839,44 @@ fn test_slurm_defaults_spec_validates_excluded_params() {
 }
 
 #[rstest]
+fn test_slurm_defaults_spec_validates_excluded_params_case_insensitive() {
+    use torc::client::workflow_spec::SlurmDefaultsSpec;
+
+    // Test that excluded parameters are rejected regardless of case
+    let case_variants = vec![
+        ("PARTITION", "partition"),
+        ("Partition", "partition"),
+        ("NODES", "nodes"),
+        ("Nodes", "nodes"),
+        ("WallTime", "walltime"),
+        ("WALLTIME", "walltime"),
+        ("TIME", "time"),
+        ("Time", "time"),
+        ("MEM", "mem"),
+        ("Mem", "mem"),
+        ("GRES", "gres"),
+        ("Gres", "gres"),
+        ("NAME", "name"),
+        ("Name", "name"),
+        ("JOB-NAME", "job-name"),
+        ("Job-Name", "job-name"),
+    ];
+
+    for (input_key, _expected_lower) in case_variants {
+        let mut map = HashMap::new();
+        map.insert(input_key.to_string(), serde_json::json!("test_value"));
+        let defaults = SlurmDefaultsSpec(map);
+
+        let result = defaults.validate();
+        assert!(
+            result.is_err(),
+            "Expected error for case variant '{}', but got Ok",
+            input_key
+        );
+    }
+}
+
+#[rstest]
 fn test_slurm_defaults_spec_allows_arbitrary_params() {
     use torc::client::workflow_spec::SlurmDefaultsSpec;
 

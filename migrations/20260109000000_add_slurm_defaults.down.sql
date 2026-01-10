@@ -14,6 +14,7 @@ CREATE TABLE workflow_backup (
   compute_node_wait_for_new_jobs_seconds INTEGER NOT NULL DEFAULT 0,
   compute_node_ignore_workflow_completion INTEGER NOT NULL DEFAULT 0,
   compute_node_wait_for_healthy_database_minutes INTEGER NOT NULL DEFAULT 20,
+  compute_node_min_time_for_new_jobs_seconds INTEGER NOT NULL DEFAULT 300,
   jobs_sort_method TEXT NOT NULL DEFAULT 'gpus_runtime_memory',
   status_id INTEGER NOT NULL,
   resource_monitor_config TEXT NULL,
@@ -25,13 +26,13 @@ INSERT INTO workflow_backup (
   id, name, description, user, timestamp, is_archived,
   compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds,
   compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes,
-  jobs_sort_method, status_id, resource_monitor_config
+  compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, resource_monitor_config
 )
 SELECT
   id, name, description, user, timestamp, is_archived,
   compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds,
   compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes,
-  jobs_sort_method, status_id, resource_monitor_config
+  compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, resource_monitor_config
 FROM workflow;
 
 -- Drop original table

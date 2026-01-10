@@ -182,9 +182,9 @@ EXAMPLES:
         /// Path to specification file containing WorkflowSpec
         #[arg()]
         file: String,
-        /// Slurm account to use for allocations
+        /// Slurm account to use for allocations (can also be specified in workflow's slurm_defaults)
         #[arg(short, long)]
-        account: String,
+        account: Option<String>,
         /// HPC profile to use (auto-detected if not specified)
         #[arg(long)]
         hpc_profile: Option<String>,
@@ -2534,7 +2534,7 @@ fn handle_create(
 fn handle_create_slurm(
     config: &Configuration,
     file: &str,
-    account: &str,
+    account: Option<&str>,
     hpc_profile: Option<&str>,
     single_allocation: bool,
     group_by: GroupByStrategy,
@@ -2625,12 +2625,31 @@ fn handle_create_slurm(
         }
     };
 
+    // Resolve account: CLI option takes precedence, then slurm_defaults
+    let resolved_account = if let Some(acct) = account {
+        acct.to_string()
+    } else if let Some(ref defaults) = spec.slurm_defaults {
+        defaults
+            .0
+            .get("account")
+            .and_then(|v| v.as_str().map(String::from))
+            .unwrap_or_else(|| {
+                eprintln!(
+                    "Error: No account specified. Use --account or set 'account' in slurm_defaults."
+                );
+                std::process::exit(1);
+            })
+    } else {
+        eprintln!("Error: No account specified. Use --account or set 'account' in slurm_defaults.");
+        std::process::exit(1);
+    };
+
     // Generate schedulers
     // Don't allow force=true - if schedulers already exist, user should use the _no_slurm variant
     match generate_schedulers_for_workflow(
         &mut spec,
         profile,
-        account,
+        &resolved_account,
         single_allocation,
         group_by,
         WalltimeStrategy::MaxJobRuntime,
@@ -2875,7 +2894,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             handle_create_slurm(
                 config,
                 file,
-                account,
+                account.as_deref(),
                 hpc_profile.as_deref(),
                 *single_allocation,
                 *group_by,

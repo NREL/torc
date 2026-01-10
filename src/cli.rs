@@ -223,9 +223,9 @@ EXAMPLES:
         /// Path to workflow spec file (JSON/JSON5/YAML/KDL)
         #[arg()]
         workflow_spec: String,
-        /// Slurm account to use for allocations
+        /// Slurm account to use for allocations (can also be specified in workflow's slurm_defaults)
         #[arg(short, long)]
-        account: String,
+        account: Option<String>,
         /// HPC profile to use (auto-detected if not specified)
         #[arg(long)]
         hpc_profile: Option<String>,

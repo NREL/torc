@@ -1222,34 +1222,6 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             overwrite,
             dry_run,
         } => {
-            // Resolve account: CLI option takes precedence, then slurm_defaults
-            let resolved_account = if let Some(acct) = account {
-                acct.clone()
-            } else {
-                // Parse workflow spec to check slurm_defaults
-                match WorkflowSpec::from_spec_file(workflow_file) {
-                    Ok(spec) => {
-                        if let Some(ref defaults) = spec.slurm_defaults {
-                            defaults
-                                .0
-                                .get("account")
-                                .and_then(|v| v.as_str().map(String::from))
-                        } else {
-                            None
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to parse workflow file: {}", e);
-                        std::process::exit(1);
-                    }
-                }
-                .unwrap_or_else(|| {
-                    eprintln!(
-                        "Error: No account specified. Use --account or set 'account' in slurm_defaults."
-                    );
-                    std::process::exit(1);
-                })
-            };
             // Validate walltime_multiplier
             if *walltime_multiplier <= 0.0 {
                 eprintln!("Error: --walltime-multiplier must be greater than 0");
@@ -1257,7 +1229,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             }
             handle_generate(
                 workflow_file,
-                &resolved_account,
+                account.as_deref(),
                 profile_name.as_deref(),
                 output.as_ref(),
                 *single_allocation,
@@ -2648,7 +2620,7 @@ pub fn run_sacct_for_workflow(
 #[allow(clippy::too_many_arguments)]
 fn handle_generate(
     workflow_file: &PathBuf,
-    account: &str,
+    account: Option<&str>,
     profile_name: Option<&str>,
     output: Option<&PathBuf>,
     single_allocation: bool,
@@ -2693,11 +2665,30 @@ fn handle_generate(
         }
     };
 
+    // Resolve account: CLI option takes precedence, then slurm_defaults
+    let resolved_account = if let Some(acct) = account {
+        acct.to_string()
+    } else if let Some(ref defaults) = spec.slurm_defaults {
+        defaults
+            .0
+            .get("account")
+            .and_then(|v| v.as_str().map(String::from))
+            .unwrap_or_else(|| {
+                eprintln!(
+                    "Error: No account specified. Use --account or set 'account' in slurm_defaults."
+                );
+                std::process::exit(1);
+            })
+    } else {
+        eprintln!("Error: No account specified. Use --account or set 'account' in slurm_defaults.");
+        std::process::exit(1);
+    };
+
     // Generate schedulers
     let result = match generate_schedulers_for_workflow(
         &mut spec,
         profile,
-        account,
+        &resolved_account,
         single_allocation,
         group_by,
         walltime_strategy,

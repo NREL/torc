@@ -280,7 +280,9 @@ pub const SLURM_EXCLUDED_PARAMS: &[&str] = &[
 ///
 /// These parameters are applied at runtime to both user-defined and auto-generated
 /// Slurm schedulers. Any valid sbatch parameter can be specified except for those
-/// managed by torc: partition, nodes, walltime/time, mem, gres, account, name/job-name.
+/// managed by torc: partition, nodes, walltime/time, mem, gres, name/job-name.
+///
+/// The "account" parameter is allowed and can be used as a workflow-level default.
 ///
 /// Parameters should use the sbatch long option name (without the leading --).
 /// For example: "qos", "constraint", "mail-user", "mail-type", "reservation", etc.
@@ -316,17 +318,29 @@ impl SlurmDefaultsSpec {
     }
 
     /// Convert all values to strings for use in config map
+    ///
+    /// Only string, number, and boolean values are supported. Arrays, objects, and null
+    /// values are skipped with a warning since they cannot be meaningfully converted
+    /// to Slurm parameter values.
     pub fn to_string_map(&self) -> std::collections::HashMap<String, String> {
         self.0
             .iter()
-            .map(|(k, v)| {
+            .filter_map(|(k, v)| {
                 let value_str = match v {
-                    serde_json::Value::String(s) => s.clone(),
-                    serde_json::Value::Number(n) => n.to_string(),
-                    serde_json::Value::Bool(b) => b.to_string(),
-                    _ => v.to_string(),
+                    serde_json::Value::String(s) => Some(s.clone()),
+                    serde_json::Value::Number(n) => Some(n.to_string()),
+                    serde_json::Value::Bool(b) => Some(b.to_string()),
+                    serde_json::Value::Array(_)
+                    | serde_json::Value::Object(_)
+                    | serde_json::Value::Null => {
+                        log::warn!(
+                            "Skipping slurm_defaults key '{}': unsupported value type (arrays, objects, and null are not valid Slurm parameter values)",
+                            k
+                        );
+                        None
+                    }
                 };
-                (k.clone(), value_str)
+                value_str.map(|v| (k.clone(), v))
             })
             .collect()
     }
