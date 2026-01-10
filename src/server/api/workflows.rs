@@ -248,9 +248,10 @@ where
                 compute_node_min_time_for_new_jobs_seconds,
                 jobs_sort_method,
                 resource_monitor_config,
+                slurm_defaults,
                 status_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING rowid
             "#,
             body.name,
@@ -264,6 +265,7 @@ where
             compute_node_min_time_for_new_jobs_seconds,
             jobs_sort_method_str,
             body.resource_monitor_config,
+            body.slurm_defaults,
             status_result[0].id,
         )
         .fetch_all(&mut *tx)
@@ -507,6 +509,7 @@ where
                         .parse::<models::ClaimJobsSortMethod>()
                         .ok(),
                     resource_monitor_config: row.resource_monitor_config,
+                    slurm_defaults: row.slurm_defaults,
                     status_id: Some(row.status_id),
                 },
             )),
@@ -769,6 +772,7 @@ where
                 ,w.compute_node_min_time_for_new_jobs_seconds
                 ,w.jobs_sort_method
                 ,w.resource_monitor_config
+                ,w.slurm_defaults
                 ,w.status_id
             FROM workflow w
             INNER JOIN workflow_status ws ON w.status_id = ws.id
@@ -789,6 +793,7 @@ where
                 ,compute_node_min_time_for_new_jobs_seconds
                 ,jobs_sort_method
                 ,resource_monitor_config
+                ,slurm_defaults
                 ,status_id
             FROM workflow
             "
@@ -926,6 +931,7 @@ where
                 ),
                 jobs_sort_method: sort_method,
                 resource_monitor_config: record.get("resource_monitor_config"),
+                slurm_defaults: record.get("slurm_defaults"),
                 status_id: Some(record.get("status_id")),
             });
         }

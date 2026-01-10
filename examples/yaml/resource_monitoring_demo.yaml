@@ -13,6 +13,12 @@ name: resource_monitoring_demo
 user: demo_user
 description: Demonstrates resource monitoring with CPU and memory intensive Python jobs
 
+# Default Slurm parameters applied to all schedulers
+slurm_defaults:
+  account: myproject
+  mail-type: BEGIN,END,FAIL
+  mail-user: user@example.com
+
 # Enable resource monitoring with time-series data collection
 resource_monitor:
   enabled: true

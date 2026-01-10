@@ -2176,7 +2176,7 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &str, format: &str
     match default_api::get_workflow(config, selected_id) {
         Ok(workflow) => {
             if format == "json" {
-                // Convert workflow to JSON value, parsing resource_monitor_config if present
+                // Convert workflow to JSON value, parsing JSON string fields to objects
                 let mut json = serde_json::to_value(&workflow).unwrap();
 
                 // Parse resource_monitor_config from JSON string to object if present
@@ -2184,6 +2184,14 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &str, format: &str
                     && let Ok(config_obj) = serde_json::from_str::<serde_json::Value>(config_str)
                 {
                     json["resource_monitor_config"] = config_obj;
+                }
+
+                // Parse slurm_defaults from JSON string to object if present
+                if let Some(defaults_str) = &workflow.slurm_defaults
+                    && let Ok(defaults_obj) =
+                        serde_json::from_str::<serde_json::Value>(defaults_str)
+                {
+                    json["slurm_defaults"] = defaults_obj;
                 }
 
                 match serde_json::to_string_pretty(&json) {
@@ -2202,6 +2210,34 @@ fn handle_get(config: &Configuration, id: &Option<i64>, user: &str, format: &str
                 }
                 if let Some(timestamp) = &workflow.timestamp {
                     println!("  Timestamp: {}", timestamp);
+                }
+                if let Some(defaults_str) = &workflow.slurm_defaults
+                    && let Ok(defaults) = serde_json::from_str::<serde_json::Value>(defaults_str)
+                    && let Some(obj) = defaults.as_object()
+                {
+                    println!("  Slurm Defaults:");
+                    for (key, value) in obj {
+                        let value_str = match value {
+                            serde_json::Value::String(s) => s.clone(),
+                            _ => value.to_string(),
+                        };
+                        println!("    {}: {}", key, value_str);
+                    }
+                }
+                if let Some(config_str) = &workflow.resource_monitor_config
+                    && let Ok(config) = serde_json::from_str::<serde_json::Value>(config_str)
+                    && let Some(obj) = config.as_object()
+                {
+                    println!("  Resource Monitor:");
+                    for (key, value) in obj {
+                        let value_str = match value {
+                            serde_json::Value::String(s) => s.clone(),
+                            serde_json::Value::Bool(b) => b.to_string(),
+                            serde_json::Value::Number(n) => n.to_string(),
+                            _ => value.to_string(),
+                        };
+                        println!("    {}: {}", key, value_str);
+                    }
                 }
             }
         }
@@ -2246,7 +2282,7 @@ fn handle_list(
     match paginate_workflows(config, params) {
         Ok(workflows) => {
             if format == "json" {
-                // Convert workflows to JSON values, parsing resource_monitor_config if present
+                // Convert workflows to JSON values, parsing JSON string fields to objects
                 let workflows_json: Vec<serde_json::Value> = workflows
                     .iter()
                     .map(|workflow| {
@@ -2258,6 +2294,14 @@ fn handle_list(
                                 serde_json::from_str::<serde_json::Value>(config_str)
                         {
                             json["resource_monitor_config"] = config_obj;
+                        }
+
+                        // Parse slurm_defaults from JSON string to object if present
+                        if let Some(defaults_str) = &workflow.slurm_defaults
+                            && let Ok(defaults_obj) =
+                                serde_json::from_str::<serde_json::Value>(defaults_str)
+                        {
+                            json["slurm_defaults"] = defaults_obj;
                         }
 
                         json
