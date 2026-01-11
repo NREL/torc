@@ -736,6 +736,7 @@ fn test_user_data_list_missing_command_json(start_server: &ServerProcess) {
         producer_job_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         0.1, // exec_time_minutes
@@ -1006,7 +1007,8 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
     let result = models::ResultModel::new(
         job2_id,
         workflow_id,
-        1,
+        1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,
         0.5,
@@ -1055,7 +1057,8 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
     let result3 = models::ResultModel::new(
         job3_id,
         workflow_id,
-        1,
+        1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,
         0.3,

@@ -202,6 +202,7 @@ fn test_complete_job_clears_active_compute_node_id(start_server: &ServerProcess)
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0, // return_code
         1.0,
@@ -329,6 +330,7 @@ fn test_orphaned_job_simulation(start_server: &ServerProcess) {
             job_id,
             workflow_id,
             run_id,
+            1, // attempt_id
             compute_node_id,
             orphan_return_code,
             0.0,
@@ -567,6 +569,7 @@ fn test_multiple_compute_nodes_job_tracking(start_server: &ServerProcess) {
             job_id,
             workflow_id,
             run_id,
+            1, // attempt_id
             cn1_id,
             -128, // ORPHANED_JOB_RETURN_CODE
             0.0,

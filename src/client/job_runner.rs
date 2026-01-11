@@ -568,8 +568,10 @@ impl JobRunner {
         for (job_id, async_job) in self.running_jobs.iter_mut() {
             let _ = match async_job.wait_for_completion() {
                 Ok(_) => {
+                    let attempt_id = async_job.job.attempt_id.unwrap_or(1);
                     let result = async_job.get_result(
                         self.run_id,
+                        attempt_id,
                         self.compute_node_id,
                         self.resource_monitor.as_ref(),
                     );
@@ -664,8 +666,10 @@ impl JobRunner {
                         "Job terminated workflow_id={} job_id={} exit_code={}",
                         self.workflow_id, job_id, exit_code
                     );
+                    let attempt_id = async_job.job.attempt_id.unwrap_or(1);
                     let result = async_job.get_result(
                         self.run_id,
+                        attempt_id,
                         self.compute_node_id,
                         self.resource_monitor.as_ref(),
                     );
@@ -698,8 +702,10 @@ impl JobRunner {
                     if async_job.is_complete {
                         completed_jobs.push(*job_id);
 
+                        let attempt_id = async_job.job.attempt_id.unwrap_or(1);
                         let result = async_job.get_result(
                             self.run_id,
+                            attempt_id,
                             self.compute_node_id,
                             self.resource_monitor.as_ref(),
                         );

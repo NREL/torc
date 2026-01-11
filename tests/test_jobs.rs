@@ -457,6 +457,7 @@ fn test_jobs_complete_command_json(start_server: &ServerProcess) {
         job_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code
         5.5, // exec_time_minutes
@@ -513,6 +514,7 @@ fn test_jobs_complete_with_different_statuses(start_server: &ServerProcess) {
             job_id,
             workflow_id,
             1, // run_id
+            1, // attempt_id
             compute_node_id,
             0,   // return_code
             2.0, // exec_time_minutes
@@ -568,6 +570,7 @@ fn test_jobs_complete_return_codes(start_server: &ServerProcess) {
             job_id,
             workflow_id,
             1, // run_id
+            1, // attempt_id
             compute_node_id,
             return_code as i64,
             1.0, // exec_time_minutes
@@ -1144,6 +1147,7 @@ fn test_retry_job_from_failed_status(start_server: &ServerProcess) {
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         1,   // return_code
         1.0, // exec_time_minutes

@@ -356,7 +356,7 @@ fn test_async_cli_command_get_result() {
     let _ = async_cmd.wait_for_completion();
 
     let run_id = 1;
-    let result = async_cmd.get_result(run_id, 1, None);
+    let result = async_cmd.get_result(run_id, 1, 1, None);
 
     assert_eq!(result.job_id, 1);
     assert_eq!(result.workflow_id, 1);
@@ -372,7 +372,7 @@ fn test_async_cli_command_get_result_not_complete() {
     let async_cmd = AsyncCliCommand::new(job);
 
     // Try to get result before completing - should panic
-    let _ = async_cmd.get_result(1, 1, None);
+    let _ = async_cmd.get_result(1, 1, 1, None);
 }
 
 #[rstest]
@@ -679,7 +679,7 @@ fn test_async_cli_command_execution_time() {
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
-    let result = async_cmd.get_result(1, 1, None);
+    let result = async_cmd.get_result(1, 1, 1, None);
 
     // Execution time should be at least 1 second (converted to minutes)
     assert!(result.exec_time_minutes >= 1.0 / 60.0);

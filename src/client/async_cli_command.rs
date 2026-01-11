@@ -185,6 +185,7 @@ impl AsyncCliCommand {
     pub fn get_result(
         &self,
         run_id: i64,
+        attempt_id: i64,
         compute_node_id: i64,
         resource_monitor: Option<&ResourceMonitor>,
     ) -> ResultModel {
@@ -221,6 +222,7 @@ impl AsyncCliCommand {
             self.job_id,
             self.job.workflow_id,
             run_id,
+            attempt_id,
             compute_node_id,
             self.return_code
                 .expect("A completed job must have a return code"),

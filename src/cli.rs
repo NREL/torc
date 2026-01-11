@@ -55,6 +55,7 @@ const HELP_TEMPLATE: &str = "\
   \x1b[1;36mevents\x1b[0m                   Event management commands
   \x1b[1;36mresource-requirements\x1b[0m    Resource requirements management
   \x1b[1;36mresults\x1b[0m                  Result management commands
+  \x1b[1;36mfailure-handlers\x1b[0m         Failure handler management
   \x1b[1;36mcompute-nodes\x1b[0m            Compute node management
   \x1b[1;36mscheduled-compute-nodes\x1b[0m  Scheduled compute node management
   \x1b[1;36mtui\x1b[0m                      Interactive terminal UI

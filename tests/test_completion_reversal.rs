@@ -78,6 +78,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         job1_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         1,   // return_code (failure)
         1.0, // exec_time_minutes
@@ -102,6 +103,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         job2_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         1.0, // exec_time_minutes
@@ -123,6 +125,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         job3_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         1.0, // exec_time_minutes
@@ -262,7 +265,8 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
         let result = models::ResultModel::new(
             job_id,
             workflow_id,
-            1,
+            1, // run_id
+            1, // attempt_id
             compute_node_id,
             return_code,
             1.0,
@@ -380,7 +384,8 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
         let result = models::ResultModel::new(
             job_id,
             workflow_id,
-            1,
+            1, // run_id
+            1, // attempt_id
             compute_node_id,
             return_code,
             1.0,

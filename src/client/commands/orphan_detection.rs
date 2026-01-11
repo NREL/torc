@@ -246,10 +246,12 @@ fn fail_orphaned_slurm_jobs(
                 }
 
                 // Create a result for the orphaned job
+                let attempt_id = job.attempt_id.unwrap_or(1);
                 let result = models::ResultModel::new(
                     job_id,
                     workflow_id,
                     run_id,
+                    attempt_id,
                     compute_node_id,
                     ORPHANED_JOB_RETURN_CODE,
                     0.0,
@@ -627,10 +629,12 @@ fn fail_orphaned_running_jobs(
         });
 
         // Create a result for the orphaned job
+        let attempt_id = job.attempt_id.unwrap_or(1);
         let result = models::ResultModel::new(
             job_id,
             workflow_id,
             run_id,
+            attempt_id,
             compute_node_id,
             ORPHANED_JOB_RETURN_CODE, // Unique return code for orphaned jobs
             0.0,                      // exec_time_minutes - unknown
