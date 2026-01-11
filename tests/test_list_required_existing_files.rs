@@ -120,6 +120,7 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
         job1_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         1.0, // exec_time_minutes
@@ -141,6 +142,7 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
         job2_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         1.0, // exec_time_minutes
@@ -294,6 +296,7 @@ fn test_list_required_existing_files_combined_scenario(start_server: &ServerProc
         job1_id,
         workflow_id,
         1,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -309,6 +312,7 @@ fn test_list_required_existing_files_combined_scenario(start_server: &ServerProc
         job2_id,
         workflow_id,
         1,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,

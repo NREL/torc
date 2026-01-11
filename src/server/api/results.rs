@@ -101,6 +101,7 @@ where
         );
         let status = body.status.to_int();
 
+        let attempt_id = body.attempt_id.unwrap_or(1);
         let result = match sqlx::query!(
             r#"
             INSERT INTO result
@@ -108,6 +109,7 @@ where
                 job_id
                 ,workflow_id
                 ,run_id
+                ,attempt_id
                 ,compute_node_id
                 ,return_code
                 ,exec_time_minutes
@@ -118,12 +120,13 @@ where
                 ,peak_cpu_percent
                 ,avg_cpu_percent
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING rowid
         "#,
             body.job_id,
             body.workflow_id,
             body.run_id,
+            attempt_id,
             body.compute_node_id,
             body.return_code,
             body.exec_time_minutes,
@@ -196,7 +199,7 @@ where
 
         let record = match sqlx::query!(
             r#"
-            SELECT id, job_id, workflow_id, run_id, compute_node_id, return_code, exec_time_minutes, completion_time, status,
+            SELECT id, job_id, workflow_id, run_id, attempt_id, compute_node_id, return_code, exec_time_minutes, completion_time, status,
                    peak_memory_bytes, avg_memory_bytes, peak_cpu_percent, avg_cpu_percent
             FROM result
             WHERE id = $1
@@ -235,6 +238,7 @@ where
             workflow_id: record.workflow_id,
             job_id: record.job_id,
             run_id: record.run_id,
+            attempt_id: Some(record.attempt_id),
             compute_node_id: record.compute_node_id,
             return_code: record.return_code,
             exec_time_minutes: record.exec_time_minutes,
@@ -287,9 +291,9 @@ where
         // Build base query
         // If all_runs is false, only return results that are in workflow_result table (current results)
         let base_query = if show_all_results {
-            "SELECT id, job_id, workflow_id, run_id, compute_node_id, return_code, exec_time_minutes, completion_time, status, peak_memory_bytes, avg_memory_bytes, peak_cpu_percent, avg_cpu_percent FROM result".to_string()
+            "SELECT id, job_id, workflow_id, run_id, attempt_id, compute_node_id, return_code, exec_time_minutes, completion_time, status, peak_memory_bytes, avg_memory_bytes, peak_cpu_percent, avg_cpu_percent FROM result".to_string()
         } else {
-            "SELECT r.id, r.job_id, r.workflow_id, r.run_id, r.compute_node_id, r.return_code, r.exec_time_minutes, r.completion_time, r.status, r.peak_memory_bytes, r.avg_memory_bytes, r.peak_cpu_percent, r.avg_cpu_percent FROM result r INNER JOIN workflow_result wr ON r.id = wr.result_id".to_string()
+            "SELECT r.id, r.job_id, r.workflow_id, r.run_id, r.attempt_id, r.compute_node_id, r.return_code, r.exec_time_minutes, r.completion_time, r.status, r.peak_memory_bytes, r.avg_memory_bytes, r.peak_cpu_percent, r.avg_cpu_percent FROM result r INNER JOIN workflow_result wr ON r.id = wr.result_id".to_string()
         };
 
         // Build WHERE clause conditions
@@ -381,6 +385,7 @@ where
                 workflow_id: record.get("workflow_id"),
                 job_id: record.get("job_id"),
                 run_id: record.get("run_id"),
+                attempt_id: Some(record.get("attempt_id")),
                 compute_node_id: record.get("compute_node_id"),
                 return_code: record.get("return_code"),
                 exec_time_minutes: record.get("exec_time_minutes"),

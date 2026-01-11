@@ -227,6 +227,7 @@ fn test_results_list_sorting(start_server: &ServerProcess) {
             job.id.unwrap(),
             workflow_id,
             1,
+            1, // attempt_id
             1, // compute_node_id
             i, // Different return codes for sorting
             5.0,
@@ -338,6 +339,7 @@ fn test_results_list_with_return_code_filter(start_server: &ServerProcess) {
         job1.id.unwrap(),
         workflow_id,
         1,
+        1, // attempt_id
         1, // compute_node_id
         0, // success return code
         2.5,
@@ -351,6 +353,7 @@ fn test_results_list_with_return_code_filter(start_server: &ServerProcess) {
         job2.id.unwrap(),
         workflow_id,
         1,
+        1, // attempt_id
         1, // compute_node_id
         1, // failure return code
         3.5,
@@ -403,6 +406,7 @@ fn test_results_list_with_status_filter(start_server: &ServerProcess) {
         job1.id.unwrap(),
         workflow_id,
         1,
+        1, // attempt_id
         1, // compute_node_id
         0,
         2.5,
@@ -416,6 +420,7 @@ fn test_results_list_with_status_filter(start_server: &ServerProcess) {
         job2.id.unwrap(),
         workflow_id,
         1,
+        1, // attempt_id
         1, // compute_node_id
         1,
         3.5,
@@ -489,6 +494,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             job1_id,
             workflow_id,
             run_id_1,
+            1, // attempt_id
             1, // compute_node_id
             1, // failed return_code
             2.5,
@@ -507,7 +513,8 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             job2_id,
             workflow_id,
             run_id_1,
-            1,
+            1, // attempt_id
+            1, // compute_node_id
             1, // failed return_code
             3.5,
             "2024-01-01T11:00:00.000Z".to_string(),
@@ -539,7 +546,8 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             job1_id,
             workflow_id,
             run_id_2,
-            1,
+            1, // attempt_id
+            1, // compute_node_id
             0,
             4.5,
             "2024-01-02T10:00:00.000Z".to_string(),
@@ -557,7 +565,8 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             job2_id,
             workflow_id,
             run_id_2,
-            1,
+            1, // attempt_id
+            1, // compute_node_id
             1, // Different return code
             5.5,
             "2024-01-02T11:00:00.000Z".to_string(),
@@ -631,7 +640,8 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         1, // run_id 1
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
@@ -643,7 +653,8 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         job2_id,
         workflow_id,
         1, // run_id 1
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         3.5,
         "2024-01-01T11:00:00.000Z".to_string(),
@@ -660,7 +671,8 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         2, // run_id 2
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         4.5,
         "2024-01-02T10:00:00.000Z".to_string(),
@@ -672,7 +684,8 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         job2_id,
         workflow_id,
         2, // run_id 2
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         1,
         5.5,
         "2024-01-02T11:00:00.000Z".to_string(),
@@ -689,7 +702,8 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         3, // run_id 3
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         6.5,
         "2024-01-03T10:00:00.000Z".to_string(),
@@ -763,7 +777,8 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         1,
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
@@ -775,7 +790,8 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         job2_id,
         workflow_id,
         1,
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         1,
         3.5,
         "2024-01-01T11:00:00.000Z".to_string(),
@@ -792,7 +808,8 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         2,
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         4.5,
         "2024-01-02T10:00:00.000Z".to_string(),
@@ -804,7 +821,8 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         job2_id,
         workflow_id,
         2,
-        1,
+        1, // attempt_id
+        1, // compute_node_id
         0,
         5.5,
         "2024-01-02T11:00:00.000Z".to_string(),
@@ -918,6 +936,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
             job1_id,
             workflow_id,
             run_id,
+            1, // attempt_id
             1, // compute_node_id
             0,
             2.5,
@@ -936,7 +955,8 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
             job2_id,
             workflow_id,
             run_id,
-            1,
+            1, // attempt_id
+            1, // compute_node_id
             0,
             3.5,
             "2024-01-01T11:00:00.000Z".to_string(),

@@ -75,6 +75,14 @@ pub struct WatchArgs {
     pub output_dir: PathBuf,
     pub show_job_counts: bool,
     pub log_level: String,
+    /// Automatically schedule new compute nodes when needed
+    pub auto_schedule: bool,
+    /// Minimum number of retry jobs before auto-scheduling (when schedulers exist)
+    pub auto_schedule_threshold: u32,
+    /// Cooldown between auto-schedule attempts (in seconds)
+    pub auto_schedule_cooldown: u64,
+    /// Maximum time to wait before scheduling stranded retry jobs (in seconds)
+    pub auto_schedule_stranded_timeout: u64,
 }
 
 /// Get job counts by status for a workflow
@@ -94,6 +102,27 @@ fn get_job_counts(
     }
 
     Ok(counts)
+}
+
+/// Count ready jobs that are retries (attempt_id > 1).
+/// These are jobs created by failure handlers that need scheduling.
+fn count_ready_retry_jobs(config: &Configuration, workflow_id: i64) -> Result<(i64, i64), String> {
+    use crate::models::JobStatus;
+
+    let ready_jobs = paginate_jobs(
+        config,
+        workflow_id,
+        JobListParams::new().with_status(JobStatus::Ready),
+    )
+    .map_err(|e| format!("Failed to list ready jobs: {}", e))?;
+
+    let total_ready = ready_jobs.len() as i64;
+    let retry_count = ready_jobs
+        .iter()
+        .filter(|job| job.attempt_id.unwrap_or(1) > 1)
+        .count() as i64;
+
+    Ok((total_ready, retry_count))
 }
 
 // Note: fail_orphaned_slurm_jobs and cleanup_dead_pending_slurm_jobs
@@ -264,6 +293,15 @@ fn has_valid_slurm_allocation(config: &Configuration, workflow_id: i64) -> bool 
 
 // Note: fail_orphaned_running_jobs is now in orphan_detection module
 
+/// Options for auto-scheduling behavior
+struct AutoScheduleOptions {
+    enabled: bool,
+    threshold: u32,
+    cooldown: Duration,
+    stranded_timeout: Duration,
+    output_dir: PathBuf,
+}
+
 /// Poll until workflow is complete, optionally printing status updates.
 /// After the workflow is complete, continues to wait until all workers have exited
 /// (no active compute nodes and no scheduled compute nodes). This is critical for
@@ -274,8 +312,13 @@ fn poll_until_complete(
     workflow_id: i64,
     poll_interval: u64,
     show_job_counts: bool,
+    auto_schedule: &AutoScheduleOptions,
 ) -> Result<HashMap<String, i64>, String> {
+    use std::time::Instant;
+
     let mut workflow_complete = false;
+    // Track when we last auto-scheduled (or started watching) for stranded job detection
+    let mut last_auto_schedule: Instant = Instant::now();
 
     loop {
         // Check if workflow is complete
@@ -285,10 +328,7 @@ fn poll_until_complete(
             }) {
                 Ok(response) => {
                     if response.is_complete {
-                        info!(
-                            "Workflow {} is complete, waiting for workers to exit...",
-                            workflow_id
-                        );
+                        info!("Workflow complete workflow_id={}", workflow_id);
                         workflow_complete = true;
                         // Don't break yet - wait for workers to exit
                     }
@@ -303,7 +343,7 @@ fn poll_until_complete(
         if workflow_complete {
             let workers_active = has_active_workers(config, workflow_id);
             if !workers_active {
-                info!("All workers have exited");
+                info!("Workers exited workflow_id={}", workflow_id);
                 break;
             }
             debug!("Waiting for workers to exit...");
@@ -321,8 +361,8 @@ fn poll_until_complete(
                     let failed = counts.get("Failed").unwrap_or(&0);
                     let blocked = counts.get("Blocked").unwrap_or(&0);
                     info!(
-                        "  ready={}, blocked={}, running={}, completed={}, failed={}",
-                        ready, blocked, running, completed, failed
+                        "Job counts workflow_id={} ready={} blocked={} running={} completed={} failed={}",
+                        workflow_id, ready, blocked, running, completed, failed
                     );
                 }
                 Err(e) => {
@@ -335,6 +375,78 @@ fn poll_until_complete(
         // skip the expensive per-allocation orphan detection. This reduces N squeue calls
         // to just 1-2 calls when jobs are queued or running normally.
         if has_valid_slurm_allocation(config, workflow_id) {
+            // Check if we should auto-schedule for retry jobs even though schedulers exist
+            if auto_schedule.enabled {
+                let cooldown_passed = last_auto_schedule.elapsed() >= auto_schedule.cooldown;
+
+                if cooldown_passed {
+                    match count_ready_retry_jobs(config, workflow_id) {
+                        Ok((total_ready, retry_ready)) => {
+                            // Check if we should schedule: either threshold met or stranded timeout
+                            let threshold_met = retry_ready >= auto_schedule.threshold as i64;
+                            let stranded = retry_ready > 0
+                                && auto_schedule.stranded_timeout.as_secs() > 0
+                                && last_auto_schedule.elapsed() >= auto_schedule.stranded_timeout;
+
+                            if threshold_met {
+                                info!(
+                                    "Auto-schedule: {} retry jobs waiting (threshold: {}), scheduling more nodes...",
+                                    retry_ready, auto_schedule.threshold
+                                );
+                                match regenerate_and_submit(workflow_id, &auto_schedule.output_dir)
+                                {
+                                    Ok(()) => {
+                                        info!(
+                                            "Auto-schedule: Successfully submitted new allocations"
+                                        );
+                                        last_auto_schedule = Instant::now();
+                                    }
+                                    Err(e) => {
+                                        warn!("Auto-schedule failed: {}", e);
+                                    }
+                                }
+                            } else if stranded {
+                                info!(
+                                    "Auto-schedule: {} retry jobs stranded for {}s (timeout: {}s), scheduling...",
+                                    retry_ready,
+                                    last_auto_schedule.elapsed().as_secs(),
+                                    auto_schedule.stranded_timeout.as_secs()
+                                );
+                                match regenerate_and_submit(workflow_id, &auto_schedule.output_dir)
+                                {
+                                    Ok(()) => {
+                                        info!(
+                                            "Auto-schedule: Successfully submitted new allocations"
+                                        );
+                                        last_auto_schedule = Instant::now();
+                                    }
+                                    Err(e) => {
+                                        warn!("Auto-schedule failed: {}", e);
+                                    }
+                                }
+                            } else if retry_ready > 0 {
+                                debug!(
+                                    "Auto-schedule: {} retry jobs waiting, below threshold of {} (stranded after {}s)",
+                                    retry_ready,
+                                    auto_schedule.threshold,
+                                    auto_schedule.stranded_timeout.as_secs()
+                                );
+                            }
+                            // Log total ready for visibility
+                            if total_ready > 0 && total_ready != retry_ready {
+                                debug!(
+                                    "Auto-schedule: {} total ready jobs ({} are retries)",
+                                    total_ready, retry_ready
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Failed to count retry jobs: {}", e);
+                        }
+                    }
+                }
+            }
+
             std::thread::sleep(Duration::from_secs(poll_interval));
             continue;
         }
@@ -363,11 +475,55 @@ fn poll_until_complete(
         }
 
         // Check if there are any pending or active scheduled compute nodes
-        // If not, nothing can make progress and we should exit
+        // If not, nothing can make progress unless we auto-schedule
         if !has_any_scheduled_compute_nodes(config, workflow_id) {
-            warn!("No pending or active scheduled compute nodes found");
-            warn!("Workflow cannot make progress without active allocations");
-            break;
+            // Check if there are ready jobs that need scheduling
+            match count_ready_retry_jobs(config, workflow_id) {
+                Ok((total_ready, retry_ready)) => {
+                    if total_ready > 0 {
+                        if auto_schedule.enabled {
+                            info!(
+                                "Auto-schedule: No schedulers available but {} ready jobs found ({} retries)",
+                                total_ready, retry_ready
+                            );
+                            info!("Auto-schedule: Regenerating schedulers...");
+                            match regenerate_and_submit(workflow_id, &auto_schedule.output_dir) {
+                                Ok(()) => {
+                                    info!("Auto-schedule: Successfully submitted new allocations");
+                                    last_auto_schedule = Instant::now();
+                                    // Continue polling - new schedulers should pick up work
+                                    std::thread::sleep(Duration::from_secs(poll_interval));
+                                    continue;
+                                }
+                                Err(e) => {
+                                    warn!("Auto-schedule failed: {}", e);
+                                    warn!(
+                                        "Workflow cannot make progress without active allocations"
+                                    );
+                                    break;
+                                }
+                            }
+                        } else {
+                            warn!("No pending or active scheduled compute nodes found");
+                            warn!(
+                                "{} ready jobs with no schedulers. Use --auto-schedule to regenerate.",
+                                total_ready
+                            );
+                            break;
+                        }
+                    } else {
+                        // No ready jobs and no schedulers - workflow is stuck
+                        warn!("No pending or active scheduled compute nodes found");
+                        warn!("Workflow cannot make progress without active allocations");
+                        break;
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to count ready jobs: {}", e);
+                    warn!("No pending or active scheduled compute nodes found");
+                    break;
+                }
+            }
         }
 
         std::thread::sleep(Duration::from_secs(poll_interval));
@@ -430,10 +586,13 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         .try_init()
         .ok(); // Ignore error if logger is already initialized
 
-    info!("Starting watch command");
-    info!("Hostname: {}", hostname);
-    info!("Output directory: {}", args.output_dir.display());
-    info!("Log file: {}", log_file_path);
+    info!(
+        "Watch started workflow_id={} hostname={} output_dir={} log_file={}",
+        args.workflow_id,
+        hostname,
+        args.output_dir.display(),
+        log_file_path
+    );
 
     let mut retry_count = 0u32;
 
@@ -472,12 +631,31 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         info!("  (use --show-job-counts to display per-status counts during polling)");
     }
 
+    // Set up auto-schedule options
+    let auto_schedule_opts = AutoScheduleOptions {
+        enabled: args.auto_schedule,
+        threshold: args.auto_schedule_threshold,
+        cooldown: Duration::from_secs(args.auto_schedule_cooldown),
+        stranded_timeout: Duration::from_secs(args.auto_schedule_stranded_timeout),
+        output_dir: args.output_dir.clone(),
+    };
+
+    if args.auto_schedule {
+        info!(
+            "Auto-schedule enabled (threshold: {} retry jobs, cooldown: {}s, stranded timeout: {}s)",
+            args.auto_schedule_threshold,
+            args.auto_schedule_cooldown,
+            args.auto_schedule_stranded_timeout
+        );
+    }
+
     loop {
         let counts = match poll_until_complete(
             config,
             args.workflow_id,
             args.poll_interval,
             args.show_job_counts,
+            &auto_schedule_opts,
         ) {
             Ok(c) => c,
             Err(e) => {

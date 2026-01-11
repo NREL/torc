@@ -397,6 +397,38 @@ function create_event(_api::DefaultApi, response_stream::Channel, body::EventMod
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_create_failure_handler_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => FailureHandlerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_create_failure_handler(_api::DefaultApi, body::FailureHandlerModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_create_failure_handler_DefaultApi, "/failure_handlers", [], body)
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Create a failure handler.
+
+Create a failure handler with rules for automatic job retry.
+
+Params:
+- body::FailureHandlerModel (required)
+
+Return: FailureHandlerModel, OpenAPI.Clients.ApiResponse
+"""
+function create_failure_handler(_api::DefaultApi, body::FailureHandlerModel; _mediaType=nothing)
+    _ctx = _oacinternal_create_failure_handler(_api, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function create_failure_handler(_api::DefaultApi, response_stream::Channel, body::FailureHandlerModel; _mediaType=nothing)
+    _ctx = _oacinternal_create_failure_handler(_api, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_create_file_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FileModel,
     Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
@@ -984,6 +1016,40 @@ end
 
 function delete_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_delete_events(_api, workflow_id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_failure_handler_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => FailureHandlerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_failure_handler(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_failure_handler_DefaultApi, "/failure_handlers/{id}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a failure handler.
+
+Delete a failure handler.
+
+Params:
+- id::Int64 (required)
+- body::Any
+
+Return: FailureHandlerModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_failure_handler(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_failure_handler(_api, id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_failure_handler(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_failure_handler(_api, id; body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -1656,6 +1722,39 @@ end
 
 function get_event(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
     _ctx = _oacinternal_get_event(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_get_failure_handler_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => FailureHandlerModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_get_failure_handler(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_failure_handler_DefaultApi, "/failure_handlers/{id}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Get a failure handler by ID.
+
+Retrieve a failure handler by ID.
+
+Params:
+- id::Int64 (required)
+
+Return: FailureHandlerModel, OpenAPI.Clients.ApiResponse
+"""
+function get_failure_handler(_api::DefaultApi, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_get_failure_handler(_api, id; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function get_failure_handler(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing)
+    _ctx = _oacinternal_get_failure_handler(_api, id; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2380,6 +2479,43 @@ end
 
 function list_events(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, category=nothing, after_timestamp=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_events(_api, workflow_id; offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, category=category, after_timestamp=after_timestamp, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_list_failure_handlers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListFailureHandlersResponse,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_failure_handlers(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_failure_handlers_DefaultApi, "/workflows/{id}/failure_handlers", [])
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "offset", offset; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""List failure handlers for a workflow.
+
+List all failure handlers for a workflow.
+
+Params:
+- id::Int64 (required)
+- offset::Int64
+- limit::Int64
+
+Return: ListFailureHandlersResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_failure_handlers(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_failure_handlers(_api, id; offset=offset, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_failure_handlers(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_failure_handlers(_api, id; offset=offset, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -3439,6 +3575,43 @@ function reset_workflow_status(_api::DefaultApi, response_stream::Channel, id::I
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_retry_job_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
+    Regex("^" * replace("422", "x"=>".") * "\$") => DefaultErrorResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_retry_job(_api::DefaultApi, id::Int64, run_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_retry_job_DefaultApi, "/jobs/{id}/retry/{run_id}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "run_id", run_id)  # type Int64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Retry a failed job.
+
+Retry a failed job by resetting it to ready status and incrementing attempt_id.
+
+Params:
+- id::Int64 (required)
+- run_id::Int64 (required)
+- body::Any
+
+Return: JobModel, OpenAPI.Clients.ApiResponse
+"""
+function retry_job(_api::DefaultApi, id::Int64, run_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_retry_job(_api, id, run_id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function retry_job(_api::DefaultApi, response_stream::Channel, id::Int64, run_id::Int64; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_retry_job(_api, id, run_id; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_start_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
     Regex("^" * replace("404", "x"=>".") * "\$") => NotFoundErrorResponse,
@@ -3899,6 +4072,7 @@ export complete_job
 export create_access_group
 export create_compute_node
 export create_event
+export create_failure_handler
 export create_file
 export create_job
 export create_jobs
@@ -3917,6 +4091,7 @@ export delete_compute_node
 export delete_compute_nodes
 export delete_event
 export delete_events
+export delete_failure_handler
 export delete_file
 export delete_files
 export delete_job
@@ -3937,6 +4112,7 @@ export delete_workflow
 export get_access_group
 export get_compute_node
 export get_event
+export get_failure_handler
 export get_file
 export get_job
 export get_latest_event_timestamp
@@ -3958,6 +4134,7 @@ export is_workflow_uninitialized
 export list_access_groups
 export list_compute_nodes
 export list_events
+export list_failure_handlers
 export list_files
 export list_group_members
 export list_job_dependencies
@@ -3984,6 +4161,7 @@ export remove_user_from_group
 export remove_workflow_from_group
 export reset_job_status
 export reset_workflow_status
+export retry_job
 export start_job
 export update_compute_node
 export update_event

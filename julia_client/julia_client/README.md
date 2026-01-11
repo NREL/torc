@@ -32,6 +32,7 @@ Class | Method
 *DefaultApi* | [**create_access_group**](docs/DefaultApi.md#create_access_group)<br/>**POST** /access_groups<br/>Create a new access group.
 *DefaultApi* | [**create_compute_node**](docs/DefaultApi.md#create_compute_node)<br/>**POST** /compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**create_event**](docs/DefaultApi.md#create_event)<br/>**POST** /events<br/>Store an event.
+*DefaultApi* | [**create_failure_handler**](docs/DefaultApi.md#create_failure_handler)<br/>**POST** /failure_handlers<br/>Create a failure handler.
 *DefaultApi* | [**create_file**](docs/DefaultApi.md#create_file)<br/>**POST** /files<br/>Store a file.
 *DefaultApi* | [**create_job**](docs/DefaultApi.md#create_job)<br/>**POST** /jobs<br/>Store a job.
 *DefaultApi* | [**create_jobs**](docs/DefaultApi.md#create_jobs)<br/>**POST** /bulk_jobs<br/>Create jobs in bulk. Recommended max job count of 10,000.
@@ -50,6 +51,7 @@ Class | Method
 *DefaultApi* | [**delete_compute_nodes**](docs/DefaultApi.md#delete_compute_nodes)<br/>**DELETE** /compute_nodes<br/>Delete all compute node records for one workflow.
 *DefaultApi* | [**delete_event**](docs/DefaultApi.md#delete_event)<br/>**DELETE** /events/{id}<br/>Delete an event.
 *DefaultApi* | [**delete_events**](docs/DefaultApi.md#delete_events)<br/>**DELETE** /events<br/>Delete all events for one workflow.
+*DefaultApi* | [**delete_failure_handler**](docs/DefaultApi.md#delete_failure_handler)<br/>**DELETE** /failure_handlers/{id}<br/>Delete a failure handler.
 *DefaultApi* | [**delete_file**](docs/DefaultApi.md#delete_file)<br/>**DELETE** /files/{id}<br/>Delete a file.
 *DefaultApi* | [**delete_files**](docs/DefaultApi.md#delete_files)<br/>**DELETE** /files<br/>Delete all files for one workflow.
 *DefaultApi* | [**delete_job**](docs/DefaultApi.md#delete_job)<br/>**DELETE** /jobs/{id}<br/>Delete a job.
@@ -70,6 +72,7 @@ Class | Method
 *DefaultApi* | [**get_access_group**](docs/DefaultApi.md#get_access_group)<br/>**GET** /access_groups/{id}<br/>Get an access group by ID.
 *DefaultApi* | [**get_compute_node**](docs/DefaultApi.md#get_compute_node)<br/>**GET** /compute_nodes/{id}<br/>Retrieve a compute node by ID.
 *DefaultApi* | [**get_event**](docs/DefaultApi.md#get_event)<br/>**GET** /events/{id}<br/>Retrieve an event by ID.
+*DefaultApi* | [**get_failure_handler**](docs/DefaultApi.md#get_failure_handler)<br/>**GET** /failure_handlers/{id}<br/>Get a failure handler by ID.
 *DefaultApi* | [**get_file**](docs/DefaultApi.md#get_file)<br/>**GET** /files/{id}<br/>Retrieve a file.
 *DefaultApi* | [**get_job**](docs/DefaultApi.md#get_job)<br/>**GET** /jobs/{id}<br/>Retrieve a job.
 *DefaultApi* | [**get_latest_event_timestamp**](docs/DefaultApi.md#get_latest_event_timestamp)<br/>**GET** /workflows/{id}/latest_event_timestamp<br/>Return the timestamp of the latest event in ms since the epoch in UTC.
@@ -91,6 +94,7 @@ Class | Method
 *DefaultApi* | [**list_access_groups**](docs/DefaultApi.md#list_access_groups)<br/>**GET** /access_groups<br/>List all access groups.
 *DefaultApi* | [**list_compute_nodes**](docs/DefaultApi.md#list_compute_nodes)<br/>**GET** /compute_nodes<br/>Retrieve all compute node records for one workflow.
 *DefaultApi* | [**list_events**](docs/DefaultApi.md#list_events)<br/>**GET** /events<br/>Retrieve all events for one workflow.
+*DefaultApi* | [**list_failure_handlers**](docs/DefaultApi.md#list_failure_handlers)<br/>**GET** /workflows/{id}/failure_handlers<br/>List failure handlers for a workflow.
 *DefaultApi* | [**list_files**](docs/DefaultApi.md#list_files)<br/>**GET** /files<br/>Retrieve all files for one workflow.
 *DefaultApi* | [**list_group_members**](docs/DefaultApi.md#list_group_members)<br/>**GET** /access_groups/{id}/members<br/>List members of an access group.
 *DefaultApi* | [**list_job_dependencies**](docs/DefaultApi.md#list_job_dependencies)<br/>**GET** /workflows/{id}/job_dependencies<br/>Retrieve job blocking relationships for a workflow.
@@ -117,6 +121,7 @@ Class | Method
 *DefaultApi* | [**remove_workflow_from_group**](docs/DefaultApi.md#remove_workflow_from_group)<br/>**DELETE** /workflows/{id}/access_groups/{group_id}<br/>Revoke an access group&#39;s access to a workflow.
 *DefaultApi* | [**reset_job_status**](docs/DefaultApi.md#reset_job_status)<br/>**POST** /workflows/{id}/reset_job_status<br/>Reset status for jobs to uninitialized.
 *DefaultApi* | [**reset_workflow_status**](docs/DefaultApi.md#reset_workflow_status)<br/>**POST** /workflows/{id}/reset_status<br/>Reset worklow status.
+*DefaultApi* | [**retry_job**](docs/DefaultApi.md#retry_job)<br/>**POST** /jobs/{id}/retry/{run_id}<br/>Retry a failed job.
 *DefaultApi* | [**start_job**](docs/DefaultApi.md#start_job)<br/>**PUT** /jobs/{id}/start_job/{run_id}/{compute_node_id}<br/>Start a job and manage side effects.
 *DefaultApi* | [**update_compute_node**](docs/DefaultApi.md#update_compute_node)<br/>**PUT** /compute_nodes/{id}<br/>Update a compute node.
 *DefaultApi* | [**update_event**](docs/DefaultApi.md#update_event)<br/>**PUT** /events/{id}<br/>Update an event.
@@ -146,6 +151,7 @@ Class | Method
  - [CreateJobsResponse](docs/CreateJobsResponse.md)
  - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
  - [EventModel](docs/EventModel.md)
+ - [FailureHandlerModel](docs/FailureHandlerModel.md)
  - [FileModel](docs/FileModel.md)
  - [ForbiddenErrorResponse](docs/ForbiddenErrorResponse.md)
  - [GetReadyJobRequirementsResponse](docs/GetReadyJobRequirementsResponse.md)
@@ -161,6 +167,7 @@ Class | Method
  - [ListAccessGroupsResponse](docs/ListAccessGroupsResponse.md)
  - [ListComputeNodesResponse](docs/ListComputeNodesResponse.md)
  - [ListEventsResponse](docs/ListEventsResponse.md)
+ - [ListFailureHandlersResponse](docs/ListFailureHandlersResponse.md)
  - [ListFilesResponse](docs/ListFilesResponse.md)
  - [ListJobDependenciesResponse](docs/ListJobDependenciesResponse.md)
  - [ListJobFileRelationshipsResponse](docs/ListJobFileRelationshipsResponse.md)

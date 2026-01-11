@@ -25,6 +25,7 @@ from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResou
 from torc.openapi_client.models.create_jobs_response import CreateJobsResponse
 from torc.openapi_client.models.default_error_response import DefaultErrorResponse
 from torc.openapi_client.models.event_model import EventModel
+from torc.openapi_client.models.failure_handler_model import FailureHandlerModel
 from torc.openapi_client.models.file_model import FileModel
 from torc.openapi_client.models.forbidden_error_response import ForbiddenErrorResponse
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
@@ -40,6 +41,7 @@ from torc.openapi_client.models.jobs_sort_method import JobsSortMethod
 from torc.openapi_client.models.list_access_groups_response import ListAccessGroupsResponse
 from torc.openapi_client.models.list_compute_nodes_response import ListComputeNodesResponse
 from torc.openapi_client.models.list_events_response import ListEventsResponse
+from torc.openapi_client.models.list_failure_handlers_response import ListFailureHandlersResponse
 from torc.openapi_client.models.list_files_response import ListFilesResponse
 from torc.openapi_client.models.list_job_dependencies_response import ListJobDependenciesResponse
 from torc.openapi_client.models.list_job_file_relationships_response import ListJobFileRelationshipsResponse

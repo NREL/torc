@@ -11,6 +11,7 @@ use crate::client::commands::{
 };
 use crate::models;
 use chrono::{DateTime, Local, Utc};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use tabled::Tabled;
 
@@ -23,6 +24,28 @@ fn format_timestamp_ms(timestamp_ms: i64) -> String {
                 .to_string()
         })
         .unwrap_or_else(|| format!("{}ms", timestamp_ms))
+}
+
+/// Event model for JSON output with human-readable timestamp
+#[derive(Serialize, Deserialize)]
+struct EventJsonOutput {
+    id: Option<i64>,
+    workflow_id: i64,
+    timestamp: i64,
+    timestamp_formatted: String,
+    data: serde_json::Value,
+}
+
+impl From<&models::EventModel> for EventJsonOutput {
+    fn from(event: &models::EventModel) -> Self {
+        EventJsonOutput {
+            id: event.id,
+            workflow_id: event.workflow_id,
+            timestamp: event.timestamp,
+            timestamp_formatted: format_timestamp_ms(event.timestamp),
+            data: event.data.clone(),
+        }
+    }
 }
 
 #[derive(Tabled)]
@@ -144,7 +167,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
 
             match default_api::create_event(config, event) {
                 Ok(created_event) => {
-                    if print_if_json(format, &created_event, "event") {
+                    let json_event = EventJsonOutput::from(&created_event);
+                    if print_if_json(format, &json_event, "event") {
                         // JSON was printed
                     } else {
                         println!("Successfully created event:");
@@ -198,7 +222,9 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
             match paginate_events(config, selected_workflow_id as i64, params) {
                 Ok(events) => {
                     if format == "json" {
-                        print_json_wrapped("events", &events, "events");
+                        let json_events: Vec<EventJsonOutput> =
+                            events.iter().map(EventJsonOutput::from).collect();
+                        print_json_wrapped("events", &json_events, "events");
                     } else if events.is_empty() {
                         println!("No events found for workflow {}", selected_workflow_id);
                     } else {
@@ -262,7 +288,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 Ok(response) => {
                     if let Some(events) = response.items {
                         if let Some(latest_event) = events.first() {
-                            if print_if_json(format, &latest_event, "event") {
+                            let json_event = EventJsonOutput::from(latest_event);
+                            if print_if_json(format, &json_event, "event") {
                                 // JSON was printed
                             } else {
                                 println!("Latest event for workflow {}:", selected_workflow_id);
@@ -292,7 +319,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         }
         EventCommands::Delete { id } => match default_api::delete_event(config, *id, None) {
             Ok(removed_event) => {
-                if print_if_json(format, &removed_event, "event") {
+                let json_event = EventJsonOutput::from(&removed_event);
+                if print_if_json(format, &json_event, "event") {
                     // JSON was printed
                 } else {
                     println!("Successfully removed event:");
@@ -395,7 +423,8 @@ fn handle_monitor_events(
                     // Process new events
                     for event in &events {
                         if format == "json" {
-                            print_json(&event, "event");
+                            let json_event = EventJsonOutput::from(event);
+                            print_json(&json_event, "event");
                         } else {
                             println!(
                                 "[{}] Event ID {}: {}",

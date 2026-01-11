@@ -41,7 +41,9 @@ class JobModel(BaseModel):
     output_user_data_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job produces")
     resource_requirements_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of resources required by this job")
     scheduler_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of scheduler needed by this job")
-    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "cancel_on_blocking_job_failure", "supports_termination", "depends_on_job_ids", "input_file_ids", "output_file_ids", "input_user_data_ids", "output_user_data_ids", "resource_requirements_id", "scheduler_id"]
+    failure_handler_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of failure handler for this job")
+    attempt_id: Optional[StrictInt] = Field(default=1, description="Current retry attempt number (starts at 1)")
+    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "cancel_on_blocking_job_failure", "supports_termination", "depends_on_job_ids", "input_file_ids", "output_file_ids", "input_user_data_ids", "output_user_data_ids", "resource_requirements_id", "scheduler_id", "failure_handler_id", "attempt_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -113,7 +115,9 @@ class JobModel(BaseModel):
             "input_user_data_ids": obj.get("input_user_data_ids"),
             "output_user_data_ids": obj.get("output_user_data_ids"),
             "resource_requirements_id": obj.get("resource_requirements_id"),
-            "scheduler_id": obj.get("scheduler_id")
+            "scheduler_id": obj.get("scheduler_id"),
+            "failure_handler_id": obj.get("failure_handler_id"),
+            "attempt_id": obj.get("attempt_id") if obj.get("attempt_id") is not None else 1
         })
         return _obj
 

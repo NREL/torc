@@ -82,6 +82,8 @@ struct ResultTableRow {
     workflow_id: i64,
     #[tabled(rename = "Run ID")]
     run_id: i64,
+    #[tabled(rename = "Attempt")]
+    attempt_id: i64,
     #[tabled(rename = "Return Code")]
     return_code: i64,
     #[tabled(rename = "Exec Time")]
@@ -268,6 +270,7 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                                     .unwrap_or_else(|| "-".to_string()),
                                 workflow_id: result.workflow_id,
                                 run_id: result.run_id,
+                                attempt_id: result.attempt_id.unwrap_or(1),
                                 return_code: result.return_code,
                                 exec_time: format!("{:.2}", result.exec_time_minutes),
                                 peak_memory: format_memory(result.peak_memory_bytes),
@@ -294,6 +297,7 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                     println!("  Job ID: {}", result.job_id);
                     println!("  Workflow ID: {}", result.workflow_id);
                     println!("  Run ID: {}", result.run_id);
+                    println!("  Attempt ID: {}", result.attempt_id.unwrap_or(1));
                     println!("  Return Code: {}", result.return_code);
                     println!(
                         "  Execution Time (minutes): {:.2}",

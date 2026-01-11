@@ -1,0 +1,57 @@
+# Failure Handler Simulation Example
+# Demonstrates configurable job failure handlers with automatic retry and recovery scripts.
+#
+# This example shows a simulation parameter sweep with:
+# - 9 parameterized jobs (3 models x 3 scenarios)
+# - A failure handler with rules for different error types
+# - A recovery script that logs recovery actions
+#
+# To run this example:
+#   torc run examples/yaml/failure_handler_simulation.yaml
+#
+# Exit codes used:
+#   0:  Success
+#   1:  Unrecoverable error (not retried)
+#   10: Convergence failure (retried with recovery script)
+#   11: Resource issue (retried with recovery script)
+#   12: Transient error (retried without script)
+
+name: failure_handler_simulation
+description: Simulation sweep with automatic failure recovery
+
+failure_handlers:
+  - name: simulation_recovery
+    rules:
+      # Convergence issues: run recovery script, retry up to 3 times
+      - exit_codes: [10]
+        recovery_script: examples/scripts/recovery_demo.sh
+        max_retries: 3
+
+      # Resource issues: run recovery script, retry up to 2 times
+      - exit_codes: [11]
+        recovery_script: examples/scripts/recovery_demo.sh
+        max_retries: 2
+
+      # Transient errors: simple retry, no recovery script
+      - exit_codes: [12]
+        max_retries: 3
+
+      # Note: exit code 1 is intentionally NOT included (unrecoverable)
+
+jobs:
+  # Run simulations: 9 parameterized jobs (3 models x 3 scenarios)
+  - name: simulate_m{model}_s{scenario}
+    command: bash examples/scripts/failure_demo_job.sh --fail-rate 0.7 --work-time 0.3
+    failure_handler: simulation_recovery
+    parameters:
+      model: "0:2"
+      scenario: "0:2"
+
+  # Aggregate results after all simulations complete
+  - name: aggregate_results
+    command: echo "All simulations completed successfully!"
+    depends_on:
+      - simulate_m{model}_s{scenario}
+    parameters:
+      model: "0:2"
+      scenario: "0:2"

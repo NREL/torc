@@ -68,12 +68,21 @@ pub struct GetJobLogsParams {
     pub job_id: i64,
     #[schemars(description = "The run ID (1 for first run, increments on restart)")]
     pub run_id: i64,
+    #[schemars(
+        description = "The attempt ID (1 for first attempt, increments on retry). Defaults to 1."
+    )]
+    #[serde(default = "default_attempt_id")]
+    pub attempt_id: i64,
     #[schemars(description = "Log type: 'stdout' or 'stderr'")]
     pub log_type: String,
     #[schemars(
         description = "Number of lines to return from the end (optional, returns all if not specified)"
     )]
     pub tail_lines: Option<usize>,
+}
+
+fn default_attempt_id() -> i64 {
+    1
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -508,6 +517,7 @@ USE CASES:
         let workflow_id = params.workflow_id;
         let job_id = params.job_id;
         let run_id = params.run_id;
+        let attempt_id = params.attempt_id;
         let log_type = params.log_type;
         let tail_lines = params.tail_lines;
         tokio::task::spawn_blocking(move || {
@@ -516,6 +526,7 @@ USE CASES:
                 workflow_id,
                 job_id,
                 run_id,
+                attempt_id,
                 &log_type,
                 tail_lines,
             )

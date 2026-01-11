@@ -584,6 +584,7 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         job1_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         1, // non-zero return_code = failure
         1.0,
@@ -606,6 +607,7 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         job2_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -715,6 +717,7 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         job1_id,
         workflow_id,
         run_id2,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,

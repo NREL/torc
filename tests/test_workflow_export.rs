@@ -294,6 +294,7 @@ fn test_export_with_results(start_server: &ServerProcess) {
         job_id,
         workflow_id,
         1, // run_id
+        1, // attempt_id
         compute_node_id,
         0,   // return_code
         1.5, // exec_time_minutes

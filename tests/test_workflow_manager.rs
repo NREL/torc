@@ -159,6 +159,7 @@ fn execute_workflow_with_job(
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -809,6 +810,7 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
         job1_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -825,6 +827,7 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
         job2_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -1021,6 +1024,7 @@ fn test_update_jobs_on_file_change_with_canceled_jobs(start_server: &ServerProce
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         -1, // Non-zero return code indicating cancellation
         0.0,
@@ -1126,6 +1130,7 @@ fn test_process_changed_files_end_to_end(start_server: &ServerProcess) {
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -1321,6 +1326,7 @@ fn complete_job_and_create_files(
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,   // return_code (success)
         1.0, // exec_time_minutes
@@ -1716,6 +1722,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
         upstream_job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -1920,6 +1927,7 @@ fn test_reinitialize_workflow_with_missing_files_ignore_missing_data_true(
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2006,6 +2014,7 @@ fn test_reinitialize_workflow_with_missing_files_dry_run_true(start_server: &Ser
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2099,6 +2108,7 @@ fn test_reinitialize_workflow_with_missing_files_ignore_missing_data_false(
         job_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2275,6 +2285,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         job1_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2320,6 +2331,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         job2_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2358,6 +2370,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         job3_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2493,6 +2506,7 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
         preprocess_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2517,6 +2531,7 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
         work1_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2568,6 +2583,7 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
         work2_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,
@@ -2625,6 +2641,7 @@ fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &Ser
         postprocess_id,
         workflow_id,
         run_id,
+        1, // attempt_id
         compute_node_id,
         0,
         1.0,

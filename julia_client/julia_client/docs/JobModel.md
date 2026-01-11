@@ -19,6 +19,8 @@ Name | Type | Description | Notes
 **output_user_data_ids** | **Vector{Int64}** | Database IDs of user-data objects that this job produces | [optional] [default to nothing]
 **resource_requirements_id** | **Int64** | Optional database ID of resources required by this job | [optional] [default to nothing]
 **scheduler_id** | **Int64** | Optional database ID of scheduler needed by this job | [optional] [default to nothing]
+**failure_handler_id** | **Int64** | Optional database ID of failure handler for this job | [optional] [default to nothing]
+**attempt_id** | **Int64** | Current retry attempt number (starts at 1) | [optional] [default to 1]
 
 
 [[Back to Model list]](../README.md#models) [[Back to API list]](../README.md#api-endpoints) [[Back to README]](../README.md)

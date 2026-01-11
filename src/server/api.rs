@@ -66,6 +66,7 @@ impl PaginationInfo {
 pub mod access_groups;
 pub mod compute_nodes;
 pub mod events;
+pub mod failure_handlers;
 pub mod files;
 pub mod jobs;
 pub mod remote_workers;
@@ -81,6 +82,7 @@ pub mod workflows;
 pub use access_groups::AccessGroupsApiImpl;
 pub use compute_nodes::{ComputeNodesApi, ComputeNodesApiImpl};
 pub use events::{EventsApi, EventsApiImpl};
+pub use failure_handlers::{FailureHandlersApi, FailureHandlersApiImpl};
 pub use files::{FilesApi, FilesApiImpl};
 pub use jobs::{JobsApi, JobsApiImpl};
 pub use remote_workers::{RemoteWorkersApi, RemoteWorkersApiImpl};

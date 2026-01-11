@@ -1549,10 +1549,21 @@ impl App {
                 // Default output directory is "output" in the current working directory
                 let output_dir = PathBuf::from("output");
 
-                let stdout_path =
-                    get_job_stdout_path(&output_dir, workflow_id, viewer.job_id, result.run_id);
-                let stderr_path =
-                    get_job_stderr_path(&output_dir, workflow_id, viewer.job_id, result.run_id);
+                let attempt_id = result.attempt_id.unwrap_or(1);
+                let stdout_path = get_job_stdout_path(
+                    &output_dir,
+                    workflow_id,
+                    viewer.job_id,
+                    result.run_id,
+                    attempt_id,
+                );
+                let stderr_path = get_job_stderr_path(
+                    &output_dir,
+                    workflow_id,
+                    viewer.job_id,
+                    result.run_id,
+                    attempt_id,
+                );
 
                 viewer.stdout_path = Some(stdout_path.clone());
                 viewer.stderr_path = Some(stderr_path.clone());

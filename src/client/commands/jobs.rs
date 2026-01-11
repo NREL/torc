@@ -49,6 +49,20 @@ struct JobResourceRequirementsTableRow {
     runtime: String,
 }
 
+#[derive(Tabled)]
+struct JobFailureHandlerTableRow {
+    #[tabled(rename = "Job ID")]
+    job_id: i64,
+    #[tabled(rename = "Job Name")]
+    job_name: String,
+    #[tabled(rename = "FH ID")]
+    fh_id: i64,
+    #[tabled(rename = "FH Name")]
+    fh_name: String,
+    #[tabled(rename = "Rules Summary")]
+    rules_summary: String,
+}
+
 #[derive(clap::Subcommand)]
 #[command(after_long_help = "\
 EXAMPLES:
@@ -289,6 +303,29 @@ EXAMPLES:
 "
     )]
     ListResourceRequirements {
+        /// Workflow ID to list jobs from (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+        /// Filter by specific job ID
+        #[arg(short, long)]
+        job_id: Option<i64>,
+    },
+    /// List jobs with their failure handlers
+    #[command(
+        name = "list-failure-handlers",
+        after_long_help = "\
+EXAMPLES:
+    # List all jobs with their failure handlers
+    torc jobs list-failure-handlers 123
+
+    # Get JSON output
+    torc -f json jobs list-failure-handlers 123
+
+    # Filter by specific job
+    torc jobs list-failure-handlers 123 --job-id 456
+"
+    )]
+    ListFailureHandlers {
         /// Workflow ID to list jobs from (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
@@ -867,6 +904,141 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 }
             }
         }
+        JobCommands::ListFailureHandlers {
+            workflow_id,
+            job_id,
+        } => {
+            // Get jobs - either a single job or all jobs for a workflow
+            let jobs: Vec<models::JobModel> = if let Some(jid) = job_id {
+                // Get single job
+                match default_api::get_job(config, *jid) {
+                    Ok(job) => vec![job],
+                    Err(e) => {
+                        print_error("getting job", &e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                // Get all jobs for workflow
+                let user_name = get_env_user_name();
+                let selected_workflow_id = match workflow_id {
+                    Some(id) => *id,
+                    None => select_workflow_interactively(config, &user_name).unwrap_or_else(|e| {
+                        eprintln!("Error selecting workflow: {}", e);
+                        std::process::exit(1);
+                    }),
+                };
+
+                match pagination::paginate_jobs(config, selected_workflow_id, JobListParams::new())
+                {
+                    Ok(jobs) => jobs,
+                    Err(e) => {
+                        print_error("listing jobs", &e);
+                        std::process::exit(1);
+                    }
+                }
+            };
+
+            if jobs.is_empty() {
+                if format == "json" {
+                    println!("[]");
+                } else {
+                    println!("No jobs found");
+                }
+                return;
+            }
+
+            // Build HashMap of unique failure_handler_id -> FailureHandlerModel
+            let mut fh_map: HashMap<i64, models::FailureHandlerModel> = HashMap::new();
+            for job in &jobs {
+                if let Some(fh_id) = job.failure_handler_id
+                    && let std::collections::hash_map::Entry::Vacant(e) = fh_map.entry(fh_id)
+                {
+                    match default_api::get_failure_handler(config, fh_id) {
+                        Ok(fh) => {
+                            e.insert(fh);
+                        }
+                        Err(e) => {
+                            print_error(&format!("getting failure handler {}", fh_id), &e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
+
+            if format == "json" {
+                // Build JSON output - only include jobs with failure handlers
+                let output: Vec<serde_json::Value> = jobs
+                    .iter()
+                    .filter_map(|job| {
+                        job.failure_handler_id.and_then(|fh_id| {
+                            fh_map.get(&fh_id).map(|fh| {
+                                serde_json::json!({
+                                    "job_id": job.id,
+                                    "job_name": &job.name,
+                                    "failure_handler_id": fh_id,
+                                    "failure_handler_name": &fh.name,
+                                    "rules": &fh.rules,
+                                })
+                            })
+                        })
+                    })
+                    .collect();
+
+                print_json(&output, "failure handlers");
+            } else {
+                // Build table rows
+                let rows: Vec<JobFailureHandlerTableRow> = jobs
+                    .iter()
+                    .filter_map(|job| {
+                        job.failure_handler_id.and_then(|fh_id| {
+                            fh_map.get(&fh_id).map(|fh| JobFailureHandlerTableRow {
+                                job_id: job.id.unwrap_or(-1),
+                                job_name: job.name.clone(),
+                                fh_id,
+                                fh_name: fh.name.clone(),
+                                rules_summary: format_rules_summary(&fh.rules),
+                            })
+                        })
+                    })
+                    .collect();
+
+                if rows.is_empty() {
+                    println!("No jobs with failure handlers found");
+                } else {
+                    display_table_with_count(&rows, "jobs with failure handlers");
+                }
+            }
+        }
+    }
+}
+
+/// Format failure handler rules for table display (compact summary)
+fn format_rules_summary(rules_json: &str) -> String {
+    if let Ok(rules) = serde_json::from_str::<Vec<serde_json::Value>>(rules_json) {
+        let summaries: Vec<String> = rules
+            .iter()
+            .filter_map(|rule| {
+                let exit_codes = rule.get("exit_codes")?;
+                let max_retries = rule
+                    .get("max_retries")
+                    .and_then(|v| v.as_i64())
+                    .unwrap_or(3);
+                let has_script = rule.get("recovery_script").is_some();
+                let script_indicator = if has_script { "+script" } else { "" };
+                Some(format!(
+                    "{}: {} retries{}",
+                    exit_codes, max_retries, script_indicator
+                ))
+            })
+            .collect();
+        if summaries.is_empty() {
+            rules_json.to_string()
+        } else {
+            summaries.join("; ")
+        }
+    } else {
+        rules_json.to_string()
     }
 }
 

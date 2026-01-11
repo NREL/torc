@@ -1890,6 +1890,62 @@ paths:
       summary: Start a job and manage side effects.
       tags: []
       x-codegen-request-body-name: body
+  /jobs/{id}/retry/{run_id}:
+    post:
+      description: Retry a failed job by resetting it to ready status and incrementing attempt_id.
+      operationId: retry_job
+      parameters:
+      - description: Job ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Current workflow run ID
+        explode: false
+        in: path
+        name: run_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Job not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Unprocessable content - job not in failed state or max retries exceeded
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retry a failed job.
+      tags: []
+      x-codegen-request-body-name: body
   /local_schedulers:
     post:
       description: Store a local scheduler. table.
@@ -2466,6 +2522,170 @@ paths:
       summary: Update one resource requirements record.
       tags: []
       x-codegen-request-body-name: body
+  # ============================================================================
+  # Failure Handlers - Configurable failure handling rules for jobs
+  # ============================================================================
+  /failure_handlers:
+    post:
+      description: Create a failure handler with rules for automatic job retry.
+      operationId: create_failure_handler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/failure_handler_model"
+        description: Failure handler to create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/failure_handler_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Referenced workflow not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Create a failure handler.
+      tags: []
+      x-codegen-request-body-name: body
+  /failure_handlers/{id}:
+    get:
+      description: Retrieve a failure handler by ID.
+      operationId: get_failure_handler
+      parameters:
+      - description: Failure handler ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/failure_handler_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Failure handler not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Get a failure handler by ID.
+      tags: []
+    delete:
+      description: Delete a failure handler.
+      operationId: delete_failure_handler
+      parameters:
+      - description: Failure handler ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/failure_handler_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Failure handler not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a failure handler.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/failure_handlers:
+    get:
+      description: List all failure handlers for a workflow.
+      operationId: list_failure_handlers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10000
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_failure_handlers_response"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Workflow not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List failure handlers for a workflow.
+      tags: []
   /results:
     post:
       description: Store a job result.
@@ -5312,6 +5532,33 @@ components:
       - data
       - timestamp  # TODO: this was a mistake. Need to patch the code.
       - workflow_id
+    failure_handler_model:
+      description: Data model for configurable failure handlers that define rules for automatic job retry.
+      example:
+        id: 1
+        workflow_id: 42
+        name: simple_retry
+        rules: "[{\"match_all_exit_codes\": true, \"max_retries\": 3}]"
+      properties:
+        id:
+          description: Database ID of this failure handler.
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this handler is associated with.
+          type: integer
+        name:
+          description: Name of the failure handler
+          type: string
+        rules:
+          description: >-
+            JSON array of rule objects. Each rule can have: exit_codes (array of integers),
+            match_all_exit_codes (boolean, matches any non-zero exit code),
+            recovery_script (optional path to script), and max_retries (integer, defaults to 3).
+          type: string
+      required:
+      - name
+      - rules
+      - workflow_id
     file_model:
       description: Data model for files needed or produced by jobs. Can be data or
         code.
@@ -5426,6 +5673,13 @@ components:
         scheduler_id:
           description: Optional database ID of scheduler needed by this job
           type: integer
+        failure_handler_id:
+          description: Optional database ID of failure handler for this job
+          type: integer
+        attempt_id:
+          description: Current retry attempt number (starts at 1)
+          type: integer
+          default: 1
       required:
       - command
       - name
@@ -5508,6 +5762,7 @@ components:
       example:
         workflow_id: 1
         run_id: 5
+        attempt_id: 1
         completion_time: completion_time
         job_id: 6
         exec_time_minutes: 2.3021358869347655
@@ -5531,6 +5786,10 @@ components:
         run_id:
           description: ID of the workflow run. Incremements on every start and restart.
           type: integer
+        attempt_id:
+          description: Retry attempt number for this result (starts at 1, increments on each retry)
+          type: integer
+          default: 1
         compute_node_id:
           description: Database ID for the compute node that ran this job
           type: integer
@@ -6439,6 +6698,40 @@ components:
         items:
           items:
             $ref: "#/components/schemas/local_scheduler_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - items
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_failure_handlers_response:
+      example:
+        max_limit: 100
+        total_count: 2
+        count: 2
+        offset: 0
+        has_more: false
+        items:
+        - id: 1
+          workflow_id: 42
+          name: gpu_recovery
+          rules: "[{\"exit_codes\": [128], \"recovery_script\": \"./fix.sh\", \"max_retries\": 3}]"
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/failure_handler_model"
           type: array
         offset:
           type: integer

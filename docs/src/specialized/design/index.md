@@ -1,0 +1,13 @@
+# Design & Architecture
+
+Internal design documentation for developers.
+
+- [Client Architecture](./client.md) - Torc client design
+- [Workflow Actions](./workflow-actions.md) - Workflow action system
+- [Web Dashboard Design](./dashboard.md) - Dashboard architecture
+- [Server API Handler](./server.md) - Server implementation
+- [Central Database](./database.md) - Database schema and design
+- [Workflow Recovery Design](./recovery.md) - Recovery system architecture
+- [Failure Handler Design](./failure-handlers.md) - Failure handler implementation
+- [Workflow Graph](./workflow-graph.md) - Dependency graph implementation
+- [Interface Architecture](./interfaces.md) - Interface design patterns

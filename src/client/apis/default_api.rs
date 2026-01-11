@@ -64,6 +64,46 @@ pub enum CreateLocalSchedulerError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`create_failure_handler`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CreateFailureHandlerError {
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_failure_handler`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetFailureHandlerError {
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`list_failure_handlers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListFailureHandlersError {
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`delete_failure_handler`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteFailureHandlerError {
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`retry_job`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RetryJobError {
+    Status500(models::ErrorResponse),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`create_resource_requirements`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -7874,6 +7914,232 @@ pub fn check_workflow_access(
     } else {
         let content = resp.text()?;
         let entity: Option<CheckWorkflowAccessError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Create a failure handler
+pub fn create_failure_handler(
+    configuration: &configuration::Configuration,
+    body: models::FailureHandlerModel,
+) -> Result<models::FailureHandlerModel, Error<CreateFailureHandlerError>> {
+    let uri_str = format!("{}/failure_handlers", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&body);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `models::FailureHandlerModel`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `models::FailureHandlerModel`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<CreateFailureHandlerError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Get a failure handler by ID
+pub fn get_failure_handler(
+    configuration: &configuration::Configuration,
+    id: i64,
+) -> Result<models::FailureHandlerModel, Error<GetFailureHandlerError>> {
+    let uri_str = format!("{}/failure_handlers/{id}", configuration.base_path, id = id);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `models::FailureHandlerModel`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `models::FailureHandlerModel`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<GetFailureHandlerError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// List failure handlers for a workflow
+pub fn list_failure_handlers(
+    configuration: &configuration::Configuration,
+    workflow_id: i64,
+    offset: Option<i64>,
+    limit: Option<i64>,
+) -> Result<models::ListFailureHandlersResponse, Error<ListFailureHandlersError>> {
+    let uri_str = format!(
+        "{}/workflows/{workflow_id}/failure_handlers",
+        configuration.base_path,
+        workflow_id = workflow_id
+    );
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = offset {
+        req_builder = req_builder.query(&[("offset", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `models::ListFailureHandlersResponse`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `models::ListFailureHandlersResponse`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<ListFailureHandlersError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Retry a failed job
+pub fn retry_job(
+    configuration: &configuration::Configuration,
+    id: i64,
+    run_id: i64,
+    max_retries: i32,
+) -> Result<models::JobModel, Error<RetryJobError>> {
+    let uri_str = format!(
+        "{}/jobs/{id}/retry/{run_id}",
+        configuration.base_path,
+        id = id,
+        run_id = run_id
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str)
+        .query(&[("max_retries", max_retries)]);
+
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req)?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text()?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom(
+                "Received `text/plain` content type response that cannot be converted to `models::JobModel`",
+            ))),
+            ContentType::Unsupported(unknown_type) => {
+                Err(Error::from(serde_json::Error::custom(format!(
+                    "Received `{unknown_type}` content type response that cannot be converted to `models::JobModel`"
+                ))))
+            }
+        }
+    } else {
+        let content = resp.text()?;
+        let entity: Option<RetryJobError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent {
             status,
             content,

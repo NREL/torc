@@ -116,17 +116,29 @@ Torc is designed for:
 
 ## Documentation Structure
 
-This documentation is organized into:
+This documentation is organized to help you find what you need quickly:
 
-- **[Tutorials](./tutorials/README.md)** — Step-by-step lessons to learn Torc
-- **[How-To Guides](./how-to/README.md)** — Practical guides for specific tasks
-- **[Explanation](./explanation/README.md)** — In-depth discussion of concepts
-- **[Reference](./reference/README.md)** — Technical specifications and API docs
+**Core Documentation** (for all users):
+
+- **Getting Started** — Installation and local quick start
+- **Core Concepts** — Architecture, job states, and dependencies
+- **Working with Workflows** — Creating and managing workflows
+- **Tutorials** — Step-by-step workflow patterns
+- **Monitoring & Debugging** — TUI, reports, and troubleshooting
+- **Reference** — CLI commands, formats, and configuration
+
+**Specialized Topics** (below the separator in the sidebar):
+
+- **HPC & Slurm** — Running on compute clusters
+- **Fault Tolerance & Recovery** — Failure handlers, checkpointing, automatic recovery
+- **Administration & Security** — Server deployment, authentication, access control
+- **Design & Architecture** — Internal design for contributors
 
 ## Next Steps
 
-- **New to Torc?** Start with [Getting Started](./getting-started.md)
+- **New to Torc?** Start with [Quick Start (Local)](./getting-started/quick-start-local.md)
 - **Want to understand how it works?** Read the
-  [Architecture Overview](./explanation/architecture.md)
-- **Ready to create workflows?** Jump to [Creating Workflows](./how-to/creating-workflows.md)
-- **Need specific examples?** Check out the [Tutorials](./tutorials/README.md)
+  [Architecture Overview](./core/concepts/architecture.md)
+- **Ready to create workflows?** Jump to
+  [Creating Workflows](./core/workflows/creating-workflows.md)
+- **On an HPC cluster?** See [Quick Start (HPC)](./specialized/hpc/quick-start-hpc.md)

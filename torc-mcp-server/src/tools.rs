@@ -117,12 +117,17 @@ pub fn get_job_logs(
     workflow_id: i64,
     job_id: i64,
     run_id: i64,
+    attempt_id: i64,
     log_type: &str,
     tail_lines: Option<usize>,
 ) -> Result<CallToolResult, McpError> {
     let log_path = match log_type.to_lowercase().as_str() {
-        "stdout" => log_paths::get_job_stdout_path(output_dir, workflow_id, job_id, run_id),
-        "stderr" => log_paths::get_job_stderr_path(output_dir, workflow_id, job_id, run_id),
+        "stdout" => {
+            log_paths::get_job_stdout_path(output_dir, workflow_id, job_id, run_id, attempt_id)
+        }
+        "stderr" => {
+            log_paths::get_job_stderr_path(output_dir, workflow_id, job_id, run_id, attempt_id)
+        }
         _ => return Err(invalid_params("log_type must be 'stdout' or 'stderr'")),
     };
 

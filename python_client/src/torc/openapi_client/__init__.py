@@ -40,6 +40,7 @@ __all__ = [
     "CreateJobsResponse",
     "DefaultErrorResponse",
     "EventModel",
+    "FailureHandlerModel",
     "FileModel",
     "ForbiddenErrorResponse",
     "GetReadyJobRequirementsResponse",
@@ -55,6 +56,7 @@ __all__ = [
     "ListAccessGroupsResponse",
     "ListComputeNodesResponse",
     "ListEventsResponse",
+    "ListFailureHandlersResponse",
     "ListFilesResponse",
     "ListJobDependenciesResponse",
     "ListJobFileRelationshipsResponse",
@@ -115,6 +117,7 @@ from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResou
 from torc.openapi_client.models.create_jobs_response import CreateJobsResponse as CreateJobsResponse
 from torc.openapi_client.models.default_error_response import DefaultErrorResponse as DefaultErrorResponse
 from torc.openapi_client.models.event_model import EventModel as EventModel
+from torc.openapi_client.models.failure_handler_model import FailureHandlerModel as FailureHandlerModel
 from torc.openapi_client.models.file_model import FileModel as FileModel
 from torc.openapi_client.models.forbidden_error_response import ForbiddenErrorResponse as ForbiddenErrorResponse
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse as GetReadyJobRequirementsResponse
@@ -130,6 +133,7 @@ from torc.openapi_client.models.jobs_sort_method import JobsSortMethod as JobsSo
 from torc.openapi_client.models.list_access_groups_response import ListAccessGroupsResponse as ListAccessGroupsResponse
 from torc.openapi_client.models.list_compute_nodes_response import ListComputeNodesResponse as ListComputeNodesResponse
 from torc.openapi_client.models.list_events_response import ListEventsResponse as ListEventsResponse
+from torc.openapi_client.models.list_failure_handlers_response import ListFailureHandlersResponse as ListFailureHandlersResponse
 from torc.openapi_client.models.list_files_response import ListFilesResponse as ListFilesResponse
 from torc.openapi_client.models.list_job_dependencies_response import ListJobDependenciesResponse as ListJobDependenciesResponse
 from torc.openapi_client.models.list_job_file_relationships_response import ListJobFileRelationshipsResponse as ListJobFileRelationshipsResponse

@@ -15,6 +15,7 @@ Method | HTTP request | Description
 [**create_access_group**](DefaultApi.md#create_access_group) | **POST** /access_groups | Create a new access group.
 [**create_compute_node**](DefaultApi.md#create_compute_node) | **POST** /compute_nodes | Store a compute node.
 [**create_event**](DefaultApi.md#create_event) | **POST** /events | Store an event.
+[**create_failure_handler**](DefaultApi.md#create_failure_handler) | **POST** /failure_handlers | Create a failure handler.
 [**create_file**](DefaultApi.md#create_file) | **POST** /files | Store a file.
 [**create_job**](DefaultApi.md#create_job) | **POST** /jobs | Store a job.
 [**create_jobs**](DefaultApi.md#create_jobs) | **POST** /bulk_jobs | Create jobs in bulk. Recommended max job count of 10,000.
@@ -33,6 +34,7 @@ Method | HTTP request | Description
 [**delete_compute_nodes**](DefaultApi.md#delete_compute_nodes) | **DELETE** /compute_nodes | Delete all compute node records for one workflow.
 [**delete_event**](DefaultApi.md#delete_event) | **DELETE** /events/{id} | Delete an event.
 [**delete_events**](DefaultApi.md#delete_events) | **DELETE** /events | Delete all events for one workflow.
+[**delete_failure_handler**](DefaultApi.md#delete_failure_handler) | **DELETE** /failure_handlers/{id} | Delete a failure handler.
 [**delete_file**](DefaultApi.md#delete_file) | **DELETE** /files/{id} | Delete a file.
 [**delete_files**](DefaultApi.md#delete_files) | **DELETE** /files | Delete all files for one workflow.
 [**delete_job**](DefaultApi.md#delete_job) | **DELETE** /jobs/{id} | Delete a job.
@@ -53,6 +55,7 @@ Method | HTTP request | Description
 [**get_access_group**](DefaultApi.md#get_access_group) | **GET** /access_groups/{id} | Get an access group by ID.
 [**get_compute_node**](DefaultApi.md#get_compute_node) | **GET** /compute_nodes/{id} | Retrieve a compute node by ID.
 [**get_event**](DefaultApi.md#get_event) | **GET** /events/{id} | Retrieve an event by ID.
+[**get_failure_handler**](DefaultApi.md#get_failure_handler) | **GET** /failure_handlers/{id} | Get a failure handler by ID.
 [**get_file**](DefaultApi.md#get_file) | **GET** /files/{id} | Retrieve a file.
 [**get_job**](DefaultApi.md#get_job) | **GET** /jobs/{id} | Retrieve a job.
 [**get_latest_event_timestamp**](DefaultApi.md#get_latest_event_timestamp) | **GET** /workflows/{id}/latest_event_timestamp | Return the timestamp of the latest event in ms since the epoch in UTC.
@@ -74,6 +77,7 @@ Method | HTTP request | Description
 [**list_access_groups**](DefaultApi.md#list_access_groups) | **GET** /access_groups | List all access groups.
 [**list_compute_nodes**](DefaultApi.md#list_compute_nodes) | **GET** /compute_nodes | Retrieve all compute node records for one workflow.
 [**list_events**](DefaultApi.md#list_events) | **GET** /events | Retrieve all events for one workflow.
+[**list_failure_handlers**](DefaultApi.md#list_failure_handlers) | **GET** /workflows/{id}/failure_handlers | List failure handlers for a workflow.
 [**list_files**](DefaultApi.md#list_files) | **GET** /files | Retrieve all files for one workflow.
 [**list_group_members**](DefaultApi.md#list_group_members) | **GET** /access_groups/{id}/members | List members of an access group.
 [**list_job_dependencies**](DefaultApi.md#list_job_dependencies) | **GET** /workflows/{id}/job_dependencies | Retrieve job blocking relationships for a workflow.
@@ -100,6 +104,7 @@ Method | HTTP request | Description
 [**remove_workflow_from_group**](DefaultApi.md#remove_workflow_from_group) | **DELETE** /workflows/{id}/access_groups/{group_id} | Revoke an access group&#39;s access to a workflow.
 [**reset_job_status**](DefaultApi.md#reset_job_status) | **POST** /workflows/{id}/reset_job_status | Reset status for jobs to uninitialized.
 [**reset_workflow_status**](DefaultApi.md#reset_workflow_status) | **POST** /workflows/{id}/reset_status | Reset worklow status.
+[**retry_job**](DefaultApi.md#retry_job) | **POST** /jobs/{id}/retry/{run_id} | Retry a failed job.
 [**start_job**](DefaultApi.md#start_job) | **PUT** /jobs/{id}/start_job/{run_id}/{compute_node_id} | Start a job and manage side effects.
 [**update_compute_node**](DefaultApi.md#update_compute_node) | **PUT** /compute_nodes/{id} | Update a compute node.
 [**update_event**](DefaultApi.md#update_event) | **PUT** /events/{id} | Update an event.
@@ -463,6 +468,36 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**EventModel**](EventModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **create_failure_handler**
+> create_failure_handler(_api::DefaultApi, body::FailureHandlerModel; _mediaType=nothing) -> FailureHandlerModel, OpenAPI.Clients.ApiResponse <br/>
+> create_failure_handler(_api::DefaultApi, response_stream::Channel, body::FailureHandlerModel; _mediaType=nothing) -> Channel{ FailureHandlerModel }, OpenAPI.Clients.ApiResponse
+
+Create a failure handler.
+
+Create a failure handler with rules for automatic job retry.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**body** | [**FailureHandlerModel**](FailureHandlerModel.md) | Failure handler to create |
+
+### Return type
+
+[**FailureHandlerModel**](FailureHandlerModel.md)
 
 ### Authorization
 
@@ -1048,6 +1083,42 @@ Name | Type | Description  | Notes
 ### Return type
 
 **Any**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **delete_failure_handler**
+> delete_failure_handler(_api::DefaultApi, id::Int64; body=nothing, _mediaType=nothing) -> FailureHandlerModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_failure_handler(_api::DefaultApi, response_stream::Channel, id::Int64; body=nothing, _mediaType=nothing) -> Channel{ FailureHandlerModel }, OpenAPI.Clients.ApiResponse
+
+Delete a failure handler.
+
+Delete a failure handler.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Failure handler ID |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any** |  | 
+
+### Return type
+
+[**FailureHandlerModel**](FailureHandlerModel.md)
 
 ### Authorization
 
@@ -1757,6 +1828,36 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **get_failure_handler**
+> get_failure_handler(_api::DefaultApi, id::Int64; _mediaType=nothing) -> FailureHandlerModel, OpenAPI.Clients.ApiResponse <br/>
+> get_failure_handler(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ FailureHandlerModel }, OpenAPI.Clients.ApiResponse
+
+Get a failure handler by ID.
+
+Retrieve a failure handler by ID.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Failure handler ID |
+
+### Return type
+
+[**FailureHandlerModel**](FailureHandlerModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **get_file**
 > get_file(_api::DefaultApi, id::Int64; _mediaType=nothing) -> FileModel, OpenAPI.Clients.ApiResponse <br/>
 > get_file(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ FileModel }, OpenAPI.Clients.ApiResponse
@@ -2420,6 +2521,43 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListEventsResponse**](ListEventsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **list_failure_handlers**
+> list_failure_handlers(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> ListFailureHandlersResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_failure_handlers(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListFailureHandlersResponse }, OpenAPI.Clients.ApiResponse
+
+List failure handlers for a workflow.
+
+List all failure handlers for a workflow.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 10000]
+
+### Return type
+
+[**ListFailureHandlersResponse**](ListFailureHandlersResponse.md)
 
 ### Authorization
 
@@ -3398,6 +3536,43 @@ Name | Type | Description  | Notes
 ### Return type
 
 **Any**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **retry_job**
+> retry_job(_api::DefaultApi, id::Int64, run_id::Int64; body=nothing, _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> retry_job(_api::DefaultApi, response_stream::Channel, id::Int64, run_id::Int64; body=nothing, _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
+
+Retry a failed job.
+
+Retry a failed job by resetting it to ready status and incrementing attempt_id.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Job ID |
+**run_id** | **Int64** | Current workflow run ID |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any** |  | 
+
+### Return type
+
+[**JobModel**](JobModel.md)
 
 ### Authorization
 

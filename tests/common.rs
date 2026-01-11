@@ -403,6 +403,7 @@ pub fn create_test_result(
         job_id,
         workflow_id,
         1,                                      // run_id
+        1,                                      // attempt_id
         1,   // compute_node_id (default created by create_test_workflow)
         0,   // return_code (success)
         5.5, // exec_time_minutes
