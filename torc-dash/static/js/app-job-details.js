@@ -200,6 +200,7 @@ Object.assign(TorcDashboard.prototype, {
                             <thead>
                                 <tr>
                                     <th>Run ID</th>
+                                    <th>Attempt</th>
                                     <th>Return Code</th>
                                     <th>Status</th>
                                     <th>Exec Time (min)</th>
@@ -211,6 +212,7 @@ Object.assign(TorcDashboard.prototype, {
                                 ${data.results.map(r => `
                                     <tr>
                                         <td>${r.run_id ?? '-'}</td>
+                                        <td>${r.attempt_id ?? 1}</td>
                                         <td class="${r.return_code === 0 ? 'return-code-0' : 'return-code-error'}">${r.return_code ?? '-'}</td>
                                         <td><span class="status-badge status-${statusNames[r.status]?.toLowerCase() || 'unknown'}">${statusNames[r.status] || r.status}</span></td>
                                         <td>${r.exec_time_minutes != null ? r.exec_time_minutes.toFixed(2) : '-'}</td>
@@ -402,7 +404,7 @@ Object.assign(TorcDashboard.prototype, {
 
         // Build run selector if multiple runs
         const runOptions = data.results.map((r, idx) =>
-            `<option value="${idx}" ${idx === data.results.length - 1 ? 'selected' : ''}>Run ${r.run_id} (Return: ${r.return_code})</option>`
+            `<option value="${idx}" ${idx === data.results.length - 1 ? 'selected' : ''}>Run ${r.run_id} Attempt ${r.attempt_id ?? 1} (Return: ${r.return_code})</option>`
         ).join('');
 
         contentEl.innerHTML = `
@@ -486,7 +488,9 @@ Object.assign(TorcDashboard.prototype, {
         const isStdout = (this._jobLogTab || 'stdout') === 'stdout';
 
         // Construct log file path based on naming convention
-        const stdioBase = `${outputDir}/job_stdio/job_wf${result.workflow_id}_j${result.job_id}_r${result.run_id}`;
+        // Include attempt_id in the path (defaults to 1 if not present)
+        const attemptId = result.attempt_id ?? 1;
+        const stdioBase = `${outputDir}/job_stdio/job_wf${result.workflow_id}_j${result.job_id}_r${result.run_id}_a${attemptId}`;
         const filePath = isStdout ? `${stdioBase}.o` : `${stdioBase}.e`;
 
         logPathEl.textContent = filePath;

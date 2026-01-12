@@ -816,7 +816,7 @@ resource_requirements:
     let work_fail_latest = result_items
         .iter()
         .filter(|r| r.job_id == work_fail_job.id.unwrap())
-        .max_by_key(|r| r.run_id)
+        .max_by_key(|r| (r.run_id, r.attempt_id.unwrap_or(1)))
         .expect("work_fail should have results");
     assert_eq!(
         work_fail_latest.return_code, 0,
@@ -1151,7 +1151,7 @@ resource_requirements:
     let work_fail_latest = result_items
         .iter()
         .filter(|r| r.job_id == work_fail_job.id.unwrap())
-        .max_by_key(|r| r.run_id)
+        .max_by_key(|r| (r.run_id, r.attempt_id.unwrap_or(1)))
         .expect("work_fail should have results");
     assert_eq!(
         work_fail_latest.return_code, 0,

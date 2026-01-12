@@ -1540,10 +1540,11 @@ impl App {
             let results = self.client.list_results(workflow_id)?;
 
             // Find the most recent result for this job
+            // Sort by (run_id, attempt_id) to get the latest attempt of the latest run
             if let Some(result) = results
                 .iter()
                 .filter(|r| r.job_id == viewer.job_id)
-                .max_by_key(|r| r.run_id)
+                .max_by_key(|r| (r.run_id, r.attempt_id.unwrap_or(1)))
             {
                 // Construct log paths using the standard path pattern
                 // Default output directory is "output" in the current working directory
