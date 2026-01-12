@@ -687,21 +687,23 @@ USE CASES:
 
     /// List jobs awaiting AI-assisted classification.
     #[tool(
-        description = "List jobs with pending_failed status that are awaiting classification. \
-        These are jobs that failed without a matching failure handler. The AI agent should: \
-        \n1. Analyze the stderr output for each job \
-        \n2. Classify the failure as transient (retry) or permanent (fail) \
-        \n3. Use classify_and_resolve_failures to act on the classification \
-        \n\nTransient errors (should retry): \
-        \n- Connection refused, network timeout, DNS resolution failures \
-        \n- NCCL timeout, GPU communication errors \
-        \n- EIO, disk I/O errors, temporary storage issues \
-        \n- Slurm node failures, preemption \
-        \n\nPermanent errors (should fail): \
-        \n- Syntax errors, import errors, missing modules \
-        \n- Invalid arguments, assertion failures \
-        \n- Out of bounds, null pointer dereference \
-        \n- Permission denied (code bug, not transient)"
+        description = r#"List jobs with pending_failed status that are awaiting classification.
+These are jobs that failed without a matching failure handler. The AI agent should:
+1. Analyze the stderr output for each job
+2. Classify the failure as transient (retry) or permanent (fail)
+3. Use classify_and_resolve_failures to act on the classification
+
+Transient errors (should retry):
+- Connection refused, network timeout, DNS resolution failures
+- NCCL timeout, GPU communication errors
+- EIO, disk I/O errors, temporary storage issues
+- Slurm node failures, preemption
+
+Permanent errors (should fail):
+- Syntax errors, import errors, missing modules
+- Invalid arguments, assertion failures
+- Out of bounds, null pointer dereference
+- Permission denied (code bug, not transient)"#
     )]
     async fn list_pending_failed_jobs(
         &self,
@@ -719,18 +721,20 @@ USE CASES:
 
     /// Classify and resolve pending_failed jobs.
     #[tool(
-        description = "Classify pending_failed jobs and either retry them or mark them as failed. \
-        \n\nIMPORTANT WORKFLOW: \
-        \n1. First call list_pending_failed_jobs to see jobs awaiting classification \
-        \n2. Analyze stderr for each job to determine if failure is transient or permanent \
-        \n3. Call this tool with dry_run=true to preview classifications \
-        \n4. Show user the preview and ask for confirmation \
-        \n5. If approved, call again with dry_run=false to apply \
-        \n\nFor each job, specify: \
-        \n- action: 'retry' (transient error) or 'fail' (permanent error) \
-        \n- memory: optional new memory requirement for retry (e.g., '8g') \
-        \n- runtime: optional new runtime for retry (e.g., 'PT2H') \
-        \n- reason: explanation for the classification (for audit trail)"
+        description = r#"Classify pending_failed jobs and either retry them or mark them as failed.
+
+IMPORTANT WORKFLOW:
+1. First call list_pending_failed_jobs to see jobs awaiting classification
+2. Analyze stderr for each job to determine if failure is transient or permanent
+3. Call this tool with dry_run=true to preview classifications
+4. Show user the preview and ask for confirmation
+5. If approved, call again with dry_run=false to apply
+
+For each job, specify:
+- action: 'retry' (transient error) or 'fail' (permanent error)
+- memory: optional new memory requirement for retry (e.g., '8g')
+- runtime: optional new runtime for retry (e.g., 'PT2H')
+- reason: explanation for the classification (for audit trail)"#
     )]
     async fn classify_and_resolve_failures(
         &self,

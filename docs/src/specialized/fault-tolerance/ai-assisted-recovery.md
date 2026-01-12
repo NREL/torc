@@ -85,22 +85,24 @@ torc recover 123 --ai-recovery
 # Continuous monitoring with AI classification
 torc watch 123 --ai-recovery
 
-# Specify a different AI agent (default: claude)
-torc recover 123 --ai-recovery --ai-agent claude
+# Specify a different AI agent
+torc recover 123 --ai-recovery --ai-agent claude     # Default
+torc recover 123 --ai-recovery --ai-agent copilot    # GitHub Copilot
 ```
 
 When `--ai-recovery` is enabled:
 
 1. Torc detects jobs in `pending_failed` status
-2. Automatically invokes the Claude CLI with the torc MCP server
-3. Claude analyzes stderr and classifies each job as transient (retry) or permanent (fail)
+2. Automatically invokes the AI agent CLI with the torc MCP server
+3. AI agent analyzes stderr and classifies each job as transient (retry) or permanent (fail)
 4. Classifications are applied via MCP tools
 5. Recovery continues with the newly classified jobs
 
 **Requirements:**
 
-- Claude Code CLI installed (`claude` command available)
-- Torc MCP server configured in Claude's MCP settings
+- **Claude**: Claude Code CLI installed (`claude` command available)
+- **GitHub Copilot**: GitHub CLI with Copilot installed (`gh copilot` command available)
+- Torc MCP server configured in your AI agent's MCP settings
 
 ### Option B: Manual AI Agent Invocation
 
@@ -117,6 +119,19 @@ torc-mcp-server --url http://localhost:8080/torc-service/v1
 Add the torc MCP server to your agent's configuration:
 
 **Claude Code (`~/.claude/mcp_servers.json`):**
+
+```json
+{
+  "mcpServers": {
+    "torc": {
+      "command": "torc-mcp-server",
+      "args": ["--url", "http://localhost:8080/torc-service/v1"]
+    }
+  }
+}
+```
+
+**GitHub Copilot (`.github/copilot/mcp-config.json` or global config):**
 
 ```json
 {

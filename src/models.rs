@@ -3481,9 +3481,10 @@ impl std::convert::TryFrom<hyper::header::HeaderValue> for header::IntoHeaderVal
 }
 
 impl JobStatus {
-    /// Returns true if the job status indicates the job is complete
-    /// (Completed, Failed, Canceled, Terminated, or PendingFailed)
-    pub fn is_complete(&self) -> bool {
+    /// Returns true if the job status indicates the job has finished executing
+    /// and reached a terminal state that can be set via complete_job API.
+    /// This includes: Completed, Failed, Canceled, Terminated, PendingFailed
+    pub fn is_terminal(&self) -> bool {
         matches!(
             self,
             JobStatus::Completed
@@ -3491,6 +3492,17 @@ impl JobStatus {
                 | JobStatus::Canceled
                 | JobStatus::Terminated
                 | JobStatus::PendingFailed
+        )
+    }
+
+    /// Returns true if the job status indicates the workflow can progress.
+    /// PendingFailed is NOT considered complete for workflow progression purposes
+    /// because it's awaiting AI classification.
+    /// Complete statuses: Completed, Failed, Canceled, Terminated
+    pub fn is_complete(&self) -> bool {
+        matches!(
+            self,
+            JobStatus::Completed | JobStatus::Failed | JobStatus::Canceled | JobStatus::Terminated
         )
     }
 }
@@ -3501,11 +3513,14 @@ mod tests {
 
     #[test]
     fn test_job_status_is_complete() {
-        // Test complete statuses
+        // Test complete statuses (workflow can progress)
         assert!(JobStatus::Completed.is_complete());
         assert!(JobStatus::Failed.is_complete());
         assert!(JobStatus::Canceled.is_complete());
         assert!(JobStatus::Terminated.is_complete());
+
+        // PendingFailed is NOT complete (workflow cannot progress)
+        assert!(!JobStatus::PendingFailed.is_complete());
 
         // Test incomplete statuses
         assert!(!JobStatus::Uninitialized.is_complete());
@@ -3514,6 +3529,24 @@ mod tests {
         assert!(!JobStatus::Running.is_complete());
         assert!(!JobStatus::Pending.is_complete());
         assert!(!JobStatus::Disabled.is_complete());
+    }
+
+    #[test]
+    fn test_job_status_is_terminal() {
+        // Test terminal statuses (finished executing)
+        assert!(JobStatus::Completed.is_terminal());
+        assert!(JobStatus::Failed.is_terminal());
+        assert!(JobStatus::Canceled.is_terminal());
+        assert!(JobStatus::Terminated.is_terminal());
+        assert!(JobStatus::PendingFailed.is_terminal());
+
+        // Test non-terminal statuses (still executing or not started)
+        assert!(!JobStatus::Uninitialized.is_terminal());
+        assert!(!JobStatus::Blocked.is_terminal());
+        assert!(!JobStatus::Ready.is_terminal());
+        assert!(!JobStatus::Running.is_terminal());
+        assert!(!JobStatus::Pending.is_terminal());
+        assert!(!JobStatus::Disabled.is_terminal());
     }
 
     #[test]
@@ -9691,7 +9724,7 @@ impl WorkflowModel {
             jobs_sort_method: None,
             resource_monitor_config: None,
             slurm_defaults: None,
-            use_pending_failed: None,
+            use_pending_failed: Some(false),
             status_id: None,
         }
     }

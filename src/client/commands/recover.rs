@@ -594,18 +594,20 @@ pub fn invoke_ai_agent(workflow_id: i64, agent: &str, output_dir: &Path) -> Resu
 
     match agent {
         "claude" => {
-            // Check if claude CLI is available
-            let check = Command::new("which")
-                .arg("claude")
-                .output()
-                .map_err(|e| format!("Failed to check for claude CLI: {}", e))?;
+            // Check if claude CLI is available by attempting to run it
+            let check = Command::new("claude").arg("--version").output();
 
-            if !check.status.success() {
-                return Err(
-                    "Claude CLI not found. Install it from https://claude.ai/code \
-                     or use --ai-agent to specify a different agent."
-                        .to_string(),
-                );
+            match check {
+                Ok(output) if output.status.success() => {
+                    // Claude CLI is available
+                }
+                Ok(_) | Err(_) => {
+                    return Err(
+                        "Claude CLI not found. Install it from https://claude.ai/code \
+                         or use --ai-agent to specify a different agent."
+                            .to_string(),
+                    );
+                }
             }
 
             // Invoke claude with the prompt using --print for non-interactive mode
@@ -640,8 +642,56 @@ pub fn invoke_ai_agent(workflow_id: i64, agent: &str, output_dir: &Path) -> Resu
             info!("AI agent completed classification");
             Ok(())
         }
+        "copilot" | "github-copilot" => {
+            // Check if gh CLI is available
+            let check = Command::new("gh").arg("--version").output();
+
+            match check {
+                Ok(output) if output.status.success() => {
+                    // gh CLI is available
+                }
+                Ok(_) | Err(_) => {
+                    return Err(
+                        "GitHub CLI (gh) not found. Install it from https://cli.github.com/ \
+                         or use --ai-agent to specify a different agent."
+                            .to_string(),
+                    );
+                }
+            }
+
+            // Invoke GitHub Copilot via gh CLI
+            info!("Running: gh copilot suggest \"<prompt>\"");
+            let output = Command::new("gh")
+                .args(["copilot", "suggest", &prompt])
+                .output()
+                .map_err(|e| format!("Failed to run gh copilot: {}", e))?;
+
+            // Print stdout
+            if !output.stdout.is_empty() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    info!("[copilot] {}", line);
+                }
+            }
+
+            // Print stderr
+            if !output.stderr.is_empty() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                for line in stderr.lines() {
+                    warn!("[copilot] {}", line);
+                }
+            }
+
+            if !output.status.success() {
+                let exit_code = output.status.code().unwrap_or(-1);
+                return Err(format!("GitHub Copilot CLI exited with code {}", exit_code));
+            }
+
+            info!("AI agent completed classification");
+            Ok(())
+        }
         other => Err(format!(
-            "Unsupported AI agent '{}'. Supported agents: claude",
+            "Unsupported AI agent '{}'. Supported agents: claude, copilot",
             other
         )),
     }

@@ -4,6 +4,7 @@ use common::{
     ServerProcess, create_test_compute_node, create_test_job, create_test_workflow, start_server,
 };
 use rstest::rstest;
+use std::fs;
 use std::path::PathBuf;
 use torc::client::commands::recover::invoke_ai_agent;
 use torc::client::default_api;
@@ -247,7 +248,6 @@ fn test_invoke_ai_agent_unsupported() {
 #[cfg(unix)]
 #[serial_test::serial] // Serialize tests that modify PATH
 fn test_invoke_ai_agent_mock() {
-    use std::fs;
     use tempfile::TempDir;
 
     // Create a temp directory with a mock "claude" script
@@ -256,6 +256,12 @@ fn test_invoke_ai_agent_mock() {
 
     // Create a simple mock script that just echoes and exits successfully
     let mock_script = r#"#!/bin/bash
+# Accept --version check
+if [ "$1" = "--version" ]; then
+    echo "Mock Claude 1.0.0"
+    exit 0
+fi
+# Accept --print with prompt
 echo "Mock Claude: Received prompt: $2"
 echo "Mock Claude: Classification complete"
 exit 0
@@ -271,7 +277,9 @@ exit 0
     perms.set_mode(0o755);
     fs::set_permissions(&mock_claude_path, perms).expect("Failed to set permissions");
 
-    // Add temp dir to PATH using a wrapper approach (since set_var is unsafe in Rust 2024)
+    // Add temp dir to PATH using a wrapper approach
+    // Note: This is still technically unsafe in concurrent test execution,
+    // but serial_test::serial ensures tests run sequentially
     let original_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{}:{}", temp_dir.path().display(), original_path);
 

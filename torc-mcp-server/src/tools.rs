@@ -1201,7 +1201,15 @@ pub fn list_pending_failed_jobs(
     // Get results and logs for each pending_failed job
     let mut pending_jobs: Vec<serde_json::Value> = Vec::new();
     for job in &jobs {
-        let job_id = job.id.unwrap_or(0);
+        let job_id = match job.id {
+            Some(id) => id,
+            None => {
+                return Err(internal_error(format!(
+                    "Encountered pending_failed job without an ID: name={:?}",
+                    job.name
+                )));
+            }
+        };
 
         // Get latest result
         let result = paginate_results(
@@ -1220,9 +1228,14 @@ pub fn list_pending_failed_jobs(
                 log_paths::get_job_stderr_path(output_dir, workflow_id, job_id, run_id, attempt_id);
             match fs::read_to_string(&stderr_path) {
                 Ok(content) => {
-                    let lines: Vec<&str> = content.lines().collect();
-                    let start = lines.len().saturating_sub(50);
-                    (lines[start..].join("\n"), None)
+                    // Efficiently get last 50 lines without loading full file into memory twice
+                    let mut lines: Vec<&str> = content.lines().collect();
+                    let tail_lines = if lines.len() > 50 {
+                        lines.split_off(lines.len() - 50)
+                    } else {
+                        lines
+                    };
+                    (tail_lines.join("\n"), None)
                 }
                 Err(e) => (String::new(), Some(format!("Failed to read stderr: {}", e))),
             }
@@ -1307,6 +1320,12 @@ pub fn classify_and_resolve_failures(
             workflow_id
         )));
     }
+
+    // Note: We still validate individual job status below because there could be
+    // edge cases where:
+    // 1. use_pending_failed was toggled after jobs entered pending_failed status
+    // 2. Jobs were manually set to pending_failed via API
+    // The per-job validation ensures we only act on jobs genuinely in pending_failed status.
 
     let mut results: Vec<serde_json::Value> = Vec::new();
     let mut jobs_to_retry: Vec<i64> = Vec::new();
