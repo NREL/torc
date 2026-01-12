@@ -4984,14 +4984,14 @@ where
             result,
             Has::<XSpanIdString>::get(context).0.clone()
         );
-        // 1. Verify job status is complete
-        if !status.is_complete() {
+        // 1. Verify job status is terminal (finished executing)
+        if !status.is_terminal() {
             error!(
-                "Attempted to complete job {} with non-complete status '{}'",
+                "Attempted to complete job {} with non-terminal status '{}'",
                 id, status
             );
             return Err(ApiError(format!(
-                "Status '{}' is not a complete status for job completion",
+                "Status '{}' is not a terminal status for job completion",
                 status
             )));
         }

@@ -518,6 +518,8 @@ fn main() {
             auto_schedule_threshold,
             auto_schedule_cooldown,
             auto_schedule_stranded_timeout,
+            ai_recovery,
+            ai_agent,
         } => {
             let args = WatchArgs {
                 workflow_id: *workflow_id,
@@ -535,6 +537,8 @@ fn main() {
                 auto_schedule_threshold: *auto_schedule_threshold,
                 auto_schedule_cooldown: *auto_schedule_cooldown,
                 auto_schedule_stranded_timeout: *auto_schedule_stranded_timeout,
+                ai_recovery: *ai_recovery,
+                ai_agent: ai_agent.clone(),
             };
             run_watch(&config, &args);
         }
@@ -546,6 +550,8 @@ fn main() {
             retry_unknown,
             recovery_hook,
             dry_run,
+            ai_recovery,
+            ai_agent,
         } => {
             let args = RecoverArgs {
                 workflow_id: *workflow_id,
@@ -555,6 +561,8 @@ fn main() {
                 retry_unknown: *retry_unknown,
                 recovery_hook: recovery_hook.clone(),
                 dry_run: *dry_run,
+                ai_recovery: *ai_recovery,
+                ai_agent: ai_agent.clone(),
             };
 
             // For JSON output, get diagnosis data to include in the report

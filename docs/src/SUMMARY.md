@@ -7,6 +7,8 @@
 - [Overview](./getting-started/getting-started.md)
 - [Installation](./getting-started/installation.md)
 - [Quick Start (Local)](./getting-started/quick-start-local.md)
+- [Quick Start (HPC/Slurm)](./getting-started/quick-start-hpc.md)
+- [Quick Start (Remote Workers)](./getting-started/quick-start-remote.md)
 
 # Core Documentation
 
@@ -25,7 +27,6 @@
   - [Exporting and Importing Workflows](./core/workflows/export-import-workflows.md)
   - [Archiving Workflows](./core/workflows/archiving.md)
 - [How-Tos](./core/how-to/index.md)
-  - [Submit a Workflow to Slurm](./core/how-to/submit-slurm-workflow.md)
   - [Track Workflow Status](./core/how-to/track-workflow-status.md)
   - [Cancel a Workflow](./core/how-to/cancel-workflow.md)
   - [View Job Logs](./core/how-to/view-job-logs.md)
@@ -58,10 +59,10 @@
 
 ---
 
-# Specialized Topics
+# Execution Modes
 
 - [HPC & Slurm](./specialized/hpc/index.md)
-  - [Quick Start (HPC)](./specialized/hpc/quick-start-hpc.md)
+  - [Submit a Workflow to Slurm](./specialized/hpc/submit-slurm-workflow.md)
   - [Slurm Workflows](./specialized/hpc/slurm-workflows.md)
   - [Debugging Slurm Workflows](./specialized/hpc/debugging-slurm.md)
   - [Working with Slurm](./specialized/hpc/slurm.md)
@@ -70,11 +71,16 @@
   - [HPC Deployment](./specialized/hpc/hpc-deployment.md)
   - [Custom HPC Profile](./specialized/hpc/custom-hpc-profile.md)
 - [Remote Workers](./specialized/remote/index.md)
-  - [Quick Start (Remote Workers)](./specialized/remote/quick-start-remote.md)
   - [Setting Up Remote Workers](./specialized/remote/remote-workers.md)
+
+---
+
+# Advanced Topics
+
 - [Fault Tolerance & Recovery](./specialized/fault-tolerance/index.md)
   - [Automatic Failure Recovery](./specialized/fault-tolerance/automatic-recovery.md)
   - [Configurable Failure Handlers](./specialized/fault-tolerance/failure-handlers.md)
+  - [AI-Assisted Recovery](./specialized/fault-tolerance/ai-assisted-recovery.md)
   - [Job Checkpointing](./specialized/fault-tolerance/checkpointing.md)
 - [Administration & Security](./specialized/admin/index.md)
   - [Server Deployment](./specialized/admin/server-deployment.md)
@@ -100,6 +106,7 @@
   - [Central Database](./specialized/design/database.md)
   - [Workflow Recovery Design](./specialized/design/recovery.md)
   - [Failure Handler Design](./specialized/design/failure-handlers.md)
+  - [AI-Assisted Recovery Design](./specialized/design/ai-assisted-recovery.md)
   - [Workflow Graph](./specialized/design/workflow-graph.md)
   - [Interface Architecture](./specialized/design/interfaces.md)
 

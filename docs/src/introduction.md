@@ -141,4 +141,4 @@ This documentation is organized to help you find what you need quickly:
   [Architecture Overview](./core/concepts/architecture.md)
 - **Ready to create workflows?** Jump to
   [Creating Workflows](./core/workflows/creating-workflows.md)
-- **On an HPC cluster?** See [Quick Start (HPC)](./specialized/hpc/quick-start-hpc.md)
+- **On an HPC cluster?** See [Quick Start (HPC)](./getting-started/quick-start-hpc.md)

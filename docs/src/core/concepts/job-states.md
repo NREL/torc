@@ -7,20 +7,28 @@ stateDiagram-v2
     [*] --> uninitialized
     uninitialized --> ready: initialize_jobs
     uninitialized --> blocked: has dependencies
+    uninitialized --> disabled: job disabled
 
     blocked --> ready: dependencies met
     ready --> pending: runner claims
     pending --> running: execution starts
 
     running --> completed: exit 0
-    running --> failed: exit != 0
+    running --> failed: exit != 0 (handler match + max retries)
+    running --> pending_failed: exit != 0 (no handler match)
+    running --> ready: exit != 0 (failure handler retry)
     running --> canceled: user cancels
     running --> terminated: system terminates
+
+    pending_failed --> failed: AI classifies as permanent
+    pending_failed --> ready: AI classifies as transient
+    pending_failed --> uninitialized: reset-status
 
     completed --> [*]
     failed --> [*]
     canceled --> [*]
     terminated --> [*]
+    disabled --> [*]
 
     classDef waiting fill:#6c757d,color:#fff
     classDef ready fill:#17a2b8,color:#fff
@@ -28,13 +36,15 @@ stateDiagram-v2
     classDef success fill:#28a745,color:#fff
     classDef error fill:#dc3545,color:#fff
     classDef stopped fill:#6f42c1,color:#fff
+    classDef classification fill:#fd7e14,color:#fff
 
     class uninitialized,blocked waiting
     class ready ready
     class pending,running active
     class completed success
     class failed error
-    class canceled,terminated stopped
+    class canceled,terminated,disabled stopped
+    class pending_failed classification
 ```
 
 ## State Descriptions
@@ -48,3 +58,7 @@ stateDiagram-v2
 - **failed** (6) - Finished with error (exit code != 0)
 - **canceled** (7) - Explicitly canceled by user or torc. Never executed.
 - **terminated** (8) - Explicitly terminated by system, such as at wall-time timeout
+- **disabled** (9) - Job is disabled and will not run
+- **pending_failed** (10) - Job failed without a matching failure handler. Awaiting AI-assisted
+  classification to determine if the error is transient (retry) or permanent (fail). See
+  [AI-Assisted Recovery](../specialized/fault-tolerance/ai-assisted-recovery.md).
