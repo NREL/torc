@@ -1181,3 +1181,284 @@ pub fn recover_workflow(
         serde_json::to_string_pretty(&response).unwrap_or_default(),
     )]))
 }
+
+/// List jobs with pending_failed status in a workflow.
+///
+/// These are jobs that failed without a matching failure handler and are awaiting
+/// AI-assisted classification to determine whether they should be retried or marked as failed.
+pub fn list_pending_failed_jobs(
+    config: &Configuration,
+    workflow_id: i64,
+    output_dir: &Path,
+) -> Result<CallToolResult, McpError> {
+    let jobs = paginate_jobs(
+        config,
+        workflow_id,
+        JobListParams::new().with_status(JobStatus::PendingFailed),
+    )
+    .map_err(|e| internal_error(format!("Failed to list jobs: {}", e)))?;
+
+    // Get results and logs for each pending_failed job
+    let mut pending_jobs: Vec<serde_json::Value> = Vec::new();
+    for job in &jobs {
+        let job_id = job.id.unwrap_or(0);
+
+        // Get latest result
+        let result = paginate_results(
+            config,
+            workflow_id,
+            ResultListParams::new().with_job_id(job_id).with_limit(1),
+        )
+        .ok()
+        .and_then(|items| items.into_iter().next());
+
+        // Try to read stderr tail (last 50 lines)
+        let stderr_tail = if let Some(ref res) = result {
+            let run_id = res.run_id;
+            let attempt_id = job.attempt_id.unwrap_or(1);
+            let stderr_path =
+                log_paths::get_job_stderr_path(output_dir, workflow_id, job_id, run_id, attempt_id);
+            fs::read_to_string(&stderr_path)
+                .ok()
+                .map(|content| {
+                    let lines: Vec<&str> = content.lines().collect();
+                    let start = lines.len().saturating_sub(50);
+                    lines[start..].join("\n")
+                })
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+
+        pending_jobs.push(serde_json::json!({
+            "job_id": job_id,
+            "name": job.name,
+            "command": job.command,
+            "attempt_id": job.attempt_id,
+            "return_code": result.as_ref().map(|r| r.return_code),
+            "exec_time_minutes": result.as_ref().map(|r| r.exec_time_minutes),
+            "stderr_tail": stderr_tail,
+        }));
+    }
+
+    let result = serde_json::json!({
+        "workflow_id": workflow_id,
+        "pending_failed_count": pending_jobs.len(),
+        "pending_failed_jobs": pending_jobs,
+        "guidance": if pending_jobs.is_empty() {
+            "No jobs are awaiting classification."
+        } else {
+            "These jobs failed without a matching failure handler. Analyze the stderr output \
+             to classify each failure as transient (retry) or permanent (fail). Use \
+             classify_and_resolve_failures to act on your classification."
+        },
+    });
+
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        serde_json::to_string_pretty(&result).unwrap_or_default(),
+    )]))
+}
+
+/// Classification decision for a pending_failed job.
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct FailureClassification {
+    /// The job ID to classify
+    pub job_id: i64,
+    /// The classification action: "retry" or "fail"
+    pub action: String,
+    /// Optional new memory requirement (e.g., "8g")
+    pub memory: Option<String>,
+    /// Optional new runtime (ISO8601 duration, e.g., "PT2H")
+    pub runtime: Option<String>,
+    /// Reason for the classification (for logging)
+    pub reason: Option<String>,
+}
+
+/// Classify and resolve pending_failed jobs.
+///
+/// This tool takes a list of classifications for pending_failed jobs and either:
+/// - Sets them to "failed" status (triggering downstream cancellation)
+/// - Resets them to "ready" status with bumped attempt_id for retry
+///
+/// Resource requirements can optionally be adjusted before retry.
+pub fn classify_and_resolve_failures(
+    config: &Configuration,
+    workflow_id: i64,
+    classifications: Vec<FailureClassification>,
+    dry_run: bool,
+) -> Result<CallToolResult, McpError> {
+    let mut results: Vec<serde_json::Value> = Vec::new();
+    let mut jobs_to_retry: Vec<i64> = Vec::new();
+    let mut jobs_to_fail: Vec<i64> = Vec::new();
+
+    for classification in &classifications {
+        let job_id = classification.job_id;
+        let action = classification.action.to_lowercase();
+
+        // Validate the job exists and is in pending_failed status
+        let job = match default_api::get_job(config, job_id) {
+            Ok(j) => j,
+            Err(e) => {
+                results.push(serde_json::json!({
+                    "job_id": job_id,
+                    "status": "error",
+                    "message": format!("Failed to get job: {}", e),
+                }));
+                continue;
+            }
+        };
+
+        if job.status != Some(JobStatus::PendingFailed) {
+            results.push(serde_json::json!({
+                "job_id": job_id,
+                "status": "skipped",
+                "message": format!("Job is not in pending_failed status (current: {:?})", job.status),
+            }));
+            continue;
+        }
+
+        // Validate action
+        if action != "retry" && action != "fail" {
+            results.push(serde_json::json!({
+                "job_id": job_id,
+                "status": "error",
+                "message": format!("Invalid action '{}'. Must be 'retry' or 'fail'.", action),
+            }));
+            continue;
+        }
+
+        if dry_run {
+            results.push(serde_json::json!({
+                "job_id": job_id,
+                "job_name": job.name,
+                "action": action,
+                "memory_adjustment": classification.memory,
+                "runtime_adjustment": classification.runtime,
+                "reason": classification.reason,
+                "status": "would_apply",
+            }));
+        } else {
+            // Apply resource adjustments if specified
+            if (classification.memory.is_some() || classification.runtime.is_some())
+                && action == "retry"
+                && let Some(req_id) = job.resource_requirements_id
+                && let Ok(mut reqs) = default_api::get_resource_requirements(config, req_id)
+            {
+                if let Some(ref mem) = classification.memory {
+                    reqs.memory = mem.clone();
+                }
+                if let Some(ref rt) = classification.runtime {
+                    reqs.runtime = rt.clone();
+                }
+                let _ = default_api::update_resource_requirements(
+                    config,
+                    req_id,
+                    ResourceRequirementsModel {
+                        id: reqs.id,
+                        workflow_id: reqs.workflow_id,
+                        name: reqs.name.clone(),
+                        num_cpus: reqs.num_cpus,
+                        num_gpus: reqs.num_gpus,
+                        num_nodes: reqs.num_nodes,
+                        memory: reqs.memory.clone(),
+                        runtime: reqs.runtime.clone(),
+                    },
+                );
+            }
+
+            if action == "retry" {
+                jobs_to_retry.push(job_id);
+            } else {
+                jobs_to_fail.push(job_id);
+            }
+
+            results.push(serde_json::json!({
+                "job_id": job_id,
+                "job_name": job.name,
+                "action": action,
+                "reason": classification.reason,
+                "status": "pending_application",
+            }));
+        }
+    }
+
+    // Apply the status changes using CLI commands (they handle the complex state transitions)
+    if !dry_run && (!jobs_to_retry.is_empty() || !jobs_to_fail.is_empty()) {
+        // For jobs to retry: reset to ready and bump attempt_id
+        for job_id in &jobs_to_retry {
+            // Use torc jobs update to reset to ready
+            let output = Command::new("torc")
+                .args(["jobs", "update", &job_id.to_string(), "--status", "ready"])
+                .output();
+
+            if let Ok(out) = output
+                && !out.status.success()
+            {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                // Update the result for this job
+                for r in &mut results {
+                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                        r["status"] = serde_json::json!("error");
+                        r["message"] =
+                            serde_json::json!(format!("Failed to reset job: {}", stderr.trim()));
+                    }
+                }
+            } else {
+                for r in &mut results {
+                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                        r["status"] = serde_json::json!("applied");
+                    }
+                }
+            }
+        }
+
+        // For jobs to fail: set to failed status
+        for job_id in &jobs_to_fail {
+            let output = Command::new("torc")
+                .args(["jobs", "update", &job_id.to_string(), "--status", "failed"])
+                .output();
+
+            if let Ok(out) = output
+                && !out.status.success()
+            {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                for r in &mut results {
+                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                        r["status"] = serde_json::json!("error");
+                        r["message"] = serde_json::json!(format!(
+                            "Failed to mark as failed: {}",
+                            stderr.trim()
+                        ));
+                    }
+                }
+            } else {
+                for r in &mut results {
+                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                        r["status"] = serde_json::json!("applied");
+                    }
+                }
+            }
+        }
+    }
+
+    let response = serde_json::json!({
+        "workflow_id": workflow_id,
+        "dry_run": dry_run,
+        "total_classifications": classifications.len(),
+        "jobs_to_retry": jobs_to_retry.len(),
+        "jobs_to_fail": jobs_to_fail.len(),
+        "results": results,
+        "next_steps": if dry_run {
+            "Review the classifications above. If they look correct, call this tool again with dry_run=false to apply them."
+        } else if !jobs_to_retry.is_empty() {
+            "Classifications applied. Jobs marked for retry are now in 'ready' status. \
+             You may need to regenerate Slurm schedulers if running on HPC."
+        } else {
+            "Classifications applied."
+        },
+    });
+
+    Ok(CallToolResult::success(vec![rmcp::model::Content::text(
+        serde_json::to_string_pretty(&response).unwrap_or_default(),
+    )]))
+}

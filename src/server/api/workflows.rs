@@ -233,6 +233,8 @@ where
             .unwrap_or(300);
 
         // Then, create the workflow record
+        let use_pending_failed_int = body.use_pending_failed.map(|v| if v { 1 } else { 0 });
+
         let workflow_result = match sqlx::query!(
             r#"
             INSERT INTO workflow
@@ -249,9 +251,10 @@ where
                 jobs_sort_method,
                 resource_monitor_config,
                 slurm_defaults,
+                use_pending_failed,
                 status_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING rowid
             "#,
             body.name,
@@ -266,6 +269,7 @@ where
             jobs_sort_method_str,
             body.resource_monitor_config,
             body.slurm_defaults,
+            use_pending_failed_int,
             status_result[0].id,
         )
         .fetch_all(&mut *tx)
@@ -510,6 +514,7 @@ where
                         .ok(),
                     resource_monitor_config: row.resource_monitor_config,
                     slurm_defaults: row.slurm_defaults,
+                    use_pending_failed: row.use_pending_failed.map(|v| v != 0),
                     status_id: Some(row.status_id),
                 },
             )),
@@ -932,6 +937,11 @@ where
                 jobs_sort_method: sort_method,
                 resource_monitor_config: record.get("resource_monitor_config"),
                 slurm_defaults: record.get("slurm_defaults"),
+                use_pending_failed: record
+                    .try_get::<Option<i64>, _>("use_pending_failed")
+                    .ok()
+                    .flatten()
+                    .map(|v| v != 0),
                 status_id: Some(record.get("status_id")),
             });
         }
@@ -1026,6 +1036,7 @@ where
         let compute_node_ignore_workflow_completion_int = body
             .compute_node_ignore_workflow_completion
             .map(|val| if val { 1 } else { 0 });
+        let use_pending_failed_int = body.use_pending_failed.map(|val| if val { 1 } else { 0 });
 
         // Update the workflow record using COALESCE to only update non-null fields
         let result = match sqlx::query!(
@@ -1039,8 +1050,9 @@ where
                 compute_node_wait_for_new_jobs_seconds = COALESCE($5, compute_node_wait_for_new_jobs_seconds),
                 compute_node_ignore_workflow_completion = COALESCE($6, compute_node_ignore_workflow_completion),
                 compute_node_wait_for_healthy_database_minutes = COALESCE($7, compute_node_wait_for_healthy_database_minutes),
-                jobs_sort_method = COALESCE($8, jobs_sort_method)
-            WHERE id = $9
+                jobs_sort_method = COALESCE($8, jobs_sort_method),
+                use_pending_failed = COALESCE($9, use_pending_failed)
+            WHERE id = $10
             "#,
             body.name,
             body.description,
@@ -1050,6 +1062,7 @@ where
             compute_node_ignore_workflow_completion_int,
             body.compute_node_wait_for_healthy_database_minutes,
             jobs_sort_method_str,
+            use_pending_failed_int,
             id
         )
         .execute(self.context.pool.as_ref())

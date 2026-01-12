@@ -3231,6 +3231,8 @@ pub enum JobStatus {
     Terminated,
     #[serde(rename = "disabled")]
     Disabled,
+    #[serde(rename = "pending_failed")]
+    PendingFailed,
 }
 
 impl std::fmt::Display for JobStatus {
@@ -3246,6 +3248,7 @@ impl std::fmt::Display for JobStatus {
             JobStatus::Canceled => write!(f, "canceled"),
             JobStatus::Terminated => write!(f, "terminated"),
             JobStatus::Disabled => write!(f, "disabled"),
+            JobStatus::PendingFailed => write!(f, "pending_failed"),
         }
     }
 }
@@ -3265,6 +3268,7 @@ impl std::str::FromStr for JobStatus {
             "canceled" => std::result::Result::Ok(JobStatus::Canceled),
             "terminated" => std::result::Result::Ok(JobStatus::Terminated),
             "disabled" => std::result::Result::Ok(JobStatus::Disabled),
+            "pending_failed" => std::result::Result::Ok(JobStatus::PendingFailed),
             _ => std::result::Result::Err(format!("Value not valid: {}", s)),
         }
     }
@@ -3287,6 +3291,7 @@ impl JobStatus {
             JobStatus::Canceled => 7,
             JobStatus::Terminated => 8,
             JobStatus::Disabled => 9,
+            JobStatus::PendingFailed => 10,
         }
     }
 
@@ -3303,6 +3308,7 @@ impl JobStatus {
             7 => Ok(JobStatus::Canceled),
             8 => Ok(JobStatus::Terminated),
             9 => Ok(JobStatus::Disabled),
+            10 => Ok(JobStatus::PendingFailed),
             _ => Err(format!("Invalid JobStatus integer value: {}", value)),
         }
     }
@@ -3332,6 +3338,7 @@ impl JobStatusMap {
             map.insert(JobStatus::Canceled, 7);
             map.insert(JobStatus::Terminated, 8);
             map.insert(JobStatus::Disabled, 9);
+            map.insert(JobStatus::PendingFailed, 10);
             map
         })
     }
@@ -3351,6 +3358,7 @@ impl JobStatusMap {
             map.insert(7, JobStatus::Canceled);
             map.insert(8, JobStatus::Terminated);
             map.insert(9, JobStatus::Disabled);
+            map.insert(10, JobStatus::PendingFailed);
             map
         })
     }
@@ -3473,11 +3481,16 @@ impl std::convert::TryFrom<hyper::header::HeaderValue> for header::IntoHeaderVal
 }
 
 impl JobStatus {
-    /// Returns true if the job status indicates the job is complete (Completed, Failed, Canceled, or Terminated)
+    /// Returns true if the job status indicates the job is complete
+    /// (Completed, Failed, Canceled, Terminated, or PendingFailed)
     pub fn is_complete(&self) -> bool {
         matches!(
             self,
-            JobStatus::Completed | JobStatus::Failed | JobStatus::Canceled | JobStatus::Terminated
+            JobStatus::Completed
+                | JobStatus::Failed
+                | JobStatus::Canceled
+                | JobStatus::Terminated
+                | JobStatus::PendingFailed
         )
     }
 }
@@ -3516,6 +3529,7 @@ mod tests {
         assert_eq!(JobStatus::Canceled.to_int(), 7);
         assert_eq!(JobStatus::Terminated.to_int(), 8);
         assert_eq!(JobStatus::Disabled.to_int(), 9);
+        assert_eq!(JobStatus::PendingFailed.to_int(), 10);
     }
 
     #[test]
@@ -3531,9 +3545,10 @@ mod tests {
         assert_eq!(JobStatus::from_int(7).unwrap(), JobStatus::Canceled);
         assert_eq!(JobStatus::from_int(8).unwrap(), JobStatus::Terminated);
         assert_eq!(JobStatus::from_int(9).unwrap(), JobStatus::Disabled);
+        assert_eq!(JobStatus::from_int(10).unwrap(), JobStatus::PendingFailed);
 
         // Test invalid integer
-        assert!(JobStatus::from_int(10).is_err());
+        assert!(JobStatus::from_int(11).is_err());
         assert!(JobStatus::from_int(-1).is_err());
     }
 
@@ -9649,6 +9664,11 @@ pub struct WorkflowModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub slurm_defaults: Option<String>,
 
+    /// Use PendingFailed status for failed jobs (enables AI-assisted recovery)
+    #[serde(rename = "use_pending_failed")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_pending_failed: Option<bool>,
+
     #[serde(rename = "status_id")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_id: Option<i64>,
@@ -9671,6 +9691,7 @@ impl WorkflowModel {
             jobs_sort_method: None,
             resource_monitor_config: None,
             slurm_defaults: None,
+            use_pending_failed: None,
             status_id: None,
         }
     }
@@ -9741,6 +9762,13 @@ impl std::string::ToString for WorkflowModel {
                     .join(",")
                 }),
             // Skipping non-primitive type jobs_sort_method in query parameter serialization
+            self.use_pending_failed.as_ref().map(|use_pending_failed| {
+                [
+                    "use_pending_failed".to_string(),
+                    use_pending_failed.to_string(),
+                ]
+                .join(",")
+            }),
             self.status_id
                 .as_ref()
                 .map(|status_id| ["status_id".to_string(), status_id.to_string()].join(",")),
@@ -9774,6 +9802,7 @@ impl std::str::FromStr for WorkflowModel {
             pub jobs_sort_method: Vec<models::ClaimJobsSortMethod>,
             pub resource_monitor_config: Vec<String>,
             pub slurm_defaults: Vec<String>,
+            pub use_pending_failed: Vec<bool>,
             pub status_id: Vec<i64>,
         }
 
@@ -9844,6 +9873,9 @@ impl std::str::FromStr for WorkflowModel {
                     "status_id" => intermediate_rep.status_id.push(
                         <i64 as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
+                    "use_pending_failed" => intermediate_rep.use_pending_failed.push(
+                        <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
+                    ),
                     _ => {
                         return std::result::Result::Err(
                             "Unexpected key while parsing WorkflowModel".to_string(),
@@ -9894,6 +9926,7 @@ impl std::str::FromStr for WorkflowModel {
             jobs_sort_method: intermediate_rep.jobs_sort_method.into_iter().next(),
             resource_monitor_config: intermediate_rep.resource_monitor_config.into_iter().next(),
             slurm_defaults: intermediate_rep.slurm_defaults.into_iter().next(),
+            use_pending_failed: intermediate_rep.use_pending_failed.into_iter().next(),
             status_id: intermediate_rep.status_id.into_iter().next(),
         })
     }

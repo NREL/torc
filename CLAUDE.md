@@ -251,7 +251,7 @@ The Rust client provides a **unified CLI and library interface** with these key 
 
 ### Job Status as Integer
 
-Job status values are stored as INTEGER (0-9) in the database, not strings:
+Job status values are stored as INTEGER (0-10) in the database, not strings:
 
 - 0 = uninitialized
 - 1 = blocked
@@ -263,6 +263,7 @@ Job status values are stored as INTEGER (0-9) in the database, not strings:
 - 7 = canceled
 - 8 = terminated
 - 9 = disabled
+- 10 = pending_failed (awaiting AI classification)
 
 ### Resource Formats
 

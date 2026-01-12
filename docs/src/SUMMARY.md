@@ -75,6 +75,7 @@
 - [Fault Tolerance & Recovery](./specialized/fault-tolerance/index.md)
   - [Automatic Failure Recovery](./specialized/fault-tolerance/automatic-recovery.md)
   - [Configurable Failure Handlers](./specialized/fault-tolerance/failure-handlers.md)
+  - [AI-Assisted Recovery](./specialized/fault-tolerance/ai-assisted-recovery.md)
   - [Job Checkpointing](./specialized/fault-tolerance/checkpointing.md)
 - [Administration & Security](./specialized/admin/index.md)
   - [Server Deployment](./specialized/admin/server-deployment.md)
@@ -100,6 +101,7 @@
   - [Central Database](./specialized/design/database.md)
   - [Workflow Recovery Design](./specialized/design/recovery.md)
   - [Failure Handler Design](./specialized/design/failure-handlers.md)
+  - [AI-Assisted Recovery Design](./specialized/design/ai-assisted-recovery.md)
   - [Workflow Graph](./specialized/design/workflow-graph.md)
   - [Interface Architecture](./specialized/design/interfaces.md)
 

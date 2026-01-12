@@ -125,6 +125,40 @@ This creates:
 - 10 parallel `process_*` jobs
 - 1 `aggregate` job that waits for all 10 to complete
 
+## Failure Recovery Options
+
+Control how Torc handles job failures:
+
+### Default Behavior
+
+By default, jobs that fail without a matching failure handler use `Failed` status:
+
+```yaml
+name: my_workflow
+jobs:
+  - name: task
+    command: ./run.sh  # If this fails, status = Failed
+```
+
+### AI-Assisted Recovery (Opt-in)
+
+Enable intelligent classification of ambiguous failures:
+
+```yaml
+name: ml_training
+use_pending_failed: true  # Enable AI-assisted recovery
+
+jobs:
+  - name: train_model
+    command: python train.py
+```
+
+With `use_pending_failed: true`:
+
+- Jobs without matching failure handlers get `PendingFailed` status
+- AI agent can analyze stderr and decide whether to retry or fail
+- See [AI-Assisted Recovery](../../specialized/design/ai-assisted-recovery.md) for details
+
 ## See Also
 
 - [Workflow Specification Formats](../workflows/workflow-formats.md) — Complete syntax reference

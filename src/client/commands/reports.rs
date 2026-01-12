@@ -918,6 +918,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
     let mut canceled_count = 0;
     let mut terminated_count = 0;
     let mut disabled_count = 0;
+    let mut pending_failed_count = 0;
 
     for job in &jobs {
         match job.status {
@@ -931,6 +932,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
             Some(models::JobStatus::Canceled) => canceled_count += 1,
             Some(models::JobStatus::Terminated) => terminated_count += 1,
             Some(models::JobStatus::Disabled) => disabled_count += 1,
+            Some(models::JobStatus::PendingFailed) => pending_failed_count += 1,
             None => {}
         }
     }
@@ -1002,6 +1004,7 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
                 "canceled": canceled_count,
                 "terminated": terminated_count,
                 "disabled": disabled_count,
+                "pending_failed": pending_failed_count,
             },
             "total_exec_time_minutes": total_exec_time_minutes,
             "total_exec_time_formatted": format_duration(total_exec_time_minutes * 60.0),
@@ -1059,6 +1062,9 @@ fn generate_summary(config: &Configuration, workflow_id: Option<i64>, format: &s
         }
         if disabled_count > 0 {
             println!("  Disabled:      {}", disabled_count);
+        }
+        if pending_failed_count > 0 {
+            println!("  PendingFailed: {} ⏳", pending_failed_count);
         }
         println!();
         println!(

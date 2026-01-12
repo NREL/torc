@@ -14,6 +14,7 @@ use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::slurm::RegenerateDryRunResult;
 use crate::client::report_models::{ResourceUtilizationReport, ResultsReport};
+use crate::models::JobStatus;
 use crate::time_utils::duration_string_to_seconds;
 
 /// Arguments for workflow recovery
@@ -25,6 +26,10 @@ pub struct RecoverArgs {
     pub retry_unknown: bool,
     pub recovery_hook: Option<String>,
     pub dry_run: bool,
+    /// [EXPERIMENTAL] Enable AI-assisted recovery for pending_failed jobs
+    pub ai_recovery: bool,
+    /// AI agent CLI to use for --ai-recovery (e.g., "claude")
+    pub ai_agent: String,
 }
 
 /// Result of applying recovery heuristics
@@ -196,6 +201,62 @@ pub fn recover_workflow(
                 args.workflow_id, e
             );
             // Continue with recovery - orphan cleanup is best-effort
+        }
+    }
+
+    // Check for pending_failed jobs (requires AI classification)
+    let pending_failed_count = count_pending_failed_jobs(config, args.workflow_id).unwrap_or(0);
+    if pending_failed_count > 0 {
+        if args.ai_recovery {
+            info!(
+                "[EXPERIMENTAL] AI recovery: {} job(s) in pending_failed status",
+                pending_failed_count
+            );
+            info!("These jobs failed without a matching failure handler rule.");
+
+            if args.dry_run {
+                info!(
+                    "[DRY RUN] Would invoke AI agent '{}' for classification",
+                    args.ai_agent
+                );
+            } else {
+                // Invoke the AI agent to classify pending_failed jobs
+                match invoke_ai_agent(args.workflow_id, &args.ai_agent, &args.output_dir) {
+                    Ok(()) => {
+                        // Re-check pending_failed count after AI classification
+                        let remaining =
+                            count_pending_failed_jobs(config, args.workflow_id).unwrap_or(0);
+                        if remaining > 0 {
+                            warn!(
+                                "{} job(s) still in pending_failed status after AI classification",
+                                remaining
+                            );
+                        } else {
+                            info!("All pending_failed jobs have been classified");
+                        }
+                    }
+                    Err(e) => {
+                        warn!("AI agent invocation failed: {}", e);
+                        warn!("You can manually classify jobs using the torc MCP server:");
+                        warn!("  1. list_pending_failed_jobs - View jobs with their stderr");
+                        warn!("  2. classify_and_resolve_failures - Apply retry/fail decisions");
+                        warn!(
+                            "Or reset them manually: torc workflows reset-status {} --failed-only",
+                            args.workflow_id
+                        );
+                    }
+                }
+            }
+        } else {
+            warn!(
+                "{} job(s) in pending_failed status (awaiting classification)",
+                pending_failed_count
+            );
+            warn!("Use --ai-recovery to enable AI-assisted classification via MCP tools.");
+            warn!(
+                "Or reset them manually: torc workflows reset-status {} --failed-only",
+                args.workflow_id
+            );
         }
     }
 
@@ -505,6 +566,105 @@ fn check_recovery_preconditions(config: &Configuration, workflow_id: i64) -> Res
     }
 
     Ok(())
+}
+
+/// Invoke an AI agent CLI to classify pending_failed jobs
+///
+/// Spawns the specified AI agent (e.g., "claude") with a prompt to use
+/// the torc MCP tools for classifying pending_failed jobs.
+pub fn invoke_ai_agent(workflow_id: i64, agent: &str, output_dir: &Path) -> Result<(), String> {
+    let prompt = format!(
+        "You are helping recover a Torc workflow. Workflow {} has jobs in 'pending_failed' status \
+         that need classification. \n\n\
+         Please use the torc MCP tools to:\n\
+         1. Call list_pending_failed_jobs with workflow_id={} to see the jobs and their stderr\n\
+         2. Analyze each job's stderr to determine if the error is transient (retry) or permanent (fail)\n\
+         3. Call classify_and_resolve_failures with your classifications\n\n\
+         The output directory is: {}\n\n\
+         After classification, the workflow can continue with recovery.",
+        workflow_id,
+        workflow_id,
+        output_dir.display()
+    );
+
+    info!(
+        "[EXPERIMENTAL] Invoking AI agent '{}' for pending_failed classification...",
+        agent
+    );
+
+    match agent {
+        "claude" => {
+            // Check if claude CLI is available
+            let check = Command::new("which")
+                .arg("claude")
+                .output()
+                .map_err(|e| format!("Failed to check for claude CLI: {}", e))?;
+
+            if !check.status.success() {
+                return Err(
+                    "Claude CLI not found. Install it from https://claude.ai/code \
+                     or use --ai-agent to specify a different agent."
+                        .to_string(),
+                );
+            }
+
+            // Invoke claude with the prompt using --print for non-interactive mode
+            info!("Running: claude --print \"<prompt>\"");
+            let output = Command::new("claude")
+                .arg("--print")
+                .arg(&prompt)
+                .output()
+                .map_err(|e| format!("Failed to run claude CLI: {}", e))?;
+
+            // Print stdout
+            if !output.stdout.is_empty() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    info!("[claude] {}", line);
+                }
+            }
+
+            // Print stderr
+            if !output.stderr.is_empty() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                for line in stderr.lines() {
+                    warn!("[claude] {}", line);
+                }
+            }
+
+            if !output.status.success() {
+                let exit_code = output.status.code().unwrap_or(-1);
+                return Err(format!("Claude CLI exited with code {}", exit_code));
+            }
+
+            info!("AI agent completed classification");
+            Ok(())
+        }
+        other => Err(format!(
+            "Unsupported AI agent '{}'. Supported agents: claude",
+            other
+        )),
+    }
+}
+
+/// Count jobs in pending_failed status that need AI classification
+fn count_pending_failed_jobs(config: &Configuration, workflow_id: i64) -> Result<i64, String> {
+    let pending_failed_jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        Some(JobStatus::PendingFailed),
+        None,    // needs_file_id
+        None,    // upstream_job_id
+        None,    // offset
+        Some(1), // limit - just need count
+        None,    // sort_by
+        None,    // reverse_sort
+        None,    // include_relationships
+        None,    // active_compute_node_id
+    )
+    .map_err(|e| format!("Failed to list pending_failed jobs: {}", e))?;
+
+    Ok(pending_failed_jobs.total_count)
 }
 
 /// Diagnose failures and return resource utilization report

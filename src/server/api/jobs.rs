@@ -404,7 +404,7 @@ impl JobsApiImpl {
         })
     }
 
-    /// Reset only failed/canceled/terminated jobs to uninitialized status.
+    /// Reset only failed/canceled/terminated/pending_failed jobs to uninitialized status.
     async fn reset_failed_jobs_only(
         &self,
         workflow_id: i64,
@@ -413,22 +413,24 @@ impl JobsApiImpl {
         let failed_status = JobStatus::Failed.to_int();
         let canceled_status = JobStatus::Canceled.to_int();
         let terminated_status = JobStatus::Terminated.to_int();
+        let pending_failed_status = JobStatus::PendingFailed.to_int();
 
-        // Get jobs with failed/canceled/terminated status. The status field is the source
-        // of truth - we don't check return_code since status should always be consistent
-        // with the actual outcome. This also handles jobs that were canceled/terminated
+        // Get jobs with failed/canceled/terminated/pending_failed status. The status field is
+        // the source of truth - we don't check return_code since status should always be
+        // consistent with the actual outcome. This also handles jobs that were canceled/terminated
         // before running (which have no result record).
         let failed_jobs = match sqlx::query!(
             r#"
             SELECT id, status
             FROM job
             WHERE workflow_id = $1
-              AND status IN ($2, $3, $4)
+              AND status IN ($2, $3, $4, $5)
             "#,
             workflow_id,
             failed_status,
             canceled_status,
-            terminated_status
+            terminated_status,
+            pending_failed_status
         )
         .fetch_all(self.context.pool.as_ref())
         .await
