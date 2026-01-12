@@ -7,7 +7,6 @@ stateDiagram-v2
     [*] --> uninitialized
     uninitialized --> ready: initialize_jobs
     uninitialized --> blocked: has dependencies
-    uninitialized --> disabled: job disabled
 
     blocked --> ready: dependencies met
     ready --> pending: runner claims
@@ -28,7 +27,6 @@ stateDiagram-v2
     failed --> [*]
     canceled --> [*]
     terminated --> [*]
-    disabled --> [*]
 
     classDef waiting fill:#6c757d,color:#fff
     classDef ready fill:#17a2b8,color:#fff
@@ -43,7 +41,7 @@ stateDiagram-v2
     class pending,running active
     class completed success
     class failed error
-    class canceled,terminated,disabled stopped
+    class canceled,terminated stopped
     class pending_failed classification
 ```
 
@@ -58,7 +56,6 @@ stateDiagram-v2
 - **failed** (6) - Finished with error (exit code != 0)
 - **canceled** (7) - Explicitly canceled by user or torc. Never executed.
 - **terminated** (8) - Explicitly terminated by system, such as at wall-time timeout
-- **disabled** (9) - Job is disabled and will not run
 - **pending_failed** (10) - Job failed without a matching failure handler. Awaiting AI-assisted
   classification to determine if the error is transient (retry) or permanent (fail). See
   [AI-Assisted Recovery](../specialized/fault-tolerance/ai-assisted-recovery.md).

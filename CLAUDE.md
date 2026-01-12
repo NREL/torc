@@ -83,8 +83,6 @@ torc/
 
 ## Component-Specific Guidance
 
-**For server development**, see `server/CLAUDE.md` for:
-
 - Server build, test, and run commands
 - Database migration management
 - API endpoint implementation patterns
@@ -95,16 +93,10 @@ torc/
 
 - All client code is in `src/client/`
 - Unified CLI is built with: `cargo build --bin torc --features "client,tui,plot_resources"`
-- Workflow specification system in `src/client/workflow_spec.rs` (JSON/JSON5/YAML formats)
+- Workflow specification system in `src/client/workflow_spec.rs` (JSON/JSON5/YAML/KDL formats)
 - Workflow manager and job runner in `src/client/`
 - API client integration patterns in `src/client/apis/`
 - Resource management and job execution in `src/client/job_runner.rs`
-
-**For Python client development**:
-
-- Package is managed with setuptools and pyproject.toml
-- CLI entry point: `torc` command
-- Development setup: `pip install -e .[dev]` from python_client directory
 
 ## Quick Start Commands
 
@@ -114,14 +106,8 @@ torc/
 cd server
 
 # Build and run server (requires DATABASE_URL in .env)
-cargo build --release
-cargo run --bin torc-server -- run
-
-# Run tests
-cargo test
-
-# Run specific test
-cargo test test_get_ready_jobs -- --nocapture
+cargo build -p torc-server
+cargo run -p torc-server --bin torc-server -- run --url localhost -p 8080
 
 # Database migrations
 sqlx migrate run
@@ -132,7 +118,7 @@ sqlx migrate revert
 
 ```bash
 # Build unified torc CLI
-cargo build --release --bin torc --features "client,tui,plot_resources"
+cargo build --workspace --release
 
 # Set server URL (optional, defaults to localhost:8080)
 export TORC_API_URL="http://localhost:8080/torc-service/v1"
@@ -155,7 +141,10 @@ export TORC_API_URL="http://localhost:8080/torc-service/v1"
 ./target/release/torc jobs list <workflow_id>          # View job status
 
 # Run tests
-cargo test
+cargo test  -- --test-threads 1
+
+# Run specific test
+cargo test test_get_ready_jobs -- --nocapture
 ```
 
 ### Standalone Binaries (for deployment)
@@ -166,23 +155,6 @@ cargo build --release -p torc
 cargo build --release -p torc-server
 
 # Use standalone binaries
-```
-
-### Python Client Operations
-
-```bash
-cd python_client
-
-# Setup development environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e .[dev]
-
-# Run CLI
-torc --help
-
-# Run tests
-pytest
 ```
 
 ## Architecture Overview
@@ -233,6 +205,11 @@ The Rust client provides a **unified CLI and library interface** with these key 
 3. **Execution**: Job runner polls server for ready jobs → Checks available resources → Submits jobs
    via AsyncCliCommand → Monitors completion → Updates server status → Triggers dependent jobs
 
+### Logging
+
+In log messages, when referring to database records, use the format `"workflow_id={} job_id={}"` to
+enable log parsing tools.
+
 ## Testing Strategy
 
 ### Rust Client Tests
@@ -241,11 +218,6 @@ The Rust client provides a **unified CLI and library interface** with these key 
 - Use `serial_test` attribute for tests that modify shared state
 - Test utilities in `tests/common/`
 - Run with: `cargo test` from rust-client directory
-
-### Python Client Tests
-
-- Unit and integration tests in `python_client/tests/`
-- Run with: `pytest` from python_client directory
 
 ## Important Notes
 
@@ -330,7 +302,8 @@ performance reasons.
 
 ### OpenAPI Code Generation
 
-- Server and client use OpenAPI-generated code for base types and routing
+- Server and client originally used OpenAPI-generated code for base types and routing but we are now
+  manually updating the code.
 - Implement business logic in non-generated modules (e.g., `server/src/bin/server/api/*.rs`)
 
 ## Common Tasks
@@ -426,7 +399,6 @@ sqlite3 server/db/sqlite/dev.db
    `torc submit examples/sample_workflow.yaml`
 4. **Or Explicit**: `torc workflows create examples/sample_workflow.yaml` →
    `torc workflows run <id>`
-5. **Monitor**: `torc workflows status <id>` or `torc tui`
 
 **Note**: The server is always run as a standalone binary (`torc-server run`), not through the
 unified CLI.
@@ -478,7 +450,6 @@ unified CLI.
 
 **Utilities**:
 
-- `torc plot-resources <db>` - Generate resource plots
 - `torc reports <subcommand>` - Generate reports
 
 **Global Options** (available on all commands):
@@ -489,4 +460,3 @@ unified CLI.
 ## Additional Resources
 
 - Example workflow specifications: `examples/`
-- API documentation: Generated from OpenAPI spec
