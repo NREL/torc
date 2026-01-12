@@ -71,9 +71,14 @@ jobs:
         env:
           DATABASE_URL: sqlite:db/sqlite/dev.db
 
+      - name: Build test binaries (only necessary packages)
+        run: cargo build --all-features -p torc -p torc-server
+        env:
+          RUST_BACKTRACE: 1
+
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
-        run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
+        run: cargo test --all-features --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
           OPENSSL_DIR: C:/vcpkg/installed/x64-windows-static-md
@@ -84,7 +89,7 @@ jobs:
 
       - name: Run tests (Unix - full test suite)
         if: matrix.os != 'windows-latest'
-        run: cargo test -- --test-threads 1
+        run: cargo test --all-features -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
 

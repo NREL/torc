@@ -379,6 +379,7 @@ Object.assign(TorcDashboard.prototype, {
                         <td><code>${result.job_id ?? '-'}</code></td>
                         <td>${this.escapeHtml(jobNameMap[result.job_id] || '-')}</td>
                         <td>${result.run_id ?? '-'}</td>
+                        <td>${result.attempt_id ?? 1}</td>
                         <td class="${result.return_code === 0 ? 'return-code-0' : 'return-code-error'}">${result.return_code ?? '-'}</td>
                         <td><span class="status-badge status-${statusNames[result.status]?.toLowerCase() || 'unknown'}">${statusNames[result.status] || result.status}</span></td>
                         <td>${result.exec_time_minutes != null ? result.exec_time_minutes.toFixed(2) : '-'}</td>

@@ -688,7 +688,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
         .add_modifier(Modifier::BOLD);
 
     let header = Row::new(vec![
-        "ID", "Job ID", "Run", "Return", "Status", "Peak Mem", "Peak CPU",
+        "ID", "Job ID", "Run", "Attempt", "Return", "Status", "Peak Mem", "Peak CPU",
     ])
     .style(header_style)
     .bottom_margin(1);
@@ -697,6 +697,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
         let id = result.id.map(|i| i.to_string()).unwrap_or_default();
         let job_id = result.job_id.to_string();
         let run_id = result.run_id.to_string();
+        let attempt_id = result.attempt_id.unwrap_or(1).to_string();
         let return_code = result.return_code;
         let status = format!("{:?}", result.status);
 
@@ -723,6 +724,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
             Cell::from(id),
             Cell::from(job_id),
             Cell::from(run_id),
+            Cell::from(attempt_id),
             Cell::from(Span::styled(
                 return_code.to_string(),
                 Style::default().fg(row_color),
@@ -757,6 +759,7 @@ fn draw_results_table(f: &mut Frame, area: Rect, app: &mut App) {
             Constraint::Length(6),  // ID
             Constraint::Length(8),  // Job ID
             Constraint::Length(5),  // Run
+            Constraint::Length(7),  // Attempt
             Constraint::Length(7),  // Return
             Constraint::Length(12), // Status
             Constraint::Length(10), // Peak Mem
