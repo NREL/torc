@@ -21,6 +21,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Free Disk Space (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # Remove large packages we don't need
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
       - name: Install OpenSSL for Windows
         if: matrix.os == 'windows-latest'
         run: |
@@ -75,12 +88,15 @@ jobs:
         run: cargo build --all-features -p torc -p torc-server
         env:
           RUST_BACKTRACE: 1
+          CARGO_INCREMENTAL: 0
+          CARGO_TERM_COLOR: always
 
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
         run: cargo test --all-features --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
+          CARGO_INCREMENTAL: 0
           OPENSSL_DIR: C:/vcpkg/installed/x64-windows-static-md
           OPENSSL_ROOT_DIR: C:/vcpkg/installed/x64-windows-static-md
           OPENSSL_INCLUDE_DIR: C:/vcpkg/installed/x64-windows-static-md/include
@@ -92,6 +108,7 @@ jobs:
         run: cargo test --all-features -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
+          CARGO_INCREMENTAL: 0
 
       # Clean up intermediate build artifacts to free disk space for Julia
       # Keep only the binaries needed to run the server
@@ -106,8 +123,10 @@ jobs:
           rm -rf target/debug/build
           rm -rf target/debug/.fingerprint
           rm -rf target/debug/examples
-          # Also clean up cargo cache
+          # Clean up the entire cargo registry cache (will be restored next time)
           rm -rf ~/.cargo/registry/cache
+          rm -rf ~/.cargo/registry/index
+          rm -rf ~/.cargo/git/db
           echo "Disk space after cleanup:"
           df -h .
 
