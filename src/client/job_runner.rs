@@ -109,6 +109,21 @@ pub struct WorkerResult {
     pub had_terminations: bool,
 }
 
+/// Outcome of attempting to recover a failed job via failure handler.
+#[derive(Debug, Clone, PartialEq)]
+pub enum RecoveryOutcome {
+    /// Job was successfully scheduled for retry
+    Retried,
+    /// No failure handler defined for this job - use PendingFailed status
+    NoHandler,
+    /// Failure handler exists but no rule matched the exit code - use PendingFailed status
+    NoMatchingRule,
+    /// Max retries exceeded - use Failed status
+    MaxRetriesExceeded,
+    /// API call or other error - use Failed status
+    Error(String),
+}
+
 /// Manages parallel job execution on a compute node.
 ///
 /// The JobRunner claims jobs from the server, executes them locally, and reports results.
@@ -865,54 +880,85 @@ impl JobRunner {
         });
 
         // Check if we should try to recover a failed job
-        if result.status == JobStatus::Failed
+        let mut final_result = result;
+        if final_result.status == JobStatus::Failed
             && let Some((job_name, attempt_id, failure_handler_id)) = &job_info
         {
-            let return_code = result.return_code;
+            let return_code = final_result.return_code;
             // Try to recover the job if it has a failure handler
-            if self.try_recover_job(
+            let outcome = self.try_recover_job(
                 job_id,
                 job_name,
                 return_code,
                 *attempt_id,
                 *failure_handler_id,
-            ) {
-                // Job was successfully scheduled for retry - clean up but don't mark as failed
-                info!(
-                    "Job retry scheduled workflow_id={} job_id={} job_name={} return_code={} attempt_id={}",
-                    self.workflow_id, job_id, job_name, return_code, attempt_id
-                );
-                if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
-                    self.increment_resources(&job_rr);
+            );
+
+            match outcome {
+                RecoveryOutcome::Retried => {
+                    // Job was successfully scheduled for retry - clean up but don't mark as failed
+                    info!(
+                        "Job retry scheduled workflow_id={} job_id={} job_name={} return_code={} attempt_id={}",
+                        self.workflow_id, job_id, job_name, return_code, attempt_id
+                    );
+                    if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
+                        self.increment_resources(&job_rr);
+                    }
+                    self.last_job_claimed_time = Some(Instant::now());
+                    self.running_jobs.remove(&job_id);
+                    self.job_resources.remove(&job_id);
+                    return;
                 }
-                self.last_job_claimed_time = Some(Instant::now());
-                self.running_jobs.remove(&job_id);
-                self.job_resources.remove(&job_id);
-                return;
+                RecoveryOutcome::NoHandler | RecoveryOutcome::NoMatchingRule => {
+                    // Check if workflow has use_pending_failed enabled
+                    if self.workflow.use_pending_failed.unwrap_or(false) {
+                        // Use PendingFailed status for AI-assisted recovery
+                        info!(
+                            "Job pending_failed workflow_id={} job_id={} job_name={} return_code={} reason={:?}",
+                            self.workflow_id, job_id, job_name, return_code, outcome
+                        );
+                        final_result.status = JobStatus::PendingFailed;
+                    } else {
+                        // Use Failed status (default behavior)
+                        debug!(
+                            "Job failed workflow_id={} job_id={} job_name={} return_code={} reason={:?}",
+                            self.workflow_id, job_id, job_name, return_code, outcome
+                        );
+                        // Keep status as Failed
+                    }
+                }
+                RecoveryOutcome::MaxRetriesExceeded | RecoveryOutcome::Error(_) => {
+                    // Max retries exceeded or error - use Failed status (no recovery possible)
+                    debug!(
+                        "Job failed workflow_id={} job_id={} reason={:?}",
+                        self.workflow_id, job_id, outcome
+                    );
+                    // Keep status as Failed
+                }
             }
         }
 
         // Track failures and terminations (if we reach here, no retry happened)
-        match result.status {
-            JobStatus::Failed => self.had_failures = true,
+        match final_result.status {
+            JobStatus::Failed | JobStatus::PendingFailed => self.had_failures = true,
             JobStatus::Terminated => self.had_terminations = true,
             _ => {}
         }
 
-        let status_str = format!("{:?}", result.status).to_lowercase();
+        let status_str = format!("{:?}", final_result.status).to_lowercase();
         match self.send_with_retries(|| {
             default_api::complete_job(
                 &self.config,
                 job_id,
-                result.status,
-                result.run_id,
-                result.clone(),
+                final_result.status,
+                final_result.run_id,
+                final_result.clone(),
             )
         }) {
             Ok(_) => {
                 info!(
                     "Job completed workflow_id={} job_id={} run_id={} status={}",
-                    self.workflow_id, job_id, result.run_id, status_str
+                    self.workflow_id, job_id, final_result.run_id, status_str
                 );
                 if let Some(job_rr) = self.job_resources.get(&job_id).cloned() {
                     self.increment_resources(&job_rr);
@@ -985,7 +1031,7 @@ impl JobRunner {
     }
 
     /// Try to recover and retry a failed job based on its failure handler rules.
-    /// Returns true if the job was successfully scheduled for retry.
+    /// Returns a `RecoveryOutcome` indicating what happened.
     fn try_recover_job(
         &self,
         job_id: i64,
@@ -993,11 +1039,11 @@ impl JobRunner {
         exit_code: i64,
         attempt_id: i64,
         failure_handler_id: Option<i64>,
-    ) -> bool {
+    ) -> RecoveryOutcome {
         // Fetch the failure handler for this job on demand
         let fh_id = match failure_handler_id {
             Some(id) => id,
-            None => return false,
+            None => return RecoveryOutcome::NoHandler,
         };
 
         let handler = match self
@@ -1009,7 +1055,7 @@ impl JobRunner {
                     "Failed to fetch failure handler {} for job {}: {}",
                     fh_id, job_id, e
                 );
-                return false;
+                return RecoveryOutcome::Error(format!("Failed to fetch failure handler: {}", e));
             }
         };
 
@@ -1021,7 +1067,10 @@ impl JobRunner {
                     "Failed to parse failure handler rules for job {}: {}",
                     job_id, e
                 );
-                return false;
+                return RecoveryOutcome::Error(format!(
+                    "Failed to parse failure handler rules: {}",
+                    e
+                ));
             }
         };
 
@@ -1039,7 +1088,7 @@ impl JobRunner {
                     "No matching failure handler rule for job {} with exit code {}",
                     job_id, exit_code
                 );
-                return false;
+                return RecoveryOutcome::NoMatchingRule;
             }
         };
 
@@ -1049,7 +1098,7 @@ impl JobRunner {
                 "Job max retries reached workflow_id={} job_id={} max_retries={} exit_code={}",
                 self.workflow_id, job_id, rule.max_retries, exit_code
             );
-            return false;
+            return RecoveryOutcome::MaxRetriesExceeded;
         }
 
         // Call retry_job API first to reserve the retry slot.
@@ -1073,7 +1122,7 @@ impl JobRunner {
                     "Job retry failed workflow_id={} job_id={} error={}",
                     self.workflow_id, job_id, e
                 );
-                return false;
+                return RecoveryOutcome::Error(format!("Retry API call failed: {}", e));
             }
         }
 
@@ -1089,10 +1138,10 @@ impl JobRunner {
                 "Recovery script failed (job will still retry) workflow_id={} job_id={} error={}",
                 self.workflow_id, job_id, e
             );
-            // Don't return false - the retry is already scheduled
+            // Don't return error - the retry is already scheduled
         }
 
-        true
+        RecoveryOutcome::Retried
     }
 
     fn decrement_resources(&mut self, rr: &ResourceRequirementsModel) {

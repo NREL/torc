@@ -227,6 +227,39 @@ pub struct RecoverWorkflowParams {
     pub retry_unknown: Option<bool>,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ListPendingFailedJobsParams {
+    #[schemars(description = "The workflow ID")]
+    pub workflow_id: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
+pub struct FailureClassificationParam {
+    #[schemars(description = "The job ID to classify")]
+    pub job_id: i64,
+    #[schemars(description = "The classification action: 'retry' or 'fail'")]
+    pub action: String,
+    #[schemars(description = "Optional new memory requirement (e.g., '8g')")]
+    pub memory: Option<String>,
+    #[schemars(description = "Optional new runtime (ISO8601 duration, e.g., 'PT2H')")]
+    pub runtime: Option<String>,
+    #[schemars(description = "Reason for the classification (for logging)")]
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ClassifyAndResolveFailuresParams {
+    #[schemars(description = "The workflow ID")]
+    pub workflow_id: i64,
+    #[schemars(description = "List of classifications for pending_failed jobs")]
+    pub classifications: Vec<FailureClassificationParam>,
+    #[schemars(
+        description = "If true, shows what would be done without making any changes. \
+        ALWAYS use dry_run=true first to preview classifications, then confirm with user before running with dry_run=false."
+    )]
+    pub dry_run: bool,
+}
+
 // Tool implementations using #[tool(tool_box)]
 // Tools are ordered by workflow lifecycle: create → plan → inspect → monitor → analyze → fix
 
@@ -647,6 +680,83 @@ USE CASES:
                 runtime_multiplier,
                 retry_unknown,
             )
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// List jobs awaiting AI-assisted classification.
+    #[tool(
+        description = r#"List jobs with pending_failed status that are awaiting classification.
+These are jobs that failed without a matching failure handler. The AI agent should:
+1. Analyze the stderr output for each job
+2. Classify the failure as transient (retry) or permanent (fail)
+3. Use classify_and_resolve_failures to act on the classification
+
+Transient errors (should retry):
+- Connection refused, network timeout, DNS resolution failures
+- NCCL timeout, GPU communication errors
+- EIO, disk I/O errors, temporary storage issues
+- Slurm node failures, preemption
+
+Permanent errors (should fail):
+- Syntax errors, import errors, missing modules
+- Invalid arguments, assertion failures
+- Out of bounds, null pointer dereference
+- Permission denied (code bug, not transient)"#
+    )]
+    async fn list_pending_failed_jobs(
+        &self,
+        #[tool(aggr)] params: ListPendingFailedJobsParams,
+    ) -> Result<CallToolResult, McpError> {
+        let config = self.config.clone();
+        let output_dir = self.output_dir.clone();
+        let workflow_id = params.workflow_id;
+        tokio::task::spawn_blocking(move || {
+            tools::list_pending_failed_jobs(&config, workflow_id, &output_dir)
+        })
+        .await
+        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+    }
+
+    /// Classify and resolve pending_failed jobs.
+    #[tool(
+        description = r#"Classify pending_failed jobs and either retry them or mark them as failed.
+
+IMPORTANT WORKFLOW:
+1. First call list_pending_failed_jobs to see jobs awaiting classification
+2. Analyze stderr for each job to determine if failure is transient or permanent
+3. Call this tool with dry_run=true to preview classifications
+4. Show user the preview and ask for confirmation
+5. If approved, call again with dry_run=false to apply
+
+For each job, specify:
+- action: 'retry' (transient error) or 'fail' (permanent error)
+- memory: optional new memory requirement for retry (e.g., '8g')
+- runtime: optional new runtime for retry (e.g., 'PT2H')
+- reason: explanation for the classification (for audit trail)"#
+    )]
+    async fn classify_and_resolve_failures(
+        &self,
+        #[tool(aggr)] params: ClassifyAndResolveFailuresParams,
+    ) -> Result<CallToolResult, McpError> {
+        let config = self.config.clone();
+        let workflow_id = params.workflow_id;
+        let dry_run = params.dry_run;
+        // Convert from param type to tools type
+        let classifications: Vec<tools::FailureClassification> = params
+            .classifications
+            .into_iter()
+            .map(|c| tools::FailureClassification {
+                job_id: c.job_id,
+                action: c.action,
+                memory: c.memory,
+                runtime: c.runtime,
+                reason: c.reason,
+            })
+            .collect();
+        tokio::task::spawn_blocking(move || {
+            tools::classify_and_resolve_failures(&config, workflow_id, classifications, dry_run)
         })
         .await
         .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?

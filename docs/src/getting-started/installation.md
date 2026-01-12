@@ -2,7 +2,34 @@
 
 ## Precompiled Binaries (Recommended)
 
-Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases).
+1. Download the appropriate archive for your platform from the
+   [releases page](https://github.com/NREL/torc/releases):
+   - **Linux**: `torc-<version>-x86_64-unknown-linux-gnu.tar.gz`
+   - **macOS (Intel)**: `torc-<version>-x86_64-apple-darwin.tar.gz`
+   - **macOS (Apple Silicon)**: `torc-<version>-aarch64-apple-darwin.tar.gz`
+
+2. Extract the archive:
+
+   ```bash
+   # For .tar.gz files
+   tar -xzf torc-<version>-<platform>.tar.gz
+
+   # For .zip files
+   unzip torc-<version>-<platform>.zip
+   ```
+
+3. Add the binaries to a directory in your system PATH:
+
+   ```bash
+   # Option 1: Copy to an existing PATH directory
+   cp torc* ~/.local/bin/
+
+   # Option 2: Add the extracted directory to your PATH
+   export PATH="/path/to/extracted/torc:$PATH"
+   ```
+
+   To make the PATH change permanent, add the export line to your shell configuration file
+   (`~/.bashrc`, `~/.zshrc`, etc.).
 
 **macOS users**: The precompiled binaries are not signed with an Apple Developer certificate. macOS
 Gatekeeper will block them by default. To allow the binaries to run, remove the quarantine attribute

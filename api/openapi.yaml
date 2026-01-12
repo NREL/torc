@@ -6030,6 +6030,16 @@ components:
           type: integer
         jobs_sort_method:
           $ref: "#/components/schemas/jobs_sort_method"
+        resource_monitor_config:
+          description: Resource monitoring configuration as JSON string
+          type: string
+        slurm_defaults:
+          description: Default Slurm parameters to apply to all schedulers as JSON string
+          type: string
+        use_pending_failed:
+          default: false
+          description: Use PendingFailed status for failed jobs (enables AI-assisted recovery)
+          type: boolean
         status_id:
           type: integer
       required:

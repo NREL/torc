@@ -439,6 +439,29 @@ SEE ALSO:
         /// Set to 0 to disable stranded job detection.
         #[arg(long, default_value = "7200")]
         auto_schedule_stranded_timeout: u64,
+
+        /// [EXPERIMENTAL] Enable AI-assisted recovery for pending_failed jobs
+        ///
+        /// When jobs fail without a matching failure handler rule, they enter
+        /// 'pending_failed' status instead of 'failed'. This flag enables AI
+        /// classification of these jobs via the torc MCP server.
+        ///
+        /// When enabled, automatically invokes the specified AI agent CLI
+        /// (see --ai-agent) to classify pending_failed jobs.
+        ///
+        /// Note: This feature is experimental and may change in future releases.
+        #[arg(long, verbatim_doc_comment)]
+        ai_recovery: bool,
+
+        /// AI agent CLI to use for --ai-recovery
+        ///
+        /// Specifies which AI agent CLI to invoke for classifying pending_failed
+        /// jobs. The agent must be installed and configured with the torc MCP server.
+        ///
+        /// Supported agents:
+        ///   claude - Claude Code CLI (default)
+        #[arg(long, default_value = "claude", verbatim_doc_comment)]
+        ai_agent: String,
     },
     /// Recover a Slurm workflow from failures
     ///
@@ -537,6 +560,29 @@ SEE ALSO:
         /// not actually update resources, reset jobs, or submit allocations.
         #[arg(long)]
         dry_run: bool,
+
+        /// [EXPERIMENTAL] Enable AI-assisted recovery for pending_failed jobs
+        ///
+        /// When jobs fail without a matching failure handler rule, they enter
+        /// 'pending_failed' status instead of 'failed'. This flag enables AI
+        /// classification of these jobs via the torc MCP server.
+        ///
+        /// When enabled, automatically invokes the specified AI agent CLI
+        /// (see --ai-agent) to classify pending_failed jobs.
+        ///
+        /// Note: This feature is experimental and may change in future releases.
+        #[arg(long, verbatim_doc_comment)]
+        ai_recovery: bool,
+
+        /// AI agent CLI to use for --ai-recovery
+        ///
+        /// Specifies which AI agent CLI to invoke for classifying pending_failed
+        /// jobs. The agent must be installed and configured with the torc MCP server.
+        ///
+        /// Supported agents:
+        ///   claude - Claude Code CLI (default)
+        #[arg(long, default_value = "claude", verbatim_doc_comment)]
+        ai_agent: String,
     },
     /// Interactive terminal UI for managing workflows
     #[command(

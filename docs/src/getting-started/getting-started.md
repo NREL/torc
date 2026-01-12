@@ -77,6 +77,45 @@ The repository includes ready-to-run workflow specifications in YAML, JSON5, and
 
 See the [examples README](https://github.com/NREL/torc/tree/main/examples) for the complete list.
 
-## Next: Quick Start
+## Choose Your Execution Mode
+
+Torc supports three fundamentally different execution environments. Choose the one that matches your
+use case:
+
+### Local Execution
+
+**Best for:** Development, testing, small-scale workflows on your workstation or a single server
+
+- Jobs run directly on the machine where you start the job runner
+- No scheduler needed — simple setup with `torc run`
+- Resource management via local CPU/memory/GPU tracking
+- **→ [Quick Start (Local)](quick-start-local.md)**
+
+### HPC/Slurm
+
+**Best for:** Large-scale computations on institutional HPC clusters
+
+- Jobs submitted to Slurm scheduler for compute node allocation
+- Automatic resource matching to partitions/QOS
+- Built-in profiles for common HPC systems
+- **→ [Quick Start (HPC/Slurm)](quick-start-hpc.md)**
+
+### Remote Workers
+
+**Best for:** Distributed execution across multiple machines you control via SSH
+
+- Jobs distributed to remote workers over SSH
+- No HPC scheduler required — you manage the machines
+- Flexible heterogeneous resources (mix of CPU/GPU machines)
+- **→ [Quick Start (Remote Workers)](quick-start-remote.md)**
+
+---
+
+**All three modes:**
+
+- Share the same workflow specification format
+- Use the same server API for coordination
+- Support the same monitoring tools (CLI, TUI, Dashboard)
+- Can be used together (e.g., develop locally, deploy to HPC)
 
 Continue to the [Quick Start](./quick-start.md) guide to run your first workflow.

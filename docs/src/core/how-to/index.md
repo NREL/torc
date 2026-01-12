@@ -2,7 +2,6 @@
 
 Step-by-step guides for common tasks.
 
-- [Submit a Workflow to Slurm](./submit-slurm-workflow.md) - Running workflows on HPC clusters
 - [Track Workflow Status](./track-workflow-status.md) - Monitoring workflow progress
 - [Cancel a Workflow](./cancel-workflow.md) - Stopping running workflows
 - [View Job Logs](./view-job-logs.md) - Accessing job output

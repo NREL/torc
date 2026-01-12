@@ -83,6 +83,10 @@ pub struct WatchArgs {
     pub auto_schedule_cooldown: u64,
     /// Maximum time to wait before scheduling stranded retry jobs (in seconds)
     pub auto_schedule_stranded_timeout: u64,
+    /// [EXPERIMENTAL] Enable AI-assisted recovery for pending_failed jobs
+    pub ai_recovery: bool,
+    /// AI agent CLI to use for --ai-recovery (e.g., "claude")
+    pub ai_agent: String,
 }
 
 /// Get job counts by status for a workflow
@@ -668,10 +672,12 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         let failed = *counts.get("Failed").unwrap_or(&0);
         let canceled = *counts.get("Canceled").unwrap_or(&0);
         let terminated = *counts.get("Terminated").unwrap_or(&0);
+        let pending_failed = *counts.get("PendingFailed").unwrap_or(&0);
 
         let needs_recovery = failed > 0 || canceled > 0 || terminated > 0;
+        let has_pending_failed = pending_failed > 0;
 
-        if !needs_recovery {
+        if !needs_recovery && !has_pending_failed {
             info!("\n✓ Workflow completed successfully ({} jobs)", completed);
             break;
         }
@@ -680,7 +686,65 @@ pub fn run_watch(config: &Configuration, args: &WatchArgs) {
         warn!("  - Failed: {}", failed);
         warn!("  - Canceled: {}", canceled);
         warn!("  - Terminated: {}", terminated);
+        if has_pending_failed {
+            warn!(
+                "  - Pending Failed: {} (awaiting AI classification)",
+                pending_failed
+            );
+        }
         warn!("  - Completed: {}", completed);
+
+        // Handle pending_failed jobs if --ai-recovery is enabled
+        if has_pending_failed {
+            if args.ai_recovery {
+                info!(
+                    "\n[EXPERIMENTAL] AI recovery: {} job(s) in pending_failed status",
+                    pending_failed
+                );
+                info!("These jobs failed without a matching failure handler rule.");
+
+                // Invoke the AI agent to classify pending_failed jobs
+                match super::recover::invoke_ai_agent(
+                    args.workflow_id,
+                    &args.ai_agent,
+                    &args.output_dir,
+                ) {
+                    Ok(()) => {
+                        info!("AI agent completed classification, continuing...");
+                        // Continue the loop to re-poll and check status
+                        continue;
+                    }
+                    Err(e) => {
+                        warn!("AI agent invocation failed: {}", e);
+                        warn!("You can manually classify jobs using the torc MCP server:");
+                        warn!("  1. list_pending_failed_jobs - View jobs with their stderr");
+                        warn!("  2. classify_and_resolve_failures - Apply retry/fail decisions");
+                        warn!(
+                            "Or reset them manually: torc workflows reset-status {} --failed-only",
+                            args.workflow_id
+                        );
+                        // Exit if only pending_failed jobs (no other failures to auto-recover)
+                        if !needs_recovery {
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            } else {
+                warn!(
+                    "\n{} job(s) in pending_failed status (awaiting classification)",
+                    pending_failed
+                );
+                warn!("Use --ai-recovery to enable AI-assisted classification via MCP tools.");
+                warn!(
+                    "Or reset them manually: torc workflows reset-status {} --failed-only",
+                    args.workflow_id
+                );
+                // Exit if only pending_failed jobs (no other failures to auto-recover)
+                if !needs_recovery {
+                    std::process::exit(1);
+                }
+            }
+        }
 
         // Check if we should attempt recovery
         if !args.recover {

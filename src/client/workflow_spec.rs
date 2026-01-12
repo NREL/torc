@@ -682,6 +682,9 @@ pub struct WorkflowSpec {
     /// Actions to execute based on workflow/job state transitions
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actions: Option<Vec<WorkflowActionSpec>>,
+    /// Use PendingFailed status for failed jobs (enables AI-assisted recovery)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_pending_failed: Option<bool>,
 }
 
 impl WorkflowSpec {
@@ -712,6 +715,7 @@ impl WorkflowSpec {
             slurm_defaults: None,
             resource_monitor: None,
             actions: None,
+            use_pending_failed: None,
         }
     }
 
@@ -1687,6 +1691,11 @@ impl WorkflowSpec {
             let config_json = serde_json::to_string(slurm_defaults)
                 .map_err(|e| format!("Failed to serialize slurm_defaults config: {}", e))?;
             workflow_model.slurm_defaults = Some(config_json);
+        }
+
+        // Set use_pending_failed if present
+        if let Some(value) = spec.use_pending_failed {
+            workflow_model.use_pending_failed = Some(value);
         }
 
         let created_workflow = default_api::create_workflow(config, workflow_model)
@@ -3384,6 +3393,11 @@ impl WorkflowSpec {
                         Self::kdl_slurm_defaults_to_json(node)?,
                     );
                 }
+                "use_pending_failed" => {
+                    if let Some(v) = node.entries().first().and_then(|e| e.value().as_bool()) {
+                        obj.insert("use_pending_failed".to_string(), serde_json::Value::Bool(v));
+                    }
+                }
                 _ => {
                     // Ignore unknown nodes
                 }
@@ -4525,6 +4539,7 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
             resource_monitor: None,
             actions: None,
             failure_handlers: None,
+            use_pending_failed: None,
         };
 
         spec.expand_parameters()

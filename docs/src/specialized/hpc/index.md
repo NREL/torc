@@ -2,7 +2,7 @@
 
 Running Torc workflows on HPC clusters with Slurm.
 
-- [Quick Start (HPC)](./quick-start-hpc.md) - Get started with HPC workflows
+- [Submit a Workflow to Slurm](./submit-slurm-workflow.md) - Running workflows on HPC clusters
 - [Slurm Workflows](./slurm-workflows.md) - Configuring Slurm-based workflows
 - [Debugging Slurm Workflows](./debugging-slurm.md) - Troubleshooting Slurm issues
 - [Working with Slurm](./slurm.md) - Slurm integration details

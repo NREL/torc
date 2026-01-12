@@ -452,3 +452,93 @@ details.
 
 - Failure handlers for immediate, exit-code-specific recovery
 - `torc watch --recover` for workflow-level resource adjustments and allocation recovery
+
+## Recovery Outcome and pending_failed Status
+
+When `try_recover_job` is called, it returns a `RecoveryOutcome` enum that determines the final job
+status:
+
+```rust
+pub enum RecoveryOutcome {
+    /// Job was successfully scheduled for retry
+    Retried,
+    /// No failure handler defined - use PendingFailed status
+    NoHandler,
+    /// Failure handler exists but no rule matched - use PendingFailed status
+    NoMatchingRule,
+    /// Max retries exceeded - use Failed status
+    MaxRetriesExceeded,
+    /// API call or other error - use Failed status
+    Error(String),
+}
+```
+
+### Status Assignment Flow
+
+```mermaid
+flowchart TD
+    FAIL["Job fails"]
+    TRY["try_recover_job()"]
+    RETRIED{"Outcome?"}
+    READY["Status: ready<br/>attempt_id += 1"]
+    PENDING["Status: pending_failed"]
+    FAILED["Status: failed"]
+
+    FAIL --> TRY
+    TRY --> RETRIED
+    RETRIED -->|Retried| READY
+    RETRIED -->|NoHandler / NoMatchingRule| PENDING
+    RETRIED -->|MaxRetriesExceeded / Error| FAILED
+
+    style FAIL fill:#dc3545,color:#fff
+    style READY fill:#28a745,color:#fff
+    style PENDING fill:#ffc107,color:#000
+    style FAILED fill:#6c757d,color:#fff
+```
+
+### pending_failed Status (value 10)
+
+The `pending_failed` status is a new job state that indicates:
+
+1. The job failed with a non-zero exit code
+2. No failure handler rule matched the exit code
+3. The job is awaiting classification (retry or fail)
+
+**Key properties:**
+
+- **Not terminal**: Workflow is not considered complete while jobs are `pending_failed`
+- **Downstream blocked**: Dependent jobs remain in `blocked` status (not canceled)
+- **Resettable**: `reset-status --failed-only` includes `pending_failed` jobs
+
+### Integration with AI-Assisted Recovery
+
+Jobs in `pending_failed` status can be classified by an AI agent using MCP tools:
+
+```mermaid
+sequenceDiagram
+    participant JR as JobRunner
+    participant API as Torc API
+    participant MCP as torc-mcp-server
+    participant AI as AI Agent
+
+    JR->>API: complete_job(status=pending_failed)
+    Note over JR,API: Job awaiting classification
+
+    AI->>MCP: list_pending_failed_jobs(workflow_id)
+    MCP->>API: GET /jobs?status=pending_failed
+    API-->>MCP: Jobs with stderr content
+    MCP-->>AI: Pending jobs + stderr
+
+    AI->>AI: Analyze error patterns
+    AI->>MCP: classify_and_resolve_failures(classifications)
+
+    alt action = retry
+        MCP->>API: PUT /jobs/{id} status=ready
+        Note over API: Triggers re-execution
+    else action = fail
+        MCP->>API: PUT /jobs/{id} status=failed
+        Note over API: Triggers downstream cancellation
+    end
+```
+
+See [AI-Assisted Recovery Design](./ai-assisted-recovery.md) for full details.

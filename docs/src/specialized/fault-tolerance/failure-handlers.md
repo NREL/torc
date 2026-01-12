@@ -480,6 +480,81 @@ These examples use:
   codes
 - `examples/scripts/recovery_demo.sh` - A recovery script that logs actions
 
+## What Happens Without a Matching Handler
+
+When a job fails with an exit code that doesn't match any failure handler rule, the job enters
+`pending_failed` status instead of `failed`. This provides an opportunity for intelligent recovery:
+
+```mermaid
+flowchart TD
+    FAIL["Job fails<br/>(exit code 1)"]
+    MATCH{"Failure handler<br/>rule matches?"}
+    RETRY["Retry via<br/>failure handler"]
+    PENDING["Status: pending_failed<br/>Awaiting classification"]
+    AI["AI agent or user<br/>classifies error"]
+    TRANSIENT["Retry<br/>(transient error)"]
+    PERMANENT["Fail<br/>(permanent error)"]
+
+    FAIL --> MATCH
+    MATCH -->|Yes| RETRY
+    MATCH -->|No| PENDING
+    PENDING --> AI
+    AI -->|Transient| TRANSIENT
+    AI -->|Permanent| PERMANENT
+
+    style FAIL fill:#dc3545,color:#fff
+    style RETRY fill:#28a745,color:#fff
+    style PENDING fill:#ffc107,color:#000
+    style AI fill:#4a9eff,color:#fff
+    style TRANSIENT fill:#28a745,color:#fff
+    style PERMANENT fill:#6c757d,color:#fff
+```
+
+### Benefits of pending_failed
+
+1. **No immediate cascade**: Downstream jobs stay blocked instead of being canceled
+2. **Time to analyze**: Errors can be reviewed before deciding retry vs fail
+3. **AI-assisted recovery**: MCP tools allow AI agents to classify errors intelligently
+
+### Handling pending_failed Jobs
+
+**Option 1: Manual reset**
+
+```bash
+# Reset all pending_failed jobs (along with failed/canceled/terminated)
+torc workflows reset-status $WORKFLOW_ID --failed-only
+```
+
+**Option 2: AI-assisted classification**
+
+Use an AI agent with the torc MCP server:
+
+1. `list_pending_failed_jobs` - See jobs with their stderr
+2. `classify_and_resolve_failures` - Apply retry/fail decisions
+
+See [AI-Assisted Recovery](./ai-assisted-recovery.md) for details.
+
+**Option 3: Catch-all failure handler**
+
+To prevent `pending_failed` status entirely, add a catch-all rule:
+
+```yaml
+failure_handlers:
+  - name: comprehensive_recovery
+    rules:
+      # Specific handling for known codes
+      - exit_codes: [10, 11]
+        recovery_script: ./recover.sh
+        max_retries: 3
+
+      # Catch-all for any other failures
+      - match_all_exit_codes: true
+        max_retries: 1
+```
+
+With `match_all_exit_codes: true`, all failures are handled by the failure handler and will never
+reach `pending_failed` status.
+
 ## Summary
 
 Failure handlers provide fine-grained control over job retry behavior:
@@ -488,6 +563,7 @@ Failure handlers provide fine-grained control over job retry behavior:
 - **Run recovery scripts** before retry
 - **Limit retries** to prevent infinite loops
 - **Share handlers** across multiple jobs
+- **Unmatched failures** enter `pending_failed` for AI-assisted or manual classification
 
 Use failure handlers for immediate, exit-code-specific recovery, and combine with
 `torc watch --recover` for comprehensive workflow resilience.
