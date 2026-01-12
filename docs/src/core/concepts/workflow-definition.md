@@ -157,7 +157,7 @@ With `use_pending_failed: true`:
 
 - Jobs without matching failure handlers get `PendingFailed` status
 - AI agent can analyze stderr and decide whether to retry or fail
-- See [AI-Assisted Recovery](../../specialized/design/ai-assisted-recovery.md) for details
+- See [AI-Assisted Recovery](../../specialized/fault-tolerance/ai-assisted-recovery.md) for details
 
 ## See Also
 

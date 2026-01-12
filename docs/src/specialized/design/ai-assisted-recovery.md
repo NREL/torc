@@ -370,6 +370,14 @@ pub fn classify_and_resolve_failures(
     classifications: Vec<FailureClassification>,
     dry_run: bool,
 ) -> Result<CallToolResult, McpError> {
+    // 0. Validate workflow has use_pending_failed enabled
+    let workflow = get_workflow(config, workflow_id)?;
+    if !workflow.use_pending_failed.unwrap_or(false) {
+        return Err(invalid_params(
+            "Workflow does not have use_pending_failed enabled"
+        ));
+    }
+
     for classification in &classifications {
         // 1. Validate job is in pending_failed status
         // 2. Apply resource adjustments if specified
@@ -379,6 +387,12 @@ pub fn classify_and_resolve_failures(
     }
 }
 ```
+
+**Validation:**
+
+The tool validates that the workflow has `use_pending_failed: true` before allowing any
+classifications. This prevents accidental modification of workflows that don't opt into AI-assisted
+recovery.
 
 ## Integration with reset-status
 

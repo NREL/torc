@@ -1213,21 +1213,21 @@ pub fn list_pending_failed_jobs(
         .and_then(|items| items.into_iter().next());
 
         // Try to read stderr tail (last 50 lines)
-        let stderr_tail = if let Some(ref res) = result {
+        let (stderr_tail, stderr_read_error) = if let Some(ref res) = result {
             let run_id = res.run_id;
             let attempt_id = job.attempt_id.unwrap_or(1);
             let stderr_path =
                 log_paths::get_job_stderr_path(output_dir, workflow_id, job_id, run_id, attempt_id);
-            fs::read_to_string(&stderr_path)
-                .ok()
-                .map(|content| {
+            match fs::read_to_string(&stderr_path) {
+                Ok(content) => {
                     let lines: Vec<&str> = content.lines().collect();
                     let start = lines.len().saturating_sub(50);
-                    lines[start..].join("\n")
-                })
-                .unwrap_or_default()
+                    (lines[start..].join("\n"), None)
+                }
+                Err(e) => (String::new(), Some(format!("Failed to read stderr: {}", e))),
+            }
         } else {
-            String::new()
+            (String::new(), Some("No result found".to_string()))
         };
 
         pending_jobs.push(serde_json::json!({
@@ -1238,6 +1238,7 @@ pub fn list_pending_failed_jobs(
             "return_code": result.as_ref().map(|r| r.return_code),
             "exec_time_minutes": result.as_ref().map(|r| r.exec_time_minutes),
             "stderr_tail": stderr_tail,
+            "stderr_read_error": stderr_read_error,
         }));
     }
 
@@ -1287,6 +1288,26 @@ pub fn classify_and_resolve_failures(
     classifications: Vec<FailureClassification>,
     dry_run: bool,
 ) -> Result<CallToolResult, McpError> {
+    // Check if workflow has use_pending_failed enabled
+    let workflow = match default_api::get_workflow(config, workflow_id) {
+        Ok(w) => w,
+        Err(e) => {
+            return Err(internal_error(format!(
+                "Failed to get workflow {}: {}",
+                workflow_id, e
+            )));
+        }
+    };
+
+    if !workflow.use_pending_failed.unwrap_or(false) {
+        return Err(invalid_params(&format!(
+            "Workflow {} does not have use_pending_failed enabled. \
+             AI-assisted recovery is disabled for this workflow. \
+             Jobs will use Failed status instead of PendingFailed.",
+            workflow_id
+        )));
+    }
+
     let mut results: Vec<serde_json::Value> = Vec::new();
     let mut jobs_to_retry: Vec<i64> = Vec::new();
     let mut jobs_to_fail: Vec<i64> = Vec::new();
@@ -1339,32 +1360,45 @@ pub fn classify_and_resolve_failures(
             }));
         } else {
             // Apply resource adjustments if specified
-            if (classification.memory.is_some() || classification.runtime.is_some())
+            let resource_adjustment_warning = if (classification.memory.is_some()
+                || classification.runtime.is_some())
                 && action == "retry"
-                && let Some(req_id) = job.resource_requirements_id
-                && let Ok(mut reqs) = default_api::get_resource_requirements(config, req_id)
             {
-                if let Some(ref mem) = classification.memory {
-                    reqs.memory = mem.clone();
+                if let Some(req_id) = job.resource_requirements_id {
+                    match default_api::get_resource_requirements(config, req_id) {
+                        Ok(mut reqs) => {
+                            if let Some(ref mem) = classification.memory {
+                                reqs.memory = mem.clone();
+                            }
+                            if let Some(ref rt) = classification.runtime {
+                                reqs.runtime = rt.clone();
+                            }
+                            match default_api::update_resource_requirements(
+                                config,
+                                req_id,
+                                ResourceRequirementsModel {
+                                    id: reqs.id,
+                                    workflow_id: reqs.workflow_id,
+                                    name: reqs.name.clone(),
+                                    num_cpus: reqs.num_cpus,
+                                    num_gpus: reqs.num_gpus,
+                                    num_nodes: reqs.num_nodes,
+                                    memory: reqs.memory.clone(),
+                                    runtime: reqs.runtime.clone(),
+                                },
+                            ) {
+                                Ok(_) => None,
+                                Err(e) => Some(format!("Failed to update resources: {}", e)),
+                            }
+                        }
+                        Err(e) => Some(format!("Failed to get resource requirements: {}", e)),
+                    }
+                } else {
+                    Some("No resource requirements defined for this job".to_string())
                 }
-                if let Some(ref rt) = classification.runtime {
-                    reqs.runtime = rt.clone();
-                }
-                let _ = default_api::update_resource_requirements(
-                    config,
-                    req_id,
-                    ResourceRequirementsModel {
-                        id: reqs.id,
-                        workflow_id: reqs.workflow_id,
-                        name: reqs.name.clone(),
-                        num_cpus: reqs.num_cpus,
-                        num_gpus: reqs.num_gpus,
-                        num_nodes: reqs.num_nodes,
-                        memory: reqs.memory.clone(),
-                        runtime: reqs.runtime.clone(),
-                    },
-                );
-            }
+            } else {
+                None
+            };
 
             if action == "retry" {
                 jobs_to_retry.push(job_id);
@@ -1372,13 +1406,17 @@ pub fn classify_and_resolve_failures(
                 jobs_to_fail.push(job_id);
             }
 
-            results.push(serde_json::json!({
+            let mut job_result = serde_json::json!({
                 "job_id": job_id,
                 "job_name": job.name,
                 "action": action,
                 "reason": classification.reason,
                 "status": "pending_application",
-            }));
+            });
+            if let Some(warning) = resource_adjustment_warning {
+                job_result["resource_adjustment_warning"] = serde_json::json!(warning);
+            }
+            results.push(job_result);
         }
     }
 
@@ -1391,22 +1429,35 @@ pub fn classify_and_resolve_failures(
                 .args(["jobs", "update", &job_id.to_string(), "--status", "ready"])
                 .output();
 
-            if let Ok(out) = output
-                && !out.status.success()
-            {
-                let stderr = String::from_utf8_lossy(&out.stderr);
-                // Update the result for this job
-                for r in &mut results {
-                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
-                        r["status"] = serde_json::json!("error");
-                        r["message"] =
-                            serde_json::json!(format!("Failed to reset job: {}", stderr.trim()));
+            match output {
+                Ok(out) if out.status.success() => {
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("applied");
+                        }
                     }
                 }
-            } else {
-                for r in &mut results {
-                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
-                        r["status"] = serde_json::json!("applied");
+                Ok(out) => {
+                    let stderr = String::from_utf8_lossy(&out.stderr);
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("error");
+                            r["message"] = serde_json::json!(format!(
+                                "Failed to reset job: {}",
+                                stderr.trim()
+                            ));
+                        }
+                    }
+                }
+                Err(e) => {
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("error");
+                            r["message"] = serde_json::json!(format!(
+                                "Failed to spawn 'torc' command: {}. Is torc in PATH?",
+                                e
+                            ));
+                        }
                     }
                 }
             }
@@ -1418,23 +1469,35 @@ pub fn classify_and_resolve_failures(
                 .args(["jobs", "update", &job_id.to_string(), "--status", "failed"])
                 .output();
 
-            if let Ok(out) = output
-                && !out.status.success()
-            {
-                let stderr = String::from_utf8_lossy(&out.stderr);
-                for r in &mut results {
-                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
-                        r["status"] = serde_json::json!("error");
-                        r["message"] = serde_json::json!(format!(
-                            "Failed to mark as failed: {}",
-                            stderr.trim()
-                        ));
+            match output {
+                Ok(out) if out.status.success() => {
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("applied");
+                        }
                     }
                 }
-            } else {
-                for r in &mut results {
-                    if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
-                        r["status"] = serde_json::json!("applied");
+                Ok(out) => {
+                    let stderr = String::from_utf8_lossy(&out.stderr);
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("error");
+                            r["message"] = serde_json::json!(format!(
+                                "Failed to mark as failed: {}",
+                                stderr.trim()
+                            ));
+                        }
+                    }
+                }
+                Err(e) => {
+                    for r in &mut results {
+                        if r.get("job_id").and_then(|v| v.as_i64()) == Some(*job_id) {
+                            r["status"] = serde_json::json!("error");
+                            r["message"] = serde_json::json!(format!(
+                                "Failed to spawn 'torc' command: {}. Is torc in PATH?",
+                                e
+                            ));
+                        }
                     }
                 }
             }

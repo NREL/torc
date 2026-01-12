@@ -245,6 +245,7 @@ fn test_invoke_ai_agent_unsupported() {
 /// This test creates a temporary mock "claude" command and tests the invocation
 #[rstest]
 #[cfg(unix)]
+#[serial_test::serial] // Serialize tests that modify PATH
 fn test_invoke_ai_agent_mock() {
     use std::fs;
     use tempfile::TempDir;
