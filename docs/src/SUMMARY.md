@@ -50,6 +50,7 @@
   - [Working with Logs](./core/monitoring/working-with-logs.md)
 - [Reference](./core/reference/index.md)
   - [CLI Reference](./core/reference/cli.md)
+  - [Workflow Specification](./core/reference/workflow-spec.md)
   - [Job Parameterization](./core/reference/parameterization.md)
   - [Resource Requirements](./core/reference/resources.md)
   - [Environment Variables](./core/reference/environment-variables.md)

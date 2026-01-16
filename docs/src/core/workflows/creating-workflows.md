@@ -36,7 +36,8 @@ torc submit workflow.yaml
 ```
 
 For format syntax and examples, see the [Workflow Specification Formats](./workflow-formats.md)
-reference.
+guide. For a complete reference of all fields, see the
+[Workflow Specification Reference](../reference/workflow-spec.md).
 
 ## Using the CLI (Step by Step)
 
@@ -395,5 +396,7 @@ For a complete walkthrough, see [Tutorial: Diamond Workflow](../tutorials/diamon
 - [Tutorial: Diamond Workflow](../tutorials/diamond.md) - Learn file-based dependencies with the
   fan-out/fan-in pattern
 - [Workflow Specification Formats](./workflow-formats.md) - Detailed format reference
+- [Workflow Specification Reference](../reference/workflow-spec.md) - Complete field reference for
+  all data models
 - [Job Parameterization](../reference/parameterization.md) - Generate multiple jobs from templates
 - [Tutorial: Many Independent Jobs](../tutorials/many-jobs.md) - Your first workflow

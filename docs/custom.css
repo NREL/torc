@@ -3,3 +3,8 @@
 ol.section ol.section > li.chapter-item strong {
     display: none;
 }
+
+/* Increase content width to accommodate wide tables */
+.content main {
+    max-width: 1200px;
+}
