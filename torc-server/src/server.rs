@@ -5315,10 +5315,10 @@ where
         let event_type = format!("job_{}", status.to_string().to_lowercase());
         let severity = match status {
             models::JobStatus::Completed => models::EventSeverity::Info,
-            models::JobStatus::Failed | models::JobStatus::Terminated => {
-                models::EventSeverity::Error
+            models::JobStatus::Failed => models::EventSeverity::Error,
+            models::JobStatus::Terminated | models::JobStatus::Canceled => {
+                models::EventSeverity::Warning
             }
-            models::JobStatus::Canceled => models::EventSeverity::Warning,
             _ => models::EventSeverity::Info,
         };
         self.event_broadcaster.broadcast(BroadcastEvent {

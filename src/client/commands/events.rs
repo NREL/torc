@@ -50,10 +50,12 @@ impl From<&models::EventModel> for EventJsonOutput {
 
 #[derive(Tabled)]
 struct EventTableRow {
-    #[tabled(rename = "ID")]
-    id: i64,
     #[tabled(rename = "Timestamp")]
     timestamp: String,
+    #[tabled(rename = "Level")]
+    level: String,
+    #[tabled(rename = "Event Type")]
+    event_type: String,
     #[tabled(rename = "Data")]
     data: String,
 }
@@ -65,7 +67,7 @@ EXAMPLES:
     torc events list 123
 
     # Monitor events in real-time
-    torc events monitor 123 --poll-interval 30
+    torc events monitor 123 --type job_started
 
     # Get JSON output
     torc -f json events list 123
@@ -88,16 +90,16 @@ EXAMPLES:
     #[command(after_long_help = "\
 EXAMPLES:
     torc events list 123
-    torc events list 123 --category job_completion
+    torc events list 123 --type user_action
     torc -f json events list 123
 ")]
     List {
         /// List events for this workflow (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Filter events by category
-        #[arg(short, long)]
-        category: Option<String>,
+        /// Filter events by type or category
+        #[arg(short = 't', long = "type", alias = "category")]
+        event_type: Option<String>,
         /// Maximum number of events to return
         #[arg(short, long, default_value = "10000")]
         limit: i64,
@@ -115,7 +117,7 @@ EXAMPLES:
     #[command(after_long_help = "\
 EXAMPLES:
     torc events monitor 123
-    torc events monitor 123 --poll-interval 30 --duration 60
+    torc events monitor 123 --level warning --filename events.log
 ")]
     Monitor {
         /// Monitor events for this workflow (optional - will prompt if not provided)
@@ -124,12 +126,12 @@ EXAMPLES:
         /// Duration to monitor in minutes (default: infinite)
         #[arg(short, long)]
         duration: Option<i64>,
-        /// Poll interval in seconds (default: 60)
-        #[arg(short, long, default_value = "60")]
-        poll_interval: i64,
-        /// Filter events by category
-        #[arg(short, long)]
-        category: Option<String>,
+        /// Filter events by level (default: info). Values: debug, info, warning, error
+        #[arg(long, default_value = "info")]
+        level: Option<models::EventSeverity>,
+        /// Log events to this file
+        #[arg(long)]
+        filename: Option<String>,
     },
     /// Get the latest event for a workflow
     GetLatestEvent {
@@ -193,7 +195,7 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         }
         EventCommands::List {
             workflow_id,
-            category,
+            event_type,
             limit,
             offset,
             sort_by,
@@ -209,8 +211,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 .with_offset(*offset)
                 .with_limit(*limit);
 
-            if let Some(category_str) = category {
-                params = params.with_category(category_str.clone());
+            if let Some(event_type_str) = event_type {
+                params = params.with_category(event_type_str.clone());
             }
 
             if let Some(sort_by_str) = sort_by {
@@ -231,11 +233,31 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                         println!("Events for workflow {}:", selected_workflow_id);
                         let rows: Vec<EventTableRow> = events
                             .iter()
-                            .map(|event| EventTableRow {
-                                id: event.id.unwrap_or(-1),
-                                timestamp: format_timestamp_ms(event.timestamp),
-                                data: serde_json::to_string(&event.data)
-                                    .unwrap_or_else(|_| "Unable to display".to_string()),
+                            .map(|event| {
+                                let etype = event
+                                    .data
+                                    .get("category")
+                                    .or_else(|| event.data.get("event_type"))
+                                    .or_else(|| event.data.get("type"))
+                                    .or_else(|| event.data.get("action"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("-")
+                                    .to_string();
+                                let level = event
+                                    .data
+                                    .get("severity")
+                                    .or_else(|| event.data.get("level"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("info")
+                                    .to_string();
+
+                                EventTableRow {
+                                    timestamp: format_timestamp_ms(event.timestamp),
+                                    level,
+                                    event_type: etype,
+                                    data: serde_json::to_string(&event.data)
+                                        .unwrap_or_else(|_| "Unable to display".to_string()),
+                                }
                             })
                             .collect();
                         display_table_with_count(&rows, "events");
@@ -250,8 +272,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         EventCommands::Monitor {
             workflow_id,
             duration,
-            poll_interval,
-            category,
+            level,
+            filename,
         } => {
             let user_name = get_env_user_name();
             let selected_workflow_id = match workflow_id {
@@ -263,8 +285,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 config,
                 selected_workflow_id,
                 *duration,
-                *poll_interval,
-                category,
+                *level,
+                filename.clone(),
                 format,
             );
         }
@@ -343,6 +365,7 @@ struct SseEventJsonOutput {
     timestamp: i64,
     timestamp_formatted: String,
     event_type: String,
+    severity: models::EventSeverity,
     data: serde_json::Value,
 }
 
@@ -353,6 +376,7 @@ impl From<&SseEvent> for SseEventJsonOutput {
             timestamp: event.timestamp,
             timestamp_formatted: format_timestamp_ms(event.timestamp),
             event_type: event.event_type.clone(),
+            severity: event.severity,
             data: event.data.clone(),
         }
     }
@@ -362,8 +386,8 @@ fn handle_monitor_events(
     config: &Configuration,
     workflow_id: i64,
     duration: Option<i64>,
-    _poll_interval: i64, // Kept for backwards compatibility but not used with SSE
-    category: &Option<String>,
+    level: Option<models::EventSeverity>,
+    filename: Option<String>,
     format: &str,
 ) {
     let start_time = Instant::now();
@@ -378,14 +402,32 @@ fn handle_monitor_events(
         }
     );
 
-    if let Some(cat) = category {
-        eprintln!("Filtering by event type: {}", cat);
+    if let Some(lvl) = level {
+        eprintln!("Filtering by level: {}", lvl);
+    }
+
+    if let Some(ref fname) = filename {
+        eprintln!("Logging events to file: {}", fname);
     }
 
     eprintln!("Press Ctrl+C to stop monitoring\n");
 
+    // Open log file if specified
+    let mut log_file = if let Some(ref fname) = filename {
+        use std::fs::OpenOptions;
+        match OpenOptions::new().create(true).append(true).open(fname) {
+            Ok(file) => Some(file),
+            Err(e) => {
+                eprintln!("Failed to open log file '{}': {}", fname, e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        None
+    };
+
     // Connect to SSE endpoint
-    let mut connection = match SseConnection::connect(config, workflow_id, None) {
+    let mut connection = match SseConnection::connect(config, workflow_id, level) {
         Ok(conn) => conn,
         Err(e) => {
             eprintln!("Failed to connect to SSE endpoint: {}", e);
@@ -411,25 +453,42 @@ fn handle_monitor_events(
         // Read next event from SSE stream
         match connection.next_event() {
             Ok(Some(event)) => {
-                // Filter by category/event_type if specified
-                if let Some(cat) = category
-                    && !event.event_type.contains(cat)
-                {
-                    continue;
-                }
+                // Note: Level filtering is handled by the server via query param,
+                // but we could also filter client-side if needed.
 
                 // Output the event
                 if format == "json" {
                     let json_event = SseEventJsonOutput::from(&event);
+                    let json_str = serde_json::to_string(&json_event).unwrap_or_default();
+
                     print_json(&json_event, "event");
+
+                    // Also write to log file if enabled
+                    if let Some(ref mut file) = log_file {
+                        use std::io::Write;
+                        if let Err(e) = writeln!(file, "{}", json_str) {
+                            eprintln!("Error writing to log file: {}", e);
+                        }
+                    }
                 } else {
-                    println!(
-                        "[{}] {}: {}",
+                    let output_str = format!(
+                        "[{}] [{}] {}: {}",
                         format_timestamp_ms(event.timestamp),
+                        event.severity,
                         event.event_type,
                         serde_json::to_string(&event.data)
                             .unwrap_or_else(|_| "Unable to display".to_string())
                     );
+
+                    println!("{}", output_str);
+
+                    // Also write to log file if enabled
+                    if let Some(ref mut file) = log_file {
+                        use std::io::Write;
+                        if let Err(e) = writeln!(file, "{}", output_str) {
+                            eprintln!("Error writing to log file: {}", e);
+                        }
+                    }
                 }
             }
             Ok(None) => {

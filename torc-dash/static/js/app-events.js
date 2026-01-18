@@ -82,7 +82,7 @@ Object.assign(TorcDashboard.prototype, {
 
         // Handle specific event types
         ['job_started', 'job_completed', 'job_failed', 'job_canceled', 'job_terminated',
-         'job_pending', 'job_running', 'job_blocked', 'job_ready', 'job_uninitialized',
+         'job_blocked', 'job_ready', 'job_uninitialized',
          'compute_node_started', 'compute_node_stopped', 'workflow_started', 
          'workflow_reinitialized', 'scheduler_node_created', 'warning'].forEach(eventType => {
             this._eventSource.addEventListener(eventType, (event) => {
@@ -152,18 +152,28 @@ Object.assign(TorcDashboard.prototype, {
                 <thead>
                     <tr>
                         <th>Timestamp</th>
+                        <th>Level</th>
                         <th>Event Type</th>
                         <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${this.events.map(event => `
+                    ${this.events.map(event => {
+                        let severityClass = '';
+                        const severity = (event.severity || 'info').toLowerCase();
+                        if (severity === 'error') severityClass = 'status-failed';
+                        else if (severity === 'warning') severityClass = 'status-pending'; // Yellow
+                        else if (severity === 'info') severityClass = 'status-success'; // Green
+                        
+                        return `
                         <tr>
                             <td>${this.formatTimestamp(event.timestamp)}</td>
+                            <td><span class="status-badge ${severityClass}">${this.escapeHtml(severity)}</span></td>
                             <td><code>${this.escapeHtml(event.event_type || '-')}</code></td>
                             <td><pre class="event-data">${this.escapeHtml(JSON.stringify(event.data, null, 2))}</pre></td>
                         </tr>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
         `;

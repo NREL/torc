@@ -620,19 +620,32 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
         .fg(Color::Yellow)
         .add_modifier(Modifier::BOLD);
 
-    let header = Row::new(vec!["Event Type", "Data", "Timestamp"])
+    let header = Row::new(vec!["Timestamp", "Level", "Event Type", "Data"])
         .style(header_style)
         .bottom_margin(1);
 
     let rows = app.events.iter().map(|event| {
+        let timestamp = format_timestamp_ms(event.timestamp);
+        let severity_str = event.severity.to_string();
         let event_type = &event.event_type;
         let data = event.data.to_string();
-        let timestamp = format_timestamp_ms(event.timestamp);
+
+        let severity_color = match severity_str.to_lowercase().as_str() {
+            "error" => Color::Red,
+            "warning" => Color::Yellow,
+            "info" => Color::Green,
+            "debug" => Color::Blue,
+            _ => Color::White,
+        };
 
         Row::new(vec![
+            Cell::from(timestamp),
+            Cell::from(Span::styled(
+                severity_str,
+                Style::default().fg(severity_color),
+            )),
             Cell::from(event_type.clone()),
             Cell::from(data),
-            Cell::from(timestamp),
         ])
     });
 
@@ -665,9 +678,10 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
     let table = Table::new(
         rows,
         [
-            Constraint::Length(25),
-            Constraint::Percentage(55),
-            Constraint::Length(20),
+            Constraint::Length(20),     // Timestamp
+            Constraint::Length(10),     // Level
+            Constraint::Length(25),     // Event Type
+            Constraint::Percentage(55), // Data
         ],
     )
     .header(header)
