@@ -3,6 +3,7 @@
 //! This module provides a broadcast channel for real-time event distribution to
 //! connected SSE clients. Events are ephemeral and not persisted to the database.
 
+use crate::models::EventSeverity;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -16,6 +17,8 @@ pub struct BroadcastEvent {
     pub timestamp: i64,
     /// The type of event (e.g., "job_started", "job_completed", "job_failed").
     pub event_type: String,
+    /// The severity level of the event.
+    pub severity: EventSeverity,
     /// Event-specific data as JSON.
     pub data: serde_json::Value,
 }
@@ -75,6 +78,7 @@ mod tests {
             workflow_id: 1,
             timestamp: 1234567890,
             event_type: "job_started".to_string(),
+            severity: EventSeverity::Info,
             data: serde_json::json!({"job_id": 42}),
         };
 
@@ -83,6 +87,7 @@ mod tests {
         let received = receiver.recv().await.unwrap();
         assert_eq!(received.workflow_id, 1);
         assert_eq!(received.event_type, "job_started");
+        assert_eq!(received.severity, EventSeverity::Info);
     }
 
     #[tokio::test]
@@ -94,6 +99,7 @@ mod tests {
             workflow_id: 1,
             timestamp: 1234567890,
             event_type: "test".to_string(),
+            severity: EventSeverity::Debug,
             data: serde_json::json!({}),
         };
 
@@ -110,6 +116,7 @@ mod tests {
             workflow_id: 1,
             timestamp: 1234567890,
             event_type: "test".to_string(),
+            severity: EventSeverity::Warning,
             data: serde_json::json!({"value": 123}),
         };
 
@@ -120,5 +127,6 @@ mod tests {
 
         assert_eq!(received1.workflow_id, received2.workflow_id);
         assert_eq!(received1.event_type, received2.event_type);
+        assert_eq!(received1.severity, received2.severity);
     }
 }

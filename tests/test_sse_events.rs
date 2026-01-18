@@ -106,6 +106,70 @@ fn test_sse_stream_404_for_nonexistent_workflow(start_server: &ServerProcess) {
     );
 }
 
+#[rstest]
+fn test_sse_stream_receives_event(start_server: &ServerProcess) {
+    let config = &start_server.config;
+
+    // Create a workflow
+    let workflow = create_workflow_with_user(config, "sse-read-workflow", "test_user");
+    let workflow_id = workflow.id.unwrap();
+
+    // Start SSE connection asynchronously (in a separate thread)
+    let client = Client::new();
+    let url = format!(
+        "{}/workflows/{}/events/stream",
+        config.base_path, workflow_id
+    );
+
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    std::thread::spawn(move || {
+        let response = client
+            .get(&url)
+            .header("Accept", "text/event-stream")
+            .send()
+            .expect("Failed to connect to SSE");
+
+        use std::io::BufRead;
+        let reader = std::io::BufReader::new(response);
+        for line in reader.lines() {
+            let line = line.expect("Failed to read line");
+            if line.starts_with("event: ") {
+                tx.send(line).expect("Failed to send event");
+                return; // Exit after first event for this test
+            }
+        }
+    });
+
+    // Trigger an event by creating a compute node
+    // Wait a bit for connection to be established
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    let compute_node = models::ComputeNodeModel::new(
+        workflow_id,
+        "sse-test-host".to_string(),
+        12345,
+        chrono::Utc::now().to_rfc3339(),
+        4,
+        8.0,
+        0,
+        1,
+        "local".to_string(),
+        None,
+    );
+    default_api::create_compute_node(config, compute_node).expect("Failed to create compute node");
+
+    // Wait for event
+    match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+        Ok(line) => {
+            assert!(line.contains("event: compute_node_started"));
+        }
+        Err(_) => {
+            panic!("Timed out waiting for SSE event");
+        }
+    }
+}
+
 // ============================================================================
 // SSE Events Stream Tests (with access control)
 // ============================================================================

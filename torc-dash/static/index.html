@@ -211,14 +211,7 @@
                             <option value="">All Workflows</option>
                         </select>
                         <button class="btn btn-secondary" id="btn-clear-events">Clear</button>
-                        <label class="toggle-label">
-                            <input type="checkbox" id="auto-refresh-events" checked>
-                            Auto-refresh
-                        </label>
-                        <label class="poll-interval-label">
-                            <input type="number" id="events-poll-interval" class="poll-interval-input" value="10" min="1" max="300">
-                            sec
-                        </label>
+                        <span id="events-status" class="status-disconnected">○ Disconnected</span>
                     </div>
                 </div>
                 <div class="events-container" id="events-container">

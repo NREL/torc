@@ -2020,7 +2020,7 @@ impl App {
                 ..Default::default()
             };
 
-            match crate::client::sse_client::SseConnection::connect(&config, workflow_id) {
+            match crate::client::sse_client::SseConnection::connect(&config, workflow_id, None) {
                 Ok(mut connection) => {
                     loop {
                         match connection.next_event() {

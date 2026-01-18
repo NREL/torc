@@ -23,7 +23,7 @@ tower-http.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "process", "io-util"] }
 
 # HTTP client for proxying
-reqwest = { workspace = true, features = ["json"] }
+reqwest = { workspace = true, features = ["json", "stream"] }
 
 # Serialization
 serde = { workspace = true }
@@ -47,6 +47,7 @@ mime_guess.workspace = true
 
 # Streaming
 async-stream = "0.3"
+futures = { workspace = true }
 
 # Date/time
 chrono = "0.4"

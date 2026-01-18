@@ -2108,6 +2108,7 @@ where
                 workflow_id: body.workflow_id,
                 timestamp: chrono::Utc::now().timestamp_millis(),
                 event_type: "compute_node_started".to_string(),
+                severity: models::EventSeverity::Info,
                 data: serde_json::json!({
                     "compute_node_id": created.id,
                     "hostname": body.hostname,
@@ -2425,6 +2426,7 @@ where
                 workflow_id,
                 timestamp: chrono::Utc::now().timestamp_millis(),
                 event_type: "scheduler_node_created".to_string(),
+                severity: models::EventSeverity::Info,
                 data: serde_json::json!({
                     "category": "scheduler",
                     "scheduled_compute_node_id": created.id,
@@ -3983,6 +3985,7 @@ where
             workflow_id: id,
             timestamp: chrono::Utc::now().timestamp_millis(),
             event_type: event_type.to_string(),
+            severity: models::EventSeverity::Info,
             data: serde_json::json!({
                 "category": "workflow",
                 "type": event_type,
@@ -4062,6 +4065,7 @@ where
                 workflow_id: body.workflow_id,
                 timestamp: chrono::Utc::now().timestamp_millis(),
                 event_type: "compute_node_stopped".to_string(),
+                severity: models::EventSeverity::Info,
                 data: serde_json::json!({
                     "compute_node_id": id,
                     "hostname": body.hostname,
@@ -5146,6 +5150,7 @@ where
             workflow_id: job.workflow_id,
             timestamp: chrono::Utc::now().timestamp_millis(),
             event_type: "job_started".to_string(),
+            severity: models::EventSeverity::Info,
             data: serde_json::json!({
                 "job_id": id,
                 "job_name": job.name,
@@ -5308,10 +5313,19 @@ where
 
         // 5. Broadcast job completion event to SSE clients (ephemeral, not persisted to DB)
         let event_type = format!("job_{}", status.to_string().to_lowercase());
+        let severity = match status {
+            models::JobStatus::Completed => models::EventSeverity::Info,
+            models::JobStatus::Failed | models::JobStatus::Terminated => {
+                models::EventSeverity::Error
+            }
+            models::JobStatus::Canceled => models::EventSeverity::Warning,
+            _ => models::EventSeverity::Info,
+        };
         self.event_broadcaster.broadcast(BroadcastEvent {
             workflow_id: job.workflow_id,
             timestamp: chrono::Utc::now().timestamp_millis(),
             event_type,
+            severity,
             data: serde_json::json!({
                 "job_id": id,
                 "job_name": job.name,

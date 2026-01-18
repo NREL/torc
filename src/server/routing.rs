@@ -14788,6 +14788,25 @@ where
                             .expect("Unable to create Bad Request response for invalid percent decode"))
                     };
 
+                    // Parse query parameters
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+
+                    let param_level = query_params
+                        .iter()
+                        .filter(|e| e.0 == "level")
+                        .map(|e| e.1.clone())
+                        .next();
+
+                    let min_severity = match param_level {
+                        Some(level_str) => match level_str.parse::<models::EventSeverity>() {
+                            Ok(lvl) => lvl,
+                            Err(_) => models::EventSeverity::Info, // Default if invalid
+                        },
+                        None => models::EventSeverity::Info, // Default
+                    };
+
                     // Check authorization by attempting to get the workflow
                     // This verifies the workflow exists and the user has access
                     match api_impl.get_workflow(param_workflow_id, &context).await {
@@ -14844,13 +14863,13 @@ where
                     let stream = async_stream::stream! {
                         loop {
                             match receiver.recv().await {
-                                Ok(event) if event.workflow_id == param_workflow_id => {
+                                Ok(event) if event.workflow_id == param_workflow_id && event.severity >= min_severity => {
                                     let data = serde_json::to_string(&event).unwrap_or_default();
                                     yield Ok::<_, std::convert::Infallible>(
                                         format!("event: {}\ndata: {}\n\n", event.event_type, data)
                                     );
                                 }
-                                Ok(_) => continue,  // Different workflow, skip
+                                Ok(_) => continue,  // Different workflow or filtered by severity, skip
                                 Err(broadcast::error::RecvError::Lagged(n)) => {
                                     // Some events were dropped due to slow consumer
                                     yield Ok::<_, std::convert::Infallible>(

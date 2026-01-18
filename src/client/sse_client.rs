@@ -4,6 +4,7 @@
 //! receiving real-time job events from the server.
 
 use crate::client::apis::configuration::Configuration;
+use crate::models::EventSeverity;
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 use std::time::Duration;
@@ -17,6 +18,8 @@ pub struct SseEvent {
     pub timestamp: i64,
     /// The type of event (e.g., "job_started", "job_completed", "job_failed").
     pub event_type: String,
+    /// The severity level of the event.
+    pub severity: EventSeverity,
     /// Event-specific data as JSON.
     pub data: serde_json::Value,
 }
@@ -69,21 +72,45 @@ impl SseConnection {
     ///
     /// This establishes a blocking HTTP connection to the SSE endpoint
     /// and returns a connection that can be used to receive events.
-    pub fn connect(config: &Configuration, workflow_id: i64) -> Result<Self, SseError> {
-        let url = format!(
+    pub fn connect(
+        config: &Configuration,
+        workflow_id: i64,
+        level: Option<EventSeverity>,
+    ) -> Result<Self, SseError> {
+        let mut url = format!(
             "{}/workflows/{}/events/stream",
             config.base_path, workflow_id
         );
+
+        if let Some(lvl) = level {
+            url.push_str(&format!("?level={}", lvl));
+        }
 
         // Use blocking client for simplicity
         let client = reqwest::blocking::Client::builder()
             .timeout(None) // No timeout for SSE connection
             .build()?;
 
-        let response = client
-            .get(&url)
-            .header("Accept", "text/event-stream")
-            .send()?;
+        // Build request and apply authentication from Configuration
+        let mut request = client.get(&url).header("Accept", "text/event-stream");
+
+        // Apply basic authentication if configured
+        if let Some((ref username, ref password)) = config.basic_auth {
+            request = request.basic_auth(username.clone(), password.clone());
+        // Apply bearer token authentication if configured
+        } else if let Some(ref token) = config.bearer_access_token {
+            request = request.bearer_auth(token.clone());
+        // Apply API key authentication if configured
+        } else if let Some(ref api_key) = config.api_key {
+            // If ApiKey has an optional prefix, include it (e.g., "Token <key>")
+            let value = match api_key.prefix {
+                Some(ref prefix) => format!("{} {}", prefix, api_key.key),
+                None => api_key.key.clone(),
+            };
+            request = request.header("X-API-KEY", value);
+        }
+
+        let response = request.send()?;
 
         if !response.status().is_success() {
             return Err(SseError::Parse(format!(
@@ -136,6 +163,7 @@ impl SseConnection {
                                     workflow_id: 0,
                                     timestamp: chrono::Utc::now().timestamp_millis(),
                                     event_type: "warning".to_string(),
+                                    severity: EventSeverity::Warning,
                                     data: serde_json::from_str(&data)
                                         .unwrap_or(serde_json::json!({"raw": data})),
                                 }));
@@ -173,13 +201,14 @@ impl SseConnection {
 pub fn stream_events<F>(
     config: &Configuration,
     workflow_id: i64,
+    level: Option<EventSeverity>,
     duration: Option<Duration>,
     mut callback: F,
 ) -> Result<(), SseError>
 where
     F: FnMut(SseEvent),
 {
-    let mut connection = SseConnection::connect(config, workflow_id)?;
+    let mut connection = SseConnection::connect(config, workflow_id, level)?;
     let start = std::time::Instant::now();
 
     loop {
@@ -207,11 +236,13 @@ mod tests {
             "workflow_id": 123,
             "timestamp": 1234567890,
             "event_type": "job_started",
+            "severity": "info",
             "data": {"job_id": 42}
         }"#;
 
         let event: SseEvent = serde_json::from_str(json).unwrap();
         assert_eq!(event.workflow_id, 123);
         assert_eq!(event.event_type, "job_started");
+        assert_eq!(event.severity, EventSeverity::Info);
     }
 }

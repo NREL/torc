@@ -31,30 +31,9 @@ Object.assign(TorcDashboard.prototype, {
             this.renderEvents();
         });
 
-        document.getElementById('auto-refresh-events')?.addEventListener('change', (e) => {
-            const workflowId = document.getElementById('events-workflow-selector')?.value;
-            if (e.target.checked && workflowId) {
-                this.startEventStream(workflowId);
-            } else {
-                this.stopEventStream();
-            }
-        });
-
-        // Remove poll interval handler - SSE is real-time
-        const pollIntervalInput = document.getElementById('events-poll-interval');
-        if (pollIntervalInput) {
-            pollIntervalInput.style.display = 'none';
-            // Hide the label too if it exists
-            const label = pollIntervalInput.previousElementSibling;
-            if (label && label.tagName === 'LABEL') {
-                label.style.display = 'none';
-            }
-        }
-
-        // Auto-start if checkbox is checked and a workflow is selected
-        const autoRefresh = document.getElementById('auto-refresh-events');
+        // Auto-start if a workflow is selected
         const workflowId = document.getElementById('events-workflow-selector')?.value;
-        if (autoRefresh?.checked && workflowId) {
+        if (workflowId) {
             this.startEventStream(workflowId);
         }
     },
@@ -102,9 +81,10 @@ Object.assign(TorcDashboard.prototype, {
         };
 
         // Handle specific event types
-        ['job_started', 'job_completed', 'job_failed', 'compute_node_started',
-         'compute_node_stopped', 'workflow_started', 'workflow_reinitialized',
-         'scheduler_node_created', 'warning'].forEach(eventType => {
+        ['job_started', 'job_completed', 'job_failed', 'job_canceled', 'job_terminated',
+         'job_pending', 'job_running', 'job_blocked', 'job_ready', 'job_uninitialized',
+         'compute_node_started', 'compute_node_stopped', 'workflow_started', 
+         'workflow_reinitialized', 'scheduler_node_created', 'warning'].forEach(eventType => {
             this._eventSource.addEventListener(eventType, (event) => {
                 try {
                     const sseEvent = JSON.parse(event.data);
@@ -171,16 +151,16 @@ Object.assign(TorcDashboard.prototype, {
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Event Type</th>
                         <th>Timestamp</th>
+                        <th>Event Type</th>
                         <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${this.events.map(event => `
                         <tr>
-                            <td><code>${this.escapeHtml(event.event_type || '-')}</code></td>
                             <td>${this.formatTimestamp(event.timestamp)}</td>
+                            <td><code>${this.escapeHtml(event.event_type || '-')}</code></td>
                             <td><pre class="event-data">${this.escapeHtml(JSON.stringify(event.data, null, 2))}</pre></td>
                         </tr>
                     `).join('')}

@@ -479,7 +479,6 @@ async fn proxy_handler(
             let status = StatusCode::from_u16(resp.status().as_u16())
                 .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
             let headers = resp.headers().clone();
-            let body = resp.bytes().await.unwrap_or_default();
 
             let mut response = Response::builder().status(status);
 
@@ -487,7 +486,12 @@ async fn proxy_handler(
                 response = response.header(name, value);
             }
 
-            response.body(Body::from(body)).unwrap().into_response()
+            // Stream the body instead of buffering it
+            let stream = resp.bytes_stream();
+            response
+                .body(Body::from_stream(stream))
+                .unwrap()
+                .into_response()
         }
         Err(e) => {
             error!("Proxy request failed: {}", e);

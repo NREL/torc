@@ -9,6 +9,52 @@ use serde_json;
 // Self-reference for models module
 use crate::models;
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    Default,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum EventSeverity {
+    Debug,
+    #[default]
+    Info,
+    Warning,
+    Error,
+}
+
+impl std::fmt::Display for EventSeverity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventSeverity::Debug => write!(f, "debug"),
+            EventSeverity::Info => write!(f, "info"),
+            EventSeverity::Warning => write!(f, "warning"),
+            EventSeverity::Error => write!(f, "error"),
+        }
+    }
+}
+
+impl std::str::FromStr for EventSeverity {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "debug" => Ok(EventSeverity::Debug),
+            "info" => Ok(EventSeverity::Info),
+            "warning" => Ok(EventSeverity::Warning),
+            "error" => Ok(EventSeverity::Error),
+            _ => Err(format!("Invalid severity level: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
 pub struct CreateJobsResponse {

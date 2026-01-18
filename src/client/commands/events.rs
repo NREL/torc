@@ -385,7 +385,7 @@ fn handle_monitor_events(
     eprintln!("Press Ctrl+C to stop monitoring\n");
 
     // Connect to SSE endpoint
-    let mut connection = match SseConnection::connect(config, workflow_id) {
+    let mut connection = match SseConnection::connect(config, workflow_id, None) {
         Ok(conn) => conn,
         Err(e) => {
             eprintln!("Failed to connect to SSE endpoint: {}", e);
