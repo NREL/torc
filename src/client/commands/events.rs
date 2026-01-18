@@ -1,5 +1,4 @@
-use std::thread;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Instant;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
@@ -9,6 +8,7 @@ use crate::client::commands::pagination::{EventListParams, paginate_events};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
+use crate::client::sse_client::{SseConnection, SseEvent};
 use crate::models;
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
@@ -50,10 +50,12 @@ impl From<&models::EventModel> for EventJsonOutput {
 
 #[derive(Tabled)]
 struct EventTableRow {
-    #[tabled(rename = "ID")]
-    id: i64,
     #[tabled(rename = "Timestamp")]
     timestamp: String,
+    #[tabled(rename = "Level")]
+    level: String,
+    #[tabled(rename = "Event Type")]
+    event_type: String,
     #[tabled(rename = "Data")]
     data: String,
 }
@@ -65,7 +67,7 @@ EXAMPLES:
     torc events list 123
 
     # Monitor events in real-time
-    torc events monitor 123 --poll-interval 30
+    torc events monitor 123 --type job_started
 
     # Get JSON output
     torc -f json events list 123
@@ -88,16 +90,16 @@ EXAMPLES:
     #[command(after_long_help = "\
 EXAMPLES:
     torc events list 123
-    torc events list 123 --category job_completion
+    torc events list 123 --type user_action
     torc -f json events list 123
 ")]
     List {
         /// List events for this workflow (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Filter events by category
-        #[arg(short, long)]
-        category: Option<String>,
+        /// Filter events by type or category
+        #[arg(short = 't', long = "type", alias = "category")]
+        event_type: Option<String>,
         /// Maximum number of events to return
         #[arg(short, long, default_value = "10000")]
         limit: i64,
@@ -115,7 +117,7 @@ EXAMPLES:
     #[command(after_long_help = "\
 EXAMPLES:
     torc events monitor 123
-    torc events monitor 123 --poll-interval 30 --duration 60
+    torc events monitor 123 --level warning --filename events.log
 ")]
     Monitor {
         /// Monitor events for this workflow (optional - will prompt if not provided)
@@ -124,12 +126,12 @@ EXAMPLES:
         /// Duration to monitor in minutes (default: infinite)
         #[arg(short, long)]
         duration: Option<i64>,
-        /// Poll interval in seconds (default: 60)
-        #[arg(short, long, default_value = "60")]
-        poll_interval: i64,
-        /// Filter events by category
-        #[arg(short, long)]
-        category: Option<String>,
+        /// Filter events by level (default: info). Values: debug, info, warning, error
+        #[arg(long, default_value = "info")]
+        level: Option<models::EventSeverity>,
+        /// Log events to this file
+        #[arg(long)]
+        filename: Option<String>,
     },
     /// Get the latest event for a workflow
     GetLatestEvent {
@@ -193,7 +195,7 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         }
         EventCommands::List {
             workflow_id,
-            category,
+            event_type,
             limit,
             offset,
             sort_by,
@@ -209,8 +211,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 .with_offset(*offset)
                 .with_limit(*limit);
 
-            if let Some(category_str) = category {
-                params = params.with_category(category_str.clone());
+            if let Some(event_type_str) = event_type {
+                params = params.with_category(event_type_str.clone());
             }
 
             if let Some(sort_by_str) = sort_by {
@@ -231,11 +233,31 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                         println!("Events for workflow {}:", selected_workflow_id);
                         let rows: Vec<EventTableRow> = events
                             .iter()
-                            .map(|event| EventTableRow {
-                                id: event.id.unwrap_or(-1),
-                                timestamp: format_timestamp_ms(event.timestamp),
-                                data: serde_json::to_string(&event.data)
-                                    .unwrap_or_else(|_| "Unable to display".to_string()),
+                            .map(|event| {
+                                let etype = event
+                                    .data
+                                    .get("category")
+                                    .or_else(|| event.data.get("event_type"))
+                                    .or_else(|| event.data.get("type"))
+                                    .or_else(|| event.data.get("action"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("-")
+                                    .to_string();
+                                let level = event
+                                    .data
+                                    .get("severity")
+                                    .or_else(|| event.data.get("level"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("info")
+                                    .to_string();
+
+                                EventTableRow {
+                                    timestamp: format_timestamp_ms(event.timestamp),
+                                    level,
+                                    event_type: etype,
+                                    data: serde_json::to_string(&event.data)
+                                        .unwrap_or_else(|_| "Unable to display".to_string()),
+                                }
                             })
                             .collect();
                         display_table_with_count(&rows, "events");
@@ -250,8 +272,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
         EventCommands::Monitor {
             workflow_id,
             duration,
-            poll_interval,
-            category,
+            level,
+            filename,
         } => {
             let user_name = get_env_user_name();
             let selected_workflow_id = match workflow_id {
@@ -263,8 +285,8 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
                 config,
                 selected_workflow_id,
                 *duration,
-                *poll_interval,
-                category,
+                *level,
+                filename.clone(),
                 format,
             );
         }
@@ -336,65 +358,88 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
     }
 }
 
+/// Event output format for SSE events (for JSON output)
+#[derive(Serialize, Deserialize)]
+struct SseEventJsonOutput {
+    workflow_id: i64,
+    timestamp: i64,
+    timestamp_formatted: String,
+    event_type: String,
+    severity: models::EventSeverity,
+    data: serde_json::Value,
+}
+
+impl From<&SseEvent> for SseEventJsonOutput {
+    fn from(event: &SseEvent) -> Self {
+        SseEventJsonOutput {
+            workflow_id: event.workflow_id,
+            timestamp: event.timestamp,
+            timestamp_formatted: format_timestamp_ms(event.timestamp),
+            event_type: event.event_type.clone(),
+            severity: event.severity,
+            data: event.data.clone(),
+        }
+    }
+}
+
 fn handle_monitor_events(
     config: &Configuration,
     workflow_id: i64,
     duration: Option<i64>,
-    poll_interval: i64,
-    category: &Option<String>,
+    level: Option<models::EventSeverity>,
+    filename: Option<String>,
     format: &str,
 ) {
-    // Get the latest event timestamp to start monitoring from (in milliseconds since epoch)
-    // Use list_events with limit=1 and reverse_sort=true to get the newest event
-    let mut last_timestamp_ms: i64 = match default_api::list_events(
-        config,
-        workflow_id,
-        None,       // offset
-        Some(1),    // limit to 1 event
-        Some("id"), // sort by id
-        Some(true), // reverse sort (newest first)
-        None,       // category
-        None,       // after_timestamp
-    ) {
-        Ok(response) => {
-            // Extract the timestamp from the latest event
-            response
-                .items
-                .and_then(|items| items.first().map(|e| e.timestamp))
-                .unwrap_or(0)
-        }
-        Err(e) => {
-            // If there are no events yet, start from 0
-            eprintln!(
-                "Note: No events found yet, starting from epoch. Error: {:?}",
-                e
-            );
-            0
-        }
-    };
-
     let start_time = Instant::now();
     let duration_seconds = duration.map(|d| d * 60); // Convert minutes to seconds
 
     eprintln!(
-        "Monitoring events for workflow {} (poll interval: {}s{})",
+        "Monitoring events for workflow {} via SSE (real-time streaming{})",
         workflow_id,
-        poll_interval,
         match duration {
             Some(d) => format!(", duration: {} minutes", d),
             None => String::from(", duration: infinite"),
         }
     );
 
-    if let Some(cat) = category {
-        println!("Filtering by category: {}", cat);
+    if let Some(lvl) = level {
+        eprintln!("Filtering by level: {}", lvl);
     }
 
-    eprintln!(
-        "Starting from timestamp: {}",
-        format_timestamp_ms(last_timestamp_ms)
-    );
+    if let Some(ref fname) = filename {
+        eprintln!("Logging events to file: {}", fname);
+    }
+
     eprintln!("Press Ctrl+C to stop monitoring\n");
+
+    // Open log file if specified
+    let mut log_file = if let Some(ref fname) = filename {
+        use std::fs::OpenOptions;
+        match OpenOptions::new().create(true).append(true).open(fname) {
+            Ok(file) => Some(file),
+            Err(e) => {
+                eprintln!("Failed to open log file '{}': {}", fname, e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        None
+    };
+
+    // Connect to SSE endpoint
+    let mut connection = match SseConnection::connect(config, workflow_id, level) {
+        Ok(conn) => conn,
+        Err(e) => {
+            eprintln!("Failed to connect to SSE endpoint: {}", e);
+            eprintln!(
+                "Make sure the server supports SSE at /workflows/{}/events/stream",
+                workflow_id
+            );
+            std::process::exit(1);
+        }
+    };
+
+    eprintln!("Connected to SSE stream. Waiting for events...\n");
 
     loop {
         // Check if we've exceeded the duration
@@ -405,50 +450,56 @@ fn handle_monitor_events(
             break;
         }
 
-        // Fetch events after the last timestamp (timestamp is in milliseconds)
-        match default_api::list_events(
-            config,
-            workflow_id,
-            None, // offset
-            None, // limit (get all new events)
-            None, // sort_by
-            None, // reverse_sort
-            category.as_deref(),
-            Some(last_timestamp_ms),
-        ) {
-            Ok(response) => {
-                if let Some(events) = response.items
-                    && !events.is_empty()
-                {
-                    // Process new events
-                    for event in &events {
-                        if format == "json" {
-                            let json_event = EventJsonOutput::from(event);
-                            print_json(&json_event, "event");
-                        } else {
-                            println!(
-                                "[{}] Event ID {}: {}",
-                                format_timestamp_ms(event.timestamp),
-                                event.id.unwrap_or(-1),
-                                serde_json::to_string(&event.data)
-                                    .unwrap_or_else(|_| "Unable to display".to_string())
-                            );
+        // Read next event from SSE stream
+        match connection.next_event() {
+            Ok(Some(event)) => {
+                // Note: Level filtering is handled by the server via query param,
+                // but we could also filter client-side if needed.
+
+                // Output the event
+                if format == "json" {
+                    let json_event = SseEventJsonOutput::from(&event);
+                    let json_str = serde_json::to_string(&json_event).unwrap_or_default();
+
+                    print_json(&json_event, "event");
+
+                    // Also write to log file if enabled
+                    if let Some(ref mut file) = log_file {
+                        use std::io::Write;
+                        if let Err(e) = writeln!(file, "{}", json_str) {
+                            eprintln!("Error writing to log file: {}", e);
                         }
                     }
+                } else {
+                    let output_str = format!(
+                        "[{}] [{}] {}: {}",
+                        format_timestamp_ms(event.timestamp),
+                        event.severity,
+                        event.event_type,
+                        serde_json::to_string(&event.data)
+                            .unwrap_or_else(|_| "Unable to display".to_string())
+                    );
 
-                    // Update last_timestamp_ms to the newest event's timestamp
-                    // Timestamp is now stored as i64 milliseconds, no parsing needed
-                    if let Some(latest_event) = events.last() {
-                        last_timestamp_ms = latest_event.timestamp;
+                    println!("{}", output_str);
+
+                    // Also write to log file if enabled
+                    if let Some(ref mut file) = log_file {
+                        use std::io::Write;
+                        if let Err(e) = writeln!(file, "{}", output_str) {
+                            eprintln!("Error writing to log file: {}", e);
+                        }
                     }
                 }
             }
+            Ok(None) => {
+                // Connection closed
+                eprintln!("\nSSE connection closed by server.");
+                break;
+            }
             Err(e) => {
-                eprintln!("Error fetching events: {:?}", e);
+                eprintln!("\nError reading SSE stream: {}", e);
+                break;
             }
         }
-
-        // Sleep for poll_interval seconds
-        thread::sleep(StdDuration::from_secs(poll_interval as u64));
     }
 }

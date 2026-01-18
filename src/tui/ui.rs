@@ -620,29 +620,45 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
         .fg(Color::Yellow)
         .add_modifier(Modifier::BOLD);
 
-    let header = Row::new(vec!["ID", "Workflow ID", "Data", "Timestamp"])
+    let header = Row::new(vec!["Timestamp", "Level", "Event Type", "Data"])
         .style(header_style)
         .bottom_margin(1);
 
     let rows = app.events.iter().map(|event| {
-        let id = event.id.map(|i| i.to_string()).unwrap_or_default();
-        let workflow_id = event.workflow_id.to_string();
-        let data = event.data.to_string();
         let timestamp = format_timestamp_ms(event.timestamp);
+        let severity_str = event.severity.to_string();
+        let event_type = &event.event_type;
+        let data = event.data.to_string();
+
+        let severity_color = match severity_str.to_lowercase().as_str() {
+            "error" => Color::Red,
+            "warning" => Color::Yellow,
+            "info" => Color::Green,
+            "debug" => Color::Blue,
+            _ => Color::White,
+        };
 
         Row::new(vec![
-            Cell::from(id),
-            Cell::from(workflow_id),
-            Cell::from(data),
             Cell::from(timestamp),
+            Cell::from(Span::styled(
+                severity_str,
+                Style::default().fg(severity_color),
+            )),
+            Cell::from(event_type.clone()),
+            Cell::from(data),
         ])
     });
 
+    let event_count = app.events.len();
     let (title, border_style) = if is_focused {
         (
             Line::from(vec![
                 Span::styled("⚡ ", Style::default().fg(Color::Green)),
-                Span::styled("Events", Style::default().fg(Color::White)),
+                Span::styled(
+                    format!("Events ({})", event_count),
+                    Style::default().fg(Color::White),
+                ),
+                Span::styled(" [SSE Live]", Style::default().fg(Color::Green)),
             ]),
             Style::default().fg(Color::Green),
         )
@@ -650,7 +666,10 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
         (
             Line::from(vec![
                 Span::styled("⚡ ", Style::default().fg(Color::Cyan)),
-                Span::styled("Events", Style::default().fg(Color::White)),
+                Span::styled(
+                    format!("Events ({})", event_count),
+                    Style::default().fg(Color::White),
+                ),
             ]),
             Style::default().fg(Color::DarkGray),
         )
@@ -659,10 +678,10 @@ fn draw_events_table(f: &mut Frame, area: Rect, app: &mut App) {
     let table = Table::new(
         rows,
         [
-            Constraint::Length(8),
-            Constraint::Length(12),
-            Constraint::Percentage(60),
-            Constraint::Length(20),
+            Constraint::Length(20),     // Timestamp
+            Constraint::Length(10),     // Level
+            Constraint::Length(25),     // Event Type
+            Constraint::Percentage(55), // Data
         ],
     )
     .header(header)

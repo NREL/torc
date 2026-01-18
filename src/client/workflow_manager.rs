@@ -5,7 +5,7 @@ use crate::config::TorcConfig;
 use log::{self, debug, error, info, warn};
 
 use crate::client::commands::pagination::{FileListParams, JobListParams, iter_files, iter_jobs};
-use crate::models::{EventModel, FileModel, JobStatus, WorkflowModel};
+use crate::models::{FileModel, JobStatus, WorkflowModel};
 use std::fs;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
@@ -21,21 +21,15 @@ pub struct WorkflowManager {
     config: Configuration,
     torc_config: TorcConfig,
     pub workflow_id: i64,
-    hostname: String,
 }
 
 impl WorkflowManager {
     pub fn new(config: Configuration, torc_config: TorcConfig, workflow: WorkflowModel) -> Self {
         let workflow_id = workflow.id.expect("Workflow ID must be present");
-        let hostname = hostname::get()
-            .expect("Failed to get hostname")
-            .into_string()
-            .expect("Hostname is not valid UTF-8");
         WorkflowManager {
             config,
             torc_config,
             workflow_id,
-            hostname,
         }
     }
 
@@ -161,19 +155,11 @@ impl WorkflowManager {
                 return Err(TorcError::ApiError(err.to_string()));
             }
         }
-        let run_id = self.bump_run_id()?;
+        let _run_id = self.bump_run_id()?;
         self.initialize_files()?;
         self.initialize_jobs(false)?;
-        let event_data = serde_json::json!({
-            "category": "workflow",
-            "type": "start",
-            "user": std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_else(|_| "unknown".to_string()),
-            "hostname": self.hostname,
-            "run_id": run_id,
-            "message": format!("Started workflow on {}", self.workflow_id),
-        });
-        let event = EventModel::new(self.workflow_id, event_data);
-        self.create_event(event)
+        // Event is now broadcast via SSE from the server
+        Ok(())
     }
 
     /// Start the workflow: initialize if needed and schedule nodes for on_workflow_start actions
@@ -316,17 +302,6 @@ impl WorkflowManager {
         Ok(())
     }
 
-    /// Create an event in this workflow. Errors are ignored.
-    fn create_event(&self, event: EventModel) -> Result<(), TorcError> {
-        match default_api::create_event(&self.config, event) {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                warn!("Failed to create event: {}", err);
-                Ok(())
-            }
-        }
-    }
-
     /// Reinitialize the workflow. Reset workflow status, bump run_id, and run startup script.
     pub fn reinitialize(&self, force: bool, dry_run: bool) -> Result<(), TorcError> {
         self.check_workflow(force)?;
@@ -346,17 +321,8 @@ impl WorkflowManager {
             }
         }
         self.reinitialize_jobs(dry_run)?;
-        let run_id = self.get_run_id()?;
-        let event_data = serde_json::json!({
-            "category": "workflow",
-            "type": "reinitialize",
-            "user": std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_else(|_| "unknown".to_string()),
-            "hostname": self.hostname,
-            "run_id": run_id,
-            "message": format!("Reinitialized workflow on {}", self.workflow_id),
-        });
-        let event = EventModel::new(self.workflow_id, event_data);
-        self.create_event(event)
+        // Event is now broadcast via SSE from the server
+        Ok(())
     }
 
     /// Increment the run_id field of the workflow.

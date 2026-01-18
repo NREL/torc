@@ -13,7 +13,7 @@ workflows, offering an intuitive alternative to the command-line interface.
 - **Debug failed jobs** with integrated log file viewer
 - **Generate resource plots** from time series monitoring data
 - **Manage torc-server** start/stop in standalone mode
-- **View events** with automatic polling for updates
+- **Live event streaming** via Server-Sent Events (SSE) for real-time job and compute node events
 
 ## Installation
 
@@ -145,14 +145,19 @@ Investigate failed jobs with the integrated debugger:
    - **stderr**: Error output and stack traces
    - Copy file paths with one click
 
-### Events Tab
+### Events Tab (SSE Live Streaming)
 
-Monitor workflow activity:
+Monitor workflow activity in real-time using Server-Sent Events (SSE):
 
-- Real-time event stream with automatic polling
-- Filter by workflow
-- View event types, timestamps, and details
-- Useful for tracking job state transitions
+- **Live event streaming** - events appear instantly without polling
+- **Connection status indicator** - shows Live/Reconnecting/Disconnected status
+- **Event types displayed**:
+  - `job_started` / `job_completed` / `job_failed` - Job lifecycle events
+  - `compute_node_started` / `compute_node_stopped` - Worker node lifecycle
+  - `workflow_started` / `workflow_reinitialized` - Workflow initialization events
+  - `scheduler_node_created` - Slurm scheduler events
+- **Clear button** to reset the event list
+- **Auto-reconnect** on connection loss
 
 ### Resource Plots Tab
 

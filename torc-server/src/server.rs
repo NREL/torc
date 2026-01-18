@@ -42,6 +42,7 @@ use torc::server::api::database_error;
 use torc::server::api_types::*;
 use torc::server::auth::MakeHtpasswdAuthenticator;
 use torc::server::authorization::{AccessCheckResult, AuthorizationService};
+use torc::server::event_broadcast::{BroadcastEvent, EventBroadcaster};
 use torc::server::htpasswd::HtpasswdFile;
 use tracing::instrument;
 
@@ -613,6 +614,8 @@ pub struct Server<C> {
     workflows_with_failures: Arc<std::sync::RwLock<std::collections::HashSet<i64>>>,
     /// Authorization service for access control checks
     authorization_service: AuthorizationService,
+    /// Event broadcaster for SSE clients
+    event_broadcaster: EventBroadcaster,
     access_groups_api: AccessGroupsApiImpl,
     compute_nodes_api: ComputeNodesApiImpl,
     events_api: EventsApiImpl,
@@ -645,6 +648,7 @@ impl<C> Server<C> {
                 std::collections::HashSet::new(),
             )),
             authorization_service,
+            event_broadcaster: EventBroadcaster::new(512),
             access_groups_api: AccessGroupsApiImpl::new(api_context.clone()),
             compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
             events_api: EventsApiImpl::new(api_context.clone()),
@@ -668,6 +672,11 @@ impl<C> Server<C> {
             .map(|d| d.as_millis() as u64)
             .unwrap_or(1);
         self.last_completion_time.store(now, Ordering::Release);
+    }
+
+    /// Get a reference to the event broadcaster for SSE subscriptions.
+    pub fn get_event_broadcaster(&self) -> &EventBroadcaster {
+        &self.event_broadcaster
     }
 
     /// Create an association between a job and a file.
@@ -2088,9 +2097,31 @@ where
             ));
         }
 
-        self.compute_nodes_api
-            .create_compute_node(body, context)
-            .await
+        let result = self
+            .compute_nodes_api
+            .create_compute_node(body.clone(), context)
+            .await?;
+
+        // Broadcast SSE event for compute node creation (start)
+        if let CreateComputeNodeResponse::SuccessfulResponse(ref created) = result {
+            self.event_broadcaster.broadcast(BroadcastEvent {
+                workflow_id: body.workflow_id,
+                timestamp: chrono::Utc::now().timestamp_millis(),
+                event_type: "compute_node_started".to_string(),
+                severity: models::EventSeverity::Info,
+                data: serde_json::json!({
+                    "compute_node_id": created.id,
+                    "hostname": body.hostname,
+                    "pid": body.pid,
+                    "num_cpus": body.num_cpus,
+                    "memory_gb": body.memory_gb,
+                    "num_gpus": body.num_gpus,
+                    "compute_node_type": body.compute_node_type,
+                }),
+            });
+        }
+
+        Ok(result)
     }
 
     /// Store an event.
@@ -2379,9 +2410,35 @@ where
             ));
         }
 
-        self.schedulers_api
+        let workflow_id = body.workflow_id;
+        let scheduler_id = body.scheduler_id;
+        let scheduler_config_id = body.scheduler_config_id;
+        let scheduler_type = body.scheduler_type.clone();
+
+        let result = self
+            .schedulers_api
             .create_scheduled_compute_node(body, context)
-            .await
+            .await?;
+
+        // Broadcast SSE event for scheduled compute node creation
+        if let CreateScheduledComputeNodeResponse::SuccessfulResponse(ref created) = result {
+            self.event_broadcaster.broadcast(BroadcastEvent {
+                workflow_id,
+                timestamp: chrono::Utc::now().timestamp_millis(),
+                event_type: "scheduler_node_created".to_string(),
+                severity: models::EventSeverity::Info,
+                data: serde_json::json!({
+                    "category": "scheduler",
+                    "scheduled_compute_node_id": created.id,
+                    "scheduler_id": scheduler_id,
+                    "scheduler_config_id": scheduler_config_id,
+                    "scheduler_type": scheduler_type,
+                    "status": created.status,
+                }),
+            });
+        }
+
+        Ok(result)
     }
 
     /// Store a Slurm compute node configuration.
@@ -2705,7 +2762,13 @@ where
                 ));
             }
         }
-        self.workflows_api.cancel_workflow(id, body, context).await
+
+        let result = self
+            .workflows_api
+            .cancel_workflow(id, body, context)
+            .await?;
+
+        Ok(result)
     }
 
     /// Delete all compute node records for one workflow.
@@ -3904,6 +3967,33 @@ where
             // Don't fail the request, just log the error
         }
 
+        // Broadcast SSE event for workflow initialization
+        // Determine event type based on only_uninitialized flag
+        let event_type = if only_uninitialized.unwrap_or(false) {
+            "workflow_started"
+        } else {
+            "workflow_reinitialized"
+        };
+
+        // Get username from authorization context if available
+        let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+        let username = auth
+            .map(|a| a.subject)
+            .unwrap_or_else(|| "unknown".to_string());
+
+        self.event_broadcaster.broadcast(BroadcastEvent {
+            workflow_id: id,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+            event_type: event_type.to_string(),
+            severity: models::EventSeverity::Info,
+            data: serde_json::json!({
+                "category": "workflow",
+                "type": event_type,
+                "user": username,
+                "message": format!("{} workflow {}", event_type.replace('_', " "), id),
+            }),
+        });
+
         let response = InitializeJobsResponse::SuccessfulResponse(
             serde_json::json!({"message": "Initialized job status"}),
         );
@@ -3962,9 +4052,31 @@ where
         body: models::ComputeNodeModel,
         context: &C,
     ) -> Result<UpdateComputeNodeResponse, ApiError> {
-        self.compute_nodes_api
-            .update_compute_node(id, body, context)
-            .await
+        let result = self
+            .compute_nodes_api
+            .update_compute_node(id, body.clone(), context)
+            .await?;
+
+        // Broadcast SSE event when compute node stops (is_active becomes false)
+        if let UpdateComputeNodeResponse::SuccessfulResponse(ref _updated) = result
+            && body.is_active == Some(false)
+        {
+            self.event_broadcaster.broadcast(BroadcastEvent {
+                workflow_id: body.workflow_id,
+                timestamp: chrono::Utc::now().timestamp_millis(),
+                event_type: "compute_node_stopped".to_string(),
+                severity: models::EventSeverity::Info,
+                data: serde_json::json!({
+                    "compute_node_id": id,
+                    "hostname": body.hostname,
+                    "pid": body.pid,
+                    "duration_seconds": body.duration_seconds,
+                    "compute_node_type": body.compute_node_type,
+                }),
+            });
+        }
+
+        Ok(result)
     }
 
     /// Update an event.
@@ -4036,9 +4148,42 @@ where
         body: models::ResourceRequirementsModel,
         context: &C,
     ) -> Result<UpdateResourceRequirementsResponse, ApiError> {
-        self.resource_requirements_api
+        let result = self
+            .resource_requirements_api
             .update_resource_requirements(id, body, context)
-            .await
+            .await?;
+
+        // Log event for successful update
+        if let UpdateResourceRequirementsResponse::SuccessfulResponse(ref rr) = result {
+            let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+            let username = auth
+                .map(|a| a.subject)
+                .unwrap_or_else(|| "unknown".to_string());
+
+            let event = models::EventModel::new(
+                rr.workflow_id,
+                serde_json::json!({
+                    "category": "user_action",
+                    "action": "update_resource_requirements",
+                    "user": username,
+                    "resource_requirements_id": id,
+                    "name": rr.name,
+                    "num_cpus": rr.num_cpus,
+                    "num_gpus": rr.num_gpus,
+                    "num_nodes": rr.num_nodes,
+                    "memory": rr.memory,
+                    "runtime": rr.runtime,
+                }),
+            );
+            if let Err(e) = self.events_api.create_event(event, context).await {
+                error!(
+                    "Failed to create event for update_resource_requirements: {:?}",
+                    e
+                );
+            }
+        }
+
+        Ok(result)
     }
 
     /// Update a job result.
@@ -4680,9 +4825,36 @@ where
             ));
         }
 
-        self.jobs_api
-            .reset_job_status(id, failed_only.unwrap_or(false), body, context)
-            .await
+        let failed_only_value = failed_only.unwrap_or(false);
+        let result = self
+            .jobs_api
+            .reset_job_status(id, failed_only_value, body, context)
+            .await?;
+
+        // Log event for successful reset
+        if let ResetJobStatusResponse::SuccessfulResponse(ref response) = result {
+            let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+            let username = auth
+                .map(|a| a.subject)
+                .unwrap_or_else(|| "unknown".to_string());
+
+            let event = models::EventModel::new(
+                id,
+                serde_json::json!({
+                    "category": "user_action",
+                    "action": "reset_job_status",
+                    "user": username,
+                    "workflow_id": id,
+                    "failed_only": failed_only_value,
+                    "updated_count": response.updated_count,
+                }),
+            );
+            if let Err(e) = self.events_api.create_event(event, context).await {
+                error!("Failed to create event for reset_job_status: {:?}", e);
+            }
+        }
+
+        Ok(result)
     }
 
     /// Reset worklow status.
@@ -4710,9 +4882,35 @@ where
         }
 
         // TODO: don't allow this if any nodes are scheduled
-        self.workflows_api
+        let force_value = force.unwrap_or(false);
+        let result = self
+            .workflows_api
             .reset_workflow_status(id, force, body, context)
-            .await
+            .await?;
+
+        // Log event for successful reset
+        if let ResetWorkflowStatusResponse::SuccessfulResponse(_) = result {
+            let auth: Option<Authorization> = Has::<Option<Authorization>>::get(context).clone();
+            let username = auth
+                .map(|a| a.subject)
+                .unwrap_or_else(|| "unknown".to_string());
+
+            let event = models::EventModel::new(
+                id,
+                serde_json::json!({
+                    "category": "user_action",
+                    "action": "reset_workflow_status",
+                    "user": username,
+                    "workflow_id": id,
+                    "force": force_value,
+                }),
+            );
+            if let Err(e) = self.events_api.create_event(event, context).await {
+                error!("Failed to create event for reset_workflow_status: {:?}", e);
+            }
+        }
+
+        Ok(result)
     }
 
     /// Build a string for a DOT graph.
@@ -4946,23 +5144,22 @@ where
         }
 
         self.manage_job_status_change(&job, run_id).await?;
-        let event_data = serde_json::json!({
-            "job_id": id,
-            "compute_node_id": compute_node_id,
-            "run_id": run_id,
-            "message": format!("Job with name = {} started on compute node {}.", job.name, compute_node_id),
-            "category": "job"
-        });
 
-        let event = models::EventModel::new(job.workflow_id, event_data);
-        match self.events_api.create_event(event, context).await {
-            Ok(_) => {
-                debug!("Successfully added start event for job_id={}", id);
-            }
-            Err(e) => {
-                error!("Failed to add start event for job_id={}: {:?}", id, e);
-            }
-        }
+        // Broadcast job_started event to SSE clients (ephemeral, not persisted to DB)
+        self.event_broadcaster.broadcast(BroadcastEvent {
+            workflow_id: job.workflow_id,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+            event_type: "job_started".to_string(),
+            severity: models::EventSeverity::Info,
+            data: serde_json::json!({
+                "job_id": id,
+                "job_name": job.name,
+                "compute_node_id": compute_node_id,
+                "run_id": run_id,
+            }),
+        });
+        debug!("Broadcast job_started event for job_id={}", id);
+
         Ok(StartJobResponse::SuccessfulResponse(job))
     }
 
@@ -5051,6 +5248,9 @@ where
             }
         }
 
+        // Capture return_code before moving result to create_result
+        let result_return_code = result.return_code;
+
         // 2. Add the result to the database
         let result_response = self.results_api.create_result(result, context).await?;
 
@@ -5111,27 +5311,29 @@ where
         // 4. Call manage_job_status_change for validation and side effects
         self.manage_job_status_change(&job, run_id).await?;
 
-        // 5. Use job data we already have for event logging
-        let job_name = job.name.clone();
-        let job_workflow_id = job.workflow_id;
-
-        // 6. Create event for job completion
-        let event_data = serde_json::json!({
-            "job_id": id,
-            "message": format!("Job with name = {} completed with status = {}.", job_name, status.to_string()),
-            "category": "job_completion"
+        // 5. Broadcast job completion event to SSE clients (ephemeral, not persisted to DB)
+        let event_type = format!("job_{}", status.to_string().to_lowercase());
+        let severity = match status {
+            models::JobStatus::Completed => models::EventSeverity::Info,
+            models::JobStatus::Failed => models::EventSeverity::Error,
+            models::JobStatus::Terminated | models::JobStatus::Canceled => {
+                models::EventSeverity::Warning
+            }
+            _ => models::EventSeverity::Info,
+        };
+        self.event_broadcaster.broadcast(BroadcastEvent {
+            workflow_id: job.workflow_id,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+            event_type,
+            severity,
+            data: serde_json::json!({
+                "job_id": id,
+                "job_name": job.name,
+                "status": status.to_string(),
+                "return_code": result_return_code,
+            }),
         });
-
-        let event = models::EventModel::new(job_workflow_id, event_data);
-        match self.events_api.create_event(event, context).await {
-            Ok(_) => {
-                debug!("Successfully added completion event for job_id={}", id);
-            }
-            Err(e) => {
-                error!("Failed to add completion event for job_id={}: {:?}", id, e);
-                // Don't fail the entire operation just because event logging failed
-            }
-        }
+        debug!("Broadcast job completion event for job_id={}", id);
 
         debug!(
             "complete_job: successfully completed job_id={} with status={}, result_id={:?}",
@@ -5211,9 +5413,12 @@ where
             max_retries,
             Has::<XSpanIdString>::get(context).0.clone()
         );
-        self.jobs_api
+        let result = self
+            .jobs_api
             .retry_job(id, run_id, max_retries, context)
-            .await
+            .await?;
+
+        Ok(result)
     }
 
     /// Get ready jobs that fit within the specified resource constraints.
@@ -6002,6 +6207,11 @@ where
         self.access_groups_api
             .check_workflow_access(workflow_id, &user_name, context)
             .await
+    }
+
+    /// Subscribe to the event broadcast channel for SSE streaming.
+    fn subscribe_to_events(&self) -> tokio::sync::broadcast::Receiver<BroadcastEvent> {
+        self.event_broadcaster.subscribe()
     }
 }
 

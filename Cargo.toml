@@ -57,6 +57,7 @@ plotly = { version = "0.10", default-features = false, features = ["kaleido"] }
 # Server-specific
 rust-embed = "8.5"
 async-trait = "0.1.24"
+async-stream = "0.3"
 axum = { version = "0.7", features = ["tokio", "http1", "http2"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "fs"] }
@@ -131,6 +132,7 @@ config = [
 ]
 server = [
     "dep:async-trait",
+    "dep:async-stream",
     "dep:swagger",
     "dep:hyper",
     "dep:serde_ignored",
@@ -209,6 +211,7 @@ validator.workspace = true
 
 # Server dependencies (optional)
 async-trait = { workspace = true, optional = true }
+async-stream = { workspace = true, optional = true }
 swagger = { workspace = true, optional = true }
 hyper = { workspace = true, optional = true }
 serde_ignored = { workspace = true, optional = true }

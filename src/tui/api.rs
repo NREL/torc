@@ -3,8 +3,8 @@ use crate::client::apis::default_api;
 use crate::client::config::TorcConfig;
 use crate::client::workflow_spec::WorkflowSpec;
 use crate::models::{
-    EventModel, FileModel, JobDependencyModel, JobModel, JobStatus, ResultModel,
-    ScheduledComputeNodesModel, WorkflowModel,
+    FileModel, JobDependencyModel, JobModel, JobStatus, ResultModel, ScheduledComputeNodesModel,
+    WorkflowModel,
 };
 use anyhow::{Context, Result};
 
@@ -117,22 +117,6 @@ impl TorcClient {
             None, // is_output
         )
         .context("Failed to list files")?;
-
-        Ok(response.items.unwrap_or_default())
-    }
-
-    pub fn list_events(&self, workflow_id: i64) -> Result<Vec<EventModel>> {
-        let response = default_api::list_events(
-            &self.config,
-            workflow_id,
-            None, // offset
-            None, // limit
-            None, // sort_by
-            None, // reverse_sort
-            None, // category
-            None, // after_timestamp
-        )
-        .context("Failed to list events")?;
 
         Ok(response.items.unwrap_or_default())
     }

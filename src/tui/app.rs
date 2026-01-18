@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::thread::JoinHandle;
 
 use anyhow::Result;
 use petgraph::graph::NodeIndex;
@@ -8,9 +10,8 @@ use ratatui::widgets::TableState;
 use crate::client::log_paths::{
     get_job_stderr_path, get_job_stdout_path, get_slurm_stderr_path, get_slurm_stdout_path,
 };
-use crate::models::{
-    EventModel, FileModel, JobModel, ResultModel, ScheduledComputeNodesModel, WorkflowModel,
-};
+use crate::client::sse_client::SseEvent;
+use crate::models::{FileModel, JobModel, ResultModel, ScheduledComputeNodesModel, WorkflowModel};
 
 use super::api::TorcClient;
 use super::components::{
@@ -223,8 +224,8 @@ pub struct App {
     pub files: Vec<FileModel>,
     pub files_all: Vec<FileModel>,
     pub files_state: TableState,
-    pub events: Vec<EventModel>,
-    pub events_all: Vec<EventModel>,
+    pub events: Vec<SseEvent>,
+    pub events_all: Vec<SseEvent>,
     pub events_state: TableState,
     pub results: Vec<ResultModel>,
     pub results_all: Vec<ResultModel>,
@@ -254,6 +255,11 @@ pub struct App {
 
     // Version info
     pub version_mismatch: Option<crate::client::version_check::VersionCheckResult>,
+
+    // SSE event streaming
+    pub sse_receiver: Option<mpsc::Receiver<SseEvent>>,
+    pub sse_thread: Option<JoinHandle<()>>,
+    pub sse_workflow_id: Option<i64>,
 }
 
 impl App {
@@ -315,6 +321,9 @@ impl App {
             server_process: None,
             standalone_database: database,
             version_mismatch: None,
+            sse_receiver: None,
+            sse_thread: None,
+            sse_workflow_id: None,
         };
 
         // Update client to use the correct URL
@@ -451,11 +460,8 @@ impl App {
                         }
                     }
                     DetailViewType::Events => {
-                        self.events_all = self.client.list_events(workflow_id)?;
-                        self.events = self.events_all.clone();
-                        if !self.events.is_empty() {
-                            self.events_state.select(Some(0));
-                        }
+                        // Start SSE connection for real-time events
+                        self.start_sse_connection(workflow_id);
                     }
                     DetailViewType::Results => {
                         self.results_all = self.client.list_results(workflow_id)?;
@@ -518,7 +524,7 @@ impl App {
         match self.detail_view {
             DetailViewType::Jobs => vec!["Status", "Name", "Command"],
             DetailViewType::Files => vec!["Name", "Path"],
-            DetailViewType::Events => vec!["Data"],
+            DetailViewType::Events => vec!["Event Type", "Data"],
             DetailViewType::Results => vec!["Status", "Return Code"],
             DetailViewType::ScheduledNodes => vec!["Status", "Scheduler Type"],
             DetailViewType::Dag => vec![], // DAG view doesn't support filtering
@@ -608,6 +614,7 @@ impl App {
                     .events_all
                     .iter()
                     .filter(|event| match column.as_str() {
+                        "Event Type" => event.event_type.to_lowercase().contains(&value),
                         "Data" => event.data.to_string().to_lowercase().contains(&value),
                         _ => false,
                     })
@@ -1983,6 +1990,98 @@ impl App {
     pub fn poll_server_output(&mut self) {
         if let Some(ref mut viewer) = self.server_process {
             viewer.poll_output();
+        }
+    }
+
+    // === SSE Event Streaming ===
+
+    /// Start SSE connection for real-time events from a workflow
+    pub fn start_sse_connection(&mut self, workflow_id: i64) {
+        // Stop existing connection if any
+        self.stop_sse_connection();
+
+        // Clear existing events when switching workflows
+        self.events.clear();
+        self.events_all.clear();
+        self.events_state.select(None);
+
+        // Create channel for receiving events
+        let (tx, rx) = mpsc::channel();
+        self.sse_receiver = Some(rx);
+        self.sse_workflow_id = Some(workflow_id);
+
+        // Get the base URL for SSE connection
+        let base_url = self.server_url.clone();
+
+        // Start background thread for SSE connection
+        let handle = std::thread::spawn(move || {
+            let config = crate::client::apis::configuration::Configuration {
+                base_path: base_url,
+                ..Default::default()
+            };
+
+            match crate::client::sse_client::SseConnection::connect(&config, workflow_id, None) {
+                Ok(mut connection) => {
+                    loop {
+                        match connection.next_event() {
+                            Ok(Some(event)) => {
+                                if tx.send(event).is_err() {
+                                    // Receiver dropped, exit thread
+                                    break;
+                                }
+                            }
+                            Ok(None) => {
+                                // Connection closed
+                                break;
+                            }
+                            Err(_) => {
+                                // Error reading, exit thread
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    // Failed to connect, thread exits
+                }
+            }
+        });
+
+        self.sse_thread = Some(handle);
+        self.set_status(StatusMessage::info(
+            "SSE connection started - waiting for events...",
+        ));
+    }
+
+    /// Stop the SSE connection
+    pub fn stop_sse_connection(&mut self) {
+        // Drop the receiver to signal the thread to stop
+        self.sse_receiver = None;
+        self.sse_workflow_id = None;
+
+        // Wait for thread to finish (with timeout)
+        if let Some(handle) = self.sse_thread.take() {
+            // Don't block, just let it finish in background
+            std::thread::spawn(move || {
+                let _ = handle.join();
+            });
+        }
+    }
+
+    /// Poll for new SSE events (called from event loop)
+    pub fn poll_sse_events(&mut self) {
+        if let Some(ref receiver) = self.sse_receiver {
+            // Try to receive events without blocking
+            while let Ok(event) = receiver.try_recv() {
+                // Add event to the beginning (newest first)
+                self.events.insert(0, event.clone());
+                self.events_all.insert(0, event);
+
+                // Select first event if nothing selected
+                if self.events_state.selected().is_none() && !self.events.is_empty() {
+                    self.events_state.select(Some(0));
+                }
+            }
         }
     }
 }
