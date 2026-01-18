@@ -40,6 +40,7 @@ configuration.
 - **Workflow Management**: Create, initialize, run, submit, cancel, reset, and delete workflows
 - **Job Management**: View details, logs, cancel, terminate, or retry jobs
 - **Real-time Monitoring**: Auto-refresh, manual refresh, color-coded status
+- **Live Event Streaming**: Server-Sent Events (SSE) for real-time job and compute node events
 - **Server Management**: Start/stop torc-server directly from the TUI
 - **File Viewing**: Preview workflow files with search and navigation
 - **DAG Visualization**: Text-based dependency graph
@@ -143,6 +144,26 @@ supports:
 - Files up to 1MB
 - Binary files show a hex dump preview
 - Same navigation keys as the log viewer
+
+## Events Tab (SSE Live Streaming)
+
+The Events tab shows real-time events from the server using Server-Sent Events (SSE). When you
+select a workflow and navigate to the Events tab, the TUI establishes a live connection to receive
+events as they occur.
+
+**Event types displayed:**
+
+- `job_started` / `job_completed` / `job_failed` - Job lifecycle events
+- `compute_node_started` / `compute_node_stopped` - Worker node lifecycle
+- `workflow_started` / `workflow_reinitialized` - Workflow initialization events
+- `scheduler_node_created` - Slurm scheduler events
+
+**Features:**
+
+- Events appear instantly without polling
+- Newest events shown at the top
+- Filter by Event Type or Data content using `f`
+- Title shows "[SSE Live]" indicator when connected
 
 ## Server Management
 

@@ -10,12 +10,16 @@ pub mod authorization;
 pub mod context;
 pub mod credential_cache;
 pub mod dashboard;
+pub mod event_broadcast;
 pub mod header;
 pub mod htpasswd;
 pub mod routing;
 
 // Re-exports from api_types (OpenAPI-generated)
 pub use api_types::*;
+
+// Re-exports from event_broadcast
+pub use event_broadcast::{BroadcastEvent, EventBroadcaster};
 
 // Re-exports from swagger crate
 pub use swagger::ContextWrapper;

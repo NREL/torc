@@ -17,6 +17,7 @@
 //! OpenAPI-generated API types and trait definitions
 
 use crate::models;
+use crate::server::event_broadcast::BroadcastEvent;
 use async_trait::async_trait;
 use futures::Stream;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,7 @@ use std::error::Error;
 use std::task::{Context, Poll};
 use swagger::auth::Authorization;
 use swagger::{ApiError, ContextWrapper};
+use tokio::sync::broadcast;
 
 pub type ServiceError = Box<dyn Error + Send + Sync + 'static>;
 
@@ -2295,6 +2297,10 @@ pub trait Api<C: Send + Sync> {
         user_name: String,
         context: &C,
     ) -> Result<CheckWorkflowAccessResponse, ApiError>;
+
+    /// Subscribe to the event broadcast channel for SSE streaming.
+    /// Returns a broadcast receiver that will receive all future events.
+    fn subscribe_to_events(&self) -> broadcast::Receiver<BroadcastEvent>;
 }
 
 /// API where `Context` isn't passed on every API call

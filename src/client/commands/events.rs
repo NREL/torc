@@ -1,5 +1,4 @@
-use std::thread;
-use std::time::{Duration as StdDuration, Instant};
+use std::time::Instant;
 
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
@@ -9,6 +8,7 @@ use crate::client::commands::pagination::{EventListParams, paginate_events};
 use crate::client::commands::{
     print_error, select_workflow_interactively, table_format::display_table_with_count,
 };
+use crate::client::sse_client::{SseConnection, SseEvent};
 use crate::models;
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
@@ -336,50 +336,42 @@ pub fn handle_event_commands(config: &Configuration, command: &EventCommands, fo
     }
 }
 
+/// Event output format for SSE events (for JSON output)
+#[derive(Serialize, Deserialize)]
+struct SseEventJsonOutput {
+    workflow_id: i64,
+    timestamp: i64,
+    timestamp_formatted: String,
+    event_type: String,
+    data: serde_json::Value,
+}
+
+impl From<&SseEvent> for SseEventJsonOutput {
+    fn from(event: &SseEvent) -> Self {
+        SseEventJsonOutput {
+            workflow_id: event.workflow_id,
+            timestamp: event.timestamp,
+            timestamp_formatted: format_timestamp_ms(event.timestamp),
+            event_type: event.event_type.clone(),
+            data: event.data.clone(),
+        }
+    }
+}
+
 fn handle_monitor_events(
     config: &Configuration,
     workflow_id: i64,
     duration: Option<i64>,
-    poll_interval: i64,
+    _poll_interval: i64, // Kept for backwards compatibility but not used with SSE
     category: &Option<String>,
     format: &str,
 ) {
-    // Get the latest event timestamp to start monitoring from (in milliseconds since epoch)
-    // Use list_events with limit=1 and reverse_sort=true to get the newest event
-    let mut last_timestamp_ms: i64 = match default_api::list_events(
-        config,
-        workflow_id,
-        None,       // offset
-        Some(1),    // limit to 1 event
-        Some("id"), // sort by id
-        Some(true), // reverse sort (newest first)
-        None,       // category
-        None,       // after_timestamp
-    ) {
-        Ok(response) => {
-            // Extract the timestamp from the latest event
-            response
-                .items
-                .and_then(|items| items.first().map(|e| e.timestamp))
-                .unwrap_or(0)
-        }
-        Err(e) => {
-            // If there are no events yet, start from 0
-            eprintln!(
-                "Note: No events found yet, starting from epoch. Error: {:?}",
-                e
-            );
-            0
-        }
-    };
-
     let start_time = Instant::now();
     let duration_seconds = duration.map(|d| d * 60); // Convert minutes to seconds
 
     eprintln!(
-        "Monitoring events for workflow {} (poll interval: {}s{})",
+        "Monitoring events for workflow {} via SSE (real-time streaming{})",
         workflow_id,
-        poll_interval,
         match duration {
             Some(d) => format!(", duration: {} minutes", d),
             None => String::from(", duration: infinite"),
@@ -387,14 +379,25 @@ fn handle_monitor_events(
     );
 
     if let Some(cat) = category {
-        println!("Filtering by category: {}", cat);
+        eprintln!("Filtering by event type: {}", cat);
     }
 
-    eprintln!(
-        "Starting from timestamp: {}",
-        format_timestamp_ms(last_timestamp_ms)
-    );
     eprintln!("Press Ctrl+C to stop monitoring\n");
+
+    // Connect to SSE endpoint
+    let mut connection = match SseConnection::connect(config, workflow_id) {
+        Ok(conn) => conn,
+        Err(e) => {
+            eprintln!("Failed to connect to SSE endpoint: {}", e);
+            eprintln!(
+                "Make sure the server supports SSE at /workflows/{}/events/stream",
+                workflow_id
+            );
+            std::process::exit(1);
+        }
+    };
+
+    eprintln!("Connected to SSE stream. Waiting for events...\n");
 
     loop {
         // Check if we've exceeded the duration
@@ -405,50 +408,39 @@ fn handle_monitor_events(
             break;
         }
 
-        // Fetch events after the last timestamp (timestamp is in milliseconds)
-        match default_api::list_events(
-            config,
-            workflow_id,
-            None, // offset
-            None, // limit (get all new events)
-            None, // sort_by
-            None, // reverse_sort
-            category.as_deref(),
-            Some(last_timestamp_ms),
-        ) {
-            Ok(response) => {
-                if let Some(events) = response.items
-                    && !events.is_empty()
+        // Read next event from SSE stream
+        match connection.next_event() {
+            Ok(Some(event)) => {
+                // Filter by category/event_type if specified
+                if let Some(cat) = category
+                    && !event.event_type.contains(cat)
                 {
-                    // Process new events
-                    for event in &events {
-                        if format == "json" {
-                            let json_event = EventJsonOutput::from(event);
-                            print_json(&json_event, "event");
-                        } else {
-                            println!(
-                                "[{}] Event ID {}: {}",
-                                format_timestamp_ms(event.timestamp),
-                                event.id.unwrap_or(-1),
-                                serde_json::to_string(&event.data)
-                                    .unwrap_or_else(|_| "Unable to display".to_string())
-                            );
-                        }
-                    }
+                    continue;
+                }
 
-                    // Update last_timestamp_ms to the newest event's timestamp
-                    // Timestamp is now stored as i64 milliseconds, no parsing needed
-                    if let Some(latest_event) = events.last() {
-                        last_timestamp_ms = latest_event.timestamp;
-                    }
+                // Output the event
+                if format == "json" {
+                    let json_event = SseEventJsonOutput::from(&event);
+                    print_json(&json_event, "event");
+                } else {
+                    println!(
+                        "[{}] {}: {}",
+                        format_timestamp_ms(event.timestamp),
+                        event.event_type,
+                        serde_json::to_string(&event.data)
+                            .unwrap_or_else(|_| "Unable to display".to_string())
+                    );
                 }
             }
+            Ok(None) => {
+                // Connection closed
+                eprintln!("\nSSE connection closed by server.");
+                break;
+            }
             Err(e) => {
-                eprintln!("Error fetching events: {:?}", e);
+                eprintln!("\nError reading SSE stream: {}", e);
+                break;
             }
         }
-
-        // Sleep for poll_interval seconds
-        thread::sleep(StdDuration::from_secs(poll_interval as u64));
     }
 }

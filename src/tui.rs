@@ -102,6 +102,9 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, mut app: Ap
         // Poll server process for new output
         app.poll_server_output();
 
+        // Poll for SSE events
+        app.poll_sse_events();
+
         if event::poll(std::time::Duration::from_millis(100))?
             && let Event::Key(key) = event::read()?
             && key.kind == KeyEventKind::Press

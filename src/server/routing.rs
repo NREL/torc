@@ -10,6 +10,7 @@ use std::marker::PhantomData;
 use std::task::{Context, Poll};
 pub use swagger::auth::Authorization;
 use swagger::{BodyExt, Has, RequestParser, XSpanIdString};
+use tokio::sync::broadcast;
 use url::form_urlencoded;
 
 use crate::models;
@@ -133,7 +134,9 @@ mod paths {
             r"^/torc-service/v1/failure_handlers/(?P<id>[^/?#]*)$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/failure_handlers$",
             // Retry job route (index 65)
-            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/retry/(?P<run_id>[^/?#]*)$"
+            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/retry/(?P<run_id>[^/?#]*)$",
+            // SSE events stream route (index 66)
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events/stream$"
         ])
         .expect("Unable to create global regex set");
     }
@@ -475,6 +478,13 @@ regex::Regex::new(
         pub static ref REGEX_JOBS_ID_RETRY_RUN_ID: regex::Regex =
             regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/retry/(?P<run_id>[^/?#]*)$")
                 .expect("Unable to create regex for JOBS_ID_RETRY_RUN_ID");
+    }
+    // SSE events stream
+    pub(crate) static ID_WORKFLOWS_ID_EVENTS_STREAM: usize = 66;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_EVENTS_STREAM: regex::Regex =
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events/stream$")
+                .expect("Unable to create regex for WORKFLOWS_ID_EVENTS_STREAM");
     }
 }
 
@@ -14747,6 +14757,122 @@ where
                 }
 
                 // ============================================================================
+                // SSE Events Stream route
+                // ============================================================================
+
+                // GET /workflows/{id}/events/stream - Stream events via Server-Sent Events
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_EVENTS_STREAM) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_WORKFLOWS_ID_EVENTS_STREAM
+                        .captures(path)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Path {} matched RE WORKFLOWS_ID_EVENTS_STREAM in set but failed match against \"{}\"",
+                                path,
+                                paths::REGEX_WORKFLOWS_ID_EVENTS_STREAM.as_str()
+                            )
+                        });
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                        Ok(param_id) => match param_id.parse::<i64>() {
+                            Ok(param_id) => param_id,
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid path parameter")),
+                        },
+                        Err(_) => return Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                            .expect("Unable to create Bad Request response for invalid percent decode"))
+                    };
+
+                    // Check authorization by attempting to get the workflow
+                    // This verifies the workflow exists and the user has access
+                    match api_impl.get_workflow(param_workflow_id, &context).await {
+                        Ok(crate::server::api_types::GetWorkflowResponse::SuccessfulResponse(
+                            _,
+                        )) => {
+                            // Access granted, proceed with SSE
+                        }
+                        Ok(
+                            crate::server::api_types::GetWorkflowResponse::ForbiddenErrorResponse(
+                                body,
+                            ),
+                        ) => {
+                            return Ok(Response::builder()
+                                .status(StatusCode::FORBIDDEN)
+                                .header(CONTENT_TYPE, "application/json")
+                                .body(Body::from(serde_json::to_string(&body).unwrap_or_default()))
+                                .expect("Unable to create Forbidden response"));
+                        }
+                        Ok(
+                            crate::server::api_types::GetWorkflowResponse::NotFoundErrorResponse(
+                                body,
+                            ),
+                        ) => {
+                            return Ok(Response::builder()
+                                .status(StatusCode::NOT_FOUND)
+                                .header(CONTENT_TYPE, "application/json")
+                                .body(Body::from(serde_json::to_string(&body).unwrap_or_default()))
+                                .expect("Unable to create Not Found response"));
+                        }
+                        Ok(
+                            crate::server::api_types::GetWorkflowResponse::DefaultErrorResponse(
+                                body,
+                            ),
+                        ) => {
+                            return Ok(Response::builder()
+                                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                                .header(CONTENT_TYPE, "application/json")
+                                .body(Body::from(serde_json::to_string(&body).unwrap_or_default()))
+                                .expect("Unable to create Error response"));
+                        }
+                        Err(_) => {
+                            return Ok(Response::builder()
+                                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                                .body(Body::from("Internal server error"))
+                                .expect("Unable to create Error response"));
+                        }
+                    }
+
+                    // Subscribe to the event broadcast channel
+                    let mut receiver = api_impl.subscribe_to_events();
+
+                    // Create an async stream that filters events for this workflow and formats as SSE
+                    let stream = async_stream::stream! {
+                        loop {
+                            match receiver.recv().await {
+                                Ok(event) if event.workflow_id == param_workflow_id => {
+                                    let data = serde_json::to_string(&event).unwrap_or_default();
+                                    yield Ok::<_, std::convert::Infallible>(
+                                        format!("event: {}\ndata: {}\n\n", event.event_type, data)
+                                    );
+                                }
+                                Ok(_) => continue,  // Different workflow, skip
+                                Err(broadcast::error::RecvError::Lagged(n)) => {
+                                    // Some events were dropped due to slow consumer
+                                    yield Ok::<_, std::convert::Infallible>(
+                                        format!("event: warning\ndata: {{\"dropped\": {}}}\n\n", n)
+                                    );
+                                }
+                                Err(broadcast::error::RecvError::Closed) => break,
+                            }
+                        }
+                    };
+
+                    // Return SSE response with proper headers
+                    Ok(Response::builder()
+                        .status(StatusCode::OK)
+                        .header(CONTENT_TYPE, "text/event-stream")
+                        .header("Cache-Control", "no-cache")
+                        .header("X-Accel-Buffering", "no")
+                        .body(Body::wrap_stream(stream))
+                        .expect("Unable to create SSE response"))
+                }
+
+                // ============================================================================
                 // Access Groups routes
                 // ============================================================================
 
@@ -16430,6 +16556,7 @@ where
                 _ if path.matched(paths::ID_WORKFLOWS_ID_REMOTE_WORKERS_WORKER) => {
                     method_not_allowed()
                 }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_EVENTS_STREAM) => method_not_allowed(),
                 // Serve dashboard for non-API routes, 404 otherwise
                 _ => {
                     // Try to serve dashboard assets for non-API paths
@@ -16757,6 +16884,10 @@ impl<T> RequestParser<T> for ApiRequestParser {
                 Some("CompleteJob")
             }
             hyper::Method::POST if path.matched(paths::ID_JOBS_ID_RETRY_RUN_ID) => Some("RetryJob"),
+            // SSE Events Stream
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_EVENTS_STREAM) => {
+                Some("SubscribeToEventsStream")
+            }
             _ => None,
         }
     }

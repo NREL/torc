@@ -1492,23 +1492,7 @@ pub fn schedule_slurm_nodes(
                     );
                 }
 
-                let event_data = serde_json::json!({
-                    "category": "scheduler",
-                    "slurm_job_id": slurm_job_id,
-                    "slurm_job_name": job_name,
-                    "scheduler_config_id": scheduler_config_id,
-                    "scheduled_compute_node_id": scn_id,
-                    "num_nodes": scheduler.nodes,
-                });
-
-                let event = models::EventModel::new(workflow_id, event_data);
-                if let Err(e) = utils::send_with_retries(
-                    config,
-                    || default_api::create_event(config, event.clone()),
-                    WAIT_FOR_HEALTHY_DATABASE_MINUTES,
-                ) {
-                    error!("Failed to create event: {}", e);
-                }
+                // Event is now broadcast via SSE from the server when the scheduled compute node is created
             }
             Err(e) => {
                 error!("Error submitting job: {}", e);

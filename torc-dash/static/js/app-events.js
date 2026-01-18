@@ -1,9 +1,6 @@
 /**
  * Torc Dashboard - Events Tab
- * Event streaming and display
- *
- * Uses after_timestamp to fetch only new events from the server.
- * Timestamp is milliseconds since epoch (integer).
+ * Real-time event streaming via SSE (Server-Sent Events)
  */
 
 Object.assign(TorcDashboard.prototype, {
@@ -11,100 +8,146 @@ Object.assign(TorcDashboard.prototype, {
 
     setupEventsTab() {
         this._lastEventsWorkflowId = null;
-        this._afterTimestamp = null;  // UNIX timestamp - fetch events after this time
+        this._eventSource = null;  // SSE connection
 
         document.getElementById('events-workflow-selector')?.addEventListener('change', (e) => {
             const newWorkflowId = e.target.value;
             if (newWorkflowId !== this._lastEventsWorkflowId) {
                 this._lastEventsWorkflowId = newWorkflowId;
-                this._afterTimestamp = Date.now();  // Current time in milliseconds
                 this.events = [];
                 this.renderEvents();
+                // Start SSE connection for the new workflow
+                if (newWorkflowId) {
+                    this.startEventStream(newWorkflowId);
+                } else {
+                    this.stopEventStream();
+                }
             }
         });
 
         document.getElementById('btn-clear-events')?.addEventListener('click', () => {
             // Clear displayed events
-            // _afterTimestamp stays the same, so cleared events won't reappear
             this.events = [];
             this.renderEvents();
         });
 
         document.getElementById('auto-refresh-events')?.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.startEventPolling();
+            const workflowId = document.getElementById('events-workflow-selector')?.value;
+            if (e.target.checked && workflowId) {
+                this.startEventStream(workflowId);
             } else {
-                this.stopEventPolling();
+                this.stopEventStream();
             }
         });
 
-        document.getElementById('events-poll-interval')?.addEventListener('change', (e) => {
-            const autoRefresh = document.getElementById('auto-refresh-events');
-            if (autoRefresh?.checked) {
-                this.startEventPolling();
+        // Remove poll interval handler - SSE is real-time
+        const pollIntervalInput = document.getElementById('events-poll-interval');
+        if (pollIntervalInput) {
+            pollIntervalInput.style.display = 'none';
+            // Hide the label too if it exists
+            const label = pollIntervalInput.previousElementSibling;
+            if (label && label.tagName === 'LABEL') {
+                label.style.display = 'none';
             }
-        });
+        }
 
+        // Auto-start if checkbox is checked and a workflow is selected
         const autoRefresh = document.getElementById('auto-refresh-events');
-        if (autoRefresh?.checked) {
-            this.startEventPolling();
+        const workflowId = document.getElementById('events-workflow-selector')?.value;
+        if (autoRefresh?.checked && workflowId) {
+            this.startEventStream(workflowId);
         }
     },
 
-    getEventsPollInterval() {
-        const input = document.getElementById('events-poll-interval');
-        const seconds = parseInt(input?.value) || 10;
-        return Math.max(1, Math.min(300, seconds)) * 1000;
-    },
+    startEventStream(workflowId) {
+        this.stopEventStream();
 
-    startEventPolling() {
-        this.stopEventPolling();
-        // Set timestamp to now (milliseconds) - only show events created after this moment
-        this._afterTimestamp = Date.now();
+        if (!workflowId) {
+            return;
+        }
+
+        this._lastEventsWorkflowId = workflowId;
         this.events = [];
         this.renderEvents();
-        const interval = this.getEventsPollInterval();
-        this.eventPollInterval = setInterval(() => this.pollNewEvents(), interval);
+
+        // Connect to SSE endpoint
+        const sseUrl = `${api.getBaseUrl()}/workflows/${workflowId}/events/stream`;
+        this._eventSource = new EventSource(sseUrl);
+
+        this._eventSource.onopen = () => {
+            console.log('SSE connection opened for workflow', workflowId);
+            this.updateEventStatus('connected');
+        };
+
+        this._eventSource.onmessage = (event) => {
+            try {
+                const sseEvent = JSON.parse(event.data);
+                // Add event to the beginning (newest first)
+                this.events.unshift(sseEvent);
+                // Limit to 1000 events to prevent memory issues
+                if (this.events.length > 1000) {
+                    this.events = this.events.slice(0, 1000);
+                }
+                this.updateEventBadge(1);
+                this.renderEvents();
+            } catch (error) {
+                console.error('Error parsing SSE event:', error, event.data);
+            }
+        };
+
+        this._eventSource.onerror = (error) => {
+            console.error('SSE connection error:', error);
+            this.updateEventStatus('error');
+            // EventSource will automatically try to reconnect
+        };
+
+        // Handle specific event types
+        ['job_started', 'job_completed', 'job_failed', 'compute_node_started',
+         'compute_node_stopped', 'workflow_started', 'workflow_reinitialized',
+         'scheduler_node_created', 'warning'].forEach(eventType => {
+            this._eventSource.addEventListener(eventType, (event) => {
+                try {
+                    const sseEvent = JSON.parse(event.data);
+                    // Override event_type from the SSE event: field
+                    sseEvent.event_type = eventType;
+                    this.events.unshift(sseEvent);
+                    if (this.events.length > 1000) {
+                        this.events = this.events.slice(0, 1000);
+                    }
+                    this.updateEventBadge(1);
+                    this.renderEvents();
+                } catch (error) {
+                    console.error('Error parsing SSE event:', error, event.data);
+                }
+            });
+        });
     },
 
-    stopEventPolling() {
-        if (this.eventPollInterval) {
-            clearInterval(this.eventPollInterval);
-            this.eventPollInterval = null;
+    stopEventStream() {
+        if (this._eventSource) {
+            this._eventSource.close();
+            this._eventSource = null;
+            this.updateEventStatus('disconnected');
         }
     },
 
-    async pollNewEvents() {
-        try {
-            let workflowId = document.getElementById('events-workflow-selector')?.value;
-
-            if (!workflowId && this._lastEventsWorkflowId) {
-                workflowId = this._lastEventsWorkflowId;
+    updateEventStatus(status) {
+        const statusIndicator = document.getElementById('events-status');
+        if (statusIndicator) {
+            switch (status) {
+                case 'connected':
+                    statusIndicator.textContent = '● Live';
+                    statusIndicator.className = 'status-connected';
+                    break;
+                case 'error':
+                    statusIndicator.textContent = '● Reconnecting...';
+                    statusIndicator.className = 'status-error';
+                    break;
+                case 'disconnected':
+                    statusIndicator.textContent = '○ Disconnected';
+                    statusIndicator.className = 'status-disconnected';
+                    break;
             }
-
-            if (!workflowId) {
-                return;
-            }
-
-            this._lastEventsWorkflowId = workflowId;
-
-            // Fetch events after our timestamp
-            const events = await api.listEvents(workflowId, 0, 100, this._afterTimestamp);
-
-            if (events && events.length > 0) {
-                // Update timestamp to the latest event's timestamp (in milliseconds)
-                // Timestamp is now an integer, no conversion needed
-                const maxTimestamp = Math.max(...events.map(e => e.timestamp));
-                this._afterTimestamp = maxTimestamp;
-
-                // Prepend new events (newest first)
-                this.events = [...events, ...this.events];
-
-                this.updateEventBadge(events.length);
-                this.renderEvents();
-            }
-        } catch (error) {
-            console.error('Error polling events:', error);
         }
     },
 
@@ -120,7 +163,7 @@ Object.assign(TorcDashboard.prototype, {
         }
 
         if (this.events.length === 0) {
-            container.innerHTML = '<div class="placeholder-message">Waiting for new events...</div>';
+            container.innerHTML = '<div class="placeholder-message">Waiting for events... (SSE connected)</div>';
             return;
         }
 
@@ -128,17 +171,17 @@ Object.assign(TorcDashboard.prototype, {
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Event Type</th>
                         <th>Timestamp</th>
-                        <th>Message</th>
+                        <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${this.events.map(event => `
                         <tr>
-                            <td><code>${event.id ?? '-'}</code></td>
+                            <td><code>${this.escapeHtml(event.event_type || '-')}</code></td>
                             <td>${this.formatTimestamp(event.timestamp)}</td>
-                            <td>${this.escapeHtml(event.data?.message || '')}</td>
+                            <td><pre class="event-data">${this.escapeHtml(JSON.stringify(event.data, null, 2))}</pre></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -150,9 +193,12 @@ Object.assign(TorcDashboard.prototype, {
         const badge = document.getElementById('event-badge');
         if (badge) {
             if (count > 0 && this.currentTab !== 'events') {
-                badge.textContent = count;
+                // Increment the badge count
+                const currentCount = parseInt(badge.textContent) || 0;
+                badge.textContent = currentCount + count;
                 badge.style.display = 'inline';
-            } else {
+            } else if (this.currentTab === 'events') {
+                // Clear badge when viewing events tab
                 badge.style.display = 'none';
             }
         }
