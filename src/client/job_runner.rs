@@ -418,6 +418,7 @@ impl JobRunner {
                             );
                         } else {
                             info!("Workflow complete workflow_id={}", self.workflow_id);
+                            self.execute_workflow_complete_actions();
                             break;
                         }
                     }
@@ -1635,6 +1636,81 @@ impl JobRunner {
                 error!(
                     "Failed to execute on_worker_complete action {}: {}",
                     action_id, e
+                );
+            }
+        }
+    }
+
+    /// Execute all on_workflow_complete actions when the workflow completes
+    fn execute_workflow_complete_actions(&mut self) {
+        info!("Checking for on_workflow_complete actions");
+
+        // Get pending on_workflow_complete actions
+        let pending_actions = match self.send_with_retries(
+            || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
+                let actions = default_api::get_pending_actions(
+                    &self.config,
+                    self.workflow_id,
+                    Some(vec!["on_workflow_complete".to_string()]),
+                )?;
+                Ok(actions)
+            },
+        ) {
+            Ok(actions) => actions,
+            Err(e) => {
+                error!("Failed to get pending actions: {}", e);
+                return;
+            }
+        };
+
+        // Execute all on_workflow_complete actions
+        for action in pending_actions {
+            let action_id = match action.id {
+                Some(id) => id,
+                None => {
+                    error!("Action missing id field");
+                    continue;
+                }
+            };
+
+            // Check if this job runner can handle this action before claiming
+            if !self.can_handle_action(&action) {
+                debug!(
+                    "on_workflow_complete action {} cannot be handled by this job runner, skipping",
+                    action_id
+                );
+                continue;
+            }
+
+            // Try to atomically claim this action
+            let claimed = match self.claim_action(action_id) {
+                Ok(claimed) => claimed,
+                Err(e) => {
+                    error!(
+                        "Error claiming on_workflow_complete action {}: {}",
+                        action_id, e
+                    );
+                    continue;
+                }
+            };
+
+            if !claimed {
+                debug!(
+                    "on_workflow_complete action {} already claimed by another runner",
+                    action_id
+                );
+                continue;
+            }
+
+            // We claimed it! Execute the action
+            info!(
+                "Executing on_workflow_complete workflow_id={} action_id={}",
+                self.workflow_id, action_id
+            );
+            if let Err(e) = self.execute_action(&action) {
+                error!(
+                    "Failed to execute on_workflow_complete workflow_id={} action_id={}: {}",
+                    self.workflow_id, action_id, e
                 );
             }
         }
