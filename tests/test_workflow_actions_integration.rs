@@ -1158,3 +1158,239 @@ actions:
         let _ = handle.join();
     }
 }
+
+#[rstest]
+fn test_on_workflow_complete_action(start_server: &ServerProcess) {
+    let config = &start_server.config;
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let output_dir = temp_dir.path().join("output");
+    fs::create_dir_all(&output_dir).expect("Failed to create output dir");
+
+    // Create a workflow spec with on_workflow_complete action
+    let spec_content = format!(
+        r#"
+name: "test_on_workflow_complete"
+user: "test_user"
+description: "Test on_workflow_complete action"
+
+jobs:
+  - name: "task_1"
+    command: "echo 'Task 1 done'"
+
+  - name: "task_2"
+    command: "echo 'Task 2 done'"
+
+actions:
+  - trigger_type: "on_workflow_complete"
+    action_type: "run_commands"
+    commands:
+      - "echo 'Workflow completed successfully' > {}/workflow_complete.txt"
+      - "date >> {}/workflow_complete.txt"
+"#,
+        output_dir.display(),
+        output_dir.display()
+    );
+
+    let spec_path = create_spec_file(temp_dir.path(), &spec_content);
+
+    // Create workflow from spec
+    let workflow_id =
+        WorkflowSpec::create_workflow_from_spec(config, &spec_path, "test_user", false, false)
+            .expect("Failed to create workflow from spec");
+
+    // Verify action was created
+    let actions =
+        default_api::get_workflow_actions(config, workflow_id).expect("Failed to get actions");
+    assert_eq!(actions.len(), 1);
+    assert_eq!(&actions[0].trigger_type, "on_workflow_complete");
+
+    // Get workflow and initialize using WorkflowManager
+    let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
+    workflow_manager
+        .initialize(true)
+        .expect("Failed to initialize workflow");
+
+    // Create and run job runner
+    let compute_node = torc::models::ComputeNodeModel::new(
+        workflow_id,
+        "test-host".to_string(),
+        std::process::id() as i64,
+        chrono::Utc::now().to_rfc3339(),
+        4,
+        8.0,
+        0,
+        1,
+        "local".to_string(),
+        None,
+    );
+    let created_node = default_api::create_compute_node(config, compute_node)
+        .expect("Failed to create compute node");
+
+    let mut job_runner = torc::client::job_runner::JobRunner::new(
+        config.clone(),
+        workflow,
+        1,
+        created_node.id.unwrap(),
+        output_dir.clone(),
+        0.1,
+        None,
+        None,
+        None,
+        torc::models::ComputeNodesResources {
+            id: None,
+            num_cpus: 16,
+            memory_gb: 32.0,
+            num_gpus: 0,
+            num_nodes: 1,
+            time_limit: None,
+            scheduler_config_id: None,
+        },
+        None,
+        None,
+        None,
+        false,
+        "test".to_string(),
+    );
+
+    thread::spawn(move || {
+        let _ = job_runner.run_worker();
+    });
+
+    // Wait for action to execute - the workflow should complete and trigger the action
+    let action_executed = wait_for(|| output_dir.join("workflow_complete.txt").exists(), 15);
+
+    assert!(
+        action_executed,
+        "on_workflow_complete action was not executed"
+    );
+
+    let complete_content = fs::read_to_string(output_dir.join("workflow_complete.txt"))
+        .expect("Failed to read workflow_complete.txt");
+    assert!(complete_content.contains("Workflow completed successfully"));
+}
+
+#[rstest]
+fn test_on_workflow_complete_idempotency_multiple_workers(start_server: &ServerProcess) {
+    let config = &start_server.config;
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let output_dir = temp_dir.path().join("output");
+    fs::create_dir_all(&output_dir).expect("Failed to create output dir");
+
+    // Create a workflow spec with on_workflow_complete action that writes a counter
+    // This verifies the action is executed only once even with multiple workers
+    let spec_content = format!(
+        r#"
+name: "test_on_workflow_complete_idempotency"
+user: "test_user"
+description: "Test on_workflow_complete action is executed only once"
+
+jobs:
+  - name: "quick_job"
+    command: "echo 'Quick job done'"
+
+actions:
+  - trigger_type: "on_workflow_complete"
+    action_type: "run_commands"
+    commands:
+      - "echo 'executed' >> {}/workflow_complete_counter.txt"
+"#,
+        output_dir.display()
+    );
+
+    let spec_path = create_spec_file(temp_dir.path(), &spec_content);
+
+    // Create workflow from spec
+    let workflow_id =
+        WorkflowSpec::create_workflow_from_spec(config, &spec_path, "test_user", false, false)
+            .expect("Failed to create workflow from spec");
+
+    let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
+
+    // Initialize workflow using WorkflowManager
+    let torc_config = TorcConfig::load().unwrap_or_default();
+    let workflow_manager = WorkflowManager::new(config.clone(), torc_config, workflow.clone());
+    workflow_manager
+        .initialize(true)
+        .expect("Failed to initialize workflow");
+
+    // Create two compute nodes and job runners (simulating concurrent execution)
+    let mut runners = vec![];
+    for i in 0..2 {
+        let compute_node = torc::models::ComputeNodeModel::new(
+            workflow_id,
+            format!("test-host-{}", i),
+            (std::process::id() + i as u32) as i64,
+            chrono::Utc::now().to_rfc3339(),
+            16,
+            32.0,
+            0,
+            1,
+            "local".to_string(),
+            None,
+        );
+        let created_node = default_api::create_compute_node(config, compute_node)
+            .expect("Failed to create compute node");
+
+        let runner = torc::client::job_runner::JobRunner::new(
+            config.clone(),
+            workflow.clone(),
+            1,
+            created_node.id.unwrap(),
+            output_dir.clone(),
+            0.1,
+            Some(1),
+            None,
+            None,
+            torc::models::ComputeNodesResources {
+                id: None,
+                num_cpus: created_node.num_cpus,
+                memory_gb: created_node.memory_gb,
+                num_gpus: created_node.num_gpus,
+                num_nodes: created_node.num_nodes,
+                time_limit: None,
+                scheduler_config_id: None,
+            },
+            None,
+            None,
+            None,
+            false,
+            format!("test-{}", i),
+        );
+        runners.push(runner);
+    }
+
+    // Run both runners concurrently
+    let handles: Vec<_> = runners
+        .into_iter()
+        .map(|mut runner| {
+            thread::spawn(move || {
+                thread::sleep(Duration::from_millis(100));
+                let _ = runner.run_worker();
+            })
+        })
+        .collect();
+
+    // Wait for execution
+    thread::sleep(Duration::from_secs(5));
+
+    // Verify the action was executed only once
+    if output_dir.join("workflow_complete_counter.txt").exists() {
+        let counter_content = fs::read_to_string(output_dir.join("workflow_complete_counter.txt"))
+            .expect("Failed to read workflow_complete_counter.txt");
+        let line_count = counter_content.lines().count();
+        assert_eq!(
+            line_count, 1,
+            "on_workflow_complete action should be executed exactly once, but was executed {} times",
+            line_count
+        );
+    } else {
+        panic!("on_workflow_complete action was not executed at all");
+    }
+
+    // Clean up threads
+    for handle in handles {
+        let _ = handle.join();
+    }
+}

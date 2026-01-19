@@ -418,6 +418,7 @@ impl JobRunner {
                             );
                         } else {
                             info!("Workflow complete workflow_id={}", self.workflow_id);
+                            self.execute_workflow_complete_actions();
                             break;
                         }
                     }
@@ -1423,34 +1424,48 @@ impl JobRunner {
         }
     }
 
-    /// Execute all on_workflow_start actions before the main loop begins
-    fn execute_workflow_start_actions(&mut self) {
-        info!("Checking for on_workflow_start actions");
+    /// Helper method to execute actions of a specific trigger type.
+    ///
+    /// This method fetches pending actions for the given trigger type, claims them atomically,
+    /// and executes them. It's used by the specific action execution methods to avoid code
+    /// duplication.
+    fn execute_actions_by_trigger_type(&mut self, trigger_type: &str) {
+        info!(
+            "Checking for {} actions workflow_id={}",
+            trigger_type, self.workflow_id
+        );
 
-        // Get pending on_workflow_start actions
+        // Get pending actions for the specified trigger type
+        let trigger_type_owned = trigger_type.to_string();
         let pending_actions = match self.send_with_retries(
             || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
                 let actions = default_api::get_pending_actions(
                     &self.config,
                     self.workflow_id,
-                    Some(vec!["on_workflow_start".to_string()]),
+                    Some(vec![trigger_type_owned.clone()]),
                 )?;
                 Ok(actions)
             },
         ) {
             Ok(actions) => actions,
             Err(e) => {
-                error!("Failed to get pending actions: {}", e);
+                error!(
+                    "Failed to get pending {} actions workflow_id={}: {}",
+                    trigger_type, self.workflow_id, e
+                );
                 return;
             }
         };
 
-        // Execute all on_workflow_start actions
+        // Execute all actions of this trigger type
         for action in pending_actions {
             let action_id = match action.id {
                 Some(id) => id,
                 None => {
-                    error!("Action missing id field");
+                    error!(
+                        "Action missing id field trigger_type={} workflow_id={}",
+                        trigger_type, self.workflow_id
+                    );
                     continue;
                 }
             };
@@ -1458,8 +1473,8 @@ impl JobRunner {
             // Check if this job runner can handle this action before claiming
             if !self.can_handle_action(&action) {
                 debug!(
-                    "on_workflow_start action {} cannot be handled by this job runner, skipping",
-                    action_id
+                    "{} action {} cannot be handled by this job runner, skipping",
+                    trigger_type, action_id
                 );
                 continue;
             }
@@ -1468,9 +1483,10 @@ impl JobRunner {
             let claimed = match self.claim_action(action_id) {
                 Ok(claimed) => claimed,
                 Err(e) => {
+                    // Not fatal - just log and continue
                     error!(
-                        "Error claiming on_workflow_start action {}: {}",
-                        action_id, e
+                        "Error claiming {} action workflow_id={} action_id={}: {}",
+                        trigger_type, self.workflow_id, action_id, e
                     );
                     continue;
                 }
@@ -1478,166 +1494,45 @@ impl JobRunner {
 
             if !claimed {
                 debug!(
-                    "on_workflow_start action {} already claimed by another runner",
-                    action_id
+                    "{} action {} already claimed by another runner",
+                    trigger_type, action_id
                 );
                 continue;
             }
 
             // We claimed it! Execute the action
-            info!("Executing on_workflow_start action {}", action_id);
+            info!(
+                "Executing {} workflow_id={} action_id={}",
+                trigger_type, self.workflow_id, action_id
+            );
             if let Err(e) = self.execute_action(&action) {
+                // Not fatal - just log and continue
                 error!(
-                    "Failed to execute on_workflow_start action {}: {}",
-                    action_id, e
+                    "Failed to execute {} workflow_id={} action_id={}: {}",
+                    trigger_type, self.workflow_id, action_id, e
                 );
             }
         }
+    }
+
+    /// Execute all on_workflow_start actions before the main loop begins
+    fn execute_workflow_start_actions(&mut self) {
+        self.execute_actions_by_trigger_type("on_workflow_start");
     }
 
     /// Execute all on_worker_start actions before the main loop begins
     fn execute_worker_start_actions(&mut self) {
-        info!("Checking for on_worker_start actions");
-
-        // Get pending on_worker_start actions
-        let pending_actions = match self.send_with_retries(
-            || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
-                let actions = default_api::get_pending_actions(
-                    &self.config,
-                    self.workflow_id,
-                    Some(vec!["on_worker_start".to_string()]),
-                )?;
-                Ok(actions)
-            },
-        ) {
-            Ok(actions) => actions,
-            Err(e) => {
-                error!("Failed to get pending actions: {}", e);
-                return;
-            }
-        };
-
-        // Execute all on_worker_start actions
-        for action in pending_actions {
-            let action_id = match action.id {
-                Some(id) => id,
-                None => {
-                    error!("Action missing id field");
-                    continue;
-                }
-            };
-
-            // Check if this job runner can handle this action before claiming
-            if !self.can_handle_action(&action) {
-                debug!(
-                    "on_worker_start action {} cannot be handled by this job runner, skipping",
-                    action_id
-                );
-                continue;
-            }
-
-            // Try to atomically claim this action
-            let claimed = match self.claim_action(action_id) {
-                Ok(claimed) => claimed,
-                Err(e) => {
-                    // Not fatal - just log and continue
-                    error!("Error claiming on_worker_start action {}: {}", action_id, e);
-                    continue;
-                }
-            };
-
-            if !claimed {
-                debug!(
-                    "on_worker_start action {} already claimed by another runner",
-                    action_id
-                );
-                continue;
-            }
-
-            // We claimed it! Execute the action
-            info!("Executing on_worker_start action {}", action_id);
-            if let Err(e) = self.execute_action(&action) {
-                // Not fatal - just log and continue
-                error!(
-                    "Failed to execute on_worker_start action {}: {}",
-                    action_id, e
-                );
-            }
-        }
+        self.execute_actions_by_trigger_type("on_worker_start");
     }
 
     /// Execute all on_worker_complete actions after the main loop ends
     fn execute_worker_complete_actions(&mut self) {
-        info!("Checking for on_worker_complete actions");
+        self.execute_actions_by_trigger_type("on_worker_complete");
+    }
 
-        // Get pending on_worker_complete actions
-        let pending_actions = match self.send_with_retries(
-            || -> Result<Vec<crate::models::WorkflowActionModel>, Box<dyn std::error::Error>> {
-                let actions = default_api::get_pending_actions(
-                    &self.config,
-                    self.workflow_id,
-                    Some(vec!["on_worker_complete".to_string()]),
-                )?;
-                Ok(actions)
-            },
-        ) {
-            Ok(actions) => actions,
-            Err(e) => {
-                error!("Failed to get pending actions: {}", e);
-                return;
-            }
-        };
-
-        // Execute all on_worker_complete actions
-        for action in pending_actions {
-            let action_id = match action.id {
-                Some(id) => id,
-                None => {
-                    error!("Action missing id field");
-                    continue;
-                }
-            };
-
-            // Check if this job runner can handle this action before claiming
-            if !self.can_handle_action(&action) {
-                debug!(
-                    "on_worker_complete action {} cannot be handled by this job runner, skipping",
-                    action_id
-                );
-                continue;
-            }
-
-            // Try to atomically claim this action
-            let claimed = match self.claim_action(action_id) {
-                Ok(claimed) => claimed,
-                Err(e) => {
-                    // Not fatal - just log and continue
-                    error!(
-                        "Error claiming on_worker_complete action {}: {}",
-                        action_id, e
-                    );
-                    continue;
-                }
-            };
-
-            if !claimed {
-                debug!(
-                    "on_worker_complete action {} already claimed by another runner",
-                    action_id
-                );
-                continue;
-            }
-
-            // We claimed it! Execute the action
-            info!("Executing on_worker_complete action {}", action_id);
-            if let Err(e) = self.execute_action(&action) {
-                // Not fatal - just log and continue
-                error!(
-                    "Failed to execute on_worker_complete action {}: {}",
-                    action_id, e
-                );
-            }
-        }
+    /// Execute all on_workflow_complete actions when the workflow completes
+    fn execute_workflow_complete_actions(&mut self) {
+        self.execute_actions_by_trigger_type("on_workflow_complete");
     }
 
     /// Check for pending workflow actions and execute them if their trigger conditions are met
