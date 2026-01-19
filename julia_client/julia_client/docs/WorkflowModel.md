@@ -15,6 +15,9 @@ Name | Type | Description | Notes
 **compute_node_wait_for_healthy_database_minutes** | **Int64** | Inform all compute nodes to wait this number of minutes if the database becomes unresponsive. | [optional] [default to 20]
 **compute_node_min_time_for_new_jobs_seconds** | **Int64** | Minimum remaining walltime (in seconds) required before a compute node will request new jobs. If the remaining time is less than this value, the compute node will stop requesting new jobs and wait for running jobs to complete. This prevents starting jobs that won&#39;t have enough time to complete. Default is 300 seconds (5 minutes). | [optional] [default to 300]
 **jobs_sort_method** | [***JobsSortMethod**](JobsSortMethod.md) |  | [optional] [default to nothing]
+**resource_monitor_config** | **String** | Resource monitoring configuration as JSON string | [optional] [default to nothing]
+**slurm_defaults** | **String** | Default Slurm parameters to apply to all schedulers as JSON string | [optional] [default to nothing]
+**use_pending_failed** | **Bool** | Use PendingFailed status for failed jobs (enables AI-assisted recovery) | [optional] [default to false]
 **status_id** | **Int64** |  | [optional] [default to nothing]
 
 

@@ -16,6 +16,9 @@
         compute_node_wait_for_healthy_database_minutes=20,
         compute_node_min_time_for_new_jobs_seconds=300,
         jobs_sort_method=nothing,
+        resource_monitor_config=nothing,
+        slurm_defaults=nothing,
+        use_pending_failed=false,
         status_id=nothing,
     )
 
@@ -30,6 +33,9 @@
     - compute_node_wait_for_healthy_database_minutes::Int64 : Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
     - compute_node_min_time_for_new_jobs_seconds::Int64 : Minimum remaining walltime (in seconds) required before a compute node will request new jobs. If the remaining time is less than this value, the compute node will stop requesting new jobs and wait for running jobs to complete. This prevents starting jobs that won&#39;t have enough time to complete. Default is 300 seconds (5 minutes).
     - jobs_sort_method::JobsSortMethod
+    - resource_monitor_config::String : Resource monitoring configuration as JSON string
+    - slurm_defaults::String : Default Slurm parameters to apply to all schedulers as JSON string
+    - use_pending_failed::Bool : Use PendingFailed status for failed jobs (enables AI-assisted recovery)
     - status_id::Int64
 """
 Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
@@ -44,16 +50,19 @@ Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
     compute_node_wait_for_healthy_database_minutes::Union{Nothing, Int64} = 20
     compute_node_min_time_for_new_jobs_seconds::Union{Nothing, Int64} = 300
     jobs_sort_method = nothing # spec type: Union{ Nothing, JobsSortMethod }
+    resource_monitor_config::Union{Nothing, String} = nothing
+    slurm_defaults::Union{Nothing, String} = nothing
+    use_pending_failed::Union{Nothing, Bool} = false
     status_id::Union{Nothing, Int64} = nothing
 
-    function WorkflowModel(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, )
-        o = new(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, status_id, )
+    function WorkflowModel(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, resource_monitor_config, slurm_defaults, use_pending_failed, status_id, )
+        o = new(id, name, user, description, timestamp, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, compute_node_min_time_for_new_jobs_seconds, jobs_sort_method, resource_monitor_config, slurm_defaults, use_pending_failed, status_id, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type WorkflowModel
 
-const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("compute_node_min_time_for_new_jobs_seconds")=>"Int64", Symbol("jobs_sort_method")=>"JobsSortMethod", Symbol("status_id")=>"Int64", )
+const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("compute_node_min_time_for_new_jobs_seconds")=>"Int64", Symbol("jobs_sort_method")=>"JobsSortMethod", Symbol("resource_monitor_config")=>"String", Symbol("slurm_defaults")=>"String", Symbol("use_pending_failed")=>"Bool", Symbol("status_id")=>"Int64", )
 OpenAPI.property_type(::Type{ WorkflowModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowModel[name]))}
 
 function OpenAPI.check_required(o::WorkflowModel)
@@ -74,10 +83,16 @@ function OpenAPI.validate_properties(o::WorkflowModel)
     OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_wait_for_healthy_database_minutes"), o.compute_node_wait_for_healthy_database_minutes)
     OpenAPI.validate_property(WorkflowModel, Symbol("compute_node_min_time_for_new_jobs_seconds"), o.compute_node_min_time_for_new_jobs_seconds)
     OpenAPI.validate_property(WorkflowModel, Symbol("jobs_sort_method"), o.jobs_sort_method)
+    OpenAPI.validate_property(WorkflowModel, Symbol("resource_monitor_config"), o.resource_monitor_config)
+    OpenAPI.validate_property(WorkflowModel, Symbol("slurm_defaults"), o.slurm_defaults)
+    OpenAPI.validate_property(WorkflowModel, Symbol("use_pending_failed"), o.use_pending_failed)
     OpenAPI.validate_property(WorkflowModel, Symbol("status_id"), o.status_id)
 end
 
 function OpenAPI.validate_property(::Type{ WorkflowModel }, name::Symbol, val)
+
+
+
 
 
 

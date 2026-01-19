@@ -38,8 +38,11 @@ class WorkflowModel(BaseModel):
     compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(default=20, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
     compute_node_min_time_for_new_jobs_seconds: Optional[StrictInt] = Field(default=300, description="Minimum remaining walltime (in seconds) required before a compute node will request new jobs. If the remaining time is less than this value, the compute node will stop requesting new jobs and wait for running jobs to complete. This prevents starting jobs that won't have enough time to complete. Default is 300 seconds (5 minutes).")
     jobs_sort_method: Optional[JobsSortMethod] = JobsSortMethod.GPUS_RUNTIME_MEMORY
+    resource_monitor_config: Optional[StrictStr] = Field(default=None, description="Resource monitoring configuration as JSON string")
+    slurm_defaults: Optional[StrictStr] = Field(default=None, description="Default Slurm parameters to apply to all schedulers as JSON string")
+    use_pending_failed: Optional[StrictBool] = Field(default=False, description="Use PendingFailed status for failed jobs (enables AI-assisted recovery)")
     status_id: Optional[StrictInt] = None
-    __properties: ClassVar[List[str]] = ["id", "name", "user", "description", "timestamp", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "compute_node_min_time_for_new_jobs_seconds", "jobs_sort_method", "status_id"]
+    __properties: ClassVar[List[str]] = ["id", "name", "user", "description", "timestamp", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "compute_node_min_time_for_new_jobs_seconds", "jobs_sort_method", "resource_monitor_config", "slurm_defaults", "use_pending_failed", "status_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -103,6 +106,9 @@ class WorkflowModel(BaseModel):
             "compute_node_wait_for_healthy_database_minutes": obj.get("compute_node_wait_for_healthy_database_minutes") if obj.get("compute_node_wait_for_healthy_database_minutes") is not None else 20,
             "compute_node_min_time_for_new_jobs_seconds": obj.get("compute_node_min_time_for_new_jobs_seconds") if obj.get("compute_node_min_time_for_new_jobs_seconds") is not None else 300,
             "jobs_sort_method": obj.get("jobs_sort_method") if obj.get("jobs_sort_method") is not None else JobsSortMethod.GPUS_RUNTIME_MEMORY,
+            "resource_monitor_config": obj.get("resource_monitor_config"),
+            "slurm_defaults": obj.get("slurm_defaults"),
+            "use_pending_failed": obj.get("use_pending_failed") if obj.get("use_pending_failed") is not None else False,
             "status_id": obj.get("status_id")
         })
         return _obj
